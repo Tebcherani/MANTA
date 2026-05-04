@@ -1,0 +1,254 @@
+MIT Sea Grant Odyssey IIB vehicle simulator
+	Revision: 2.22, Date: 1998/02/03 04:25:07
+Initializing vehicle data structure ...
+	410 sensors, 22 behaviors ...
+mission file: ./SMission/dive240_xanthos.mi ...
+ ============================================================
+
+ dive240_xanthos.mi
+
+ 240-second dive to 15 m using the controller settings logged
+
+ by Xanthos during the September 1998 Massachusetts Bay LOOPS
+
+ cruise (X9827208.obd).
+
+
+
+ Differences from dive240.mi:
+
+   - Outer-loop depth-mapping gain dropped 6x (0.5 -> 0.08).
+
+     This is the dominant change; the original simulator value
+
+     drove the controller into pitch-limit saturation.
+
+   - Pitch loop kpp/kdp/kip raised to match real-vehicle gains.
+
+   - Heading loop kih added (small integral term).
+
+   - Pitch limit kept at 30 deg (Xanthos's standard envelope for
+
+     yo-yo profiles, which routinely use 20-30 deg dive/climb).
+
+     The 20 deg seen in X9827208.obd was a mission-specific override.
+
+   - Filter time constant uo_tau halved (5 s -> 2.5 s).
+
+   - Max heading rate doubled (0.1 -> 0.2 rad/s).
+
+   - Bug fix: heading was 90 RADIANS (~5156 deg). Now 90 deg
+
+     declared with (deg) so the loader converts to radians.
+
+ ============================================================
+
+ Initial position and attitude
+
+  sensor:                    m_pos_n(m) 0
+  sensor:                    m_pos_e(m) 0
+  sensor:                    m_depth(m) 0
+  sensor:                     real_x(m) 0
+  sensor:                     real_y(m) 0
+  sensor:                     real_z(m) 0
+  sensor:                uo_control_kpp 1.5
+  sensor:                uo_control_kdp 2
+  sensor:                uo_control_kip 0.05
+  sensor:     uo_control_pitch_lim(deg) 30
+  sensor:                uo_control_kph 0.7
+  sensor:                uo_control_kdh 2
+  sensor:                uo_control_kih 0.02
+  sensor:                uo_depth_map_k 0.08
+  sensor:              uo_depth_int_k() 0.005
+  sensor:                   uo_tau(sec) 2.5
+  sensor:              uo_max_hr(rad/s) 0.2
+  sensor:                uo_max_dr(m/s) 0.5
+  sensor:                 real_veh_w(N) 1173
+  sensor:                 real_veh_b(N) 1173
+  sensor:               vs_act_delay(s) 0.1
+
+ *** state 1 ***
+state: dive_and_cruise
+
+ behavior: mission_timer 1 
+  b_arg:                        time(s) 240
+ behavior: depth_envelope 2 
+  b_arg:                   max_depth(m) 50
+  b_arg:                   min_depth(m) 0.5
+  b_arg:           alt_env_active(bool) 0
+  b_arg:                min_altitude(m) 2
+  b_arg:      depth_cutoff_active(bool) 0
+  b_arg:                cutoff_depth(m) 55
+ behavior: setpoint 3 
+  b_arg:                   heading(rad) 1.5708
+  b_arg:                       depth(m) 15
+  b_arg:                     speed(m/s) 1.5
+  b_arg:                        time(s) 240
+vvp->nstates = 1, vvp->cstate = 0 after load_mission()
+sim initial position: 0.00 0.00 0.00 0.00 0.00 0.00
+Data Logger (binary file v2)
+	Revision: 2.22, Date: 1998/02/03 04:25:07
+	datafile: ./SData/S2612403.obd
+Calendar time: 1777923005 (May 04, 2026 19:30:05 UTC)
+simEdgeTechLBL:
+lbl_cycle 10.0, sos 1485.0, 4 beacons, timeout 8.0
+percent_bias=0.000000, bias_amplitude=0.000000, noise_amplitude=0.000000
+	X1: N  500.0 E  500.0 D10.0 T0.003
+	X2: N  500.0 E -500.0 D10.0 T0.003
+	X3: N -500.0 E -500.0 D10.0 T0.003
+	X4: N -500.0 E  500.0 D10.0 T0.003
+    0.00: LBL PING, next at    10.00
+	X1: N 500.0 E 500.0 D 10.0 T 0.003
+	X2: N 500.0 E -500.0 D 10.0 T 0.003
+	X3: N -500.0 E -500.0 D 10.0 T 0.003
+	X4: N -500.0 E 500.0 D 10.0 T 0.003
+    0.00: setpoint starts (end time 240.00)
+    0.00: mission_timer starts (end time 240.00)
+    8.20: simEdgeTechLBL updates ...
+	M_LBL_1T 0.9554
+	M_LBL_2T 0.9554
+	M_LBL_3T 0.9555
+	M_LBL_4T 0.9555
+   10.20: LBL PING, next at    20.00
+   18.40: simEdgeTechLBL updates ...
+	M_LBL_1T 0.9513
+	M_LBL_2T 0.9527
+	M_LBL_3T 0.9596
+	M_LBL_4T 0.9582
+   20.20: LBL PING, next at    30.00
+   28.40: simEdgeTechLBL updates ...
+	M_LBL_1T 0.9434
+	M_LBL_2T 0.9557
+	M_LBL_3T 0.9674
+	M_LBL_4T 0.9553
+   30.20: LBL PING, next at    40.00
+   38.20: simEdgeTechLBL updates ...
+	M_LBL_1T 0.9361
+	M_LBL_2T 0.9640
+	M_LBL_3T 0.9747
+	M_LBL_4T 0.9471
+   40.00: LBL PING, next at    50.00
+   48.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.9285
+	M_LBL_2T 0.9740
+	M_LBL_3T 0.9825
+	M_LBL_4T 0.9374
+   50.00: LBL PING, next at    60.00
+   58.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.9196
+	M_LBL_2T 0.9853
+	M_LBL_3T 0.9920
+	M_LBL_4T 0.9268
+   60.00: LBL PING, next at    70.00
+   68.20: simEdgeTechLBL updates ...
+	M_LBL_1T 0.9087
+	M_LBL_2T 0.9983
+	M_LBL_3T 1.0039
+	M_LBL_4T 0.9148
+   70.00: LBL PING, next at    80.00
+   78.20: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8965
+	M_LBL_2T 1.0122
+	M_LBL_3T 1.0176
+	M_LBL_4T 0.9026
+   80.00: LBL PING, next at    90.00
+   88.20: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8832
+	M_LBL_2T 1.0260
+	M_LBL_3T 1.0326
+	M_LBL_4T 0.8908
+   90.20: LBL PING, next at   100.00
+   98.40: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8690
+	M_LBL_2T 1.0398
+	M_LBL_3T 1.0488
+	M_LBL_4T 0.8796
+  100.20: LBL PING, next at   110.00
+  108.40: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8552
+	M_LBL_2T 1.0537
+	M_LBL_3T 1.0648
+	M_LBL_4T 0.8688
+  110.20: LBL PING, next at   120.00
+  118.40: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8421
+	M_LBL_2T 1.0682
+	M_LBL_3T 1.0808
+	M_LBL_4T 0.8579
+  120.20: LBL PING, next at   130.00
+  128.40: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8295
+	M_LBL_2T 1.0833
+	M_LBL_3T 1.0965
+	M_LBL_4T 0.8467
+  130.20: LBL PING, next at   140.00
+  138.20: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8178
+	M_LBL_2T 1.0989
+	M_LBL_3T 1.1121
+	M_LBL_4T 0.8355
+  140.20: LBL PING, next at   150.00
+  148.20: simEdgeTechLBL updates ...
+	M_LBL_1T 0.8067
+	M_LBL_2T 1.1150
+	M_LBL_3T 1.1275
+	M_LBL_4T 0.8240
+  150.00: LBL PING, next at   160.00
+  158.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7968
+	M_LBL_2T 1.1311
+	M_LBL_3T 1.1424
+	M_LBL_4T 0.8127
+  160.00: LBL PING, next at   170.00
+  168.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7874
+	M_LBL_2T 1.1480
+	M_LBL_3T 1.1573
+	M_LBL_4T 0.8010
+  170.00: LBL PING, next at   180.00
+  178.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7788
+	M_LBL_2T 1.1652
+	M_LBL_3T 1.1722
+	M_LBL_4T 0.7894
+  180.00: LBL PING, next at   190.00
+  188.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7703
+	M_LBL_2T 1.1822
+	M_LBL_3T 1.1874
+	M_LBL_4T 0.7783
+  190.00: LBL PING, next at   200.00
+  198.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7616
+	M_LBL_2T 1.1990
+	M_LBL_3T 1.2034
+	M_LBL_4T 0.7682
+  200.00: LBL PING, next at   210.00
+  208.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7526
+	M_LBL_2T 1.2157
+	M_LBL_3T 1.2197
+	M_LBL_4T 0.7590
+  210.00: LBL PING, next at   220.00
+  218.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7435
+	M_LBL_2T 1.2320
+	M_LBL_3T 1.2364
+	M_LBL_4T 0.7508
+  220.00: LBL PING, next at   230.00
+  228.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7342
+	M_LBL_2T 1.2479
+	M_LBL_3T 1.2536
+	M_LBL_4T 0.7438
+  230.00: LBL PING, next at   240.00
+  238.00: simEdgeTechLBL updates ...
+	M_LBL_1T 0.7248
+	M_LBL_2T 1.2637
+	M_LBL_3T 1.2712
+	M_LBL_4T 0.7377
+  240.00: LBL PING, next at   250.00
+  240.00: setpoint managed time expired
+  240.00: mission_timer managed time expired
+  240.00: state 0 completed
+Mission finished -- data file: ./SData/S2612403.obd

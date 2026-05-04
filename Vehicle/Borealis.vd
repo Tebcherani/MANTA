@@ -1,0 +1,140 @@
+# ----------------------------------------------------------------------
+# Borealis vehicle definition
+#
+# Physical, hydrodynamic, and actuator parameters for the Borealis
+# Odyssey IIB AUV.  Loaded by load_vehicle_def() at simulator startup
+# (or vehicle startup, when integrated with the digital twin).
+#
+# Header MUST match the build's VEHICLE_NAME.  For the simulator build
+# VEHICLE_NAME is "Simulator" (per ody_defs.h _SIMULATOR block); for a
+# real-vehicle build it's whatever ody_name.h defines.  Change the
+# 'vehicle:' line below to match the build you are loading into, OR
+# rename this file to <VEHICLE_NAME>.vd and have multiple .vd files.
+#
+# Default values reproduce the original Odyssey IIA hydrodynamic
+# coefficients that were previously baked into sim.c.  Edit values
+# in place and re-run; no recompile needed.
+#
+# Comment lines start with '#', '%', or '*'.  Blank lines OK.
+# Names not listed here keep their compile-time defaults from
+# vehicle.c (so old .vd files keep working as new vs_* are added).
+# Unknown names cause a hard error at load time.
+# ----------------------------------------------------------------------
+
+vehicle: Simulator
+
+# ---- center of gravity / center of buoyancy ----
+vs_xg(m)                       0.0
+vs_yg(m)                      -0.0002
+vs_zg(m)                       0.082
+vs_xb(m)                       0.0
+vs_yb(m)                       0.0
+vs_zb(m)                       0.0
+
+# ---- mass and rotational inertia ----
+vs_mass(kg)                  339.0
+vs_ixx(kg-m^2)                10.59
+vs_iyy(kg-m^2)                71.95
+vs_izz(kg-m^2)                71.95
+vs_ixy(kg-m^2)                 0.0
+vs_izx(kg-m^2)                 0.0
+vs_iyz(kg-m^2)                 0.0
+
+# ---- drop weight 1 (buoyancy and body-frame location) ----
+vs_bdw1(N)                     0.0
+vs_xdw1(m)                     0.1655
+vs_ydw1(m)                     0.0
+vs_zdw1(m)                     0.0
+
+# ---- drop weight 2 ----
+vs_bdw2(N)                     0.0
+vs_xdw2(m)                     0.1655
+vs_ydw2(m)                     0.0
+vs_zdw2(m)                     0.0
+
+# ---- hydrodynamic coefficients - quadratic drag ----
+vs_kpabp()                     0.0
+vs_mqabq()                  -150.0
+vs_nrabr()                  -150.0
+vs_xuabu()                   -10.1
+vs_yvabv()                 -4930.0
+vs_zwabw()                 -4930.0
+
+# ---- hydrodynamic coefficients - added mass ----
+vs_kpdot()                     0.0
+vs_mqdot()                   -50.7
+vs_nrdot()                   -50.7
+vs_xudot()                   -32.0
+vs_yvdot()                  -313.6
+vs_zwdot()                  -313.6
+
+# ---- hydrodynamic coefficients - added-mass cross terms ----
+vs_kvdot()                     0.0
+vs_mwdot()                     0.0
+vs_nvdot()                     0.0
+vs_yrdot()                     0.0
+vs_ypdot()                     0.0
+vs_zqdot()                     0.0
+
+# ---- hydrodynamic coefficients - quadratic drag cross terms ----
+vs_mwabw()                     0.0
+vs_nvabv()                     0.0
+vs_yrabr()                     0.0
+vs_zqabq()                     0.0
+
+# ---- hydrodynamic coefficients - in-line lift and drag ----
+vs_muq()                     -74.9
+vs_muw()                     167.3
+vs_mpr()                      50.7
+vs_nur()                     -74.9
+vs_nuv()                    -167.3
+vs_npq()                     -50.7
+vs_xvv()                      48.7
+vs_xww()                      48.7
+vs_xvr()                     411.2
+vs_xwq()                    -411.2
+vs_xrr()                     -43.4
+vs_xqq()                     -43.4
+vs_yur()                     112.6
+vs_yuv()                    -117.5
+vs_ywp()                     313.6
+vs_zuq()                    -112.6
+vs_zuw()                    -117.5
+vs_zvp()                    -313.6
+vs_kvt2()                      7.736
+
+# ---- fin geometry (body-frame location of each fin centroid) ----
+# fin 1 = lower rudder, 2 = port elevator, 3 = upper rudder, 4 = stbd elevator
+vs_fin1_x(m)                  -1.069
+vs_fin1_y(m)                   0.012
+vs_fin1_z(m)                  -0.1524
+vs_fin2_x(m)                  -1.069
+vs_fin2_y(m)                  -0.1524
+vs_fin2_z(m)                   0.0
+vs_fin3_x(m)                  -1.069
+vs_fin3_y(m)                   0.012
+vs_fin3_z(m)                   0.1524
+vs_fin4_x(m)                  -1.069
+vs_fin4_y(m)                   0.1524
+vs_fin4_z(m)                   0.0
+
+# ---- fin actuator and aerodynamic parameters ----
+vs_fin_speed(rad/s)            0.6109
+vs_act_delay(steps)           20      # fin cmd transport delay at 50 Hz hydro rate (20 * 0.02s = 0.4s)
+vs_fin_cdo()                   0.0065
+vs_fin_oswald()                0.90
+vs_fin_aspect_ratio()          4.26
+vs_fin_stall_angle(rad)        0.5236
+vs_rud_hyst_width(rad)         0.1396
+vs_rud_hyst_center(rad)        0.0
+vs_elev_hyst_width(rad)        0.0349
+vs_elev_hyst_center(rad)       0.0
+vs_fin_area(m^2)               0.0299
+vs_fin_cd_cross()              0.723
+vs_fin_dcl()                   3.392
+
+# ---- thruster characteristics ----
+vs_thruster_kt(Nm/A)           0.456
+vs_thruster_eta()              0.80
+vs_thruster_pitch(m/rad)       0.124
+vs_thruster_duct_area(m^2)     0.28

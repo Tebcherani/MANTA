@@ -1,0 +1,39 @@
+/*----------------------------------------------------------------------*
+   Copyright (C) 1994-1997, Massachusetts Institute of Technology.
+	 Sea Grant Autonomous Underwater Vehicles Laboratory.
+			 All rights reserved.
+  $Id: diagnostic.h,v 2.21 1998/01/20 00:31:51 bamoran Exp $
+ *----------------------------------------------------------------------*/
+
+#ifndef DIAGNOSTIC_H
+#define DIAGNOSTIC_H
+
+#include <stdio.h>		/* required because of syslog & term */
+
+#define TERM 001		/* for terminal monitoring */
+#define SLOG 002		/* for syslog monitoring */
+#define DUMP 004		/* hex dump to syslog file */
+
+				/* status codes */
+enum ody_dev_status {
+    STATUS_OK, STATUS_NOT_SELECTED, STATUS_NOT_CONNECTED,
+    STATUS_UNINITIALIZED, STATUS_SERIAL_PORT, STATUS_NO_SIGNALS,
+    STATUS_SAIL1_COMMS, STATUS_INDEX_FAILED, STATUS_FORK_FAILED,
+    STATUS_UNKNOWN
+};
+
+extern char msg_buf[];		/* buffer for storing diagnostics */
+extern char syslog_file[];	/* full path name of syslog */
+extern FILE *syslog, *term;
+
+                                /* prototypes */
+void write_message( int monitor );
+int open_syslog( const char *name );
+void status_msg( enum ody_dev_status status, char *string );
+void init_dump( int Monitor );
+int dump_char( char c, int Monitor );
+void stop_dump( int Monitor );
+int dump_buf( char *buf, int len, int Monitor );
+void write_rcs( const char *rev, const char *date );
+
+#endif /* DIAGNOSTIC_H */

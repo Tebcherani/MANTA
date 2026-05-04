@@ -1,0 +1,28 @@
+# Borealis vehicle definition
+# Copy this file to ./Vehicle/<VehicleName>.vd, edit the values, and
+# load_vehicle_def() will read it before the mission file at startup.
+# Anything not set here keeps its compile-time default from edit_struct.c.
+
+vehicle: Borealis
+
+# --- center of gravity / center of buoyancy ---
+vs_xg(m)               0.00243
+vs_yg(m)              -0.00120
+vs_zg(m)               0.08000
+vs_xb(m)               0.00240
+vs_yb(m)               0.00000
+vs_zb(m)               0.00000
+
+# --- mass and inertia ---
+vs_mass(kg)          339.26
+vs_ixx(kg-m^2)        10.59
+vs_iyy(kg-m^2)        70.83
+vs_izz(kg-m^2)        70.83
+
+# --- a few hydrodynamic coefficients (rest take defaults) ---
+vs_xudot()           -33.93
+vs_yvdot()          -396.81
+
+# --- thruster characteristics ---
+vs_thruster_kt(Nm/A)   0.456
+vs_thruster_eta()      0.80

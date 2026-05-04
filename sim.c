@@ -1,0 +1,1103 @@
+/*----------------------------------------------------------------------*
+   Copyright (C) 1994-1997, Massachusetts Institute of Technology.
+	 Sea Grant Autonomous Underwater Vehicles Laboratory.
+			 All rights reserved.
+  $Id: sim.c,v 2.21 1998/01/20 00:31:51 bamoran Exp $
+ *----------------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------------*
+ | sim.c    Odyssey II hydrodynamic simulator with Franz Hover's updates |
+ |                                                                       |
+ | Last mod:  6/9/95 Franz Hover                                         |
+ | History: copied to SGI from Mac by June 1, 1994 by jleonard           |
+ |          compilation of vehicle simulation routines written by        |
+ |          Jim Bellingham and other Sea Grant staff (198?-1994)         |
+ |          90% of the code came from Draper, a student of Abkowitz.     |
+ |                                                                       |
+ |          From March to June, 1995 this code was significantly         |
+ |          improved by Franz Hover.  Errors were removed and the        |
+ |          model was updated based on theoretical considerations,       |
+ |          Draper's modeling program, and analysis of mission data      |
+ |                                                                       |
+ | NOTE: all vehicle physical parameters (mass, inertia, CG/CB,         |
+ | hydrodynamic and fin coefficients) are read from vs_* variables in   |
+ | the data structure, populated by load_vehicle_def() before           |
+ | init_simulation() is called.  There are no external coefficient      |
+ | files.                                                                |
+ *-----------------------------------------------------------------------*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+#ifndef _OSK
+#ifndef drand48
+#define drand48() ((double)rand()/RAND_MAX)
+#endif
+#endif
+
+
+#include "diagnostic.h"
+#include "vehicle.h"
+
+#ifdef _OSK
+  double drand48();
+#endif
+
+
+/*-----------------------------------------------------------------------*
+ | structure of this file: 
+ |   global variables declarations       (there are a lot of them)
+ |   main()                              simple interface to test (for now)
+ |   start_sub(),                        calls lhs
+ |   lhs()                               precompute lhs of hydro equations
+ |   motion()                            main computation
+ |   hydro()                             calcs rhs of hydro equations
+ |   fins()                              computes forces caused by fins
+ |   act_model()                         fin actuator model (just a delay) 
+ |   thruster_force(),thruster_torque()  thruster model
+ |   matinv(), mmul()                    matrix routines
+ | 
+ *-----------------------------------------------------------------------*/
+
+
+/*------------------- function prototypes -------------------------------*/
+
+void init_simulation();
+static void lhs();
+void fins(double *, double, double);
+
+/*------------------- generic constants -------------------------------*/
+
+#define FTOM   0.3048               /* from feet to meters */
+#define FTOM2  (0.3048 * 0.3048)
+#define FTOM3  (0.3048 * 0.3048 * 0.3048)
+#define TWOPI  (2*PI)
+
+const double rho = 1.025e3;	/* kg/m^3 density of seawater */
+
+/*------------------- global variables -------------------------------*/
+
+int UseSim, MonitorSim;   /* simulator enable / monitor flags */
+
+static double rhs[7];       /* calculated in hydro, used in motion */
+static double ainv[7][7];   /* calculated by lhs, used in motion */
+
+/* coordinate transformation matrix, we use only indices 1-6 */
+static double ctrn[7][7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+			    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+			    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+			    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+			    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+			    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+			    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};              
+
+static int jjj;  /* runge-kutta index (shouldn't be global) but is ? */
+
+/*---- Forces and moments due to the fins ----*/
+static double F1[4],F2[4],F3[4],F4[4];
+static double M1[4],M2[4],M3[4],M4[4];
+
+
+/*----------------------- vehicle parameters ------------------------------*/
+
+/* All vehicle physical parameters are read from vs_* variables in the
+   data structure.  Defaults live in edit_struct.c; runtime values are
+   loaded by load_vehicle_def() from the vehicle definition (.vd) file
+   before init_simulation() is called.  There are no bare globals or
+   external coefficient files here.
+
+   x is fwd, y stbd, z down.
+
+   Fin numbering: #1 lower rudder, #2 port elevator,
+                  #3 upper rudder,  #4 stbd elevator.
+   Fin model from PNA / Whicker & Fehlner 1958.
+
+   Thruster model from J. G. Bellingham 1/94, fsh 5/95.          */
+
+
+/*----------------------------------------------------------------------*/
+
+void init_simulation()
+{
+    /* vs_* parameters already loaded by load_vehicle_def() -- just
+       build the inertia matrix inverse and we are ready to integrate. */
+    lhs();
+}
+
+/*----------------------------------------------------------------------*/
+
+void lhs()			/* calculates left-hand-side of the eqn */
+{
+    double a[7][7],work[7][7];
+    int i, j, debug=0;
+
+				/* fsh checked inertia matrix 3/22/94 */
+
+    a[1][1] =  sensor(VS_MASS) - sensor(VS_XUDOT);	/* surge force */
+    a[1][2] = 0.;
+    a[1][3] = 0.;
+    a[1][4] = 0.;
+    a[1][5] = sensor(VS_MASS) * sensor(VS_ZG);
+    a[1][6] = -sensor(VS_MASS) * sensor(VS_YG);
+
+    a[2][1] = 0.;		/* sway force */
+    a[2][2] =  sensor(VS_MASS) - sensor(VS_YVDOT) ;
+    a[2][3] = 0.;
+    a[2][4] = -sensor(VS_MASS) * sensor(VS_ZG) - sensor(VS_YPDOT);
+    a[2][5] = 0.;
+    a[2][6] =  sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_YRDOT);
+
+    a[3][1] = 0.;		/* heave force */
+    a[3][2] = 0.;
+    a[3][3] =  sensor(VS_MASS) - sensor(VS_ZWDOT);
+    a[3][4] =  sensor(VS_MASS) * sensor(VS_YG);
+    a[3][5] = -sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_ZQDOT);
+    a[3][6] = 0.;
+  
+    a[4][1] = 0.;		/* roll moment */
+    a[4][2] = -sensor(VS_MASS) * sensor(VS_ZG) - sensor(VS_KVDOT);
+    a[4][3] =  sensor(VS_MASS) * sensor(VS_YG);
+    a[4][4] =  sensor(VS_IXX) - sensor(VS_KPDOT);
+    a[4][5] = -sensor(VS_IXY);
+    a[4][6] = -sensor(VS_IZX);
+  
+    a[5][1] =  sensor(VS_MASS) * sensor(VS_ZG);	/* pitch moment */
+    a[5][2] = 0.;
+    a[5][3] = -sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_MWDOT);
+    a[5][4] = -sensor(VS_IXY);
+    a[5][5] =  sensor(VS_IYY) - sensor(VS_MQDOT);
+    a[5][6] = -sensor(VS_IYZ);
+
+    a[6][1] = -sensor(VS_MASS) * sensor(VS_YG);	/* yaw moment */
+    a[6][2] =  sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_NVDOT);
+    a[6][3] = 0.;
+    a[6][4] = -sensor(VS_IZX);
+    a[6][5] = -sensor(VS_IYZ);
+    a[6][6] =  sensor(VS_IZZ) - sensor(VS_NRDOT);
+  
+    if(debug)
+    {
+	printf("Inertia matrix: ------------ \n") ;
+	for(i=1;i<=6;i++){
+	    for(j=1;j<=6;j++)
+		printf("%6.2f  ", a[i][j]) ;
+	    printf("\n");
+	}
+	printf("\n");
+    }
+
+    if (matinv(a,ainv,6,work)==1) 
+    {
+	fprintf(syslog, "Matrix is singular in lhs of equations of motion\n");
+    }
+}
+                
+/*----------------------------------------------------------------------*
+   Subroutine motion() uses 4th-order Runge-Kutta method.  Variables are:
+     
+   edot(1)  edot(2)  edot(3)  edot(4)  edot(5)  edot(6)
+     ]        ]        ]        ]        ]        ]
+    udot     vdot     wdot     pdot     qdot     rdot
+
+   e(1)      e(2)     e(3)     e(4)     e(5)     e(6)
+     ]        ]        ]        ]        ]        ]
+     u        v        w        p        q        r
+
+   p(1)      p(2)     p(3)     p(4)     p(5)     p(6)
+     ]        ]        ]        ]        ]        ]
+     x        y        z       phi     theta     psi
+ *-----------------------------------------------------------------------*/
+
+void motion( double e[], double p[], double Amps, double Del13,
+	     double Del24, double dt ) 
+{
+    double eo[7],pdot[7][5], edot[7][5];
+    double po[7];
+    double ds4,dc4,ds5,dc5,ds6,dc6,dt5,ds5dc6,ds5ds6;
+    int i,j,k;
+    double dto2, dto6;
+
+    dto2  = 0.5*dt;
+    dto6  = dt/6.0;
+
+    for (i=1;i<=6;i++)
+    {
+	eo[i]=e[i];
+	po[i]=p[i];
+	for (j=1;j<=4;j++)
+	{
+	    edot[i][j]=0.0;
+	    pdot[i][j]=0.0;
+	}
+    }
+				/* start 4th order runga kutta integration */
+    for (jjj=1;jjj<=4;jjj++)
+    {				/* get forces and moments: rhs[1] to rhs[6] */
+	hydro( e, p, Amps, Del13, Del24, dt );
+				/* multiply by inverse of inertial matrix */
+	for (i=1;i<=6;i++)
+	    for (k=1;k<=6;k++)
+		edot[i][jjj] = edot[i][jjj] +  ainv[i][k] * rhs[k];
+
+				/* ctrn takes e to pdot */
+	ds4 = sin(p[4]);
+	dc4 = cos(p[4]);
+	ds5 = sin(p[5]);
+	dc5 = cos(p[5]);
+	ds6 = sin(p[6]);
+	dc6 = cos(p[6]);
+	dt5 = tan(p[5]);
+	ds5dc6 = ds5 * dc6;
+	ds5ds6 = ds5 * ds6;
+				/* this first 3x3 block is just 3-axis
+				   rotation */
+	ctrn[1][1] =  dc5 * dc6;
+	ctrn[1][2] = -dc4 * ds6 + ds4 * ds5dc6;
+	ctrn[1][3] =  ds4 * ds6 + dc4 * ds5dc6;
+
+	ctrn[2][1] =  dc5 * ds6;
+	ctrn[2][2] =  dc4 * dc6 + ds4 * ds5ds6;
+	ctrn[2][3] = -ds4 * dc6 + dc4 * ds5ds6;
+
+	ctrn[3][1] = -ds5;
+	ctrn[3][2] =  dc5 * ds4;
+	ctrn[3][3] =  dc5 * dc4;
+				/* this 3x3 block relates body attitude
+				   rates to Euler angle rates of change */
+	ctrn[4][4] =  1.0;
+	ctrn[4][5] =  ds4 * dt5;
+	ctrn[4][6] =  dc4 * dt5;
+
+	ctrn[5][4] =  0.0;
+	ctrn[5][5] =  dc4;
+	ctrn[5][6] = -ds4;
+
+	ctrn[6][4] =  0.0;
+	ctrn[6][5] =  ds4/dc5;
+	ctrn[6][6] =  dc4/dc5;
+
+	for (i=1;i<=6;i++) {	/* get pdot */
+	    for (k=1;k<=6;k++) {
+		pdot[i][jjj] = pdot[i][jjj] + ctrn[i][k] * e[k];
+	    }
+	}
+				/* apply a Runge-Kutta half- or whole step */
+	if ((jjj == 1) || (jjj == 2)) {
+	    for (i=1;i<=6;i++) { 
+		e[i] = eo[i] + edot[i][jjj] * dto2;
+		p[i] = po[i] + pdot[i][jjj] * dto2;
+	    }
+	}
+	else {
+	    for (i=1;i<=6;i++) 
+	    {
+		e[i] = eo[i] + edot[i][jjj] * dt;
+		p[i] = po[i] + pdot[i][jjj] * dt;
+	    }
+	}
+    } /* for (jjj=1;jjj<=4;jjj++)  loop ends */
+
+
+    for (i=1;i<=6;i++)		/* compute the weighted sum */ 
+    {
+	e[i] = eo[i] + (edot[i][1] + 2. * (edot[i][2] + edot[i][3]) + 
+			edot[i][4]) * dto6;
+	p[i] = po[i] + (pdot[i][1] + 2. * (pdot[i][2] + pdot[i][3]) + 
+			pdot[i][4]) * dto6;
+    }
+
+				/* add in effects of steady current... */ 
+    p[2] = p[2] + sensor(REAL_CURRENT_EAST) * dt;
+    p[1] = p[1] + sensor(REAL_CURRENT_NORTH) * dt;
+				/* update parameters for noisy sensor cases */
+    update(REAL_U, e[1]);
+    update(REAL_V, e[2]);
+    update(REAL_W, e[3]);
+    update(REAL_P, e[4]);
+    update(REAL_Q, e[5]);
+    update(REAL_R, e[6]);
+  
+    update(REAL_UD, (e[1] - eo[1]) / dt);
+    update(REAL_VD, (e[2] - eo[2]) / dt);
+    update(REAL_WD, (e[3] - eo[3]) / dt);
+    update(REAL_PD, (e[4] - eo[4]) / dt);
+    update(REAL_QD, (e[5] - eo[5]) / dt);
+    update(REAL_RD, (e[6] - eo[6]) / dt);
+  
+    update(REAL_X, p[1]);
+    update(REAL_Y, p[2]);
+    update(REAL_Z, p[3]);
+    update(REAL_PSI, p[6]);
+    update(REAL_THETA, p[5]);
+    update(REAL_PHI, p[4]);
+}
+
+/*-------------------------------------------------------------------------
+  Subroutine hydro() gets the right-hand sides of the dynamic equations.
+------------------------------------------------------------------------- */
+
+void hydro( double *e, double *p, double Amps, double Del13, double
+	    Del24, double dt )
+
+{
+  static double Xgp, Ygp, Zgp, Xbp, Ybp, Zbp, Wp, Bp;
+  double pp,qq,rr,pr,pq,qr,uv,uw,uq,ur,vv,ww;
+  double vp,vr,wp,wq,cp4,cp5,sp4,sp5;
+  double wabw,vabv,uabu,pabp,qabq,rabr;
+  double real_amps;
+  double rud_ang, elev_ang, TForce, TTorque, TVolt;
+  double vt , wt ;
+
+  static double old_rud_ang = 0 ,       old_elev_ang = 0. ;
+  static double old_rud_ang_shaft = 0. , old_elev_ang_shaft  = 0. ;
+  double rud_ang_shaft, elev_ang_shaft ;
+  static double rud_ang_com_delay[100], elev_ang_com_delay[100] ;
+  int i ;
+
+  static double old_TForce = 0.0, old_TTorque = 0.0, old_TVolt = 0.0;
+  double Wdw1, Wdw2, W,B ;
+  const int debug=0;
+  
+				/* if weight dropped, then vehicle feels 0 */
+  if (sensor(C_WEIGHT1_DROP)==0.0) 
+      Wdw1 = sensor(REAL_WDW1);
+  else 
+      Wdw1 = 0.0;
+        
+  if (sensor(C_WEIGHT2_DROP)==0.0) 
+      Wdw2 = sensor(REAL_WDW2);
+  else 
+      Wdw2 = 0.0;
+        
+  W = sensor(REAL_VEH_W);
+  B = sensor(REAL_VEH_B);
+				/* get weight and buoyancy of vehicle */
+  Wp = W + Wdw1 + Wdw2;
+  Bp = B + sensor(VS_BDW1) + sensor(VS_BDW2);
+  Xgp = (sensor(VS_XG)*W + sensor(VS_XDW1)*Wdw1 + sensor(VS_XDW2)*Wdw2) / Wp;
+  Ygp = (sensor(VS_YG)*W + sensor(VS_YDW1)*Wdw1 + sensor(VS_YDW2)*Wdw2) / Wp;
+  Zgp = (sensor(VS_ZG)*W + sensor(VS_ZDW1)*Wdw1 + sensor(VS_ZDW2)*Wdw2) / Wp;
+  Xbp = (sensor(VS_XB)*W + sensor(VS_XDW1)*sensor(VS_BDW1) + sensor(VS_XDW2)*sensor(VS_BDW2)) / Bp;
+  Ybp = (sensor(VS_YB)*W + sensor(VS_YDW1)*sensor(VS_BDW1) + sensor(VS_YDW2)*sensor(VS_BDW2)) / Bp;
+  Zbp = (sensor(VS_ZB)*W + sensor(VS_ZDW1)*sensor(VS_BDW1) + sensor(VS_ZDW2)*sensor(VS_BDW2)) / Bp;
+
+  update(REAL_EXCESS_BUOYANCY, Bp-Wp);
+
+  vv = e[2] * e[2];
+  ww = e[3] * e[3];
+  uv = e[1] * e[2];
+  uw = e[1] * e[3];
+  ur = e[1] * e[6];
+  uq = e[1] * e[5];
+  vr = e[2] * e[6];
+  vp = e[2] * e[4];
+  wp = e[3] * e[4];
+  wq = e[3] * e[5];
+  pr = e[4] * e[6];
+  pq = e[4] * e[5];
+  qr = e[5] * e[6];
+  pp = e[4] * e[4];
+  qq = e[5] * e[5];
+  rr = e[6] * e[6];
+  uabu = e[1] * fabs(e[1]);
+  vabv = e[2] * fabs(e[2]);
+  wabw = e[3] * fabs(e[3]);
+  pabp = e[4] * fabs(e[4]);
+  qabq = e[5] * fabs(e[5]);
+  rabr = e[6] * fabs(e[6]);
+  cp4 = cos(p[4]);  
+  cp5 = cos(p[5]);
+  sp4 = sin(p[4]);
+  sp5 = sin(p[5]);       
+
+  vt = e[2] + sensor(VS_FIN1_X)*e[6] ;
+  wt = e[3] - sensor(VS_FIN1_X)*e[5] ;
+
+  if (sensor(M_PRESENT_TIME) <= .2) {
+    old_rud_ang = -sensor(VS_RUD_HYST_CENTER) ;
+    old_elev_ang = -sensor(VS_ELEV_HYST_CENTER) ;
+  }
+
+  if (jjj == 1)          /* if first step of the runge-kutta integration,...  */
+  {
+
+                         /* two big time steps delay */
+    int act_delay = (int)sensor(VS_ACT_DELAY);
+    for(i=act_delay-1;i>=0;i--){
+      rud_ang_com_delay[i+1]  = rud_ang_com_delay[i] ;
+      elev_ang_com_delay[i+1] = elev_ang_com_delay[i] ;
+    }
+
+    rud_ang_com_delay[0] = Del13;
+    elev_ang_com_delay[0] = Del24;
+
+				/* enforce speed constraint on motor shaft */
+    rud_ang_shaft = act_model( rud_ang_com_delay[act_delay], 
+			       old_rud_ang_shaft, dt );
+				/* put through a hysteresis loop to get
+                                   actual rudder */
+    rud_ang = hysteresis( rud_ang_shaft, old_rud_ang_shaft,  
+			  old_rud_ang, sensor(VS_RUD_HYST_WIDTH), sensor(VS_RUD_HYST_CENTER) ) ;
+
+    elev_ang_shaft = act_model( elev_ang_com_delay[act_delay],
+				 old_elev_ang_shaft, dt );
+    elev_ang = hysteresis( elev_ang_shaft, old_elev_ang_shaft,
+			   old_elev_ang, sensor(VS_ELEV_HYST_WIDTH), sensor(VS_ELEV_HYST_CENTER)) ;
+
+    update(M_ELEVATOR_ANGLE,elev_ang) ;
+    update(M_RUDDER_ANGLE,rud_ang) ;
+
+    real_amps = Amps  ;
+
+    TForce = thruster_force(real_amps,e[1]);    /* using u here should be a little*/
+    TTorque = thruster_torque(real_amps,e[1]);  /* more accurate than ut */
+
+                             /* store the previous fin angles and thruster parameters */
+    old_rud_ang = rud_ang ;
+    old_elev_ang = elev_ang ;
+    old_rud_ang_shaft = rud_ang_shaft ;
+    old_elev_ang_shaft = elev_ang_shaft ;
+    
+    old_TForce = TForce;
+    old_TTorque = TTorque;
+    old_TVolt = TVolt;
+  }
+  else
+  {
+    rud_ang = old_rud_ang ;
+    elev_ang = old_elev_ang ;
+    TForce = old_TForce;
+    TTorque = old_TTorque;
+    TVolt = old_TVolt;
+  }
+  
+  fins(e,rud_ang,elev_ang);            /* get fin forces and moments 
+                                   F1,F2,F3,F4,M1,M2,M3,M4 */
+  
+  rhs[1] = TForce                   /* AXIAL FORCES */
+         - (Wp-Bp)*sp5 
+         + sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr) 
+         + F1[1] + F2[1] + F3[1] + F4[1]
+         + sensor(VS_XVV)*vv + sensor(VS_XWW)*ww + sensor(VS_XVR)*vr + sensor(VS_XWQ)*wq + sensor(VS_XRR)*rr + sensor(VS_XQQ)*qq;
+
+                          /* apply correction in operating speed range, fsh */
+  if (e[1] > 0.7)
+         rhs[1] += sensor(VS_XUABU)*uabu*(2.455-2.175*e[1]+.75*e[1]*e[1]) ;
+  else
+         rhs[1] += sensor(VS_XUABU)*uabu*(2.455-2.175*.7+.75*.7*.7) ;
+
+  if ((debug)&&(jjj == 1)) {
+      printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e ",
+             sensor(M_PRESENT_TIME),rud_ang,
+             TForce,
+             sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr),
+             F1[1] + F2[1] + F3[1] + F4[1],
+             sensor(VS_XVV)*vv , sensor(VS_XWW)*ww , sensor(VS_XVR)*vr ,sensor(VS_XWQ)*wq , sensor(VS_XRR)*rr , sensor(VS_XQQ)*qq,
+             sensor(VS_XUABU)*uabu*(2.455-2.175*e[1]+.75*e[1]*e[1])) ;
+  }
+  
+  rhs[2] = (Wp-Bp)*cp5*sp4         /* LATERAL FORCES */
+         + sensor(VS_YVABV)*vabv
+         + sensor(VS_YUV)*uv + sensor(VS_YUR)*ur + sensor(VS_YRABR)*rabr + sensor(VS_YWP)*wp 
+         + sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq) 
+         + F1[2] + F2[2] + F3[2] + F4[2];
+
+  if ((debug)&&(jjj == 1)) {
+          printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e ",
+                 sensor(VS_YVABV)*vabv,
+                 sensor(VS_YUV)*uv , sensor(VS_YUR)*ur , sensor(VS_YRABR)*rabr , sensor(VS_YWP)*wp, 
+                 sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq),
+                 F1[2] + F2[2] + F3[2] + F4[2]);
+  }
+  
+  rhs[3] = (Wp-Bp)*cp5*cp4   /* NORMAL FORCES */
+         + sensor(VS_ZWABW)*wabw
+         + sensor(VS_ZUQ)*uq + sensor(VS_ZUW)*uw + sensor(VS_ZQABQ)*qabq + sensor(VS_ZVP)*vp
+           + sensor(VS_MASS)*(uq - vp + Zgp*(pp + qq) - Xgp*pr - Ygp*qr)
+         + F1[3] + F2[3] + F3[3] + F4[3];
+  
+  rhs[4] = -(Zgp*Wp - Zbp*Bp)*cp5*sp4    /* ROLL MOMENTS */
+           + (Ygp*Wp - Ybp*Bp)*cp5*cp4   
+         + sensor(VS_KPABP)*pabp 
+         - (sensor(VS_IZZ) - sensor(VS_IYY))*qr 
+         + sensor(VS_IZX)*pq - sensor(VS_IXY)*pr + sensor(VS_IYZ)*qq -sensor(VS_IYZ)*rr 
+         - sensor(VS_MASS)*(Ygp*(vp-uq) + Zgp*(wp-ur))
+         + M1[1] + M2[1] + M3[1] + M4[1] 
+         + TTorque + sensor(VS_KVT2)*4.*vt*wt*(wt*wt-vt*vt)/(vt*vt + wt*wt + .0001) ;
+  
+  rhs[5] = -(Zgp*Wp - Zbp*Bp)*sp5        /* PITCH MOMENTS */
+           - (Xgp*Wp - Xbp*Bp)*cp5*cp4
+         + sensor(VS_MWABW)*wabw
+         + sensor(VS_MQABQ)*qabq
+         + sensor(VS_MUW)*uw  
+         + sensor(VS_MUQ)*uq + sensor(VS_MPR)*pr
+           + (sensor(VS_IZZ) - sensor(VS_IXX))*pr
+         - sensor(VS_IZX)*pp - sensor(VS_IYZ)*pq +sensor(VS_IXY)*qr + sensor(VS_IZX)*rr
+         - sensor(VS_MASS)*(Zgp*(wq - vr) + Xgp*(uq - vp))                     
+         + M1[2] + M2[2] + M3[2] + M4[2];
+
+  rhs[6] = (Ygp*Wp - Ybp*Bp)*sp5          /* YAW MOMENTS */ 
+           + (Xgp*Wp - Xbp*Bp)*cp5*sp4   
+         + sensor(VS_NUV)*uv + sensor(VS_NRABR)*rabr 
+         + sensor(VS_NUR)*ur + sensor(VS_NVABV)*vabv 
+         + sensor(VS_NPQ)*pq
+         + (sensor(VS_IXX) - sensor(VS_IYY))*pq
+         + sensor(VS_IXY)*pp + sensor(VS_IYZ)*pr - sensor(VS_IXY)*qq - sensor(VS_IZX)*qr 
+         - sensor(VS_MASS)*Xgp*(ur-wp) + sensor(VS_MASS)*Ygp*(wq - vr)
+               + M1[3] + M2[3] + M3[3] + M4[3];
+
+  if ((debug)&&(jjj == 1)) {
+          printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e\n",
+                 sensor(VS_NUV)*uv,
+                 sensor(VS_NRABR)*rabr, 
+                 sensor(VS_NUR)*ur,
+                 sensor(VS_NVABV)*vabv,
+                 sensor(VS_NPQ)*pq,
+                 (sensor(VS_IXX) - sensor(VS_IYY))*pq + sensor(VS_IXY)*pp + sensor(VS_IYZ)*pr - sensor(VS_IXY)*qq - sensor(VS_IZX)*qr 
+                 - sensor(VS_MASS)*Xgp*(ur-wp) + sensor(VS_MASS)*Ygp*(wq - vr),  
+                 M1[3] + M2[3] + M3[3] + M4[3]);
+  }
+  
+  update(REAL_FX, rhs[1]);
+  update(REAL_FY, rhs[2]);
+  update(REAL_FZ, rhs[3]);
+  update(REAL_FK, rhs[4]);
+  update(REAL_FM, rhs[5]);
+  update(REAL_FN, rhs[6]);
+
+}
+
+/* ------------------------------------------------------------------
+   Subroutine fins() computes forces generated by control surfaces
+   ------------------------------------------------------------------ */
+
+void fins( double *e, double rud_ang, double elev_ang )
+{
+  double r1[4] = {0., sensor(VS_FIN1_X), sensor(VS_FIN1_Y), sensor(VS_FIN1_Z)};
+  double r2[4] = {0., sensor(VS_FIN2_X), sensor(VS_FIN2_Y), sensor(VS_FIN2_Z)};
+  double r3[4] = {0., sensor(VS_FIN3_X), sensor(VS_FIN3_Y), sensor(VS_FIN3_Z)};
+  double r4[4] = {0., sensor(VS_FIN4_X), sensor(VS_FIN4_Y), sensor(VS_FIN4_Z)};
+  static double norm_v1, norm_v2, norm_v3, norm_v4;
+  static double alpha1,alpha2,alpha3,alpha4;
+  static double CL1,CL2,CL3,CL4,CD1,CD2,CD3,CD4;
+  static double cons,CDC,aa;
+  static double LW1,LW2,LW3,LW4,DW1,DW2,DW3,DW4;
+  static double LF1,LF2,LF3,LF4,DF1,DF2,DF3,DF4;
+  static double v1[4],v2[4],v3[4],v4[4];
+  static double s13,s24,c13,c24;
+
+  s13 = sin(rud_ang);
+  s24 = sin(elev_ang);
+  c13 = cos(rud_ang);
+  c24 = cos(elev_ang);
+    
+  v1[1] = e[1] + e[5]*r1[3] - e[6]*r1[2];        /* fin velocities in body coords.  */
+  v1[2] = e[2] - e[4]*r1[3] + e[6]*r1[1];
+  v1[3] = e[3] + e[4]*r1[2] - e[5]*r1[1];
+  
+  v2[1] = e[1] + e[5]*r2[3] - e[6]*r2[2];
+  v2[2] = e[2] - e[4]*r2[3] + e[6]*r2[1];
+  v2[3] = e[3] + e[4]*r2[2] - e[5]*r2[1];
+  
+  v3[1] = e[1] + e[5]*r3[3] - e[6]*r3[2];
+  v3[2] = e[2] - e[4]*r3[3] + e[6]*r3[1];
+  v3[3] = e[3] + e[4]*r3[2] - e[5]*r3[1];
+
+  v4[1] = e[1] + e[5]*r4[3] - e[6]*r4[2];
+  v4[2] = e[2] - e[4]*r4[3] + e[6]*r4[1];
+  v4[3] = e[3] + e[4]*r4[2] - e[5]*r4[1];
+
+                                                 /* now get angle of attack for each fin */
+  norm_v1 = sqrt( v1[1]*v1[1] + v1[2]*v1[2] + v1[3]*v1[3] );
+  if (norm_v1 < 0.001)
+    alpha1 = 0.0;
+  else
+    alpha1 = asin(-v1[2]/norm_v1) + rud_ang;
+
+  norm_v2 = sqrt( v2[1]*v2[1] + v2[2]*v2[2] + v2[3]*v2[3] );
+  if (norm_v2 < 0.001)
+    alpha2 = 0.0;
+  else
+    alpha2 = atan2(v2[3],v2[1]) + elev_ang;
+  
+  norm_v3 = sqrt( v3[1]*v3[1] + v3[2]*v3[2] + v3[3]*v3[3] );
+  if (norm_v3 < 0.001)
+    alpha3=0.0;
+  else
+    alpha3 = asin(-v3[2]/norm_v3) + rud_ang;
+  
+  norm_v4 = sqrt( v4[1]*v4[1] + v4[2]*v4[2] + v4[3]*v4[3] );
+  if (norm_v4 < 0.001)
+    alpha4=0.0;
+  else
+    alpha4 = atan2(v4[3],v4[1]) + elev_ang;
+  
+                                  /* lift and drag coefficients */
+  CDC = sensor(VS_FIN_CD_CROSS)/sensor(VS_FIN_ASPECT_RATIO);
+
+                                  /* note that if stall angle is exceeded: NO LIFT */
+  if (fabs(alpha1) < sensor(VS_FIN_STALL_ANGLE))
+    CL1 = sensor(VS_FIN_DCL)*alpha1 + CDC*alpha1*fabs(alpha1);
+  else CL1 = 0. ;
+  if (fabs(alpha2) < sensor(VS_FIN_STALL_ANGLE))
+    CL2 = sensor(VS_FIN_DCL)*alpha2 + CDC*alpha2*fabs(alpha2);
+  else CL2 = 0. ;
+  if (fabs(alpha3) < sensor(VS_FIN_STALL_ANGLE))
+    CL3 = sensor(VS_FIN_DCL)*alpha3 + CDC*alpha3*fabs(alpha3);
+  else CL3 = 0. ;
+  if (fabs(alpha4) < sensor(VS_FIN_STALL_ANGLE))
+    CL4 = sensor(VS_FIN_DCL)*alpha4 + CDC*alpha4*fabs(alpha4);
+  else CL4 = 0. ;
+
+  aa = 1.0/(PI*sensor(VS_FIN_ASPECT_RATIO)*sensor(VS_FIN_OSWALD));
+  
+  CD1 = sensor(VS_FIN_CDO) + aa*CL1*CL1;
+  CD2 = sensor(VS_FIN_CDO) + aa*CL2*CL2;
+  CD3 = sensor(VS_FIN_CDO) + aa*CL3*CL3;
+  CD4 = sensor(VS_FIN_CDO) + aa*CL4*CL4;
+
+                                        /* lift and drag forces, in flow coords... */  
+  cons = (rho*sensor(VS_FIN_AREA))/2.0;
+  
+  LW1 = cons*norm_v1*norm_v1*CL1;      /* positive when the lift vector is close to normal vector */
+  LW2 = cons*norm_v2*norm_v2*CL2;
+  LW3 = cons*norm_v3*norm_v3*CL3;
+  LW4 = cons*norm_v4*norm_v4*CL4;
+  
+  DW1 = cons*norm_v1*norm_v1*CD1;      /* always positive */
+  DW2 = cons*norm_v2*norm_v2*CD2;
+  DW3 = cons*norm_v3*norm_v3*CD3;
+  DW4 = cons*norm_v4*norm_v4*CD4;
+  
+  LF1 = LW1*cos(alpha1) + DW1*sin(alpha1);        /* force in the fin normal direction */
+  LF2 = LW2*cos(alpha2) + DW2*sin(alpha2);
+  LF3 = LW3*cos(alpha3) + DW3*sin(alpha3);
+  LF4 = LW4*cos(alpha4) + DW4*sin(alpha4);
+  
+  DF1 = -LW1*sin(alpha1) + DW1*cos(alpha1);        /* force in the fin-aft direction */
+  DF2 = -LW2*sin(alpha2) + DW2*cos(alpha2);        
+  DF3 = -LW3*sin(alpha3) + DW3*cos(alpha3);
+  DF4 = -LW4*sin(alpha4) + DW4*cos(alpha4);
+  
+  F1[1] = -LF1*s13 + (-DF1)*c13;        /* finally, transform into the body frame */
+  F1[2] =  LF1*c13 + (-DF1)*s13;
+  F1[3] = 0.0;
+  
+  F2[1] = -LF2*s24 + (-DF2)*c24;
+  F2[2] = 0.0;
+  F2[3] = -LF2*c24 - (-DF2)*s24;
+  
+  F3[1] = -LF3*s13 + (-DF3)*c13;
+  F3[2] =  LF3*c13 + (-DF3)*s13;
+  F3[3] = 0.0;
+  
+  F4[1] = -LF4*s24 + (-DF4)*c24;
+  F4[2] = 0.0;
+  F4[3] = -LF4*c24 - (-DF4)*s24;
+  
+  M1[1] = r1[2]*F1[3] - r1[3]*F1[2];                /* moments induced by these forces */
+  M1[2] = -r1[1]*F1[3] + r1[3]*F1[1];
+  M1[3] = r1[1]*F1[2] - r1[2]*F1[1];
+  
+  M2[1] = r2[2]*F2[3] - r2[3]*F2[2];
+  M2[2] = -r2[1]*F2[3] + r2[3]*F2[1];
+  M2[3] = r2[1]*F2[2] - r2[2]*F2[1];
+  
+  M3[1] = r3[2]*F3[3] - r3[3]*F3[2];
+  M3[2] = -r3[1]*F3[3] + r3[3]*F3[1];
+  M3[3] = r3[1]*F3[2] - r3[2]*F3[1];
+  
+  M4[1] = r4[2]*F4[3] - r4[3]*F4[2];
+  M4[2] = -r4[1]*F4[3] + r4[3]*F4[1];
+  M4[3] = r4[1]*F4[2] - r4[2]*F4[1];
+
+  return;
+}
+
+/*--------------------- routines from actuator.c -----------------------*
+* act_model() :  move at either zero, full forward, or full backward speed.
+* thruster_force() : computation of the thruster force from the Amps
+* thruster_torque() : computation of the thruster torque from the Amps
+* ----------------------------------------------------------------------*/
+
+double act_model(double des_angle, double angle, double dt)
+{
+  double new_angle = 0.0;
+  double can_move_in_dt ;
+  const int debug=0;      
+
+  can_move_in_dt = sensor(VS_FIN_SPEED)*dt;        
+                                 /* how far fin can go in dt seconds */
+
+  if (fabs(angle-des_angle) <= can_move_in_dt) {
+    new_angle = des_angle;
+  }
+  else {
+    if (angle > des_angle)
+      new_angle = angle - can_move_in_dt;
+    if (angle < des_angle)
+      new_angle = angle + can_move_in_dt;
+  }
+
+  if (debug) 
+      printf("canmove in dt=%lf  %lf  %lf  %lf\n", can_move_in_dt,des_angle,angle,new_angle); 
+
+  return(new_angle);
+}
+
+/*----------------------------------------------------------------------
+  Hysteresis: applied to an arbitrary input, probably elevator or
+  rudder.  Width and center of loop are defined with other physical
+  variables.
+
+  fsh 8 May 1995
+------------------------------------------------------------------------*/
+
+double hysteresis( double x, double x_last, double y_last, double wide, double center )
+{
+  double right_intercept, left_intercept, to_right, to_left ;
+  double dx, y = 0.0;
+
+  right_intercept = center + wide/2. ;
+  left_intercept = center - wide/2. ;
+
+  dx = x - x_last ;
+                             /* get last horizontal distance from right and left lines*/
+  to_right = -x_last + (y_last + right_intercept) ; 
+  to_left = -x_last + (y_last + left_intercept) ;
+
+
+  if (dx == 0.) y = y_last ;
+
+/* CASE 1:  a move inside the loop -------------------------------*/
+
+  if (dx <= to_right && dx > 0.) y = y_last ;
+  if (dx >= to_left  && dx < 0.) y = y_last ;
+
+/* CASE 2:  a move that goes outside the loop ---------------------*/
+
+  if (dx > to_right && dx > 0.)
+    y = y_last + x - (y_last + right_intercept) ;
+  if (dx < to_left && dx < 0.)
+    y = y_last + x - (y_last + left_intercept) ;
+
+  return(y) ;
+}
+
+
+/*=====================================================================
+  Modified this to reflect nature of Odyssey II's current control
+  on the thruster controller...  Calculate torque (Kt*amps) then
+  calculate propellor RPM for that torque and water speed.  This in
+  turn allows one to compute thrust....
+  J. G. Bellingham        1/94
+  fsh update     5/95    
+ *====================================================================*/
+        
+double thruster_force( double real_amps, double w_speed )
+{
+    double omega, thrust;
+
+    omega = sqrt((sensor(VS_THRUSTER_KT)*real_amps + .5*sensor(VS_THRUSTER_DUCT_AREA)*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*rho*w_speed*w_speed)/
+		 (.5*sensor(VS_THRUSTER_DUCT_AREA)*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*sensor(VS_THRUSTER_PITCH)*sensor(VS_THRUSTER_PITCH)*rho));
+
+    thrust = rho * sensor(VS_THRUSTER_DUCT_AREA) *(pow(sensor(VS_THRUSTER_ETA) * sensor(VS_THRUSTER_PITCH)*omega,2) - w_speed * sensor(VS_THRUSTER_ETA) * sensor(VS_THRUSTER_PITCH)*omega);
+
+    update( M_PROPELLER_SPEED, 2*PI*60/5.54*omega );
+    return thrust;
+}
+
+/*======================================================================
+  Modified this to reflect nature of Odyssey II's current control
+  on the thruster controller...torque is proportional to current...
+  J. G. Bellingham        1/94
+ *======================================================================*/
+
+double thruster_torque( double real_amps, double w_speed )
+{
+    double torque;
+    torque = sensor(VS_THRUSTER_KT) * real_amps;
+    return torque;
+}
+
+/*====================================================================*/
+
+
+/*-----------------------------------------------------------------*
+ | matrix calculations, not sure where their from, probably 
+ | numerical recipes in fortran (note array element[0] unused!)
+ *-----------------------------------------------------------------*/
+
+/***************************************************************
+  subroutine matinv(a,ainv,n,adum)
+
+  this routine computes the inverse of a matrix.
+  matrix inversion is performed by crout elimination
+
+   input matrix :  a
+  output matrix :  ainv
+          order :  n
+     error flag :  ier
+         adum   :  dummy matrix of order  n x n .
+
+----------------------------------------------------------------- */
+
+int matinv( double a[][7], double ainv[][7], int n, double adum[][7] )
+{
+int ier,i,j,k,ic,ii,km,kp;
+double p,t,s,dp,dt;
+double eps;
+eps= 1.0e-36;
+/*  "ier" is a flag that is set to "1" if the matrix is singular. */
+ier = 0;
+/*
+ special case for n=1
+*/
+if (n==1)
+  {
+   if ( fabs(a[1][1]) <= eps) 
+      {
+      ier=1;
+      return (ier);
+      }
+   else
+      {
+      ainv[1][1] = 1.0/a[1][1];
+      return (ier);
+      }
+  };    
+/*
+     copy  a  into  adum  because  a  is changed during computation.
+*/
+for (i=1;i<=n;i++)
+    for (j=1;j<=n;j++)
+        adum[i][j]=a[i][j];
+/*
+     initialize  ainv  to  i .
+*/
+for (i=1;i<=n;i++)
+    for (j=1;j<=n;j++)
+       {
+       ainv[i][j] = 0.0e0;
+       if (i==j) ainv[i][j] = 1.0e0;
+       };
+/*
+    find the largest element in col-1.
+*/
+ic = 0;
+ii = 0;
+t  = fabs(adum[1][1]);
+for (i=2;i<=n;i++)
+   {
+   if (t-fabs(adum[i][1]) < 0.0e0)  
+       {
+       ii = i;
+       t  = fabs(adum[i][1]);
+       }
+   };
+if (ii!=0) 
+   {
+    ic++;
+
+    for (j=1;j<=n;j++)
+       {
+        s = ainv[1][j];
+        ainv[1][j] = ainv[ii][j];
+        ainv[ii][j] = s;
+       };
+   
+    for (j=1;j<=n;j++)
+       {
+        s = adum[1][j];
+        adum[1][j] = adum[ii][j];
+        adum[ii][j] = s;
+       };
+   };
+   
+p = adum[1][1];
+
+if (fabs(p)<=eps) 
+  {
+   /*
+   c determinant is zero.
+   */
+   ier = 1;
+   return (ier);
+  }
+
+/*
+c  determinant is non-zero, continue
+*/
+for (j=2;j<=n;j++)
+    adum[1][j] = adum[1][j]/p;
+
+for (j=1;j<=n;j++)
+    ainv[1][j] = ainv[1][j]/p;
+ 
+for (k=2;k<=n;k++)      
+   {    /*start big loop*/
+    km = k - 1;
+    t = -1.0;
+
+    for (i=k;i<=n;i++)     
+       {
+        dp = adum[i][k];
+
+        for (j=1;j<=km;j++) 
+           dp = dp - adum[i][j] * adum[j][k];
+           
+        adum[i][k] = dp;
+        if (t-fabs(adum[i][k]) < 0.0e0) 
+          {
+           t = fabs(adum[i][k]);
+           ii = i;
+          }
+       }
+     
+    if (ii!=k)
+      {
+       ic++;
+
+       for (j=1;j<=n;j++) 
+          {
+           s = ainv[k][j];
+           ainv[k][j] = ainv[ii][j];
+           ainv[ii][j] = s;
+          };
+
+       for (j=1;j<=n;j++)       
+          {
+           s = adum[k][j];
+           adum[k][j] = adum[ii][j];
+           adum[ii][j] = s;
+          };
+      }
+    
+    dt = adum[k][k];
+    if (fabs(dt) <= eps) 
+      {
+       /*
+       c determinant is zero.
+       */
+       ier = 1;
+       return (ier);
+      }
+    p = p * dt;
+    if (k!=n)
+      {
+       kp = k + 1;
+
+       for (j=kp;j<=n;j++)     
+          {
+           dp = adum[k][j];
+
+           for (i=1;i<=km;i++)   
+              dp = dp - adum[k][i] * adum[i][j];
+ 
+           adum[k][j] = dp/dt;
+          };
+      }
+        
+    for (j=1;j<=n;j++)   
+       {
+        dp = ainv[k][j];
+
+        for (i=1;i<=km;i++)   
+           dp = dp - adum[k][i] * ainv[i][j];
+
+         ainv[k][j] = dp/dt;
+        };
+   };  /*end big loop*/
+
+if ((ic%2)!=0) p=-p;
+  
+ii = n;
+
+for (k=2;k<=n;k++)  
+   {
+    kp = ii;
+    ii--;
+
+    for (j=1;j<=n;j++)   
+       {
+        dp = ainv[ii][j];
+
+        for (i=kp;i<=n;i++) 
+            dp = dp - adum[ii][i] * ainv[i][j];
+
+        ainv[ii][j] = dp;
+       };
+   };
+
+return (ier);
+}
+
+
+/* **********************************************************************
+  subroutine mmul (na,nb,nc,l,m,n,a,b,c)
+* *********************************************************************** */
+void mmul( int na, int nb, int nc, int l, int m, int n, double a[][7], double b[][7], double c[][7] )
+{
+int i,j,k;
+/*     double precision a(na,n),b(nb,l),c(nc,l)   
+
+  [a]*[b] =[c] 
+  
+     a is m x n,  b is n x l, and c is m x l       
+
+        na    row dimension of a as declared in calling unit
+        nb    row dimension of b as declared in calling unit
+       nc    row dimension of c as declared in calling unit
+        l     number of columns of the matrices b and c
+        m     number of rows of the matrices a and c
+        n     number of columns of a and number of rows of b
+*/
+for (j=1;j<=l;j++)   
+   {
+    for (i=1;i<=m;i++) 
+       c[i][j]=0.0e0;        
+    for (k=1;k<=n;k++)  
+       for (i=1;i<=m;i++) 
+           c[i][j] += a[i][k] * b[k][j];
+   }
+}
+
+#ifndef Macintosh
+double gasdev()
+{
+  static int iset=0;
+  static double gset;
+  double fac,r,v1,v2;
+  
+  if  (iset == 0) {
+    do {
+      v1 = 2.0*drand48()-1.0;
+      v2 = 2.0*drand48()-1.0;
+      r = v1*v1 + v2*v2;
+    } while (r >= 1.0);
+    fac = sqrt( -2.0*log(r)/r );
+    gset = v1*fac;
+    iset = 1;
+    return v2*fac;
+  } else {
+    iset = 0;
+    return gset;
+  }
+}
+#endif
+
+/* jleonard 09/08/96 drand48 is available on SGI but not on OS-9,
+   so we defined our own. (improve it later)  */
+#ifdef _OSK
+double drand48()
+{
+  int i;
+  double x;
+
+  i = rand();
+  x = ((double) i)/32767;
+  if ((x<0)||(x>1)) fprintf(stderr, "Error in drand48(), value is %lf\n", x);
+  return(x);
+}
+#endif
