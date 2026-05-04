@@ -1,0 +1,34 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Build products
+*.exe
+*.o
+*.obj
+*.dll
+*.lib
+*.a
+
+# Build/output folders
+build/
+bin/
+obj/
+
+# Logs/temp
+*.log
+*.tmp
+
+# MATLAB autosave
+*.asv
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/ipch/
