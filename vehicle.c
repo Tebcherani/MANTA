@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/05/03 19:57:51 GMT";
+char *creation_date = "2026/05/08 23:11:30 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -98,99 +98,6 @@ const struct sensor sss[] = {
     "u_wp_x_track_gain", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_xte(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_dtw(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xg(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yg(m)", -0.0002, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zg(m)", 0.082, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xb(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yb(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zb(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_mass(kg)", 339, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_ixx(kg-m^2)", 10.59, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_iyy(kg-m^2)", 71.95, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_izz(kg-m^2)", 71.95, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_ixy(kg-m^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_izx(kg-m^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_iyz(kg-m^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_bdw1(N)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xdw1(m)", 0.1655, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_ydw1(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zdw1(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_bdw2(N)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xdw2(m)", 0.1655, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_ydw2(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zdw2(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_kpabp()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_mqabq()", -150, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_nrabr()", -150, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xuabu()", -10.1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yvabv()", -4930, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zwabw()", -4930, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_kpdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_mqdot()", -50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_nrdot()", -50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xudot()", -32, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yvdot()", -313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zwdot()", -313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_kvdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_mwdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_nvdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yrdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_ypdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zqdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_mwabw()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_nvabv()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yrabr()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zqabq()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_muq()", -74.9, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_muw()", 167.3, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_mpr()", 50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_nur()", -74.9, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_nuv()", -167.3, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_npq()", -50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xvv()", 48.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xww()", 48.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xvr()", 411.2, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xwq()", -411.2, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xrr()", -43.4, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_xqq()", -43.4, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yur()", 112.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_yuv()", -117.5, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_ywp()", 313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zuq()", -112.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zuw()", -117.5, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_zvp()", -313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_kvt2()", 7.736, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin1_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin1_y(m)", 0.012, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin1_z(m)", -0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin2_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin2_y(m)", -0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin2_z(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin3_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin3_y(m)", 0.012, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin3_z(m)", 0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin4_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin4_y(m)", 0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin4_z(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_cdo()", 0.0065, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_oswald()", 0.9, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_aspect_ratio()", 4.26, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_stall_angle(rad)", 0.5236, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_rud_hyst_width(rad)", 0.1396, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_rud_hyst_center(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_elev_hyst_width(rad)", 0.0349, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_elev_hyst_center(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_area(m^2)", 0.0299, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_cd_cross()", 0.723, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_dcl()", 3.392, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_act_delay(s)", 0.4, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_fin_speed(rad/s)", 0.6109, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_hyst_wide_elev(rad)", 0.0349, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_hyst_wide_rud(rad)", 0.1396, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_thruster_kt(Nm/A)", 0.456, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_thruster_eta()", 0.8, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_thruster_pitch(m/rad)", 0.124, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_thruster_duct_area(m^2)", 0.28, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "c_camera_fire(bool)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "dgc_autocal()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "dgc_calmerit(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -268,6 +175,98 @@ const struct sensor sss[] = {
     "real_contact_x(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_contact_y(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_contact_z(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_fault_active(int)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_mass(kg)", 339, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_ixx(kg.m^2)", 10.59, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_iyy(kg.m^2)", 71.95, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_izz(kg.m^2)", 71.95, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_ixy(kg.m^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_iyz(kg.m^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_izx(kg.m^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xg(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yg(m)", -0.0002, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zg(m)", 0.082, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xb(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yb(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zb(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xdw1(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_ydw1(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zdw1(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_bdw1(N)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xdw2(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_ydw2(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zdw2(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_bdw2(N)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xudot()", -32, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yvdot()", -313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zwdot()", -313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_kpdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_mqdot()", -50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_nrdot()", -50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_kvdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_mwdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_nvdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_ypdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yrdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zqdot()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xuabu()", -10.1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yvabv()", -4930, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zwabw()", -4930, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_kpabp()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_mqabq()", -150, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_nrabr()", -150, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_mwabw()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_nvabv()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yrabr()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zqabq()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_muq()", -74.9, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_muw()", 167.3, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_mpr()", 50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_nur()", -74.9, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_nuv()", -167.3, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_npq()", -50.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xvv()", 48.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xww()", 48.7, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xvr()", 411.2, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xwq()", -411.2, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xrr()", -43.4, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_xqq()", -43.4, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yur()", 112.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_yuv()", -117.5, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_ywp()", 313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zuq()", -112.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zuw()", -117.5, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_zvp()", -313.6, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_kvt2()", 7.737, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin1_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin1_y(m)", 0.012, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin1_z(m)", -0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin2_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin2_y(m)", -0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin2_z(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin3_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin3_y(m)", 0.012, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin3_z(m)", 0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin4_x(m)", -1.069, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin4_y(m)", 0.1524, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin4_z(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_area(m^2)", 0.0299, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_aspect_ratio()", 4.26, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_cdo()", 0.0065, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_cd_cross()", 0.723, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_dcl()", 3.392, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_oswald()", 0.9, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_stall_angle(rad)", 0.5236, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_fin_speed(rad/s)", 0.6109, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_act_delay(int)", 20, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_rud_hyst_width(rad)", 0.1396, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_rud_hyst_center(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_elev_hyst_width(rad)", 0.0349, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_elev_hyst_center(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_kt(Nm/A)", 0.456, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_eta()", 0.8, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_pitch(m/rad)", 0.124, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_duct_area(m^2)", 0.28, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "rdi_binsize(m)", 2, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "rdi_numbins(int)", 50, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "rdi_range1(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -342,7 +341,7 @@ const struct sensor sss[] = {
     "u_lbl_dr_threshold(m)", 20, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_dr_north(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_dr_east(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_lbl_ping_time(s)", -1e+06, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_lbl_ping_time(s)", -1e+006, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_num_used()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_valid1()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_valid2()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -536,7 +535,7 @@ const struct behavior bTemplate[] = {
         "direction_k()", 0,
         "heading_offset(rad)", 0,
         "pole_transient_time(s)", 0,
-        "bailout_range(m)", -1e+06,
+        "bailout_range(m)", -1e+006,
         "cnav_enable_range(m)", 100,
     "edc_homing", 0, -1., 0., 0,
         "elev_gain(num)", 0,
@@ -759,99 +758,6 @@ int T_DEPTH = -1;
 int U_WP_X_TRACK_GAIN = -1;
 int WP_XTE = -1;
 int WP_DTW = -1;
-int VS_XG = -1;
-int VS_YG = -1;
-int VS_ZG = -1;
-int VS_XB = -1;
-int VS_YB = -1;
-int VS_ZB = -1;
-int VS_MASS = -1;
-int VS_IXX = -1;
-int VS_IYY = -1;
-int VS_IZZ = -1;
-int VS_IXY = -1;
-int VS_IZX = -1;
-int VS_IYZ = -1;
-int VS_BDW1 = -1;
-int VS_XDW1 = -1;
-int VS_YDW1 = -1;
-int VS_ZDW1 = -1;
-int VS_BDW2 = -1;
-int VS_XDW2 = -1;
-int VS_YDW2 = -1;
-int VS_ZDW2 = -1;
-int VS_KPABP = -1;
-int VS_MQABQ = -1;
-int VS_NRABR = -1;
-int VS_XUABU = -1;
-int VS_YVABV = -1;
-int VS_ZWABW = -1;
-int VS_KPDOT = -1;
-int VS_MQDOT = -1;
-int VS_NRDOT = -1;
-int VS_XUDOT = -1;
-int VS_YVDOT = -1;
-int VS_ZWDOT = -1;
-int VS_KVDOT = -1;
-int VS_MWDOT = -1;
-int VS_NVDOT = -1;
-int VS_YRDOT = -1;
-int VS_YPDOT = -1;
-int VS_ZQDOT = -1;
-int VS_MWABW = -1;
-int VS_NVABV = -1;
-int VS_YRABR = -1;
-int VS_ZQABQ = -1;
-int VS_MUQ = -1;
-int VS_MUW = -1;
-int VS_MPR = -1;
-int VS_NUR = -1;
-int VS_NUV = -1;
-int VS_NPQ = -1;
-int VS_XVV = -1;
-int VS_XWW = -1;
-int VS_XVR = -1;
-int VS_XWQ = -1;
-int VS_XRR = -1;
-int VS_XQQ = -1;
-int VS_YUR = -1;
-int VS_YUV = -1;
-int VS_YWP = -1;
-int VS_ZUQ = -1;
-int VS_ZUW = -1;
-int VS_ZVP = -1;
-int VS_KVT2 = -1;
-int VS_FIN1_X = -1;
-int VS_FIN1_Y = -1;
-int VS_FIN1_Z = -1;
-int VS_FIN2_X = -1;
-int VS_FIN2_Y = -1;
-int VS_FIN2_Z = -1;
-int VS_FIN3_X = -1;
-int VS_FIN3_Y = -1;
-int VS_FIN3_Z = -1;
-int VS_FIN4_X = -1;
-int VS_FIN4_Y = -1;
-int VS_FIN4_Z = -1;
-int VS_FIN_CDO = -1;
-int VS_FIN_OSWALD = -1;
-int VS_FIN_ASPECT_RATIO = -1;
-int VS_FIN_STALL_ANGLE = -1;
-int VS_RUD_HYST_WIDTH = -1;
-int VS_RUD_HYST_CENTER = -1;
-int VS_ELEV_HYST_WIDTH = -1;
-int VS_ELEV_HYST_CENTER = -1;
-int VS_FIN_AREA = -1;
-int VS_FIN_CD_CROSS = -1;
-int VS_FIN_DCL = -1;
-int VS_ACT_DELAY = -1;
-int VS_FIN_SPEED = -1;
-int VS_HYST_WIDE_ELEV = -1;
-int VS_HYST_WIDE_RUD = -1;
-int VS_THRUSTER_KT = -1;
-int VS_THRUSTER_ETA = -1;
-int VS_THRUSTER_PITCH = -1;
-int VS_THRUSTER_DUCT_AREA = -1;
 int C_CAMERA_FIRE = -1;
 int DGC_AUTOCAL = -1;
 int DGC_CALMERIT = -1;
@@ -929,6 +835,98 @@ int SIM_CONTACT_Z = -1;
 int REAL_CONTACT_X = -1;
 int REAL_CONTACT_Y = -1;
 int REAL_CONTACT_Z = -1;
+int M_FAULT_ACTIVE = -1;
+int VS_MASS = -1;
+int VS_IXX = -1;
+int VS_IYY = -1;
+int VS_IZZ = -1;
+int VS_IXY = -1;
+int VS_IYZ = -1;
+int VS_IZX = -1;
+int VS_XG = -1;
+int VS_YG = -1;
+int VS_ZG = -1;
+int VS_XB = -1;
+int VS_YB = -1;
+int VS_ZB = -1;
+int VS_XDW1 = -1;
+int VS_YDW1 = -1;
+int VS_ZDW1 = -1;
+int VS_BDW1 = -1;
+int VS_XDW2 = -1;
+int VS_YDW2 = -1;
+int VS_ZDW2 = -1;
+int VS_BDW2 = -1;
+int VS_XUDOT = -1;
+int VS_YVDOT = -1;
+int VS_ZWDOT = -1;
+int VS_KPDOT = -1;
+int VS_MQDOT = -1;
+int VS_NRDOT = -1;
+int VS_KVDOT = -1;
+int VS_MWDOT = -1;
+int VS_NVDOT = -1;
+int VS_YPDOT = -1;
+int VS_YRDOT = -1;
+int VS_ZQDOT = -1;
+int VS_XUABU = -1;
+int VS_YVABV = -1;
+int VS_ZWABW = -1;
+int VS_KPABP = -1;
+int VS_MQABQ = -1;
+int VS_NRABR = -1;
+int VS_MWABW = -1;
+int VS_NVABV = -1;
+int VS_YRABR = -1;
+int VS_ZQABQ = -1;
+int VS_MUQ = -1;
+int VS_MUW = -1;
+int VS_MPR = -1;
+int VS_NUR = -1;
+int VS_NUV = -1;
+int VS_NPQ = -1;
+int VS_XVV = -1;
+int VS_XWW = -1;
+int VS_XVR = -1;
+int VS_XWQ = -1;
+int VS_XRR = -1;
+int VS_XQQ = -1;
+int VS_YUR = -1;
+int VS_YUV = -1;
+int VS_YWP = -1;
+int VS_ZUQ = -1;
+int VS_ZUW = -1;
+int VS_ZVP = -1;
+int VS_KVT2 = -1;
+int VS_FIN1_X = -1;
+int VS_FIN1_Y = -1;
+int VS_FIN1_Z = -1;
+int VS_FIN2_X = -1;
+int VS_FIN2_Y = -1;
+int VS_FIN2_Z = -1;
+int VS_FIN3_X = -1;
+int VS_FIN3_Y = -1;
+int VS_FIN3_Z = -1;
+int VS_FIN4_X = -1;
+int VS_FIN4_Y = -1;
+int VS_FIN4_Z = -1;
+int VS_FIN_AREA = -1;
+int VS_FIN_ASPECT_RATIO = -1;
+int VS_FIN_CDO = -1;
+int VS_FIN_CD_CROSS = -1;
+int VS_FIN_DCL = -1;
+int VS_FIN_OSWALD = -1;
+int VS_FIN_STALL_ANGLE = -1;
+int VS_FIN_SPEED = -1;
+int VS_ACT_DELAY = -1;
+int VS_RUD_HYST_WIDTH = -1;
+int VS_RUD_HYST_CENTER = -1;
+int VS_ELEV_HYST_WIDTH = -1;
+int VS_ELEV_HYST_CENTER = -1;
+int VS_THRUSTER_KT = -1;
+int VS_THRUSTER_ETA = -1;
+int VS_THRUSTER_PITCH = -1;
+int VS_THRUSTER_DUCT_AREA = -1;
 int RDI_BINSIZE = -1;
 int RDI_NUMBINS = -1;
 int RDI_RANGE1 = -1;
@@ -1172,99 +1170,6 @@ int *sindex[] = {
     &U_WP_X_TRACK_GAIN,
     &WP_XTE,
     &WP_DTW,
-    &VS_XG,
-    &VS_YG,
-    &VS_ZG,
-    &VS_XB,
-    &VS_YB,
-    &VS_ZB,
-    &VS_MASS,
-    &VS_IXX,
-    &VS_IYY,
-    &VS_IZZ,
-    &VS_IXY,
-    &VS_IZX,
-    &VS_IYZ,
-    &VS_BDW1,
-    &VS_XDW1,
-    &VS_YDW1,
-    &VS_ZDW1,
-    &VS_BDW2,
-    &VS_XDW2,
-    &VS_YDW2,
-    &VS_ZDW2,
-    &VS_KPABP,
-    &VS_MQABQ,
-    &VS_NRABR,
-    &VS_XUABU,
-    &VS_YVABV,
-    &VS_ZWABW,
-    &VS_KPDOT,
-    &VS_MQDOT,
-    &VS_NRDOT,
-    &VS_XUDOT,
-    &VS_YVDOT,
-    &VS_ZWDOT,
-    &VS_KVDOT,
-    &VS_MWDOT,
-    &VS_NVDOT,
-    &VS_YRDOT,
-    &VS_YPDOT,
-    &VS_ZQDOT,
-    &VS_MWABW,
-    &VS_NVABV,
-    &VS_YRABR,
-    &VS_ZQABQ,
-    &VS_MUQ,
-    &VS_MUW,
-    &VS_MPR,
-    &VS_NUR,
-    &VS_NUV,
-    &VS_NPQ,
-    &VS_XVV,
-    &VS_XWW,
-    &VS_XVR,
-    &VS_XWQ,
-    &VS_XRR,
-    &VS_XQQ,
-    &VS_YUR,
-    &VS_YUV,
-    &VS_YWP,
-    &VS_ZUQ,
-    &VS_ZUW,
-    &VS_ZVP,
-    &VS_KVT2,
-    &VS_FIN1_X,
-    &VS_FIN1_Y,
-    &VS_FIN1_Z,
-    &VS_FIN2_X,
-    &VS_FIN2_Y,
-    &VS_FIN2_Z,
-    &VS_FIN3_X,
-    &VS_FIN3_Y,
-    &VS_FIN3_Z,
-    &VS_FIN4_X,
-    &VS_FIN4_Y,
-    &VS_FIN4_Z,
-    &VS_FIN_CDO,
-    &VS_FIN_OSWALD,
-    &VS_FIN_ASPECT_RATIO,
-    &VS_FIN_STALL_ANGLE,
-    &VS_RUD_HYST_WIDTH,
-    &VS_RUD_HYST_CENTER,
-    &VS_ELEV_HYST_WIDTH,
-    &VS_ELEV_HYST_CENTER,
-    &VS_FIN_AREA,
-    &VS_FIN_CD_CROSS,
-    &VS_FIN_DCL,
-    &VS_ACT_DELAY,
-    &VS_FIN_SPEED,
-    &VS_HYST_WIDE_ELEV,
-    &VS_HYST_WIDE_RUD,
-    &VS_THRUSTER_KT,
-    &VS_THRUSTER_ETA,
-    &VS_THRUSTER_PITCH,
-    &VS_THRUSTER_DUCT_AREA,
     &C_CAMERA_FIRE,
     &DGC_AUTOCAL,
     &DGC_CALMERIT,
@@ -1342,6 +1247,98 @@ int *sindex[] = {
     &REAL_CONTACT_X,
     &REAL_CONTACT_Y,
     &REAL_CONTACT_Z,
+    &M_FAULT_ACTIVE,
+    &VS_MASS,
+    &VS_IXX,
+    &VS_IYY,
+    &VS_IZZ,
+    &VS_IXY,
+    &VS_IYZ,
+    &VS_IZX,
+    &VS_XG,
+    &VS_YG,
+    &VS_ZG,
+    &VS_XB,
+    &VS_YB,
+    &VS_ZB,
+    &VS_XDW1,
+    &VS_YDW1,
+    &VS_ZDW1,
+    &VS_BDW1,
+    &VS_XDW2,
+    &VS_YDW2,
+    &VS_ZDW2,
+    &VS_BDW2,
+    &VS_XUDOT,
+    &VS_YVDOT,
+    &VS_ZWDOT,
+    &VS_KPDOT,
+    &VS_MQDOT,
+    &VS_NRDOT,
+    &VS_KVDOT,
+    &VS_MWDOT,
+    &VS_NVDOT,
+    &VS_YPDOT,
+    &VS_YRDOT,
+    &VS_ZQDOT,
+    &VS_XUABU,
+    &VS_YVABV,
+    &VS_ZWABW,
+    &VS_KPABP,
+    &VS_MQABQ,
+    &VS_NRABR,
+    &VS_MWABW,
+    &VS_NVABV,
+    &VS_YRABR,
+    &VS_ZQABQ,
+    &VS_MUQ,
+    &VS_MUW,
+    &VS_MPR,
+    &VS_NUR,
+    &VS_NUV,
+    &VS_NPQ,
+    &VS_XVV,
+    &VS_XWW,
+    &VS_XVR,
+    &VS_XWQ,
+    &VS_XRR,
+    &VS_XQQ,
+    &VS_YUR,
+    &VS_YUV,
+    &VS_YWP,
+    &VS_ZUQ,
+    &VS_ZUW,
+    &VS_ZVP,
+    &VS_KVT2,
+    &VS_FIN1_X,
+    &VS_FIN1_Y,
+    &VS_FIN1_Z,
+    &VS_FIN2_X,
+    &VS_FIN2_Y,
+    &VS_FIN2_Z,
+    &VS_FIN3_X,
+    &VS_FIN3_Y,
+    &VS_FIN3_Z,
+    &VS_FIN4_X,
+    &VS_FIN4_Y,
+    &VS_FIN4_Z,
+    &VS_FIN_AREA,
+    &VS_FIN_ASPECT_RATIO,
+    &VS_FIN_CDO,
+    &VS_FIN_CD_CROSS,
+    &VS_FIN_DCL,
+    &VS_FIN_OSWALD,
+    &VS_FIN_STALL_ANGLE,
+    &VS_FIN_SPEED,
+    &VS_ACT_DELAY,
+    &VS_RUD_HYST_WIDTH,
+    &VS_RUD_HYST_CENTER,
+    &VS_ELEV_HYST_WIDTH,
+    &VS_ELEV_HYST_CENTER,
+    &VS_THRUSTER_KT,
+    &VS_THRUSTER_ETA,
+    &VS_THRUSTER_PITCH,
+    &VS_THRUSTER_DUCT_AREA,
     &RDI_BINSIZE,
     &RDI_NUMBINS,
     &RDI_RANGE1,

@@ -28,6 +28,7 @@
 #define DATA_DIR     ODY_ROOT "/SData"
 #define SYSLOG_FILE  ODY_ROOT "/system.log"
 #define MISSION_DIR  ODY_ROOT "/SMission"
+#define SFAULT_DIR   ODY_ROOT "/SFault"
 #define VEHICLE_DIR  ODY_ROOT "/Vehicle"
 #define LBL_LOGFILE_NAME ODY_ROOT "/lbl.log"
 

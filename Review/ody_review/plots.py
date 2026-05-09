@@ -37,6 +37,92 @@ def _run_name(ds: xr.Dataset) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Clipboard helper — adds a "Copy to clipboard" button to any figure
+# ---------------------------------------------------------------------------
+def _add_copy_button(fig: plt.Figure) -> None:
+    """Add a small 'Copy' button to the bottom-right of the figure.
+
+    Renders the figure to a PNG in memory and puts it on the Windows
+    clipboard using the tkinter/PIL approach that works without any
+    extra dependencies beyond what the review venv already has.
+    Falls back silently on non-Windows platforms.
+    """
+    import sys
+    from matplotlib.widgets import Button
+
+    # Reserve a small axes in the bottom-right corner for the button.
+    # [left, bottom, width, height] in figure-fraction coordinates.
+    btn_ax = fig.add_axes([0.88, 0.01, 0.10, 0.04])
+    btn = Button(btn_ax, "Copy", color="0.85", hovercolor="0.70")
+
+    def _copy(event):
+        import io
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
+        buf.seek(0)
+        png_bytes = buf.read()
+
+        if sys.platform == "win32":
+            try:
+                # Try PIL/Pillow first (most reliable on Windows)
+                from PIL import Image
+                import win32clipboard, win32con
+                img = Image.open(io.BytesIO(png_bytes))
+                # Convert to DIB (device-independent bitmap) for clipboard
+                buf_bmp = io.BytesIO()
+                img.convert("RGB").save(buf_bmp, format="BMP")
+                bmp_data = buf_bmp.getvalue()[14:]   # strip BMP file header
+                win32clipboard.OpenClipboard()
+                win32clipboard.EmptyClipboard()
+                win32clipboard.SetClipboardData(win32con.CF_DIB, bmp_data)
+                win32clipboard.CloseClipboard()
+                btn.label.set_text("Copied!")
+            except ImportError:
+                # Pillow or pywin32 not available — use PowerShell fallback
+                try:
+                    import subprocess, tempfile, os
+                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                        tmp.write(png_bytes)
+                        tmp_path = tmp.name
+                    ps_cmd = (
+                        f"Add-Type -AssemblyName System.Windows.Forms; "
+                        f"[System.Windows.Forms.Clipboard]::SetImage("
+                        f"[System.Drawing.Image]::FromFile('{tmp_path}'))"
+                    )
+                    subprocess.run(
+                        ["powershell", "-NoProfile", "-Command", ps_cmd],
+                        check=True, capture_output=True
+                    )
+                    os.unlink(tmp_path)
+                    btn.label.set_text("Copied!")
+                except Exception:
+                    btn.label.set_text("Failed")
+        else:
+            # Linux / macOS — xclip or pbcopy
+            try:
+                import subprocess
+                if sys.platform == "darwin":
+                    proc = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE)
+                    proc.communicate(png_bytes)
+                else:
+                    proc = subprocess.Popen(
+                        ["xclip", "-selection", "clipboard", "-t", "image/png"],
+                        stdin=subprocess.PIPE
+                    )
+                    proc.communicate(png_bytes)
+                btn.label.set_text("Copied!")
+            except Exception:
+                btn.label.set_text("Failed")
+
+        fig.canvas.draw_idle()
+
+    btn.on_clicked(_copy)
+    # Keep a reference so the button isn't garbage-collected
+    fig._copy_button = btn
+
+
+
+# ---------------------------------------------------------------------------
 # vplane.m → vertical_plane
 # ---------------------------------------------------------------------------
 def vertical_plane(ds: xr.Dataset) -> plt.Figure:
@@ -59,6 +145,7 @@ def vertical_plane(ds: xr.Dataset) -> plt.Figure:
     axes[1].set_xlabel("Mission time (s)")
     axes[1].grid(True, alpha=0.3)
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -84,6 +171,7 @@ def navplot(ds: xr.Dataset) -> plt.Figure:
     ax.legend(loc="best")
     ax.set_title(f"Track: {_run_name(ds)}")
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -104,6 +192,7 @@ def ctd_time_series(ds: xr.Dataset) -> plt.Figure:
     axes[1].set_xlabel("Mission time (s)")
     axes[1].grid(True, alpha=0.3)
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -127,6 +216,7 @@ def ctd_profiles(ds: xr.Dataset) -> plt.Figure:
     axes[2].set_xlabel("Density (kg/m³)")
     axes[2].grid(True, alpha=0.3)
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -161,6 +251,7 @@ def ts_cast(ds: xr.Dataset) -> plt.Figure:
         split_plot(axes[2], ds["sound_velocity"].values, "Sound velocity (m/s)")
     fig.suptitle(f"T-S cast: {_run_name(ds)}")
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -200,6 +291,7 @@ def cascade_ctd(
     axes[1].set_title("Salinity cascade")
     fig.suptitle(f"Cascade CTD: {_run_name(ds)}")
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -231,6 +323,7 @@ def optics_cast(ds: xr.Dataset) -> plt.Figure:
     axes[0].set_ylabel("Depth (m)")
     fig.suptitle(f"Optical sensors: {_run_name(ds)}")
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -268,6 +361,7 @@ def depth_rate_check(ds: xr.Dataset) -> plt.Figure:
     axes[2].set_xlabel("Time (s)")
     axes[2].grid(True, alpha=0.3)
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -347,6 +441,7 @@ def vertical_diagnostic(ds: xr.Dataset) -> plt.Figure:
         axes[2].legend(loc="best", fontsize=9)
 
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -402,6 +497,7 @@ def thruster(ds: xr.Dataset) -> plt.Figure:
 
     axes[-1].set_xlabel("Mission time (s)")
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig
 
 
@@ -469,6 +565,7 @@ def horizontal_diagnostic(ds: xr.Dataset) -> plt.Figure:
     else:
         ax_bot.legend(loc="best", fontsize=9)
 
+    _add_copy_button(fig)
     return fig
 
 
@@ -495,4 +592,5 @@ def power(ds: xr.Dataset) -> plt.Figure:
     axes[1].grid(True, alpha=0.3)
     axes[0].set_title(f"Power: {_run_name(ds)}")
     fig.tight_layout()
+    _add_copy_button(fig)
     return fig

@@ -107,7 +107,7 @@ const struct behavior bTemplate[] = {
         "direction_k()", 0,
         "heading_offset(rad)", 0,
         "pole_transient_time(s)", 0,
-        "bailout_range(m)", -1e+06,
+        "bailout_range(m)", -1e+006,
         "cnav_enable_range(m)", 100,
     "edc_homing", 0, -1., 0., 0,
         "elev_gain(num)", 0,

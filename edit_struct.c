@@ -91,132 +91,6 @@
   sensor:                     wp_xte(m)
   sensor:                     wp_dtw(m)
 
-
-  vehicle-simulator parameters (vs_).  These describe the physical
-  vehicle - mass, CG/CB, hydrodynamic coefficients, fin and thruster
-  characteristics.  They are populated at runtime from the vehicle
-  definition file (loaded before the mission file), and are present
-  in every build, simulator and real-vehicle alike, so that a digital
-  twin running on the vehicle reads the same fields the bench
-  simulator does.
-
-  center of gravity and center of buoyancy
-  sensor:                      vs_xg(m) 0.0
-  sensor:                      vs_yg(m) -0.0002
-  sensor:                      vs_zg(m) 0.082
-  sensor:                      vs_xb(m) 0.0
-  sensor:                      vs_yb(m) 0.0
-  sensor:                      vs_zb(m) 0.0
-
-  body mass and rotational inertia
-  sensor:                   vs_mass(kg) 339.0
-  sensor:                vs_ixx(kg-m^2) 10.59
-  sensor:                vs_iyy(kg-m^2) 71.95
-  sensor:                vs_izz(kg-m^2) 71.95
-  sensor:                vs_ixy(kg-m^2) 0.0
-  sensor:                vs_izx(kg-m^2) 0.0
-  sensor:                vs_iyz(kg-m^2) 0.0
-
-  drop weight 1 (buoyancy and body-frame location)
-  sensor:                   vs_bdw1(N) 0.0
-  sensor:                   vs_xdw1(m) 0.1655
-  sensor:                   vs_ydw1(m) 0.0
-  sensor:                   vs_zdw1(m) 0.0
-  drop weight 2
-  sensor:                   vs_bdw2(N) 0.0
-  sensor:                   vs_xdw2(m) 0.1655
-  sensor:                   vs_ydw2(m) 0.0
-  sensor:                   vs_zdw2(m) 0.0
-
-  hydrodynamic coefficients - quadratic drag
-  sensor:                   vs_kpabp() 0.0
-  sensor:                   vs_mqabq() -150.0
-  sensor:                   vs_nrabr() -150.0
-  sensor:                   vs_xuabu() -10.1
-  sensor:                   vs_yvabv() -4930.0
-  sensor:                   vs_zwabw() -4930.0
-
-  hydrodynamic coefficients - added mass
-  sensor:                   vs_kpdot() 0.0
-  sensor:                   vs_mqdot() -50.7
-  sensor:                   vs_nrdot() -50.7
-  sensor:                   vs_xudot() -32.0
-  sensor:                   vs_yvdot() -313.6
-  sensor:                   vs_zwdot() -313.6
-
-  hydrodynamic coefficients - added-mass cross terms
-  sensor:                   vs_kvdot() 0.0
-  sensor:                   vs_mwdot() 0.0
-  sensor:                   vs_nvdot() 0.0
-  sensor:                   vs_yrdot() 0.0
-  sensor:                   vs_ypdot() 0.0
-  sensor:                   vs_zqdot() 0.0
-
-  hydrodynamic coefficients - quadratic drag cross terms
-  sensor:                   vs_mwabw() 0.0
-  sensor:                   vs_nvabv() 0.0
-  sensor:                   vs_yrabr() 0.0
-  sensor:                   vs_zqabq() 0.0
-
-  hydrodynamic coefficients - in-line lift and drag
-  sensor:                     vs_muq() -74.9
-  sensor:                     vs_muw() 167.3
-  sensor:                     vs_mpr() 50.7
-  sensor:                     vs_nur() -74.9
-  sensor:                     vs_nuv() -167.3
-  sensor:                     vs_npq() -50.7
-  sensor:                     vs_xvv() 48.7
-  sensor:                     vs_xww() 48.7
-  sensor:                     vs_xvr() 411.2
-  sensor:                     vs_xwq() -411.2
-  sensor:                     vs_xrr() -43.4
-  sensor:                     vs_xqq() -43.4
-  sensor:                     vs_yur() 112.6
-  sensor:                     vs_yuv() -117.5
-  sensor:                     vs_ywp() 313.6
-  sensor:                     vs_zuq() -112.6
-  sensor:                     vs_zuw() -117.5
-  sensor:                     vs_zvp() -313.6
-  sensor:                    vs_kvt2() 7.736   (0.001352 x 5722)
-
-  fin geometry - body-frame location of each fin
-  fin #1 lower rudder, #2 port elevator, #3 upper rudder, #4 stbd elevator
-  sensor:                  vs_fin1_x(m) -1.069
-  sensor:                vs_fin1_y(m) 0.012
-  sensor:                vs_fin1_z(m) -0.1524
-  sensor:                vs_fin2_x(m) -1.069
-  sensor:                vs_fin2_y(m) -0.1524
-  sensor:                vs_fin2_z(m) 0.0
-  sensor:                vs_fin3_x(m) -1.069
-  sensor:                vs_fin3_y(m) 0.012
-  sensor:                vs_fin3_z(m) 0.1524
-  sensor:                vs_fin4_x(m) -1.069
-  sensor:                vs_fin4_y(m) 0.1524
-  sensor:                vs_fin4_z(m) 0.0
-
-  fin actuator and aerodynamic parameters
-  sensor:                 vs_fin_cdo() 0.0065
-  sensor:              vs_fin_oswald() 0.90
-  sensor:        vs_fin_aspect_ratio() 4.26
-  sensor:        vs_fin_stall_angle(rad) 0.5236  (30 deg)
-  sensor:        vs_rud_hyst_width(rad) 0.1396  (8 deg)
-  sensor:       vs_rud_hyst_center(rad) 0.0
-  sensor:       vs_elev_hyst_width(rad) 0.0349  (2 deg)
-  sensor:      vs_elev_hyst_center(rad) 0.0
-  sensor:              vs_fin_area(m^2) 0.0299
-  sensor:             vs_fin_cd_cross() 0.723
-  sensor:                  vs_fin_dcl() 3.392
-  sensor:                    vs_act_delay(s) 0.4
-  sensor:             vs_fin_speed(rad/s) 0.6109
-  sensor:           vs_hyst_wide_elev(rad) 0.0349
-  sensor:            vs_hyst_wide_rud(rad) 0.1396
-
-  thruster characteristics
-  sensor:           vs_thruster_kt(Nm/A) 0.456
-  sensor:             vs_thruster_eta() 0.80
-  sensor:        vs_thruster_pitch(m/rad) 0.124
-  sensor:      vs_thruster_duct_area(m^2) 0.28
-
 config: camera
   sensor:           c_camera_fire(bool) 0
 endconfig
@@ -307,6 +181,101 @@ config: sim
   sensor:             real_contact_x(m) 0
   sensor:             real_contact_y(m) 0
   sensor:             real_contact_z(m) 0
+  sensor:           m_fault_active(int) 0
+endconfig
+
+config: vs
+  sensor:                    vs_mass(kg) 339.0
+  sensor:                  vs_ixx(kg.m^2) 10.59
+  sensor:                  vs_iyy(kg.m^2) 71.95
+  sensor:                  vs_izz(kg.m^2) 71.95
+  sensor:                  vs_ixy(kg.m^2) 0.0
+  sensor:                  vs_iyz(kg.m^2) 0.0
+  sensor:                  vs_izx(kg.m^2) 0.0
+  sensor:                      vs_xg(m) 0.0
+  sensor:                      vs_yg(m) -0.0002
+  sensor:                      vs_zg(m) 0.082
+  sensor:                      vs_xb(m) 0.0
+  sensor:                      vs_yb(m) 0.0
+  sensor:                      vs_zb(m) 0.0
+  sensor:                    vs_xdw1(m) 0.0
+  sensor:                    vs_ydw1(m) 0.0
+  sensor:                    vs_zdw1(m) 0.0
+  sensor:                    vs_bdw1(N) 0.0
+  sensor:                    vs_xdw2(m) 0.0
+  sensor:                    vs_ydw2(m) 0.0
+  sensor:                    vs_zdw2(m) 0.0
+  sensor:                    vs_bdw2(N) 0.0
+  sensor:                  vs_xudot() -32.0
+  sensor:                  vs_yvdot() -313.6
+  sensor:                  vs_zwdot() -313.6
+  sensor:                  vs_kpdot() 0.0
+  sensor:                  vs_mqdot() -50.7
+  sensor:                  vs_nrdot() -50.7
+  sensor:                  vs_kvdot() 0.0
+  sensor:                  vs_mwdot() 0.0
+  sensor:                  vs_nvdot() 0.0
+  sensor:                  vs_ypdot() 0.0
+  sensor:                  vs_yrdot() 0.0
+  sensor:                  vs_zqdot() 0.0
+  sensor:                  vs_xuabu() -10.1
+  sensor:                  vs_yvabv() -4930.0
+  sensor:                  vs_zwabw() -4930.0
+  sensor:                  vs_kpabp() 0.0
+  sensor:                  vs_mqabq() -150.0
+  sensor:                  vs_nrabr() -150.0
+  sensor:                  vs_mwabw() 0.0
+  sensor:                  vs_nvabv() 0.0
+  sensor:                  vs_yrabr() 0.0
+  sensor:                  vs_zqabq() 0.0
+  sensor:                    vs_muq() -74.9
+  sensor:                    vs_muw() 167.3
+  sensor:                    vs_mpr() 50.7
+  sensor:                    vs_nur() -74.9
+  sensor:                    vs_nuv() -167.3
+  sensor:                    vs_npq() -50.7
+  sensor:                    vs_xvv() 48.7
+  sensor:                    vs_xww() 48.7
+  sensor:                    vs_xvr() 411.2
+  sensor:                    vs_xwq() -411.2
+  sensor:                    vs_xrr() -43.4
+  sensor:                    vs_xqq() -43.4
+  sensor:                    vs_yur() 112.6
+  sensor:                    vs_yuv() -117.5
+  sensor:                    vs_ywp() 313.6
+  sensor:                    vs_zuq() -112.6
+  sensor:                    vs_zuw() -117.5
+  sensor:                    vs_zvp() -313.6
+  sensor:                   vs_kvt2() 7.737
+  sensor:                 vs_fin1_x(m) -1.069
+  sensor:                 vs_fin1_y(m) 0.012
+  sensor:                 vs_fin1_z(m) -0.1524
+  sensor:                 vs_fin2_x(m) -1.069
+  sensor:                 vs_fin2_y(m) -0.1524
+  sensor:                 vs_fin2_z(m) 0.0
+  sensor:                 vs_fin3_x(m) -1.069
+  sensor:                 vs_fin3_y(m) 0.012
+  sensor:                 vs_fin3_z(m) 0.1524
+  sensor:                 vs_fin4_x(m) -1.069
+  sensor:                 vs_fin4_y(m) 0.1524
+  sensor:                 vs_fin4_z(m) 0.0
+  sensor:              vs_fin_area(m^2) 0.0299
+  sensor:         vs_fin_aspect_ratio() 4.26
+  sensor:               vs_fin_cdo() 0.0065
+  sensor:          vs_fin_cd_cross() 0.723
+  sensor:               vs_fin_dcl() 3.392
+  sensor:            vs_fin_oswald() 0.90
+  sensor:        vs_fin_stall_angle(rad) 0.5236
+  sensor:           vs_fin_speed(rad/s) 0.6109
+  sensor:             vs_act_delay(int) 20
+  sensor:        vs_rud_hyst_width(rad) 0.1396
+  sensor:       vs_rud_hyst_center(rad) 0.0
+  sensor:       vs_elev_hyst_width(rad) 0.0349
+  sensor:      vs_elev_hyst_center(rad) 0.0
+  sensor:           vs_thruster_kt(Nm/A) 0.456
+  sensor:            vs_thruster_eta() 0.80
+  sensor:          vs_thruster_pitch(m/rad) 0.124
+  sensor:       vs_thruster_duct_area(m^2) 0.28
 endconfig
 
 config: rdi_wh
@@ -679,7 +648,6 @@ END
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
 
 #ifdef _OSK
 #include "getopt.h"
@@ -728,21 +696,19 @@ cfglst_t cfgs;
   main function starts here
   -----------------------------------------------------------------------*/
 
-int main( int argc, char **argv )
+main( int argc, char **argv )
 {
     char *rcsrev = "$Revision: 2.22 $";
     char *rcsdate = "$Date: 1998/02/03 04:20:01 $";
     char *rcsfile = "$RCSfile: edit_struct.c,v $";
 
-/* prototypes */
+				/* prototypes */
     void parse_cmd_line( int argc, char **argv );
     void load_configs( const char *name );
     FILE *fopen_fatal( const char *name, const char *type );
     int add_sensor( char *line, int *n, FILE *lfile, FILE *sfile,
-                    FILE *hfile );
+		    FILE *hfile );
     int add_b_arg( char *line, int *n, FILE *lfile, FILE *bfile );
-    int add_behavior( char *line, int *numBeh, int n_b_args, FILE *lfile,
-                      FILE *bfile, FILE *hfile );
 
 				/* local vars */
     int i, num_sensors=0, num_behaviors=0, num_b_args=0;

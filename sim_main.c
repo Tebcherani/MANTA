@@ -67,7 +67,7 @@ int main( int argc, char *argv[], char *envp[] )
 
     if ( argc < 2 )
     {
-	fprintf( stderr, "usage: %s mission\n", argv[0] );
+	fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
 	exit( 1 );
     }
     if ( load_mission(argv[1]) == -1 )
@@ -76,6 +76,10 @@ int main( int argc, char *argv[], char *envp[] )
 	     "vvp->nstates = %d, vvp->cstate = %d after load_mission()\n",
 	     vvp->nstates, vvp->cstate );
     write_message( TERM | SLOG );
+
+				/* load fault injection file if specified
+				   as second argument or via data structure */
+    load_faults( argc > 2 ? argv[2] : vvp->fault_file_name );
 
 				/* use data structure initial values to set
                                    initial position */
@@ -164,6 +168,12 @@ int main( int argc, char *argv[], char *envp[] )
 				/* to call sensor_LBL, sensor_USBL, ... */
 	    simSensors();
 	    sensor_processing();
+
+				/* inject faults: after sensors so control
+				   sees corrupted values; before control laws
+				   so vs_* changes affect this cycle's physics */
+	    apply_faults();
+
 	    layered_control();
 
 	    dynamic_control();

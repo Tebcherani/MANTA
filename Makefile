@@ -36,7 +36,8 @@ SRCS = \
     edc_homing.c        \
     docking.c           \
     getopt.c            \
-    sim_stubs.c
+    sim_stubs.c         \
+    load_fault.c
 
 # Files intentionally excluded and why:
 #   main.c              — real-vehicle entry point; replaced by sim_main.c
@@ -63,7 +64,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 setup:
-	@mkdir -p Data Mission
+	@mkdir -p SData SMission SFault
 
 clean:
 	rm -f $(OBJS) $(TARGET) sim_debug

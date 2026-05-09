@@ -55,6 +55,7 @@ call .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
 python -m pip install numpy xarray matplotlib pyqt5
 python -m pip install gsw
+python -m pip install pywin32
 if errorlevel 1 (
     echo.
     echo NOTE: gsw failed to install. The package will still work using

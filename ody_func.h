@@ -74,6 +74,11 @@ void init_tab( void );
 void update_tab( float depth );
 int write_tab( void );
 
+			/* load_fault.c */
+int         load_faults        ( const char *fname );
+void        apply_faults       ( void );
+const char *get_fault_file_name( void );
+
 int send( int port, char *string );
 int millisec( void );
 int csend( int, char *, int );

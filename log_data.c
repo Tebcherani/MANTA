@@ -140,6 +140,53 @@ int log_data( FILE *datafile )
 
 
 /*------------------------------------------------------------------*
+ | write_fault_header
+ |
+ | Copies the active *.fd file verbatim into the ODB ASCII header so
+ | the fault scenario is self-documenting in the data file.  The block
+ | is wrapped in FAULT_FILE_BEGIN/END sentinels.  Every embedded line
+ | is prefixed "# fd>" so all existing parsers skip it cleanly.
+ | If no fault file was loaded the delimiters are still written with
+ | a one-line note — the header remains valid either way.
+ *------------------------------------------------------------------*/
+
+static void write_fault_header( FILE *datafile )
+{
+    FILE       *ffd;
+    char        fd_path[256];
+    char        line[256];
+    int         n_lines = 0;
+    const char *fname   = get_fault_file_name();
+
+    fprintf( datafile,
+        "# ===== FAULT_FILE_BEGIN ================================\xa" );
+
+    if ( fname == NULL || fname[0] == '\0' ) {
+        fprintf( datafile, "# (no fault file loaded)\xa" );
+    } else {
+        fprintf( datafile, "# fault file: %s\xa", fname );
+        snprintf( fd_path, sizeof(fd_path), "%s/%s", SFAULT_DIR, fname );
+
+        if ( (ffd = fopen(fd_path, "r")) == NULL ) {
+            fprintf( datafile,
+                "# WARNING: could not open %s for embedding\xa", fd_path );
+        } else {
+            while ( fgets(line, sizeof(line), ffd) ) {
+                line[ strcspn(line, "\r\n") ] = '\0';
+                fprintf( datafile, "# fd> %s\xa", line );
+                n_lines++;
+            }
+            fclose( ffd );
+            fprintf( datafile, "# (%d lines)\xa", n_lines );
+        }
+    }
+
+    fprintf( datafile,
+        "# ===== FAULT_FILE_END ==================================\xa" );
+}
+
+
+/*------------------------------------------------------------------*
  | init_data_logging()
  *------------------------------------------------------------------*/ 
 
@@ -202,6 +249,10 @@ FILE *init_data_logging( char *DataFileName )
     fprintf( datafile, "%s     # OS-9 file creation time\xa", time_string );
     fprintf( datafile, "%s     # Structure creation time\xa",
 	     vvp->creation_date );
+
+				/* embed fault file in header for
+				   self-documentation of fault scenario */
+    write_fault_header( datafile );
 
 				/* write sensor index, name, init values */
     for ( i = 0; i <= vvp->last_s; i++ )
