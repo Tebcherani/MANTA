@@ -2,13 +2,14 @@
 .venv/
 venv/
 env/
+Review/.venv/
 
 # Python caches
 __pycache__/
 *.pyc
 *.pyo
 
-# Build products
+# C build products
 *.exe
 *.o
 *.obj
@@ -28,7 +29,11 @@ obj/
 # MATLAB autosave
 *.asv
 
-# OS/editor files
+# Windows / OS / editor files
 .DS_Store
 Thumbs.db
+desktop.ini
 .vscode/ipch/
+
+# Simulator output/data products
+*.obd
