@@ -1,0 +1,2291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Odyssey Mission Constructor</title>
+  <style>
+    :root {
+      --bg: #f4f6f7;
+      --panel: #ffffff;
+      --ink: #182229;
+      --muted: #61717d;
+      --line: #d9e0e5;
+      --accent: #197278;
+      --accent-dark: #125459;
+      --warn: #b85c38;
+      --missing: #c62828;
+      --missing-bg: #fff0f0;
+      --gold: #d39d2a;
+      --blue: #2f6f9f;
+      --green: #477a4b;
+      --shadow: 0 10px 24px rgba(21, 35, 45, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.4 "Segoe UI", Arial, sans-serif;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .topbar {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      background: #24323a;
+      color: #ffffff;
+      border-bottom: 3px solid var(--accent);
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-right: auto;
+      white-space: nowrap;
+    }
+
+    .topbar button,
+    .topbar label {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+
+    button,
+    .file-button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 10px;
+      background: #ffffff;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    button:hover,
+    .file-button:hover {
+      border-color: var(--accent);
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button.danger {
+      color: #ffffff;
+      background: var(--warn);
+      border-color: var(--warn);
+    }
+
+    button.icon {
+      width: 34px;
+      padding: 0;
+      font-weight: 700;
+    }
+
+    .layout {
+      height: calc(100vh - 56px);
+      display: grid;
+      grid-template-rows: minmax(420px, 1fr) 250px;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(310px, 0.95fr) minmax(300px, 0.85fr) minmax(380px, 1.2fr);
+      gap: 10px;
+    }
+
+    .panel {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f9fbfc;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .panel-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 6px;
+      background: #eef3f4;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .segmented button {
+      min-height: 30px;
+      background: transparent;
+      border: 1px solid transparent;
+    }
+
+    .segmented button.active {
+      background: #ffffff;
+      border-color: var(--line);
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+
+    .search {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 9px;
+      margin-bottom: 10px;
+    }
+
+    .results-panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .results-summary {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      color: var(--ink);
+      font-size: 13px;
+      white-space: pre-wrap;
+      min-height: 56px;
+    }
+
+    #behaviorCanvas {
+      width: 100%;
+      height: 220px;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .behavior-row,
+    .stack-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .behavior-row.active,
+    .stack-row.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(25, 114, 120, 0.12);
+    }
+
+    .badge {
+      min-width: 34px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+      background: #edf3f5;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .row-title {
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .row-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .details-title {
+      margin: 0 0 4px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .description {
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: minmax(140px, 1fr) minmax(90px, 0.8fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .field label {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 8px;
+      background: #ffffff;
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 86px;
+      resize: vertical;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 18px 0 8px;
+      color: var(--ink);
+      font-size: 13px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .section-title::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: var(--line);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .script-output {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      outline: 0;
+      resize: none;
+      padding: 12px;
+      font: 13px/1.45 Consolas, "Courier New", monospace;
+      color: #102027;
+      background: #fbfcfd;
+    }
+
+    .script-panel .panel-body {
+      padding: 0;
+      display: flex;
+    }
+
+    .warnings {
+      display: grid;
+      gap: 6px;
+      padding: 9px 12px;
+      border-top: 1px solid var(--line);
+      background: #fffaf2;
+      color: #6e451c;
+      font-size: 12px;
+    }
+
+    .warnings:empty {
+      display: none;
+    }
+
+    .missing-note {
+      color: var(--missing);
+      font-weight: 700;
+    }
+
+    .preview {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .canvas-wrap {
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: 34px 1fr;
+      overflow: hidden;
+    }
+
+    .canvas-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f9fbfc;
+      font-weight: 700;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      display: block;
+    }
+
+    .sensor-row {
+      display: grid;
+      grid-template-columns: 1fr 90px 34px;
+      gap: 7px;
+      margin-bottom: 7px;
+    }
+
+    .sensor-row input {
+      min-width: 0;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+
+    .sensor-row.missing input:first-child,
+    .field.missing input,
+    .field textarea.missing,
+    .stack-row.missing {
+      border-color: var(--missing);
+      background: var(--missing-bg);
+    }
+
+    .sensor-row.missing input:first-child,
+    .field.missing label,
+    .stack-row.missing .row-title {
+      color: var(--missing);
+    }
+
+    .validation-list {
+      display: grid;
+      gap: 5px;
+      margin: 8px 0 0;
+      color: var(--missing);
+      font-size: 12px;
+    }
+
+    .validation-list:empty {
+      display: none;
+    }
+
+    .empty {
+      padding: 18px 12px;
+      border: 1px dashed var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .meta-grid label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .meta-grid input {
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--ink);
+    }
+
+    .drop-overlay {
+      position: fixed;
+      inset: 66px 12px 12px;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border: 2px dashed var(--accent);
+      border-radius: 10px;
+      background: rgba(249, 251, 252, 0.9);
+      color: var(--accent-dark);
+      font-size: 20px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    body.drag-active .drop-overlay {
+      display: flex;
+    }
+
+    .drop-zone {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px;
+      border: 1px dashed var(--line);
+      border-radius: 6px;
+      background: #fbfcfd;
+      color: var(--muted);
+    }
+
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: #eef7f6;
+      color: var(--accent-dark);
+    }
+
+    .variable-picker {
+      display: grid;
+      grid-template-columns: minmax(90px, 0.5fr) minmax(170px, 1.2fr) minmax(90px, 0.5fr) auto;
+      gap: 8px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .variable-picker label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .variable-picker select,
+    .variable-picker input {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--ink);
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        height: auto;
+        min-height: calc(100vh - 56px);
+        grid-template-rows: auto auto;
+      }
+
+      .workspace,
+      .preview {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        min-height: 360px;
+      }
+
+      .script-output {
+        min-height: 420px;
+      }
+
+      .canvas-wrap {
+        min-height: 260px;
+      }
+
+      .variable-picker {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">Odyssey Mission Constructor</div>
+    <button id="newMission" title="Start a new mission">New</button>
+    <label class="file-button" for="importMission" title="Import an existing .mi file">Import</label>
+    <input id="importMission" type="file" accept=".mi,.txt" hidden>
+    <button id="copyScript" title="Copy the mission script">Copy</button>
+    <button id="runKsim" class="primary" title="Run the current mission in ksim">Run Ksim</button>
+    <button id="downloadScript" class="primary" title="Download the mission script">Download</button>
+  </header>
+  <div id="dropOverlay" class="drop-overlay">Drop .mi file to import</div>
+
+  <div class="layout">
+    <main class="workspace">
+      <section class="panel detail-panel">
+        <div class="panel-header">
+          <h2 id="detailHeader">Mission Defaults</h2>
+        </div>
+        <div class="panel-body">
+          <div id="details"></div>
+        </div>
+      </section>
+
+      <section class="panel library-panel">
+        <div class="panel-header">
+          <h2>Building Blocks</h2>
+        </div>
+        <div class="segmented">
+          <button id="catalogTab" class="active">Catalog</button>
+          <button id="stackTab">Mission Stack</button>
+          <button id="resultsTab">Results</button>
+        </div>
+        <div class="panel-body">
+          <input id="search" class="search" type="search" placeholder="Filter behaviors">
+          <div id="catalogList" class="list"></div>
+          <div id="stackList" class="list" hidden></div>
+          <div id="resultsPanel" class="results-panel" hidden>
+            <div id="resultsSummary" class="results-summary">Run Ksim to generate simulation results.</div>
+            <canvas id="behaviorCanvas" width="640" height="220"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel script-panel">
+        <div class="panel-header">
+          <h2>Mission Script</h2>
+          <button id="applyScript">Apply Edits</button>
+          <button id="selectScript">Select</button>
+        </div>
+        <div class="panel-body">
+          <textarea id="scriptOutput" class="script-output" spellcheck="false"></textarea>
+        </div>
+        <div id="warnings" class="warnings"></div>
+      </section>
+    </main>
+
+    <section class="preview">
+      <div class="canvas-wrap">
+        <div class="canvas-title">Plan View</div>
+        <canvas id="planCanvas"></canvas>
+      </div>
+      <div class="canvas-wrap">
+        <div class="canvas-title">Vertical View</div>
+        <canvas id="depthCanvas"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const catalog = [
+      {name: "mission_timer", group: "Safety", description: "Ends the mission after a fixed elapsed time. This is normally the lowest-priority safety terminator.", args: [["time(s)", 0]]},
+      {name: "acquire_heading", group: "Guidance", description: "Turns until the vehicle heading is within the requested error band. It does not command speed or depth.", args: [["heading(rad)", 0], ["acceptable_error(rad)", 0], ["behavior_active(bool)", 0]]},
+      {name: "ascend", group: "Safety", description: "Commands a pitch-up ascent until measured depth is shallower than end_depth. Optional weight drops and abort activation are supported.", args: [["heading(rad)", 0], ["rudder_angle(rad)", 0], ["ascent_angle(rad)", 0], ["speed(m/s)", 0], ["end_depth(m)", 1], ["drop_descent_weight(bool)", 0], ["drop_ascent_weight(bool)", 0], ["abort_mission_active(bool)", 0]]},
+      {name: "broadcast", group: "Comms", description: "Schedules periodic acoustic or cross-system status broadcasts. It does not affect vehicle motion.", args: [["start_time(s)", 120], ["duration(s)", 43200], ["xs_delay(s)", 120], ["xs_cycle(s)", 120], ["uam_delay(s)", 0], ["uam_cycle(s)", 1]]},
+      {name: "chirp_fin", group: "Test", description: "Commands a sinusoidal chirp on either rudder or elevator for actuator and dynamics tests.", args: [["key_delay(s)", 0], ["key_depth(m)", 0], ["fin_name(bool)", 0], ["amplitude(rad)", 0], ["init_freq(hz)", 0], ["final_freq(hz)", 0], ["duration(s)", 0]]},
+      {name: "depth_envelope", group: "Safety", description: "Constrains depth commands to a min/max depth envelope and can stop the mission at a cutoff depth. Altitude limiting should only be enabled when altitude is valid.", args: [["max_depth(m)", 0], ["min_depth(m)", 0], ["alt_env_active(bool)", 0], ["min_altitude(m)", 0], ["depth_cutoff_active(bool)", 0], ["cutoff_depth(m)", 0]]},
+      {name: "descend", group: "Vertical", description: "Commands a fixed descent pitch and speed until end_depth, minimum altitude, or timeout is reached.", args: [["heading(rad)", 0], ["rudder_angle(rad)", 0], ["descent_angle(rad)", 0], ["speed(m/s)", 0], ["end_depth(m)", 0], ["min_altitude(m)", 0], ["drop_descent_weight(bool)", 0], ["drop_ascent_weight(bool)", 0], ["max_time(s)", 0]]},
+      {name: "dock", group: "Docking", description: "Runs a simple docking thrust profile with idle and thrust intervals.", args: [["idle_time(s)", 30], ["thrust_time(s)", 0], ["speed(m/s)", 0]]},
+      {name: "undock", group: "Docking", description: "Runs a timed forward/reverse undocking profile with optional rudder and elevator commands.", args: [["cycle_time(s)", 60], ["fwd_time_start(s)", 0], ["fwd_time_dur(s)", 10], ["rev_time_start(s)", 11], ["rev_time_dur(s)", 19], ["speed(m/s)", 0.6], ["rudder(rad)", 0], ["elevator(rad)", 0]]},
+      {name: "whoi_homing", group: "Homing", description: "WHOI homing behavior for acoustic beacon approach. Commands speed, depth, heading, and homing gains.", args: [["time(s)", 0], ["speed(m/s)", 0], ["depth(m)", 0], ["heading(rad)", 0], ["gain()", 0], ["direction_k()", 0], ["heading_offset(rad)", 0], ["pole_transient_time(s)", 0], ["bailout_range(m)", -1000000], ["cnav_enable_range(m)", 100]]},
+      {name: "edc_homing", group: "Homing", description: "EDC homing behavior using elevator and azimuth gains with a range cutout.", args: [["elev_gain(num)", 0], ["azim_gain(num)", 0], ["range_cutout(m)", 0], ["speed(m/s)", 0]]},
+      {name: "set_elevator", group: "Test", description: "Commands elevator, speed, and heading for a timed interval with depth and pitch safety limits.", args: [["heading(rad)", 0], ["elevator(rad)", 0], ["speed(m/s)", 0], ["time(s)", 0], ["max_depth(m)", 10], ["min_depth(m)", 0], ["max_pitch(rad)", 0.52], ["finished(bool)", 0]]},
+      {name: "set_rudder", group: "Test", description: "Commands a fixed rudder, depth, and speed for a timed interval.", args: [["rudder(rad)", 0], ["depth(m)", 0], ["speed(m/s)", 0], ["time(s)", 0], ["finished(bool)", 0]]},
+      {name: "setmode", group: "Advanced", description: "Directly loads heading, depth, and speed mode values and associated command arguments.", args: [["heading_mode(int)", 0], ["heading_commmand1(?)", 0], ["heading_commmand2(?)", 0], ["depth_mode(int)", 0], ["depth_commmand1(?)", 0], ["depth_commmand2(?)", 0], ["speed_mode(int)", 0], ["speed_commmand1(?)", 0], ["speed_commmand2(?)", 0], ["time(s)", 0]]},
+      {name: "setpoint", group: "Guidance", description: "Commands heading, depth, and speed for a timed interval. A nonzero desired_pitch overrides depth control.", args: [["heading(rad)", 0], ["depth(m)", 0], ["speed(m/s)", 0], ["time(s)", 0], ["cycles(int)", 1], ["turn(rad)", 0], ["desired_pitch(rad)", 0]]},
+      {name: "setvector", group: "Guidance", description: "Commands heading, pitch, and speed for a timed interval.", args: [["heading(m)", 0], ["pitch(rad)", 0], ["speed(m/s)", 0], ["time(s)", 0]]},
+      {name: "survey_dead_reckon", group: "Survey", description: "Builds a dead-reckoned survey pattern with transit, alternating legs, depth, and separate transit/survey speeds.", args: [["trans_heading(rad)", 0], ["trans_time(s)", 0], ["heading_leg1(rad)", 0], ["time_leg1(s)", 0], ["heading_leg2(rad)", 0], ["time_leg2(s)", 0], ["cycles(#)", 0], ["depth(m)", 0], ["transit_speed(m/s)", 0], ["survey_speed(m/s)", 0]]},
+      {name: "remote_delay", group: "Comms", description: "Delays mission progress to create a remote-command timing window.", args: [["time(s)", 0], ["heading(rad)", 0], ["min_time(sec)", 1], ["max_time(sec)", 4.6], ["mission_abort_enable(bool)", 0], ["finished(bool)", 0]]},
+      {name: "waypoint_2d", group: "Guidance", description: "Navigates to a north/east waypoint with depth, speed, capture radius, optional circle mode, and timeout.", args: [["wpt_n(m)", 0], ["wpt_e(m)", 0], ["depth(m)", 0], ["speed(m/s)", 0], ["capture(m)", 5], ["circle_mode()", 1], ["heading(rad)", -1], ["gain(rad/m)", 0.0175], ["timeout(s)", 0], ["abort_on_timeout()", 0]]},
+      {name: "wiggle", group: "Test", description: "Applies sinusoidal rudder/elevator wiggle commands and a thruster current for a fixed duration.", args: [["time(s)", 30], ["period(s)", 6], ["rudder_amplitude(rad)", 0], ["elevator_amplitude(rad)", 0], ["thruster_current(amps)", 0]]},
+      {name: "launch", group: "Launch", description: "Holds simple speed, elevator, and rudder commands until depth or timeout indicates launch has completed.", args: [["speed(m/s)", 0], ["elevator_angle(rad)", 0], ["depth(m)", 0], ["timeout(s)", 5]]},
+      {name: "yo_yo", group: "Vertical", description: "Commands repeated pitch-controlled depth excursions between top and bottom depth limits.", args: [["desired_pitch(rad)", 0], ["top_depth(m)", 0], ["bottom_depth(m)", 0], ["min_altitude(m)", 0], ["cycles(int)", 0], ["max_time(s)", 0]]}
+    ];
+
+    const catalogByName = Object.fromEntries(catalog.map(item => [item.name, item]));
+    const vehicleVariables = `
+m_present_time(s)|0
+m_dt(s)|0
+m_roll(rad)|0
+m_pitch(rad)|0
+m_yaw(rad)|0
+m_roll_rate(rad/s)|0
+m_pitch_rate(rad/s)|0
+m_yaw_rate(rad/s)|0
+m_inclino_roll(rad)|0
+m_inclino_pitch(rad)|0
+m_compass_yaw(rad)|0
+m_dr_north(m)|0
+m_dr_east(m)|0
+m_dr_dn(m)|0
+m_dr_de(m)|0
+m_pos_n(m)|0
+m_pos_e(m)|0
+uo_magnetic_variation(rad)|-0.268781
+m_paro_pres_period(us)|0
+m_paro_temp_period(us)|0
+m_init_pres(bar)|-1
+m_pressure(bar)|0
+m_depth(m)|0
+e_latitude(rad)|0.7393
+m_depth_rate(m/s)|0
+u_prop_pitch(m)|0.324
+m_water_speed(m/s)|0
+m_altitude(m)|0
+m_st500_range(m)|0
+m_st200_range(m)|0
+water_cond(S/m)|3
+water_temp(degC)|10
+m_salinity(psu)|35
+u_speed_of_sound(m/s)|1485
+c_dr_north(m)|0
+c_dr_east(m)|0
+c_elevator_angle(rad)|0
+m_elevator_angle(rad)|0
+c_rudder_angle(rad)|0
+m_rudder_angle(rad)|0
+effective_drag_coeff()|0.21
+c_thruster_current(Amp)|0
+m_thruster_current(Amp)|0
+m_thruster_per(16us)|0
+m_thruster_rawbatt(8bit)|0
+m_propeller_speed(rpm)|0
+m_copley_voltage(V)|0
+m_copley_current(A)|0
+u_cutoff_voltage(V)|0
+c_weight1_drop(bool)|0
+c_weight2_drop(bool)|0
+cc_heading_mode(index)|0
+cc_depth_mode(index)|0
+cc_speed_mode(index)|0
+c_abort_mission(int)|0
+c_depth(m)|0
+c_pitch(rad)|0
+c_heading(rad)|0
+c_speed(m/s)|0
+m_he_elev_raw(8bit)|0
+m_he_rud_raw(8bit)|0
+m_he_elev_deg(deg)|0
+m_he_rud_deg(deg)|0
+uo_control_kpp|1
+uo_control_kdp|0.9
+uo_control_kip|0
+uo_control_pitch_lim(deg)|30
+uo_control_depth_lim(deg)|0.3
+uo_control_kph|0.75
+uo_control_kdh|1.5
+uo_control_kih|0
+h_integral(rad)|0
+d_integral(rad)|0
+p_integral(rad)|0
+uo_depth_map_k|0.5
+uo_depth_int_k()|0
+uo_tau(sec)|5
+uo_max_hr(rad/s)|0.1
+uo_max_dr(m/s)|0.5
+t_hdg(rad)|0
+t_hdg_rate(rad/s)|0
+t_depth(m)|0
+u_wp_x_track_gain|0
+wp_xte(m)|0
+wp_dtw(m)|0
+c_camera_fire(bool)|0
+dgc_autocal()|0
+dgc_calmerit(int)|0
+dgc_locmerit(int)|0
+dgc_calcount(int)|0
+m_psa_range(m)|99.99
+psa_pitch(rad)|0.4363
+sbe_temp_freq(Hz)|0
+sbe_cond_freq(Hz)|0
+m_obs(?)|0
+real_x(m)|0
+real_y(m)|0
+real_z(m)|0
+real_u(m/s)|0
+real_v(m/s)|0
+real_w(m/s)|0
+real_ud(m/s^2)|0
+real_vd(m/s^2)|0
+real_wd(m/s^2)|0
+real_phi(rad)|0
+real_theta(rad)|0
+real_psi(rad)|0
+real_p(rad/s)|0
+real_q(rad/s)|0
+real_r(rad/s)|0
+real_pd(rad/s^2)|0
+real_qd(rad/s^2)|0
+real_rd(rad/s^2)|0
+real_fx(N)|0
+real_fy(N)|0
+real_fz(N)|0
+real_fk(Nm)|0
+real_fm(Nm)|0
+real_fn(Nm)|0
+real_depth_noise(m)|0
+real_acc_noise(m/s^2)|0
+real_excess_buoyancy(N)|0
+real_veh_w(N)|1173
+real_veh_b(N)|1173
+real_wdw1(N)|0
+real_wdw2(N)|0
+real_current_north(m/s)|0
+real_current_east(m/s)|0
+read_current_from_file(bool)|0
+real_sonar_frac_dropout(0-1)|0
+u_bottom_type(int)|1
+u_bottom_noise(m)|0
+real_alt(m)|0
+real_triangle_x1(m)|0
+real_triangle_y1(m)|0
+real_triangle_z1(m)|0
+real_triangle_x2(m)|0
+real_triangle_y2(m)|0
+real_triangle_z2(m)|0
+real_triangle_x3(m)|0
+real_triangle_y3(m)|0
+real_triangle_z3(m)|0
+sim_triangle_x1(m)|0
+sim_triangle_y1(m)|0
+sim_triangle_z1(m)|0
+sim_triangle_x2(m)|0
+sim_triangle_y2(m)|0
+sim_triangle_z2(m)|0
+sim_triangle_x3(m)|0
+sim_triangle_y3(m)|0
+sim_triangle_z3(m)|0
+sim_sonar_phi_t(rad)|0
+sim_sonar_phi_b(rad)|0
+sim_sonar_intensity(dB)|0
+sim_triangle_id(int)|0
+real_triangle_id(int)|0
+sim_contact_x(m)|0
+sim_contact_y(m)|0
+sim_contact_z(m)|0
+real_contact_x(m)|0
+real_contact_y(m)|0
+real_contact_z(m)|0
+m_fault_active(int)|0
+vs_mass(kg)|339
+vs_ixx(kg.m^2)|10.59
+vs_iyy(kg.m^2)|71.95
+vs_izz(kg.m^2)|71.95
+vs_ixy(kg.m^2)|0
+vs_iyz(kg.m^2)|0
+vs_izx(kg.m^2)|0
+vs_xg(m)|0
+vs_yg(m)|-0.0002
+vs_zg(m)|0.082
+vs_xb(m)|0
+vs_yb(m)|0
+vs_zb(m)|0
+vs_xdw1(m)|0
+vs_ydw1(m)|0
+vs_zdw1(m)|0
+vs_bdw1(N)|0
+vs_xdw2(m)|0
+vs_ydw2(m)|0
+vs_zdw2(m)|0
+vs_bdw2(N)|0
+vs_xudot()|-32
+vs_yvdot()|-313.6
+vs_zwdot()|-313.6
+vs_kpdot()|0
+vs_mqdot()|-50.7
+vs_nrdot()|-50.7
+vs_kvdot()|0
+vs_mwdot()|0
+vs_nvdot()|0
+vs_ypdot()|0
+vs_yrdot()|0
+vs_zqdot()|0
+vs_xuabu()|-10.1
+vs_yvabv()|-4930
+vs_zwabw()|-4930
+vs_kpabp()|0
+vs_mqabq()|-150
+vs_nrabr()|-150
+vs_mwabw()|0
+vs_nvabv()|0
+vs_yrabr()|0
+vs_zqabq()|0
+vs_muq()|-74.9
+vs_muw()|167.3
+vs_mpr()|50.7
+vs_nur()|-74.9
+vs_nuv()|-167.3
+vs_npq()|-50.7
+vs_xvv()|48.7
+vs_xww()|48.7
+vs_xvr()|411.2
+vs_xwq()|-411.2
+vs_xrr()|-43.4
+vs_xqq()|-43.4
+vs_yur()|112.6
+vs_yuv()|-117.5
+vs_ywp()|313.6
+vs_zuq()|-112.6
+vs_zuw()|-117.5
+vs_zvp()|-313.6
+vs_kvt2()|7.737
+vs_fin1_x(m)|-1.069
+vs_fin1_y(m)|0.012
+vs_fin1_z(m)|-0.1524
+vs_fin2_x(m)|-1.069
+vs_fin2_y(m)|-0.1524
+vs_fin2_z(m)|0
+vs_fin3_x(m)|-1.069
+vs_fin3_y(m)|0.012
+vs_fin3_z(m)|0.1524
+vs_fin4_x(m)|-1.069
+vs_fin4_y(m)|0.1524
+vs_fin4_z(m)|0
+vs_fin_area(m^2)|0.0299
+vs_fin_aspect_ratio()|4.26
+vs_fin_cdo()|0.0065
+vs_fin_cd_cross()|0.723
+vs_fin_dcl()|3.392
+vs_fin_oswald()|0.9
+vs_fin_stall_angle(rad)|0.5236
+vs_fin_speed(rad/s)|0.6109
+vs_act_delay(int)|20
+vs_rud_hyst_width(rad)|0.1396
+vs_rud_hyst_center(rad)|0
+vs_elev_hyst_width(rad)|0.0349
+vs_elev_hyst_center(rad)|0
+vs_thruster_kt(Nm/A)|0.456
+vs_thruster_eta()|0.8
+vs_thruster_pitch(m/rad)|0.124
+vs_thruster_duct_area(m^2)|0.28
+rdi_binsize(m)|2
+rdi_numbins(int)|50
+rdi_range1(m)|0
+rdi_range2(m)|0
+rdi_range3(m)|0
+rdi_range4(m)|0
+rdi_alt(m)|0
+rdi_vel1(m/s)|0
+rdi_vel2(m/s)|0
+rdi_vel3(m/s)|0
+rdi_vel4(m/s)|0
+rdi_dn(m)|0
+rdi_de(m)|0
+adv_samp()|0
+adv_vx(m/s)|0
+adv_vy(m/s)|0
+adv_vz(m/s)|0
+adv_a1(dB)|0
+adv_a2(dB)|0
+adv_a3(dB)|0
+adv_c1(%)|0
+adv_c2(%)|0
+adv_c3(%)|0
+edge_tr_xs_time(s)|0
+edge_am200_bacs()|617505
+edge_xs_databyte()|0
+real_lbl_timing_noise(mSec)|0
+real_lbl_frac_bias(0-1)|0
+real_lbl_frac_dropout(0-1)|0
+real_lbl_bias_amplitude(mSec)|0
+m_roll_drift(rad)|0
+m_pitch_drift(rad)|0
+m_yaw_drift(rad)|0
+u_lbl_beacon_number(#)|4
+u_lbl_1north(m)|500
+u_lbl_1east(m)|500
+u_lbl_1depth(m)|10
+u_lbl_1tat(s)|0.003
+u_lbl_2north(m)|500
+u_lbl_2east(m)|-500
+u_lbl_2depth(m)|10
+u_lbl_2tat(s)|0.003
+u_lbl_3north(m)|-500
+u_lbl_3east(m)|-500
+u_lbl_3depth(m)|10
+u_lbl_3tat(s)|0.003
+u_lbl_4north(m)|-500
+u_lbl_4east(m)|500
+u_lbl_4depth(m)|10
+u_lbl_4tat(s)|0.003
+c_lbl_control()|1
+u_lbl_cycle(s)|10
+u_lbl_lockout(s)|0
+u_lbl_timeout(s)|8
+m_lbl_0t(s)|0
+m_lbl_1t(s)|0
+m_lbl_2t(s)|0
+m_lbl_3t(s)|0
+m_lbl_4t(s)|0
+lbl_newdata()|0
+m_lbl_northfix(m)|0
+m_lbl_eastfix(m)|0
+lbl_fixstat()|0
+lbl_fixgain()|0.2835
+lbl_range_tol(m)|25
+lbl_fix_err(m)|30
+lbl_min_angle(rad)|0.2618
+m_lbl_est_north(m)|0
+m_lbl_est_east(m)|0
+m_lbl_heading(rad)|0
+u_lbl_mean_threshold(m)|20
+u_lbl_dr_threshold(m)|20
+m_lbl_dr_north(m)|0
+m_lbl_dr_east(m)|0
+m_lbl_ping_time(s)|-1e+006
+m_lbl_num_used()|0
+m_lbl_valid1()|0
+m_lbl_valid2()|0
+m_lbl_valid3()|0
+m_lbl_valid4()|0
+m_lbl_dist_to_line(m)|0
+m_lbl_dist_to_last(m)|0
+m_lbl_trans_thresh(m)|0
+m_lbl_longi_thresh(m)|0
+u_trans_thresh(m)|15
+u_mahala_thresh()|36
+m_mahala1()|0
+m_mahala2()|0
+m_mahala3()|0
+m_mahala4()|0
+m_ekf_north(m)|0
+m_ekf_east(m)|0
+u_lbl_transponder_mode(bool)|1
+m_sidescan_no(int)|0
+m_accel_x(m/s^2)|0
+m_accel_y(m/s^2)|0
+m_accel_z(m/s^2)|0
+m_mag_x(gauss)|0
+m_mag_y(gauss)|0
+m_mag_z(gauss)|0
+m_usbl_count()|0
+m_usbl_azimuth(rad)|0
+m_usbl_elevation(rad)|0
+m_usbl_time(s)|0
+m_usbl_qual(%)|0
+m_usbl_rdot(m/s)|0
+u_usbl_ringbuf()|10
+m_inertial_az(rad)|0
+m_inertial_el(rad)|0
+m_usbl_rdot_mean(m/s)|0
+m_usbl_azimuth_norm(rad)|0
+m_usbl_r0(s)|0
+m_usbl_rem(s)|0
+m_usbl_range(m)|0
+sim_dock_n(m)|100
+sim_dock_e(m)|200
+sim_dock_d(m)|50
+m_dock_n(m)|0
+m_dock_e(m)|0
+m_dock_d(m)|0
+u_dock_vbl(m)|100
+u_dock_zoff(m)|1.6
+u_lower_tat(s)|0.01
+m_lower_raw(s)|0
+u_bucky_tat(s)|0.003
+m_bucky_raw(s)|0
+m_cnav_radial(m)|0
+m_cnav_axial(m)|0
+m_cnav_status()|0
+autoparse()|0
+uo_t_straight(sec)|30
+uo_search_direction()|0
+uo_search_hr(rad/s)|0.05
+uo_usbl_update(sec)|0.5
+m_latchio0()|0
+m_latchio1()|0
+m_latchio2()|0
+m_latchio3()|0
+m_pole_present()|0
+latch_start()|0
+latch_check()|0
+latch_stop()|0
+m_load_charge(coulomb)|0
+m_load_voltage(volt)|0
+m_edc_b_x()|0
+m_edc_b_y()|0
+m_edc_b_z()|0
+u_edc_z_gain()|0
+m_edc_b_intensity()|0
+e_edc_b_north()|0
+e_edc_b_east()|0
+e_edc_b_down()|0
+e_edc_b_bearing(rad)|0
+e_edc_b_inclination(rad)|0
+e_edc_axial_range(m)|15
+`.trim().split("\n").map(line => {
+      const parts = line.split("|");
+      return {name: parts[0], value: parts[1] || "0"};
+    });
+    const vehicleVariableByName = Object.fromEntries(vehicleVariables.map(item => [item.name, item]));
+    const vehicleVariableBases = new Set(vehicleVariables.map(item => baseName(item.name).toLowerCase()));
+    const missionHeaderNames = new Set([
+      "UseSim", "UseAltimeter", "UseSail1", "UseWatchdog", "UseThruster",
+      "FinHECalibrate", "HallEffectIndex", "UseElevator", "UseRudder",
+      "UseParosci", "UseKVH_DGC", "UseKVH_DGI", "MonitorKVH_DGC",
+      "MonitorKVH_DGI", "MonitorAltimeter", "UseLBL", "MonitorLBL",
+      "LBLTransponderMode", "UseCondTemp", "MonitorCondTemp", "UseCamera",
+      "MonitorCamera", "CameraOnTime", "CameraOffTime",
+      "MonitorLayeredControl", "MonitorWatchdog", "MonitorThruster",
+      "MonitorElevator", "MonitorRudder", "MonitorParosci", "Countdown",
+      "CommandedTime", "CommandedSpeed", "CommandedHeading",
+      "CommandedHeadingDegrees", "CommandedDepth", "DebugMode",
+      "CommsDebugMode", "TimingDebugMode", "WatchdogTimeoutMinutes",
+      "WatchdogTimeoutHours", "InitDataFileSize", "UseKalmanFilter",
+      "UseEDC", "MonitorEDC", "MonitorSim", "AltimeterFrequency",
+      "UseOld200", "DeadManSwitchEnabled", "NewMissionFileEnabled",
+      "AltimeterPortNumber", "UsePort", "UseStarboard", "UseModem",
+      "MonitorModem", "ModemInterval", "UseSideScan", "MonitorSideScan",
+      "UsePSA", "MonitorPSA", "UseRDI", "MonitorRDI", "UseADV",
+      "MonitorADV", "UseBatCon", "MonitorBatCon", "UseLoad",
+      "MonitorLoad", "UseMetraByte", "MonitorMetraByte",
+      "UseLatchMotor", "MonitorLatchMotor"
+    ].map(name => name.toLowerCase()));
+    let nextId = 1;
+    let selectedCatalog = catalogByName.setpoint;
+    let selectedStepId = null;
+    let activeTab = "catalog";
+    let scriptDirty = false;
+    let simulationResults = null;
+    const DEG_TO_RAD = Math.PI / 180;
+    const RAD_TO_DEG = 180 / Math.PI;
+
+    const mission = {
+      filename: "mission.mi",
+      state: "",
+      header: "UseSim 1\nMonitorLayeredControl 2\nCountdown 0",
+      sensors: [
+        {name: "m_pos_n(m)", value: 0},
+        {name: "m_pos_e(m)", value: 0},
+        {name: "m_depth(m)", value: 0},
+        {name: "u_speed_of_sound(m/s)", value: 1490},
+        {name: "uo_control_pitch_lim(deg)", value: 20},
+        {name: "uo_max_dr(m/s)", value: 0.5},
+        {name: "uo_tau(sec)", value: 5}
+      ],
+      behaviors: []
+    };
+
+    function cloneArgs(def) {
+      return def.args.map(([name, value]) => ({name, value: fromScriptValue(name, value)}));
+    }
+
+    function createStep(name, priority) {
+      const def = catalogByName[name] || {name, group: "Custom", description: "Imported behavior not present in the current generated behavior table.", args: []};
+      return {id: nextId++, name, priority, args: cloneArgs(def)};
+    }
+
+    function resetMission() {
+      scriptDirty = false;
+      nextId = 1;
+      mission.filename = "mission.mi";
+      mission.state = "";
+      mission.header = "UseSim 1\nMonitorLayeredControl 2\nCountdown 0";
+      mission.sensors = [
+        {name: "m_pos_n(m)", value: 0},
+        {name: "m_pos_e(m)", value: 0},
+        {name: "m_depth(m)", value: 0},
+        {name: "u_speed_of_sound(m/s)", value: 1490},
+        {name: "uo_control_pitch_lim(deg)", value: 20},
+        {name: "uo_max_dr(m/s)", value: 0.5},
+        {name: "uo_tau(sec)", value: 5}
+      ];
+      mission.behaviors = [
+        createStep("mission_timer", 1),
+        createStep("depth_envelope", 2),
+        createStep("setpoint", 3)
+      ];
+      setArg(mission.behaviors[0], "time", 1800);
+      setArg(mission.behaviors[1], "max_depth", 100);
+      setArg(mission.behaviors[1], "min_depth", 0.5);
+      setArg(mission.behaviors[1], "depth_cutoff_active", 1);
+      setArg(mission.behaviors[1], "cutoff_depth", 110);
+      setArg(mission.behaviors[2], "depth", 50);
+      setArg(mission.behaviors[2], "speed", 1.5);
+      setArg(mission.behaviors[2], "time", 1200);
+      selectedStepId = mission.behaviors[2].id;
+      selectedCatalog = catalogByName.setpoint;
+      renderAll();
+    }
+
+    function renderSelectionOnly() {
+      renderTabs();
+      renderCatalog();
+      renderStack();
+      renderDetails();
+      renderWarnings();
+      drawPreviews();
+    }
+
+    function selectBehaviorFromScriptCursor() {
+      const output = document.getElementById("scriptOutput");
+      const beforeCursor = output.value.slice(0, output.selectionStart);
+      const lines = beforeCursor.split(/\r?\n/);
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const match = lines[i].trim().match(/^behavior:\s+(\S+)\s+(\d+)/i);
+        if (!match) continue;
+        const name = match[1];
+        const priority = parseInt(match[2], 10);
+        const step = mission.behaviors.find(item => item.name === name && item.priority === priority)
+          || mission.behaviors.find(item => item.priority === priority)
+          || mission.behaviors.find(item => item.name === name);
+        if (!step) return;
+        selectedStepId = step.id;
+        selectedCatalog = catalogByName[step.name] || selectedCatalog;
+        activeTab = "stack";
+        renderSelectionOnly();
+        return;
+      }
+    }
+
+    function baseName(name) {
+      return String(name).split("(", 1)[0].trim();
+    }
+
+    function normalizedBaseName(name) {
+      return baseName(name).toLowerCase();
+    }
+
+    function isKnownVehicleVariable(name) {
+      return vehicleVariableBases.has(normalizedBaseName(name));
+    }
+
+    function isCommentLine(line) {
+      const trimmed = String(line).trim();
+      return !trimmed || trimmed.startsWith("#") || trimmed.startsWith("%") || trimmed.startsWith("*");
+    }
+
+    function headerToken(line) {
+      const match = String(line).trim().match(/^([A-Za-z_][A-Za-z0-9_]*)\b/);
+      return match ? match[1] : "";
+    }
+
+    function missingHeaderEntries() {
+      return mission.header
+        .split(/\r?\n/)
+        .map(line => ({line, token: headerToken(line)}))
+        .filter(item => !isCommentLine(item.line) && item.token && !missionHeaderNames.has(item.token.toLowerCase()));
+    }
+
+    function knownArgNamesFor(step) {
+      const def = catalogByName[step.name];
+      if (!def) return null;
+      return new Set(def.args.map(([name]) => normalizedBaseName(name)));
+    }
+
+    function missionValidation() {
+      const missingHeaders = missingHeaderEntries().map(item => item.token);
+      const missingSensors = mission.sensors
+        .map(sensor => sensor.name)
+        .filter(name => !isKnownVehicleVariable(name));
+      const missingBehaviors = mission.behaviors
+        .map(step => step.name)
+        .filter(name => !catalogByName[name]);
+      const missingArgs = [];
+
+      mission.behaviors.forEach(step => {
+        const knownArgs = knownArgNamesFor(step);
+        if (!knownArgs) return;
+        step.args.forEach(arg => {
+          if (!knownArgs.has(normalizedBaseName(arg.name))) {
+            missingArgs.push(`${step.name}.${baseName(arg.name)}`);
+          }
+        });
+      });
+
+      return {
+        missingHeaders: uniqueValues(missingHeaders),
+        missingSensors: uniqueValues(missingSensors.map(baseName)),
+        missingBehaviors: uniqueValues(missingBehaviors),
+        missingArgs: uniqueValues(missingArgs)
+      };
+    }
+
+    function uniqueValues(values) {
+      const seen = new Set();
+      const out = [];
+      values.forEach(value => {
+        const key = String(value).toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push(value);
+        }
+      });
+      return out;
+    }
+
+    function unitText(name) {
+      const match = String(name).match(/\(([^)]*)\)/);
+      return match ? match[1].toLowerCase() : "";
+    }
+
+    function usesRadians(name) {
+      return unitText(name).includes("rad");
+    }
+
+    function variablePrefix(name) {
+      const base = baseName(name);
+      const match = base.match(/^([a-z]+)(?:_|$)/i);
+      return match ? match[1].toLowerCase() : base.toLowerCase();
+    }
+
+    function vehiclePrefixes() {
+      return [...new Set(vehicleVariables.map(item => variablePrefix(item.name)))].sort();
+    }
+
+    function editorLabel(name) {
+      return String(name)
+        .replace(/\(rad\/s\)/ig, "(deg/s)")
+        .replace(/\(rad\/m\)/ig, "(deg/m)")
+        .replace(/\(rad\)/ig, "(deg)");
+    }
+
+    function formatNumeric(value) {
+      if (!Number.isFinite(value)) return "";
+      if (Math.abs(value) < 1e-12) return "0";
+      return Number(value.toPrecision(8)).toString();
+    }
+
+    function fromScriptValue(name, value) {
+      const numeric = parseFloat(value);
+      if (!Number.isFinite(numeric)) return String(value);
+      return usesRadians(name) ? formatNumeric(numeric * RAD_TO_DEG) : String(value);
+    }
+
+    function toScriptValue(name, value) {
+      const numeric = parseFloat(value);
+      if (!Number.isFinite(numeric)) return String(value);
+      return usesRadians(name) ? formatNumeric(numeric * DEG_TO_RAD) : String(value);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function getArg(step, base, fallback = 0) {
+      const found = step.args.find(arg => baseName(arg.name) === base);
+      if (!found) return fallback;
+      const value = parseFloat(found.value);
+      if (!Number.isFinite(value)) return fallback;
+      return usesRadians(found.name) ? value * DEG_TO_RAD : value;
+    }
+
+    function setArg(step, base, value) {
+      const found = step.args.find(arg => baseName(arg.name) === base);
+      if (found) found.value = String(value);
+    }
+
+    function renumberPriorities() {
+      mission.behaviors
+        .sort((a, b) => a.priority - b.priority)
+        .forEach((step, index) => step.priority = index + 1);
+    }
+
+    function addSelectedBehavior() {
+      const step = createStep(selectedCatalog.name, mission.behaviors.length + 1);
+      mission.behaviors.push(step);
+      selectedStepId = step.id;
+      activeTab = "stack";
+      renderAll();
+    }
+
+    function duplicateSelectedStep() {
+      const step = getSelectedStep();
+      if (!step) return;
+      const copy = {
+        id: nextId++,
+        name: step.name,
+        priority: mission.behaviors.length + 1,
+        args: step.args.map(arg => ({name: arg.name, value: arg.value}))
+      };
+      mission.behaviors.push(copy);
+      selectedStepId = copy.id;
+      renderAll();
+    }
+
+    function removeSelectedStep() {
+      if (selectedStepId == null) return;
+      const index = mission.behaviors.findIndex(step => step.id === selectedStepId);
+      if (index < 0) return;
+      mission.behaviors.splice(index, 1);
+      selectedStepId = mission.behaviors[0] ? mission.behaviors[0].id : null;
+      renumberPriorities();
+      renderAll();
+    }
+
+    function moveSelectedStep(delta) {
+      const ordered = mission.behaviors.sort((a, b) => a.priority - b.priority);
+      const index = ordered.findIndex(step => step.id === selectedStepId);
+      const target = index + delta;
+      if (index < 0 || target < 0 || target >= ordered.length) return;
+      const old = ordered[index].priority;
+      ordered[index].priority = ordered[target].priority;
+      ordered[target].priority = old;
+      renderAll();
+    }
+
+    function getSelectedStep() {
+      return mission.behaviors.find(step => step.id === selectedStepId) || null;
+    }
+
+    function renderAll() {
+      renderTabs();
+      renderCatalog();
+      renderStack();
+      renderResults();
+      renderDetails();
+      renderScript();
+      drawPreviews();
+    }
+
+    function renderTabs() {
+      document.getElementById("catalogTab").classList.toggle("active", activeTab === "catalog");
+      document.getElementById("stackTab").classList.toggle("active", activeTab === "stack");
+      document.getElementById("resultsTab").classList.toggle("active", activeTab === "results");
+      document.getElementById("catalogList").hidden = activeTab !== "catalog";
+      document.getElementById("stackList").hidden = activeTab !== "stack";
+      document.getElementById("resultsPanel").hidden = activeTab !== "results";
+      document.getElementById("search").hidden = activeTab !== "catalog";
+    }
+
+    function renderCatalog() {
+      const query = document.getElementById("search").value.trim().toLowerCase();
+      const list = document.getElementById("catalogList");
+      list.innerHTML = "";
+      catalog
+        .filter(item => !query || item.name.includes(query) || item.group.toLowerCase().includes(query) || item.description.toLowerCase().includes(query))
+        .forEach(item => {
+          const row = document.createElement("button");
+          row.className = "behavior-row" + (selectedCatalog.name === item.name && activeTab === "catalog" ? " active" : "");
+          row.innerHTML = `<span class="badge">${escapeHtml(item.group.slice(0, 3))}</span><span><span class="row-title">${escapeHtml(item.name)}</span><span class="row-subtitle">${escapeHtml(item.description)}</span></span><span class="badge">${item.args.length}</span>`;
+          row.addEventListener("click", () => {
+            selectedCatalog = item;
+            selectedStepId = null;
+            renderAll();
+          });
+          list.appendChild(row);
+        });
+    }
+
+    function renderStack() {
+      const list = document.getElementById("stackList");
+      list.innerHTML = "";
+      if (!mission.behaviors.length) {
+        list.innerHTML = `<div class="empty">No behaviors in the mission stack</div>`;
+        return;
+      }
+      mission.behaviors
+        .slice()
+        .sort((a, b) => a.priority - b.priority)
+        .forEach(step => {
+          const def = catalogByName[step.name] || {group: "Custom", description: "Imported behavior"};
+          const missing = !catalogByName[step.name];
+          const row = document.createElement("button");
+          row.className = "stack-row" + (selectedStepId === step.id ? " active" : "") + (missing ? " missing" : "");
+          if (missing) row.title = "Behavior is not in the current simulator behavior table";
+          row.innerHTML = `<span class="badge">P${step.priority}</span><span><span class="row-title">${escapeHtml(step.name)}</span><span class="row-subtitle">${escapeHtml(def.group)} - lower number is higher priority</span></span><span class="badge">${step.args.length}</span>`;
+          row.addEventListener("click", () => {
+            selectedStepId = step.id;
+            selectedCatalog = catalogByName[step.name] || selectedCatalog;
+            renderAll();
+          });
+          list.appendChild(row);
+        });
+    }
+
+    function renderDetails() {
+      const details = document.getElementById("details");
+      const step = getSelectedStep();
+      if (step) {
+        renderStepDetails(details, step);
+      } else {
+        renderCatalogDetails(details, selectedCatalog);
+      }
+    }
+
+    function renderCatalogDetails(container, item) {
+      document.getElementById("detailHeader").textContent = "Behavior Breakout";
+      container.innerHTML = `
+        <h3 class="details-title">${escapeHtml(item.name)}</h3>
+        <p class="description">${escapeHtml(item.description)}</p>
+        <div class="actions">
+          <button class="primary" id="addBehavior">Add to Mission</button>
+          <button id="showDefaults">Mission Defaults</button>
+        </div>
+        <div class="section-title">Default Arguments</div>
+        <div class="field-grid">
+          ${item.args.map(([name, value]) => `<div class="field"><label title="${escapeHtml(name)}">${escapeHtml(editorLabel(name))}</label><input value="${escapeHtml(fromScriptValue(name, value))}" readonly></div>`).join("")}
+        </div>
+      `;
+      document.getElementById("addBehavior").addEventListener("click", addSelectedBehavior);
+      document.getElementById("showDefaults").addEventListener("click", renderMissionDefaults);
+    }
+
+    function renderStepDetails(container, step) {
+      const def = catalogByName[step.name] || {description: "Imported behavior not present in the current generated behavior table.", group: "Custom"};
+      document.getElementById("detailHeader").textContent = "Selected Behavior";
+      container.innerHTML = `
+        <h3 class="details-title">${escapeHtml(step.name)}</h3>
+        <p class="description">${escapeHtml(def.description)}</p>
+        <div class="field"><label>Priority (1 highest)</label><input id="priorityInput" type="number" min="1" step="1" value="${step.priority}"></div>
+        <div class="actions">
+          <button id="moveHigher">Higher Priority</button>
+          <button id="moveLower">Lower Priority</button>
+          <button id="duplicateStep">Duplicate</button>
+          <button class="danger" id="removeStep">Remove</button>
+        </div>
+        <div class="section-title">Arguments</div>
+        <div class="field-grid" id="argFields"></div>
+        <div class="section-title">Mission Defaults</div>
+        <div id="compactDefaults"></div>
+      `;
+
+      document.getElementById("priorityInput").addEventListener("change", event => {
+        const value = Math.max(1, parseInt(event.target.value, 10) || 1);
+        step.priority = value;
+        const used = new Set();
+        mission.behaviors
+          .sort((a, b) => a.priority - b.priority)
+          .forEach(item => {
+            while (used.has(item.priority)) item.priority++;
+            used.add(item.priority);
+          });
+          renumberPriorities();
+          renderAll();
+        });
+      document.getElementById("moveHigher").addEventListener("click", () => moveSelectedStep(-1));
+      document.getElementById("moveLower").addEventListener("click", () => moveSelectedStep(1));
+      document.getElementById("duplicateStep").addEventListener("click", duplicateSelectedStep);
+      document.getElementById("removeStep").addEventListener("click", removeSelectedStep);
+
+      const argFields = document.getElementById("argFields");
+      const knownArgs = knownArgNamesFor(step);
+      step.args.forEach((arg, index) => {
+        const missing = knownArgs ? !knownArgs.has(normalizedBaseName(arg.name)) : true;
+        const field = document.createElement("div");
+        field.className = "field" + (missing ? " missing" : "");
+        if (missing) field.title = "Argument is not in the current simulator behavior table";
+        field.innerHTML = `<label title="${escapeHtml(arg.name)}">${escapeHtml(editorLabel(arg.name))}</label><input data-index="${index}" value="${escapeHtml(arg.value)}">`;
+        field.querySelector("input").addEventListener("input", event => {
+          arg.value = event.target.value;
+          renderScript();
+          drawPreviews();
+        });
+        argFields.appendChild(field);
+      });
+      renderCompactDefaults();
+    }
+
+    function renderMissionDefaults() {
+      selectedStepId = null;
+      document.getElementById("detailHeader").textContent = "Mission Defaults";
+      const container = document.getElementById("details");
+      container.innerHTML = `
+        <div class="meta-grid">
+          <label>Filename<input id="filenameInput" value="${escapeHtml(mission.filename)}"></label>
+          <label>State<input id="stateInput" value="${escapeHtml(mission.state)}"></label>
+        </div>
+        <div id="missionDropZone" class="drop-zone">
+          <span>Start from a .mi file</span>
+          <label class="file-button" for="importMission">Choose File</label>
+        </div>
+        <div class="field-grid">
+          <div class="field"><label>Header lines</label><textarea id="headerInput">${escapeHtml(mission.header)}</textarea></div>
+        </div>
+        <div id="headerValidation" class="validation-list"></div>
+        <div class="section-title">Variable Picker</div>
+        <div class="variable-picker">
+          <label>Prefix<select id="variablePrefix"></select></label>
+          <label>Variable<select id="vehicleVariable"></select></label>
+          <label>Value<input id="vehicleVariableValue"></label>
+          <button id="addPickedVariable">Add/Update</button>
+        </div>
+        <div class="section-title">Initial Sensors</div>
+        <div id="sensorList"></div>
+        <button id="addSensor">Add Sensor</button>
+      `;
+      document.getElementById("filenameInput").addEventListener("input", event => {
+        mission.filename = event.target.value || "mission.mi";
+      });
+      document.getElementById("stateInput").addEventListener("input", event => {
+        mission.state = event.target.value;
+        renderScript();
+      });
+      document.getElementById("headerInput").addEventListener("input", event => {
+        mission.header = event.target.value;
+        renderScript();
+        renderHeaderValidation();
+      });
+      document.getElementById("addSensor").addEventListener("click", () => {
+        mission.sensors.push({name: "m_depth(m)", value: 0});
+        renderMissionDefaults();
+        renderScript();
+        drawPreviews();
+      });
+      wireMissionDropZone();
+      renderVariablePicker();
+      renderHeaderValidation();
+      renderSensorList();
+    }
+
+    function renderCompactDefaults() {
+      const target = document.getElementById("compactDefaults");
+      if (!target) return;
+      target.innerHTML = `
+        <div class="meta-grid">
+          <label>Filename<input id="compactFilename" value="${escapeHtml(mission.filename)}"></label>
+          <label>State<input id="compactState" value="${escapeHtml(mission.state)}"></label>
+        </div>
+        <button id="editDefaults">Edit Header and Sensors</button>
+      `;
+      document.getElementById("compactFilename").addEventListener("input", event => mission.filename = event.target.value || "mission.mi");
+      document.getElementById("compactState").addEventListener("input", event => {
+        mission.state = event.target.value;
+        renderScript();
+      });
+      document.getElementById("editDefaults").addEventListener("click", renderMissionDefaults);
+    }
+
+    function renderHeaderValidation() {
+      const input = document.getElementById("headerInput");
+      const target = document.getElementById("headerValidation");
+      if (!input || !target) return;
+      const missing = missingHeaderEntries();
+      input.classList.toggle("missing", missing.length > 0);
+      target.innerHTML = missing
+        .map(item => `<div>Unsupported header/use entry: ${escapeHtml(item.token)}</div>`)
+        .join("");
+    }
+
+    function renderVariablePicker() {
+      const prefixSelect = document.getElementById("variablePrefix");
+      const variableSelect = document.getElementById("vehicleVariable");
+      const valueInput = document.getElementById("vehicleVariableValue");
+      const addButton = document.getElementById("addPickedVariable");
+      if (!prefixSelect || !variableSelect || !valueInput || !addButton) return;
+
+      const prefixes = ["all", ...vehiclePrefixes()];
+      const preferred = prefixes.includes("m") ? "m" : "all";
+      prefixSelect.innerHTML = prefixes.map(prefix => `<option value="${escapeHtml(prefix)}">${escapeHtml(prefix)}</option>`).join("");
+      prefixSelect.value = preferred;
+
+      const populateVariables = () => {
+        const prefix = prefixSelect.value;
+        const filtered = vehicleVariables.filter(item => prefix === "all" || variablePrefix(item.name) === prefix);
+        variableSelect.innerHTML = filtered
+          .map(item => `<option value="${escapeHtml(item.name)}">${escapeHtml(editorLabel(item.name))}</option>`)
+          .join("");
+        setPickedVariableDefault();
+      };
+
+      const setPickedVariableDefault = () => {
+        const item = vehicleVariableByName[variableSelect.value];
+        if (item) valueInput.value = fromScriptValue(item.name, item.value);
+      };
+
+      prefixSelect.addEventListener("change", populateVariables);
+      variableSelect.addEventListener("change", setPickedVariableDefault);
+      addButton.addEventListener("click", () => {
+        const item = vehicleVariableByName[variableSelect.value];
+        if (!item) return;
+        const existing = mission.sensors.find(sensor => baseName(sensor.name) === baseName(item.name));
+        if (existing) {
+          existing.name = item.name;
+          existing.value = valueInput.value;
+        } else {
+          mission.sensors.push({name: item.name, value: valueInput.value});
+        }
+        renderMissionDefaults();
+        renderScript();
+        drawPreviews();
+      });
+      populateVariables();
+    }
+
+    function renderSensorList() {
+      const list = document.getElementById("sensorList");
+      if (!list) return;
+      list.innerHTML = "";
+      mission.sensors.forEach((sensor, index) => {
+        const row = document.createElement("div");
+        updateSensorRowState(row, sensor.name);
+        row.innerHTML = `<input value="${escapeHtml(sensor.name)}" aria-label="sensor name"><input value="${escapeHtml(sensor.value)}" aria-label="sensor value"><button class="icon" title="Remove sensor">x</button>`;
+        const inputs = row.querySelectorAll("input");
+        inputs[0].addEventListener("input", event => {
+          sensor.name = event.target.value;
+          updateSensorRowState(row, sensor.name);
+          renderScript();
+        });
+        inputs[1].addEventListener("input", event => {
+          sensor.value = event.target.value;
+          renderScript();
+          drawPreviews();
+        });
+        row.querySelector("button").addEventListener("click", () => {
+          mission.sensors.splice(index, 1);
+          renderMissionDefaults();
+          renderScript();
+          drawPreviews();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    function updateSensorRowState(row, name) {
+      const missing = !isKnownVehicleVariable(name);
+      row.className = "sensor-row" + (missing ? " missing" : "");
+      row.title = missing ? "Sensor variable is not in the current simulator data structure" : "";
+    }
+
+    function formatName(name, width) {
+      return String(name).padStart(width, " ");
+    }
+
+    function renderScript() {
+      if (scriptDirty) {
+        renderWarnings();
+        return;
+      }
+      const text = buildScript();
+      document.getElementById("scriptOutput").value = text;
+      renderWarnings();
+    }
+
+    function buildScript() {
+      const lines = [];
+      mission.header.split(/\r?\n/).map(line => line.trim()).filter(Boolean).forEach(line => {
+        if (!/^InitDataFileSize\b/i.test(line)) lines.push(line);
+      });
+      lines.push(`InitDataFileSize  ${mission.sensors.length}`);
+      mission.sensors.forEach(sensor => {
+        lines.push(`  sensor: ${formatName(sensor.name, 29)} ${toScriptValue(sensor.name, sensor.value)}`);
+      });
+      if (mission.state.trim()) lines.push(`state: ${mission.state.trim()}`);
+      mission.behaviors
+        .slice()
+        .sort((a, b) => a.priority - b.priority)
+        .forEach(step => {
+          lines.push(` behavior: ${step.name} ${step.priority} `);
+          step.args.forEach(arg => {
+            if (String(arg.name).trim()) {
+              lines.push(`  b_arg: ${formatName(arg.name, 30)} ${toScriptValue(arg.name, arg.value)}`);
+            }
+          });
+        });
+      return lines.join("\n") + "\n";
+    }
+
+    function collectWarnings() {
+      const warnings = [];
+      const validation = missionValidation();
+      if (scriptDirty) {
+        warnings.push("Mission script has raw edits that are not synced to the behavior editor. Use Apply Edits to re-parse it.");
+      }
+      if (validation.missingHeaders.length) {
+        warnings.push("Unsupported header/use entries: " + validation.missingHeaders.join(", "));
+      }
+      if (validation.missingSensors.length) {
+        warnings.push("Unsupported sensor variables: " + validation.missingSensors.join(", "));
+      }
+      if (validation.missingBehaviors.length) {
+        warnings.push("Unsupported behaviors: " + validation.missingBehaviors.join(", "));
+      }
+      if (validation.missingArgs.length) {
+        warnings.push("Unsupported behavior arguments: " + validation.missingArgs.join(", "));
+      }
+      mission.behaviors.forEach(step => {
+        if (step.name === "depth_envelope" && getArg(step, "alt_env_active", 0) !== 0) {
+          warnings.push("depth_envelope altitude limiting is enabled; make sure M_ALTITUDE is valid in the simulator or field run.");
+        }
+        if (step.name === "setpoint" && getArg(step, "depth", 0) > 0 && getArg(step, "speed", 0) === 0) {
+          warnings.push("setpoint has a positive depth command with zero speed.");
+        }
+      });
+      return warnings;
+    }
+
+    function renderWarnings() {
+      const warnings = collectWarnings();
+      const target = document.getElementById("warnings");
+      target.innerHTML = warnings.map(item => {
+        const klass = /^Unsupported /.test(item) ? " class=\"missing-note\"" : "";
+        return `<div${klass}>${escapeHtml(item)}</div>`;
+      }).join("");
+    }
+
+    async function copyTextFromElement(element) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(element.value);
+      } else {
+        element.select();
+        document.execCommand("copy");
+      }
+    }
+
+    function importMissionFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => parseMissionText(String(reader.result), file.name);
+      reader.readAsText(file);
+    }
+
+    function handleImportFiles(files) {
+      const list = Array.from(files || []);
+      const file = list.find(item => /\.(mi|txt)$/i.test(item.name)) || list[0];
+      if (file) importMissionFile(file);
+    }
+
+    function isFileDrag(event) {
+      return event.dataTransfer && Array.from(event.dataTransfer.types || []).includes("Files");
+    }
+
+    function wireMissionDropZone() {
+      const zone = document.getElementById("missionDropZone");
+      if (!zone) return;
+      zone.addEventListener("dragover", event => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        zone.classList.add("drag-over");
+      });
+      zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+      zone.addEventListener("drop", event => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        zone.classList.remove("drag-over");
+        handleImportFiles(event.dataTransfer.files);
+      });
+    }
+
+    function parseMissionText(text, fileName) {
+      scriptDirty = false;
+      nextId = 1;
+      mission.filename = fileName || "imported.mi";
+      mission.state = "";
+      mission.header = "";
+      mission.sensors = [];
+      mission.behaviors = [];
+      let current = null;
+      const headerLines = [];
+      text.split(/\r?\n/).forEach(raw => {
+        const line = raw.trim();
+        if (!line || line.startsWith("#") || line.startsWith("%") || line.startsWith("*")) return;
+        let match = line.match(/^sensor:\s+(\S+)\s*(.*)$/i);
+        if (match) {
+          mission.sensors.push({name: match[1], value: fromScriptValue(match[1], match[2].trim() || "")});
+          return;
+        }
+        match = line.match(/^state:\s+(.+)$/i);
+        if (match) {
+          mission.state = match[1].trim();
+          return;
+        }
+        match = line.match(/^behavior:\s+(\S+)\s+(\d+)/i);
+        if (match) {
+          current = createStep(match[1], parseInt(match[2], 10));
+          current.args = [];
+          mission.behaviors.push(current);
+          return;
+        }
+        match = line.match(/^b_arg:\s+(\S+)\s*(.*)$/i);
+        if (match && current) {
+          current.args.push({name: match[1], value: fromScriptValue(match[1], match[2].trim() || "")});
+          return;
+        }
+        if (!/^InitDataFileSize\b/i.test(line)) headerLines.push(line);
+      });
+      mission.header = headerLines.join("\n");
+      if (!mission.header.trim()) mission.header = "UseSim 1\nMonitorLayeredControl 2\nCountdown 0";
+      if (!mission.sensors.length) mission.sensors.push({name: "m_depth(m)", value: 0});
+      renumberPriorities();
+      selectedStepId = mission.behaviors[0] ? mission.behaviors[0].id : null;
+      activeTab = "stack";
+      renderAll();
+    }
+
+    function initialDepth() {
+      const sensor = mission.sensors.find(item => baseName(item.name) === "m_depth");
+      return sensor ? parseFloat(sensor.value) || 0 : 0;
+    }
+
+    function initialNorth() {
+      const sensor = mission.sensors.find(item => baseName(item.name) === "m_pos_n");
+      return sensor ? parseFloat(sensor.value) || 0 : 0;
+    }
+
+    function initialEast() {
+      const sensor = mission.sensors.find(item => baseName(item.name) === "m_pos_e");
+      return sensor ? parseFloat(sensor.value) || 0 : 0;
+    }
+
+    function buildPreviewPath() {
+      const points = [{t: 0, n: initialNorth(), e: initialEast(), d: initialDepth(), label: "start"}];
+      let t = 0;
+      let n = points[0].n;
+      let e = points[0].e;
+      let d = points[0].d;
+      let heading = 0;
+      const motionSteps = mission.behaviors
+        .slice()
+        .sort((a, b) => b.priority - a.priority)
+        .filter(step => !["mission_timer", "depth_envelope", "broadcast", "remote_delay", "acquire_heading"].includes(step.name));
+
+      const addPoint = (duration, newDepth, newHeading, speed, label) => {
+        duration = Math.max(0, duration);
+        newDepth = Number.isFinite(newDepth) ? Math.max(0, newDepth) : d;
+        newHeading = Number.isFinite(newHeading) ? newHeading : heading;
+        speed = Number.isFinite(speed) ? speed : 0;
+        n += Math.cos(newHeading) * speed * duration;
+        e += Math.sin(newHeading) * speed * duration;
+        t += duration;
+        d = newDepth;
+        heading = newHeading;
+        points.push({t, n, e, d, label});
+      };
+
+      motionSteps.forEach(step => {
+        if (step.name === "setpoint") {
+          const cycles = Math.max(1, Math.round(getArg(step, "cycles", 1)));
+          let h = getArg(step, "heading", heading);
+          const turn = getArg(step, "turn", 0);
+          for (let i = 0; i < cycles; i++) {
+            addPoint(getArg(step, "time", 0), getArg(step, "depth", d), h, getArg(step, "speed", 0), "setpoint");
+            h += turn;
+          }
+        } else if (step.name === "waypoint_2d") {
+          const targetN = getArg(step, "wpt_n", n);
+          const targetE = getArg(step, "wpt_e", e);
+          const speed = Math.abs(getArg(step, "speed", 1));
+          const dist = Math.hypot(targetN - n, targetE - e);
+          const duration = getArg(step, "timeout", 0) > 0 ? Math.min(getArg(step, "timeout", 0), dist / Math.max(speed, 0.1)) : dist / Math.max(speed, 0.1);
+          t += Math.max(0, duration);
+          n = targetN;
+          e = targetE;
+          d = getArg(step, "depth", d);
+          points.push({t, n, e, d, label: "waypoint"});
+        } else if (step.name === "descend") {
+          const pitch = Math.abs(getArg(step, "descent_angle", 0.2));
+          const speed = Math.abs(getArg(step, "speed", 1));
+          const target = getArg(step, "end_depth", d);
+          const duration = getArg(step, "max_time", 0) > 0 ? Math.min(getArg(step, "max_time", 0), Math.abs(target - d) / Math.max(speed * Math.sin(pitch), 0.05)) : Math.abs(target - d) / Math.max(speed * Math.sin(pitch), 0.05);
+          addPoint(duration, target, getArg(step, "heading", heading), speed, "descend");
+        } else if (step.name === "ascend") {
+          const pitch = Math.abs(getArg(step, "ascent_angle", 0.2));
+          const speed = Math.abs(getArg(step, "speed", 1));
+          const target = getArg(step, "end_depth", 0);
+          const duration = Math.abs(d - target) / Math.max(speed * Math.sin(pitch), 0.05);
+          addPoint(duration, target, getArg(step, "heading", heading), speed, "ascend");
+        } else if (step.name === "yo_yo") {
+          const cycles = Math.min(20, Math.max(1, Math.round(getArg(step, "cycles", 1))));
+          const top = getArg(step, "top_depth", d);
+          const bottom = getArg(step, "bottom_depth", d);
+          const total = getArg(step, "max_time", cycles * 240);
+          for (let i = 0; i < cycles * 2; i++) {
+            addPoint(total / (cycles * 2), i % 2 === 0 ? bottom : top, heading, 1, "yo_yo");
+          }
+        } else if (step.name === "survey_dead_reckon") {
+          addPoint(getArg(step, "trans_time", 0), getArg(step, "depth", d), getArg(step, "trans_heading", heading), getArg(step, "transit_speed", 0), "transit");
+          const cycles = Math.max(0, Math.round(getArg(step, "cycles", 0)));
+          for (let i = 0; i < cycles; i++) {
+            addPoint(getArg(step, "time_leg1", 0), getArg(step, "depth", d), getArg(step, "heading_leg1", heading) + (i % 2 ? Math.PI : 0), getArg(step, "survey_speed", 0), "leg1");
+            addPoint(getArg(step, "time_leg2", 0), getArg(step, "depth", d), getArg(step, "heading_leg2", heading), getArg(step, "survey_speed", 0), "leg2");
+          }
+        } else if (step.name === "setvector") {
+          const pitch = getArg(step, "pitch", 0);
+          const speed = getArg(step, "speed", 0);
+          const duration = getArg(step, "time", 0);
+          const target = Math.max(0, d - Math.sin(pitch) * speed * duration);
+          addPoint(duration, target, getArg(step, "heading", heading), speed, "setvector");
+        } else if (step.name === "set_rudder" || step.name === "set_elevator" || step.name === "wiggle" || step.name === "launch") {
+          addPoint(getArg(step, "time", getArg(step, "timeout", 0)), getArg(step, "depth", d), heading, getArg(step, "speed", 0), step.name);
+        }
+      });
+      return points;
+    }
+
+    function setupCanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return {ctx, width: rect.width, height: rect.height};
+    }
+
+    function drawPreviews() {
+      drawPlan(buildPreviewPath());
+      drawDepth(buildPreviewPath());
+    }
+
+    function drawPlan(points) {
+      const canvas = document.getElementById("planCanvas");
+      const {ctx, width, height} = setupCanvas(canvas);
+      ctx.clearRect(0, 0, width, height);
+      const pad = 34;
+      const ns = points.map(p => p.n);
+      const es = points.map(p => p.e);
+      const minN = Math.min(...ns), maxN = Math.max(...ns);
+      const minE = Math.min(...es), maxE = Math.max(...es);
+      const spanN = Math.max(20, maxN - minN);
+      const spanE = Math.max(20, maxE - minE);
+      const sx = (width - 2 * pad) / spanE;
+      const sy = (height - 2 * pad) / spanN;
+      const scale = Math.min(sx, sy);
+      const x = p => pad + (p.e - minE) * scale + ((width - 2 * pad) - spanE * scale) / 2;
+      const y = p => height - pad - (p.n - minN) * scale - ((height - 2 * pad) - spanN * scale) / 2;
+      drawGrid(ctx, width, height, pad);
+      ctx.strokeStyle = "#2f6f9f";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      points.forEach((p, index) => index ? ctx.lineTo(x(p), y(p)) : ctx.moveTo(x(p), y(p)));
+      ctx.stroke();
+      points.forEach((p, index) => {
+        ctx.fillStyle = index === 0 ? "#477a4b" : (index === points.length - 1 ? "#b85c38" : "#197278");
+        ctx.beginPath();
+        ctx.arc(x(p), y(p), index === 0 || index === points.length - 1 ? 5 : 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      drawCanvasLabel(ctx, `N ${Math.round(minN)}..${Math.round(maxN)} m`, pad, 18);
+      drawCanvasLabel(ctx, `E ${Math.round(minE)}..${Math.round(maxE)} m`, width - pad - 130, height - 12);
+    }
+
+    function drawDepth(points) {
+      const canvas = document.getElementById("depthCanvas");
+      const {ctx, width, height} = setupCanvas(canvas);
+      ctx.clearRect(0, 0, width, height);
+      const pad = 34;
+      const maxT = Math.max(60, ...points.map(p => p.t));
+      const maxD = Math.max(10, ...points.map(p => p.d), envelopeDepth());
+      const x = p => pad + (p.t / maxT) * (width - 2 * pad);
+      const y = p => pad + (p.d / maxD) * (height - 2 * pad);
+      drawGrid(ctx, width, height, pad);
+      drawEnvelope(ctx, width, height, pad, maxD);
+      ctx.strokeStyle = "#197278";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      points.forEach((p, index) => index ? ctx.lineTo(x(p), y(p)) : ctx.moveTo(x(p), y(p)));
+      ctx.stroke();
+      points.forEach((p, index) => {
+        ctx.fillStyle = index === 0 ? "#477a4b" : "#197278";
+        ctx.beginPath();
+        ctx.arc(x(p), y(p), index === 0 ? 5 : 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      drawCanvasLabel(ctx, `0..${Math.round(maxD)} m`, pad, 18);
+      drawCanvasLabel(ctx, `0..${Math.round(maxT)} s`, width - pad - 110, height - 12);
+    }
+
+    function drawGrid(ctx, width, height, pad) {
+      ctx.strokeStyle = "#e2e8ec";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const x = pad + i * (width - 2 * pad) / 4;
+        const y = pad + i * (height - 2 * pad) / 4;
+        ctx.beginPath();
+        ctx.moveTo(x, pad);
+        ctx.lineTo(x, height - pad);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(width - pad, y);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "#8da0aa";
+      ctx.strokeRect(pad, pad, width - 2 * pad, height - 2 * pad);
+    }
+
+    function envelopeDepth() {
+      const env = mission.behaviors.find(step => step.name === "depth_envelope");
+      return env ? getArg(env, "max_depth", 0) : 0;
+    }
+
+    function drawEnvelope(ctx, width, height, pad, maxD) {
+      const env = mission.behaviors.find(step => step.name === "depth_envelope");
+      if (!env) return;
+      const maxDepth = getArg(env, "max_depth", 0);
+      const minDepth = getArg(env, "min_depth", 0);
+      ctx.setLineDash([6, 5]);
+      [[maxDepth, "#b85c38"], [minDepth, "#d39d2a"]].forEach(([depth, color]) => {
+        if (depth <= 0) return;
+        const y = pad + (depth / maxD) * (height - 2 * pad);
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(width - pad, y);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    }
+
+    function drawCanvasLabel(ctx, text, x, y) {
+      ctx.fillStyle = "#4f606b";
+      ctx.font = "12px Segoe UI, Arial, sans-serif";
+      ctx.fillText(text, x, y);
+    }
+
+    function renderResults() {
+      const summary = document.getElementById("resultsSummary");
+      if (!simulationResults || !Array.isArray(simulationResults) || !simulationResults.length) {
+        summary.textContent = "Run Ksim to generate simulation results.";
+      } else {
+        const first = simulationResults[0];
+        const last = simulationResults[simulationResults.length - 1];
+        summary.textContent = `Ksim loaded ${simulationResults.length} behavior log entries from ${first.time.toFixed(1)}s to ${last.time.toFixed(1)}s.`;
+      }
+      plotBehaviorTimeline();
+    }
+
+    function plotBehaviorTimeline() {
+      const canvas = document.getElementById("behaviorCanvas");
+      if (!canvas.offsetWidth || !canvas.offsetHeight) return;
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      if (!simulationResults || !Array.isArray(simulationResults) || !simulationResults.length) {
+        ctx.fillStyle = "#61717d";
+        ctx.font = "14px Segoe UI, Arial, sans-serif";
+        ctx.fillText("No behavior timeline available yet.", 20, 36);
+        return;
+      }
+
+      const times = simulationResults.map(entry => entry.time);
+      const depths = simulationResults.map(entry => entry.c0_depth);
+      const minTime = Math.min(...times);
+      const maxTime = Math.max(...times);
+      const minDepth = Math.min(...depths);
+      const maxDepth = Math.max(...depths);
+      const left = 46;
+      const right = rect.width - 14;
+      const top = 18;
+      const bottom = rect.height - 28;
+      const width = right - left;
+      const height = bottom - top;
+
+      ctx.strokeStyle = "#cfd8dc";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, bottom);
+      ctx.lineTo(right, bottom);
+      ctx.stroke();
+
+      ctx.fillStyle = "#4f606b";
+      ctx.font = "12px Segoe UI, Arial, sans-serif";
+      ctx.fillText(`Depth (m)`, left, top - 4);
+      ctx.fillText(`Time (s)`, right - 44, bottom + 18);
+
+      const timeSpan = maxTime - minTime || 1;
+      const depthSpan = maxDepth - minDepth || 1;
+      ctx.strokeStyle = "#197278";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      simulationResults.forEach((entry, index) => {
+        const x = left + ((entry.time - minTime) / timeSpan) * width;
+        const y = top + ((entry.c0_depth - minDepth) / depthSpan) * height;
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = "#125459";
+      ctx.font = "11px Segoe UI, Arial, sans-serif";
+      ctx.fillText(minTime.toFixed(0), left, bottom + 14);
+      ctx.fillText(maxTime.toFixed(0), right - 26, bottom + 14);
+      ctx.fillText(minDepth.toFixed(1), 4, bottom);
+      ctx.fillText(maxDepth.toFixed(1), 4, top + 4);
+    }
+
+    async function runMissionInKsim() {
+      const script = document.getElementById("scriptOutput").value;
+      const filename = mission.filename || "mission.mi";
+      const summary = document.getElementById("resultsSummary");
+      if (!script.trim()) {
+        simulationResults = null;
+        activeTab = "results";
+        renderAll();
+        summary.textContent = "Mission script is empty. Add behaviors and download or run the mission.";
+        return;
+      }
+
+      activeTab = "results";
+      simulationResults = null;
+      renderAll();
+      summary.textContent = "Running Ksim...";
+
+      try {
+        const response = await fetch("/run-ksim", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({filename, mission: script})
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          simulationResults = null;
+          summary.textContent = `Ksim failed: ${data.error || response.statusText}`;
+          return;
+        }
+
+        simulationResults = Array.isArray(data.behavior_log) ? data.behavior_log : [];
+        renderResults();
+      } catch (error) {
+        simulationResults = null;
+        summary.textContent = `Run failed: ${error.message}`;
+      }
+    }
+
+    document.getElementById("catalogTab").addEventListener("click", () => {
+      activeTab = "catalog";
+      selectedStepId = null;
+      renderAll();
+    });
+    document.getElementById("stackTab").addEventListener("click", () => {
+      activeTab = "stack";
+      if (!selectedStepId && mission.behaviors[0]) selectedStepId = mission.behaviors[0].id;
+      renderAll();
+    });
+    document.getElementById("search").addEventListener("input", renderCatalog);
+    document.getElementById("newMission").addEventListener("click", resetMission);
+    document.getElementById("applyScript").addEventListener("click", () => {
+      parseMissionText(document.getElementById("scriptOutput").value, mission.filename);
+    });
+    document.getElementById("selectScript").addEventListener("click", () => document.getElementById("scriptOutput").select());
+    document.getElementById("scriptOutput").addEventListener("input", () => {
+      scriptDirty = true;
+      renderWarnings();
+    });
+    document.getElementById("scriptOutput").addEventListener("click", selectBehaviorFromScriptCursor);
+    document.getElementById("scriptOutput").addEventListener("keyup", selectBehaviorFromScriptCursor);
+    document.getElementById("copyScript").addEventListener("click", async () => {
+      const output = document.getElementById("scriptOutput");
+      await copyTextFromElement(output);
+    });
+    document.getElementById("downloadScript").addEventListener("click", () => {
+      const blob = new Blob([document.getElementById("scriptOutput").value], {type: "text/plain"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = mission.filename || "mission.mi";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+    document.getElementById("runKsim").addEventListener("click", runMissionInKsim);
+    document.getElementById("resultsTab").addEventListener("click", () => {
+      activeTab = "results";
+      renderAll();
+    });
+    document.getElementById("importMission").addEventListener("change", event => {
+      const file = event.target.files[0];
+      importMissionFile(file);
+      event.target.value = "";
+    });
+    document.addEventListener("dragenter", event => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      document.body.classList.add("drag-active");
+    });
+    document.addEventListener("dragover", event => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+    });
+    document.addEventListener("dragleave", event => {
+      if (event.relatedTarget) return;
+      document.body.classList.remove("drag-active");
+    });
+    document.addEventListener("drop", event => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      document.body.classList.remove("drag-active");
+      handleImportFiles(event.dataTransfer.files);
+    });
+    window.addEventListener("resize", drawPreviews);
+
+    resetMission();
+  </script>
+</body>
+</html>
