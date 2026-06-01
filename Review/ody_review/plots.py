@@ -154,10 +154,11 @@ def vertical_plane(ds: xr.Dataset) -> plt.Figure:
 # ---------------------------------------------------------------------------
 def navplot(ds: xr.Dataset) -> plt.Figure:
     """Track in horizontal plane (north vs east)."""
-    _need(ds, "m_pos_n", "m_pos_e")
+    n_name, e_name = ("real_x", "real_y") if "real_x" in ds and "real_y" in ds else ("m_pos_n", "m_pos_e")
+    _need(ds, n_name, e_name)
     fig, ax = plt.subplots(figsize=(7, 7))
-    n = ds["m_pos_n"].values
-    e = ds["m_pos_e"].values
+    n = ds[n_name].values
+    e = ds[e_name].values
     ax.plot(e, n, "b-", lw=0.8)
     if "u_veh_init_north" in ds.attrs and "u_veh_init_east" in ds.attrs:
         ax.plot(ds.attrs["u_veh_init_east"], ds.attrs["u_veh_init_north"],
@@ -461,12 +462,15 @@ def thruster(ds: xr.Dataset) -> plt.Figure:
     """
     have_curr = "c_thruster_current" in ds or "m_thruster_current" in ds
     have_rpm  = "m_propeller_speed" in ds
-    if not (have_curr or have_rpm):
+    velocity_names = [name for name in ("m_water_speed", "real_u", "real_v", "real_w") if name in ds]
+    have_velocity = bool(velocity_names)
+    if not (have_curr or have_rpm or have_velocity):
         raise KeyError("No thruster channels logged "
-                       "(c_thruster_current, m_thruster_current, m_propeller_speed).")
+                       "(c_thruster_current, m_thruster_current, "
+                       "m_propeller_speed, m_water_speed, real_u/v/w).")
 
     t = ds["time"].values
-    n_panels = (1 if have_curr else 0) + (1 if have_rpm else 0)
+    n_panels = (1 if have_curr else 0) + (1 if have_rpm else 0) + (1 if have_velocity else 0)
     fig, axes = plt.subplots(n_panels, 1, sharex=True, figsize=(10, 3.2 * n_panels))
     if n_panels == 1:
         axes = [axes]
@@ -495,6 +499,26 @@ def thruster(ds: xr.Dataset) -> plt.Figure:
             axes[panel].set_title(f"Thruster: {_run_name(ds)}")
         panel += 1
 
+    if have_velocity:
+        if "m_water_speed" in ds:
+            axes[panel].plot(t, ds["m_water_speed"].values, "k-", lw=1.0,
+                             label="water speed")
+        if "real_u" in ds:
+            axes[panel].plot(t, ds["real_u"].values, color="tab:blue",
+                             lw=0.9, label="real_u axial")
+        if "real_v" in ds:
+            axes[panel].plot(t, ds["real_v"].values, color="tab:orange",
+                             lw=0.9, label="real_v sideways")
+        if "real_w" in ds:
+            axes[panel].plot(t, ds["real_w"].values, color="tab:green",
+                             lw=0.9, label="real_w upward")
+        axes[panel].set_ylabel("Vehicle velocity (m/s)")
+        axes[panel].grid(True, alpha=0.3)
+        axes[panel].legend(loc="best", fontsize=9)
+        if panel == 0:
+            axes[panel].set_title(f"Thruster: {_run_name(ds)}")
+        panel += 1
+
     axes[-1].set_xlabel("Mission time (s)")
     fig.tight_layout()
     _add_copy_button(fig)
@@ -516,7 +540,8 @@ def horizontal_diagnostic(ds: xr.Dataset) -> plt.Figure:
       - Is the controller asking for sane rudder?
       - Is the rudder doing what it was asked?
     """
-    _need(ds, "m_pos_n", "m_pos_e", "m_yaw")
+    n_name, e_name = ("real_x", "real_y") if "real_x" in ds and "real_y" in ds else ("m_pos_n", "m_pos_e")
+    _need(ds, n_name, e_name, "m_yaw")
 
     t = ds["time"].values
     fig = plt.figure(figsize=(10, 11))
@@ -525,8 +550,8 @@ def horizontal_diagnostic(ds: xr.Dataset) -> plt.Figure:
 
     # ---- Plan view ------------------------------------------------------
     ax_top = fig.add_subplot(gs[0])
-    n = ds["m_pos_n"].values
-    e = ds["m_pos_e"].values
+    n = ds[n_name].values
+    e = ds[e_name].values
     ax_top.plot(e, n, "b-", lw=0.8, label="track")
     ax_top.plot(e[0], n[0], "go", markersize=10, label="start")
     ax_top.plot(e[-1], n[-1], "rs", markersize=10, label="end")
@@ -537,33 +562,19 @@ def horizontal_diagnostic(ds: xr.Dataset) -> plt.Figure:
     ax_top.legend(loc="best", fontsize=9)
     ax_top.set_title(f"Horizontal-plane diagnostic: {_run_name(ds)}")
 
-    # ---- Heading + rudder time series ----------------------------------
+    # ---- Heading time series -------------------------------------------
     ax_bot = fig.add_subplot(gs[1])
-    yaw_deg = np.degrees(ds["m_yaw"].values)
+    yaw_deg = np.degrees(ds["m_yaw"].values) % 360
     ax_bot.plot(t, yaw_deg, "g-", lw=1.0, label="m_yaw")
     if "c_heading" in ds:
-        c_yaw_deg = np.degrees(ds["c_heading"].values)
+        c_yaw_deg = np.degrees(ds["c_heading"].values) % 360
         ax_bot.plot(t, c_yaw_deg, "r--", lw=0.8, label="commanded")
     ax_bot.set_ylabel("Heading (deg)")
     ax_bot.set_xlabel("Mission time (s)")
     ax_bot.grid(True, alpha=0.3)
 
     # Rudder on secondary axis (typical range ±15° vs heading 0–360°)
-    if "m_rudder_angle" in ds or "c_rudder_angle" in ds:
-        ax_rud = ax_bot.twinx()
-        if "m_rudder_angle" in ds:
-            ax_rud.plot(t, np.degrees(ds["m_rudder_angle"].values), "m-",
-                        lw=0.8, alpha=0.7, label="rudder (meas)")
-        if "c_rudder_angle" in ds:
-            ax_rud.plot(t, np.degrees(ds["c_rudder_angle"].values), "k:",
-                        lw=0.8, alpha=0.7, label="rudder (cmd)")
-        ax_rud.set_ylabel("Rudder (deg)")
-        # Combined legend on the bottom panel
-        h1, l1 = ax_bot.get_legend_handles_labels()
-        h2, l2 = ax_rud.get_legend_handles_labels()
-        ax_bot.legend(h1 + h2, l1 + l2, loc="best", fontsize=9)
-    else:
-        ax_bot.legend(loc="best", fontsize=9)
+    ax_bot.legend(loc="best", fontsize=9)
 
     _add_copy_button(fig)
     return fig
@@ -573,23 +584,34 @@ def horizontal_diagnostic(ds: xr.Dataset) -> plt.Figure:
 # Battery / power (o2_power.m equivalent)
 # ---------------------------------------------------------------------------
 def power(ds: xr.Dataset) -> plt.Figure:
-    """Battery voltage and current draw vs time."""
-    fig, axes = plt.subplots(2, 1, sharex=True, figsize=(9, 6))
+    """Battery voltage, current, SOC, and power vs time."""
+    fig, axes = plt.subplots(4, 1, sharex=True, figsize=(9, 8))
     t = ds["time"].values
     has_any = False
-    if "m_km_voltage" in ds:
-        axes[0].plot(t, ds["m_km_voltage"].values, "b-")
+    voltage_name = "m_battery_voltage" if "m_battery_voltage" in ds else "m_km_voltage"
+    current_name = "m_battery_current" if "m_battery_current" in ds else "m_km_current"
+    soc_name = "real_battery_soc" if "real_battery_soc" in ds else "m_batt_soc_est"
+    if voltage_name in ds:
+        axes[0].plot(t, ds[voltage_name].values, "b-")
         axes[0].set_ylabel("Voltage (V)")
         has_any = True
-    if "m_km_current" in ds:
-        axes[1].plot(t, ds["m_km_current"].values, "r-")
+    if current_name in ds:
+        axes[1].plot(t, ds[current_name].values, "r-")
         axes[1].set_ylabel("Current (A)")
         has_any = True
+    if soc_name in ds:
+        axes[2].plot(t, ds[soc_name].values, "g-")
+        axes[2].set_ylabel("SOC")
+        has_any = True
+    if "real_battery_power" in ds:
+        axes[3].plot(t, ds["real_battery_power"].values, "k-")
+        axes[3].set_ylabel("Power (W)")
+        has_any = True
     if not has_any:
-        raise KeyError("No m_km_voltage / m_km_current in dataset.")
-    axes[1].set_xlabel("Mission time (s)")
-    axes[0].grid(True, alpha=0.3)
-    axes[1].grid(True, alpha=0.3)
+        raise KeyError("No battery/power channels in dataset.")
+    axes[-1].set_xlabel("Mission time (s)")
+    for ax in axes:
+        ax.grid(True, alpha=0.3)
     axes[0].set_title(f"Power: {_run_name(ds)}")
     fig.tight_layout()
     _add_copy_button(fig)

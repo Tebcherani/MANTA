@@ -7,10 +7,10 @@ sticky values seen at each cycle. This means a sensor logged once at
 init that never changes shows write_count=1, not write_count=N_cycles.
 
 Usage:
-    python -m ody_review.inspect FILE.obd
-    python -m ody_review.inspect FILE.obd --csv stats.csv
-    python -m ody_review.inspect FILE.obd --sort writes  # writes|name|min|max|index
-    python -m ody_review.inspect FILE.obd --filter m_     # only sensors starting with m_
+    python -m ody_review.inspect_odb FILE.obd
+    python -m ody_review.inspect_odb FILE.obd --csv stats.csv
+    python -m ody_review.inspect_odb FILE.obd --sort writes  # writes|name|min|max|index
+    python -m ody_review.inspect_odb FILE.obd --filter m_     # only sensors starting with m_
 """
 from __future__ import annotations
 

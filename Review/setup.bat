@@ -65,7 +65,7 @@ if errorlevel 1 (
 echo.
 echo === Setup complete ===
 echo.
-echo You can now double-click review.bat to review a file,
-echo or drag any .obd file onto review.bat.
+echo You can now double-click launch_review.py to open the tabbed GUI,
+echo or run: python Review\launch_review.py
 echo.
 pause

@@ -74,6 +74,20 @@ def _parse_header(raw: bytes) -> tuple[list[_SensorDef], int, dict]:
         if "#" in line and not line.lstrip().startswith(tuple("0123456789")):
             # Date/comment line: "1998/02/03 04:25:07 GMT     # OS-9 file ..."
             meta.setdefault("header_lines", []).append(line)
+            # Extract fault file name written by write_fault_header() in log_data.c:
+            #   "# fault file: cg_shift_demo.fd"
+            if "fault file:" in line:
+                m = re.search(r"fault file:\s*(\S+)", line)
+                if m:
+                    meta["fault_file"] = m.group(1)
+            if "mission file:" in line:
+                m = re.search(r"mission file:\s*(\S+)", line)
+                if m:
+                    meta["mission_file"] = m.group(1)
+            if line.startswith("# mi>"):
+                meta.setdefault("mission_lines", []).append(line[5:].lstrip())
+            if line.startswith("# fd>"):
+                meta.setdefault("fault_lines", []).append(line[5:].lstrip())
             continue
         if line.startswith(("*", "%")):
             continue
@@ -137,6 +151,11 @@ def _parse_header(raw: bytes) -> tuple[list[_SensorDef], int, dict]:
         if nl < 0:
             raise ValueError("Found '9999' but no terminating newline after it.")
         binary_offset = nl + 1
+
+    if "mission_lines" in meta:
+        meta["mission_text"] = "\n".join(meta["mission_lines"]).rstrip() + "\n"
+    if "fault_lines" in meta:
+        meta["fault_text"] = "\n".join(meta["fault_lines"]).rstrip() + "\n"
 
     return sensors, binary_offset, meta
 
