@@ -10,26 +10,38 @@
 
 
 /*----------------------------------------------------------------------
-  If the ODY file system maintains its relative structure, then the only
-  change needed is to ODY_ROOT.  The ANSI-C standard specifies that the
-  preprocessor concatenates quoted strings when separated by whitespace.
-  The following code relies on this feature.
+  Runtime paths are rooted at the simulator directory by default.  This
+  lets sim/ksim be launched from any working directory while preserving
+  the traditional DATA_DIR, MISSION_DIR, etc. names used throughout the
+  code.  ODY_ROOT in the environment overrides the detected root.
   ----------------------------------------------------------------------*/
 
 #include "ody_name.h"		/* for vehicle identification */
 
-#ifdef _OSK
-#define ODY_ROOT "/dd/usr/auvlab/ody"
-#else
-#define ODY_ROOT "."
-#endif
+#define ODY_PATH_MAX 512
 
-#define INIT_DIR     ODY_ROOT "/Init"
-#define DATA_DIR     ODY_ROOT "/SData"
-#define SYSLOG_FILE  ODY_ROOT "/system.log"
-#define MISSION_DIR  ODY_ROOT "/SMission"
-#define SFAULT_DIR   ODY_ROOT "/SFault"
-#define VEHICLE_DIR  ODY_ROOT "/Vehicle"
-#define LBL_LOGFILE_NAME ODY_ROOT "/lbl.log"
+extern char ody_root[ODY_PATH_MAX];
+extern char ody_init_dir[ODY_PATH_MAX];
+extern char ody_data_dir[ODY_PATH_MAX];
+extern char ody_syslog_file[ODY_PATH_MAX];
+extern char ody_mission_dir[ODY_PATH_MAX];
+extern char ody_sfault_dir[ODY_PATH_MAX];
+extern char ody_vehicle_dir[ODY_PATH_MAX];
+extern char ody_lbl_logfile_name[ODY_PATH_MAX];
+
+void ody_init_paths( const char *argv0 );
+int ody_path_is_explicit( const char *path );
+int ody_file_exists( const char *path );
+void ody_join_path( char *out, int out_size, const char *dir,
+		    const char *name );
+
+#define ODY_ROOT ody_root
+#define INIT_DIR ody_init_dir
+#define DATA_DIR ody_data_dir
+#define SYSLOG_FILE ody_syslog_file
+#define MISSION_DIR ody_mission_dir
+#define SFAULT_DIR ody_sfault_dir
+#define VEHICLE_DIR ody_vehicle_dir
+#define LBL_LOGFILE_NAME ody_lbl_logfile_name
 
 #endif

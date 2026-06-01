@@ -25,7 +25,7 @@
 #define MAX_BEHAVIOR    30
 #define MAX_COMMAND     30
 #define MAX_MODEM       500
-#define MAX_FILE_NAME   64
+#define MAX_FILE_NAME   512
 #define MAX_STATES      3
 #define MAX_STATE_NAME  128
 #define MAX_LINE        196

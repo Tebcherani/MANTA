@@ -22,6 +22,7 @@
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
+int  load_vehicle_def( const char * );
 int  hirestime( double * );
 int  stack_busy( struct command * );
 void handle_modem( void );
@@ -29,11 +30,96 @@ void get_argos( long );
 
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
-char DataFileName[64];
+char DataFileName[ODY_PATH_MAX];
 double gasdev();
 
 static char tmp2[80];
 static double north0, east0;
+
+/* CLI flags for ksim / mission verification modes */
+static int parse_only_mode = 0;  /* --parse: load mission and exit */
+static int nolog_mode = 0;        /* --nolog: skip data file logging */
+static char behavior_dump_file[256] = "";  /* --dump-behavior: JSON output file */
+
+/* In-memory behavior activity capture (max 100k cycles for ksim) */
+#define MAX_BEHAVIOR_LOG 100000
+struct behavior_log_entry {
+    double time;
+    int state;
+    int priority;
+    int behavior_id;
+    int heading_mode;
+    int depth_mode;
+    int speed_mode;
+    double c0_heading;
+    double c0_depth;
+    double c0_speed;
+} behavior_log[MAX_BEHAVIOR_LOG];
+static int behavior_log_count = 0;
+
+/* Capture behavior activity for ksim verification */
+static void capture_behavior_activity( void )
+{
+    int i;
+    if (behavior_log_count >= MAX_BEHAVIOR_LOG) return;
+    
+    behavior_log[behavior_log_count].time = sensor(M_PRESENT_TIME);
+    behavior_log[behavior_log_count].state = vvp->cstate;
+    behavior_log[behavior_log_count].heading_mode = vvp->c[0].heading_mode;
+    behavior_log[behavior_log_count].depth_mode = vvp->c[0].depth_mode;
+    behavior_log[behavior_log_count].speed_mode = vvp->c[0].speed_mode;
+    behavior_log[behavior_log_count].c0_heading = vvp->c[0].heading[0];
+    behavior_log[behavior_log_count].c0_depth = vvp->c[0].depth[0];
+    behavior_log[behavior_log_count].c0_speed = vvp->c[0].speed[0];
+    
+    /* Log active behavior at highest priority */
+    behavior_log[behavior_log_count].behavior_id = -1;
+    behavior_log[behavior_log_count].priority = -1;
+    for (i = 0; i < MAX_COMMAND; i++) {
+        if (vvp->sta[vvp->cstate].c[i].behavior != -1) {
+            behavior_log[behavior_log_count].behavior_id = vvp->sta[vvp->cstate].c[i].behavior;
+            behavior_log[behavior_log_count].priority = i;
+            break;
+        }
+    }
+    
+    behavior_log_count++;
+}
+
+/* Dump behavior log as JSON for mission verification */
+static void dump_behavior_log_json( const char *fname )
+{
+    FILE *fp;
+    int i;
+    
+    fp = fopen(fname, "w");
+    if (!fp) {
+        sprintf( msg_buf, "Cannot open %s for behavior dump\n", fname );
+        write_message( TERM | SLOG );
+        return;
+    }
+    
+    fprintf(fp, "[\n");
+    for (i = 0; i < behavior_log_count; i++) {
+        fprintf(fp, "  {\n");
+        fprintf(fp, "    \"time\": %.2f,\n", behavior_log[i].time);
+        fprintf(fp, "    \"state\": %d,\n", behavior_log[i].state);
+        fprintf(fp, "    \"behavior_id\": %d,\n", behavior_log[i].behavior_id);
+        fprintf(fp, "    \"priority\": %d,\n", behavior_log[i].priority);
+        fprintf(fp, "    \"heading_mode\": %d,\n", behavior_log[i].heading_mode);
+        fprintf(fp, "    \"depth_mode\": %d,\n", behavior_log[i].depth_mode);
+        fprintf(fp, "    \"speed_mode\": %d,\n", behavior_log[i].speed_mode);
+        fprintf(fp, "    \"c0_heading\": %.4f,\n", behavior_log[i].c0_heading);
+        fprintf(fp, "    \"c0_depth\": %.4f,\n", behavior_log[i].c0_depth);
+        fprintf(fp, "    \"c0_speed\": %.4f\n", behavior_log[i].c0_speed);
+        fprintf(fp, "  }%s\n", (i < behavior_log_count-1) ? "," : "");
+    }
+    fprintf(fp, "]\n");
+    fclose(fp);
+    
+    sprintf( msg_buf, "Behavior log dumped to %s (%d entries)\n", fname, behavior_log_count );
+    write_message( TERM | SLOG );
+}
 
 int main( int argc, char *argv[], char *envp[] )
 {
@@ -46,10 +132,14 @@ int main( int argc, char *argv[], char *envp[] )
     time_t start_time;		/* used for syslog, datalog */
     struct tm *tp;
     char *tmp1, *tmp3;
+    char *mission_file = NULL, *fault_file = NULL;
+    char *vehicle_file = "Vehicle/Borealis.vd";
 				/* e is the force/moment vector, p is the
 				   position/orientation vector */
     double e[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double p[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+    ody_init_paths( argv[0] );
 
   /* del13 is rudder angle in radian, del24 is elevator angle in radians */
   /* I'm pretty sure that positive rudder causes a right turn and that
@@ -65,21 +155,86 @@ int main( int argc, char *argv[], char *envp[] )
 
     UseSim = 1;
 
+    /* Parse command-line arguments */
     if ( argc < 2 )
     {
 	fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
+        fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
+        fprintf( stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0] );
+        fprintf( stderr, "       %s --nolog mission                 (run without logging)\n", argv[0] );
+        fprintf( stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0] );
+        fprintf( stderr, "       %s --help|-h                     (show this message)\n", argv[0] );
 	exit( 1 );
     }
-    if ( load_mission(argv[1]) == -1 )
+    
+    /* Process CLI flags */
+    i = 1;
+    while (i < argc && argv[i][0] == '-') {
+        if (!strcmp(argv[i], "--parse")) {
+            parse_only_mode = 1;
+            i++;
+        } else if (!strcmp(argv[i], "--nolog")) {
+            nolog_mode = 1;
+            i++;
+        } else if (!strcmp(argv[i], "--dump-behavior")) {
+            if (i+1 < argc) {
+                strcpy(behavior_dump_file, argv[i+1]);
+                i += 2;
+            } else {
+                fprintf(stderr, "Error: --dump-behavior requires filename\n");
+                exit(1);
+            }
+        } else if (!strcmp(argv[i], "--vehicle")) {
+            if (i+1 < argc) {
+                vehicle_file = argv[i+1];
+                i += 2;
+            } else {
+                fprintf(stderr, "Error: --vehicle requires filename\n");
+                exit(1);
+            }
+        } else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
+            fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
+            fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
+            fprintf( stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0] );
+            fprintf( stderr, "       %s --nolog mission                 (run without logging)\n", argv[0] );
+            fprintf( stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0] );
+            fprintf( stderr, "       %s --help|-h                     (show this message)\n", argv[0] );
+            exit(0);
+        } else {
+            fprintf(stderr, "Unknown option: %s\n", argv[i]);
+            exit(1);
+        }
+    }
+    
+    /* Remaining positional args */
+    if (i < argc) mission_file = argv[i++];
+    if (i < argc) fault_file = argv[i++];
+    
+    if (!mission_file) {
+        fprintf(stderr, "Error: mission file required\n");
+        exit(1);
+    }
+
+    if ( vehicle_file && load_vehicle_def(vehicle_file) == -1 )
+	exit( 1 );
+    
+    if ( load_mission(mission_file) == -1 )
 	exit( 1 );
     sprintf( msg_buf, 
 	     "vvp->nstates = %d, vvp->cstate = %d after load_mission()\n",
 	     vvp->nstates, vvp->cstate );
     write_message( TERM | SLOG );
 
+    /* If --parse mode, just exit after successful mission load */
+    if (parse_only_mode) {
+        sprintf( msg_buf, "Mission parse successful (--parse mode, exiting)\n");
+        write_message( TERM | SLOG );
+        exit(0);
+    }
+
 				/* load fault injection file if specified
 				   as second argument or via data structure */
-    load_faults( argc > 2 ? argv[2] : vvp->fault_file_name );
+    load_faults( fault_file ? fault_file : vvp->fault_file_name );
 
 				/* use data structure initial values to set
                                    initial position */
@@ -99,7 +254,14 @@ int main( int argc, char *argv[], char *envp[] )
 	     p[1], p[2], p[3], p[4], p[5], p[6] );
     write_message( MonitorSim | SLOG );
 
-    datafile = init_data_logging( DataFileName );
+    /* Initialize data logging (skip if nolog_mode) */
+    if (!nolog_mode) {
+        datafile = init_data_logging( DataFileName );
+    } else {
+        datafile = NULL;
+        sprintf( msg_buf, "Logging disabled (--nolog mode)\n");
+        write_message( TERM | SLOG );
+    }
 
     init_simulation();
 
@@ -178,7 +340,11 @@ int main( int argc, char *argv[], char *envp[] )
 
 	    dynamic_control();
 
-	    log_data( datafile );
+	    /* Capture behavior activity for ksim/mission verification */
+	    capture_behavior_activity();
+
+	    if (!nolog_mode)
+	        log_data( datafile );
 
 	    if( !stack_busy(&vvp->c[0]) )
 	    {
@@ -251,6 +417,10 @@ void exit_gracefully( int exit_status )
 	fflush( datafile );
 	size = ftell( datafile );
 	fclose( datafile );
+    }
+
+    if (behavior_dump_file[0]) {
+        dump_behavior_log_json(behavior_dump_file);
     }
 
     sprintf( msg_buf, "Mission finished -- data file: %s\n", 

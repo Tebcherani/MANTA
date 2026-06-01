@@ -21,6 +21,10 @@
 #include "vehicle.h"
 
 static int loggerVersion = 2;	/* file format version number */
+const char *get_fault_file_name( void );
+const char *get_fault_file_path( void );
+const char *get_mission_file_name( void );
+const char *get_mission_file_path( void );
 
 #ifdef _OSK
 extern int CycleCount;
@@ -165,7 +169,10 @@ static void write_fault_header( FILE *datafile )
         fprintf( datafile, "# (no fault file loaded)\xa" );
     } else {
         fprintf( datafile, "# fault file: %s\xa", fname );
-        snprintf( fd_path, sizeof(fd_path), "%s/%s", SFAULT_DIR, fname );
+        strncpy( fd_path, get_fault_file_path(), sizeof(fd_path) - 1 );
+        fd_path[sizeof(fd_path) - 1] = '\0';
+        if ( fd_path[0] == '\0' )
+            ody_join_path( fd_path, sizeof(fd_path), SFAULT_DIR, fname );
 
         if ( (ffd = fopen(fd_path, "r")) == NULL ) {
             fprintf( datafile,
@@ -183,6 +190,54 @@ static void write_fault_header( FILE *datafile )
 
     fprintf( datafile,
         "# ===== FAULT_FILE_END ==================================\xa" );
+}
+
+
+/*------------------------------------------------------------------*
+ | write_mission_header
+ |
+ | Copies the active mission file verbatim into the ODB ASCII header so
+ | a run can be reproduced from the data file.  The block is wrapped in
+ | MISSION_FILE_BEGIN/END sentinels.  Every embedded line is prefixed
+ | "# mi>" so existing parsers continue to skip it as a comment.
+ *------------------------------------------------------------------*/
+
+static void write_mission_header( FILE *datafile )
+{
+    FILE       *fmi;
+    char        mi_path[ODY_PATH_MAX];
+    char        line[MAX_LINE];
+    int         n_lines = 0;
+    const char *fname   = get_mission_file_name();
+
+    fprintf( datafile,
+        "# ===== MISSION_FILE_BEGIN ==============================\xa" );
+
+    if ( fname == NULL || fname[0] == '\0' ) {
+        fprintf( datafile, "# (no mission file loaded)\xa" );
+    } else {
+        fprintf( datafile, "# mission file: %s\xa", fname );
+        strncpy( mi_path, get_mission_file_path(), sizeof(mi_path) - 1 );
+        mi_path[sizeof(mi_path) - 1] = '\0';
+        if ( mi_path[0] == '\0' )
+            ody_join_path( mi_path, sizeof(mi_path), MISSION_DIR, fname );
+
+        if ( (fmi = fopen(mi_path, "r")) == NULL ) {
+            fprintf( datafile,
+                "# WARNING: could not open %s for embedding\xa", mi_path );
+        } else {
+            while ( fgets(line, sizeof(line), fmi) ) {
+                line[ strcspn(line, "\r\n") ] = '\0';
+                fprintf( datafile, "# mi> %s\xa", line );
+                n_lines++;
+            }
+            fclose( fmi );
+            fprintf( datafile, "# (%d lines)\xa", n_lines );
+        }
+    }
+
+    fprintf( datafile,
+        "# ===== MISSION_FILE_END ================================\xa" );
 }
 
 
@@ -216,8 +271,8 @@ FILE *init_data_logging( char *DataFileName )
     do {
 	++RunNumber;
 	
-	sprintf( DataFileName, "%s/%c%s%02d.obd", DATA_DIR, PREFIX_CHAR,
-		 fname_string, RunNumber );
+	snprintf( DataFileName, ODY_PATH_MAX, "%s/%c%s%02d.obd",
+		  DATA_DIR, PREFIX_CHAR, fname_string, RunNumber );
 #ifdef _OSK
 #define MODE 0			/* OS-9 test for existence using access() */
 #else
@@ -253,6 +308,7 @@ FILE *init_data_logging( char *DataFileName )
 				/* embed fault file in header for
 				   self-documentation of fault scenario */
     write_fault_header( datafile );
+    write_mission_header( datafile );
 
 				/* write sensor index, name, init values */
     for ( i = 0; i <= vvp->last_s; i++ )
@@ -334,7 +390,7 @@ int write_tab( void )
     char *run;
     int error = -1;
 
-    sprintf( msg_buf, "%s/%s.tab", DATA_DIR, VEHICLE_NAME );
+    snprintf( msg_buf, 256, "%s/%s.tab", DATA_DIR, VEHICLE_NAME );
 
 				/* open tab-file for append */
     ftab = fopen( msg_buf, "a" );

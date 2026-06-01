@@ -20,6 +20,18 @@ static int convert_units( const char *, const char *, const double,
 			  double * );
 				/* externals local to this file */
 static char linebuf[MAX_LINE], fullpath[MAX_LINE];
+static char loaded_mission_fname[MAX_FILE_NAME] = "";
+static char loaded_mission_path[MAX_LINE] = "";
+
+const char *get_mission_file_name( void )
+{
+    return loaded_mission_fname;
+}
+
+const char *get_mission_file_path( void )
+{
+    return loaded_mission_path;
+}
 
 
 /*-------------------------------------------------------------------------
@@ -45,7 +57,14 @@ int load_mission( const char *fname )
     int error = -1;
 
 				/* construct full path to mission file */
-    sprintf( fullpath, "%s/%s", MISSION_DIR, fname );
+    if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
+	strcpy( fullpath, fname );
+    else
+	ody_join_path( fullpath, sizeof(fullpath), MISSION_DIR, fname );
+    strncpy( loaded_mission_fname, fname, sizeof(loaded_mission_fname) - 1 );
+    loaded_mission_fname[sizeof(loaded_mission_fname) - 1] = '\0';
+    strncpy( loaded_mission_path, fullpath, sizeof(loaded_mission_path) - 1 );
+    loaded_mission_path[sizeof(loaded_mission_path) - 1] = '\0';
     if ( (fptr = fopen(fullpath, "r")) == NULL )
     {
 	sprintf( msg_buf, "%s: %s\n", fullpath, strerror(errno) );
@@ -99,7 +118,10 @@ int load_vehicle_def( const char *fname )
     double value;
     int index, lineno = 0, n_set = 0, header_seen = 0;
 
-    sprintf( fullpath, "%s/%s", VEHICLE_DIR, fname );
+    if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
+	strcpy( fullpath, fname );
+    else
+	ody_join_path( fullpath, sizeof(fullpath), VEHICLE_DIR, fname );
     if ( (fptr = fopen(fullpath, "r")) == NULL ) {
         sprintf( msg_buf, "%s: %s\n", fullpath, strerror(errno) );
         write_message( TERM | SLOG );

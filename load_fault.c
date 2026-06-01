@@ -79,6 +79,7 @@ static int       n_rules = 0;
 static char      linebuf[FAULT_MAX_LINE];
 static char      fullpath[FAULT_MAX_LINE];
 static char      loaded_fname[MAX_FILE_NAME] = "";
+static char      loaded_path[FAULT_MAX_LINE] = "";
 
 /* forward declarations */
 static int    parse_condition( const char *s, Condition *cond );
@@ -105,6 +106,11 @@ const char *get_fault_file_name( void )
     return loaded_fname;
 }
 
+const char *get_fault_file_path( void )
+{
+    return loaded_path;
+}
+
 /*--------------------------------------------------------------------
   LOAD_FAULTS
   Call once after load_mission().  Returns 0 on success, -1 on error.
@@ -118,6 +124,7 @@ int load_faults( const char *fname )
 
     n_rules = 0;
     loaded_fname[0] = '\0';
+    loaded_path[0] = '\0';
     vvp->fault_file_name[0] = '\0';
 
     if ( fname == NULL || fname[0] == '\0' ) {
@@ -130,7 +137,11 @@ int load_faults( const char *fname )
     strncpy( vvp->fault_file_name, fname,
              sizeof(vvp->fault_file_name) - 1 );
 
-    sprintf( fullpath, "%s/%s", SFAULT_DIR, fname );
+    if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
+	strcpy( fullpath, fname );
+    else
+	ody_join_path( fullpath, sizeof(fullpath), SFAULT_DIR, fname );
+    strncpy( loaded_path, fullpath, sizeof(loaded_path) - 1 );
 
     if ( (fp = fopen(fullpath, "r")) == NULL ) {
         sprintf( msg_buf, "load_faults: no fault file %s\n", fullpath );
