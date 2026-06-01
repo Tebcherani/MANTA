@@ -34,7 +34,7 @@ behavior: depth_envelope 2
   b_arg: cutoff_depth(m)       55.0
 
 behavior: setpoint 3
-  b_arg: heading(rad)  90.0
+  b_arg: heading(deg)  90.0
   b_arg: depth(m)     15.0
   b_arg: speed(m/s)    1.5
   b_arg: time(s)      240.0

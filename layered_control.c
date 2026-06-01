@@ -25,6 +25,11 @@
 
 int stack_busy( struct command *cmd );
 int getXSDataByte( void );
+static int behavior_axis_mask( int behavior_id );
+
+#define AXIS_DEPTH   1
+#define AXIS_HEADING 2
+#define AXIS_SPEED   4
 
 /*----------------------------------------------------------------------*
   LAYERED_CONTROL
@@ -40,6 +45,13 @@ void layered_control( void )
     register struct behavior *b;
     register int priority, j;
     struct command *cmd;
+    int behavior_id, status, mask;
+    int depth_priority = -1, heading_priority = -1, speed_priority = -1;
+    int depth_behavior = -1, heading_behavior = -1, speed_behavior = -1;
+    int state_before, command_changed;
+    int depth_mode_before, heading_mode_before, speed_mode_before;
+    double depth_before[MAX_C_ARG], heading_before[MAX_C_ARG];
+    double speed_before[MAX_C_ARG];
 
 /* Start with low priority behaviors and work to high priority,
    i.e., start at the high end of the structure and work down. */
@@ -48,6 +60,7 @@ void layered_control( void )
 
         if ( vvp->sta[vvp->cstate].c[priority].behavior != -1 )
 	{
+	    behavior_id = vvp->sta[vvp->cstate].c[priority].behavior;
 	    b = &vvp->sta[vvp->cstate].c[priority].b;
 
 	    if ( (b->state == B_ACTIVE) || (b->state == B_UNINITIALIZED) )
@@ -57,8 +70,53 @@ void layered_control( void )
 				/* resolve command stack from lower
 				   priority to this level */
 		    resolve( priority );
+		    cmd = &vvp->c[priority];
+		    state_before = b->state;
+		    depth_mode_before = cmd->depth_mode;
+		    heading_mode_before = cmd->heading_mode;
+		    speed_mode_before = cmd->speed_mode;
+		    for ( j = 0; j < MAX_C_ARG; j++ )
+		    {
+			depth_before[j] = cmd->depth[j];
+			heading_before[j] = cmd->heading[j];
+			speed_before[j] = cmd->speed[j];
+		    }
 				/* call the behavior */
-		    b->fcn( b, priority, 0 );
+		    status = b->fcn( b, priority, 0 );
+
+		    command_changed =
+			(cmd->depth_mode != depth_mode_before) ||
+			(cmd->heading_mode != heading_mode_before) ||
+			(cmd->speed_mode != speed_mode_before);
+		    for ( j = 0; j < MAX_C_ARG; j++ )
+		    {
+			if ( (cmd->depth[j] != depth_before[j]) ||
+			     (cmd->heading[j] != heading_before[j]) ||
+			     (cmd->speed[j] != speed_before[j]) )
+			    command_changed = 1;
+		    }
+
+		    if ( (status != -1) &&
+			 (command_changed || state_before == B_ACTIVE ||
+			  b->state == B_ACTIVE) )
+		    {
+			mask = behavior_axis_mask( behavior_id );
+			if ( (mask & AXIS_DEPTH) && (cmd->depth_mode != -1) )
+			{
+			    depth_priority = priority;
+			    depth_behavior = behavior_id;
+			}
+			if ( (mask & AXIS_HEADING) && (cmd->heading_mode != -1) )
+			{
+			    heading_priority = priority;
+			    heading_behavior = behavior_id;
+			}
+			if ( (mask & AXIS_SPEED) && (cmd->speed_mode != -1) )
+			{
+			    speed_priority = priority;
+			    speed_behavior = behavior_id;
+			}
+		    }
 		}
 		else
 		{
@@ -76,6 +134,12 @@ void layered_control( void )
     update( CC_HEADING_MODE, vvp->c[0].heading_mode );
     update( CC_DEPTH_MODE, vvp->c[0].depth_mode );
     update( CC_SPEED_MODE, vvp->c[0].speed_mode );
+    update( C_DEPTH_BEHAVIOR, depth_behavior );
+    update( C_DEPTH_PRIORITY, depth_priority );
+    update( C_HEADING_BEHAVIOR, heading_behavior );
+    update( C_HEADING_PRIORITY, heading_priority );
+    update( C_SPEED_BEHAVIOR, speed_behavior );
+    update( C_SPEED_PRIORITY, speed_priority );
 }
 
 /*----------------------------------------------------------------------*
@@ -133,6 +197,38 @@ void resolve( int pres )
    last = pres;   
 }
 
+static int behavior_axis_mask( int behavior_id )
+{
+    switch ( behavior_id )
+    {
+    case ACQUIRE_HEADING:
+	return AXIS_HEADING;
+    case ASCEND:
+    case DESCEND:
+    case DOCK:
+    case UNDOCK:
+    case WHOI_HOMING:
+    case EDC_HOMING:
+    case SET_ELEVATOR:
+    case SET_RUDDER:
+    case SETPOINT:
+    case SETVECTOR:
+    case SURVEY_DEAD_RECKON:
+    case WAYPOINT_2D:
+    case WIGGLE:
+    case LAUNCH:
+	return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
+    case YO_YO:
+	return AXIS_DEPTH;
+    case CHIRP_FIN:
+	return AXIS_DEPTH | AXIS_HEADING;
+    case SETMODE:
+	return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
+    default:
+	return 0;
+    }
+}
+
 /*-----------------------------------------------------------------------*
 
 behavior: descend
@@ -159,7 +255,7 @@ int descend(struct behavior *b, int priority, int level)
                                    weights, set end_depth to < 0 */
     if ( (manage_time(b, bArg(MAX_TIME)) == 1) || 
 	 (sensor(M_DEPTH) > bArg(DEPTH)) ||
-	 (sensor(M_ALTITUDE) < bArg(MIN_ALT)) )
+	 ((sensor(M_ALTITUDE) > 0.0) && (sensor(M_ALTITUDE) < bArg(MIN_ALT))) )
     {
 	if (bArg(DROPD) > 0)
 	{
@@ -415,11 +511,53 @@ int broadcast( struct behavior *b, int priority, int level )
 
 int yo_yo( struct behavior *b, int priority, int level )
 {
+    register struct command *cmd = &vvp->c[priority];
+    int companion_priority;
+    struct command *companion_cmd;
+    struct behavior *companion;
+
+    companion_priority = priority + 1;
+    if ( companion_priority >= MAX_COMMAND )
+    {
+	shut_down( priority );
+	b->state = B_COMPLETE;
+	sprintf( msg_buf, "% 8.2f: %s done (no companion priority)\n",
+		 sensor(M_PRESENT_TIME), b->name );
+	write_message( MonitorLayeredControl | SLOG );
+	return 1;
+    }
+
+    companion_cmd = &vvp->c[companion_priority];
+    companion = &vvp->sta[vvp->cstate].c[companion_priority].b;
+
+    if ( b->state == B_UNINITIALIZED )
+    {
+	if ( (vvp->sta[vvp->cstate].c[companion_priority].behavior == -1) ||
+	     (companion->state != B_ACTIVE) ||
+	     (companion_cmd->heading_mode == -1) ||
+	     (companion_cmd->speed_mode == -1) )
+	    return -1;
+
+	b->state = B_ACTIVE;
+    }
 
 				/* if behavior has timed out or all cycles
                                    complete, return 1 */
     if ( manage_time(b, bArg(5)) == 1 )
+    {
+	b->state = B_COMPLETE;
 	return 1;
+    }
+
+    if ( (cmd->heading_mode == -1) || (cmd->speed_mode == -1) )
+    {
+	shut_down( priority );
+	b->state = B_COMPLETE;
+	sprintf( msg_buf, "% 8.2f: %s done (companion lost heading/speed)\n",
+		 sensor(M_PRESENT_TIME), b->name );
+	write_message( MonitorLayeredControl | SLOG );
+	return 1;
+    }
 
   /* jleonard 6/21/96 changing so that if number of cycles elapses, then we
      will set the modes to -1 to cause shut down of the vehicle unless
@@ -470,7 +608,7 @@ int yo_yo( struct behavior *b, int priority, int level )
      zero if a) the sonar was never interrogated (0.0 is inital value
      in the data structure) or b) the sonar is in air.  */
 
-    if ((sensor(M_ALTITUDE)!=0.0) && (sensor(M_ALTITUDE) < b->arg[3].x) && 
+    if ((sensor(M_ALTITUDE) > 0.0) && (sensor(M_ALTITUDE) < b->arg[3].x) && 
 	(b->arg[0].x < 0.0))
     {
 	b->arg[0].x = -b->arg[0].x;
@@ -483,8 +621,8 @@ int yo_yo( struct behavior *b, int priority, int level )
     }  
   
 				/* set output command */
-    vvp->c[priority].depth_mode = 2;
-    vvp->c[priority].depth[0] = b->arg[0].x;    
+    cmd->depth_mode = 2;
+    cmd->depth[0] = b->arg[0].x;    
 
     return(0);
 }
@@ -991,7 +1129,7 @@ int depth_envelope( struct behavior *b, int priority, int level )
     }
 				/* check minimum altitude */
     dummy = sensor( M_DEPTH ) + ( sensor(M_ALTITUDE) - bArg(A_MIN) );
-    if ( alt_active && (dummy < bArg(D_MAX)) )
+    if ( alt_active && (sensor(M_ALTITUDE) > 0.0) && (dummy < bArg(D_MAX)) )
 	max_depth = dummy;
 
 				/* if already in depth mode, give new max

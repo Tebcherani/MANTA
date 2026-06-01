@@ -33,12 +33,12 @@ vs_zb(m)                       0.0
 
 # ---- mass and rotational inertia ----
 vs_mass(kg)                  339.0
-vs_ixx(kg-m^2)                10.59
-vs_iyy(kg-m^2)                71.95
-vs_izz(kg-m^2)                71.95
-vs_ixy(kg-m^2)                 0.0
-vs_izx(kg-m^2)                 0.0
-vs_iyz(kg-m^2)                 0.0
+vs_ixx(kg.m^2)                10.59
+vs_iyy(kg.m^2)                71.95
+vs_izz(kg.m^2)                71.95
+vs_ixy(kg.m^2)                 0.0
+vs_izx(kg.m^2)                 0.0
+vs_iyz(kg.m^2)                 0.0
 
 # ---- drop weight 1 (buoyancy and body-frame location) ----
 vs_bdw1(N)                     0.0
@@ -120,12 +120,12 @@ vs_fin4_z(m)                   0.0
 
 # ---- fin actuator and aerodynamic parameters ----
 vs_fin_speed(rad/s)            0.6109
-vs_act_delay(steps)           20      # fin cmd transport delay at 50 Hz hydro rate (20 * 0.02s = 0.4s)
+vs_act_delay(int)             10      # fin cmd transport delay at 50 Hz hydro rate (20 * 0.02s = 0.4s)
 vs_fin_cdo()                   0.0065
 vs_fin_oswald()                0.90
 vs_fin_aspect_ratio()          4.26
 vs_fin_stall_angle(rad)        0.5236
-vs_rud_hyst_width(rad)         0.1396
+vs_rud_hyst_width(rad)         0.0349
 vs_rud_hyst_center(rad)        0.0
 vs_elev_hyst_width(rad)        0.0349
 vs_elev_hyst_center(rad)       0.0
@@ -138,3 +138,39 @@ vs_thruster_kt(Nm/A)           0.456
 vs_thruster_eta()              0.80
 vs_thruster_pitch(m/rad)       0.124
 vs_thruster_duct_area(m^2)     0.28
+
+# ---- battery/load model ----
+# vs_batt_chem: 1 = silver-zinc, 2 = lithium secondary
+vs_batt_chem()                 1
+vs_battery_nominal_voltage(V) 48.0
+vs_batt_series_cells()        32
+vs_batt_parallel_strs()        5
+vs_batt_capacity(C)       216000.0
+vs_batt_energy_cap(J)   10400000.0
+vs_batt_initial_soc()          1.0
+vs_batt_r0_cell(ohm)           0.003
+vs_batt_r_wiring(ohm)          0.01
+vs_batt_r_conn(ohm)            0.01
+vs_batt_r1(ohm)                0.02
+vs_batt_c1(F)               5000.0
+vs_batt_therm_mass(J/K)    50000.0
+vs_batt_therm_res(K/W)         0.3
+vs_batt_age()                  0.0
+vs_batt_cap_scale()            1.0
+vs_batt_r_scale()              1.0
+vs_batt_parasitic(A)           0.0
+vs_batt_max_current(A)       100.0
+vs_batt_min_voltage(V)        35.0
+vs_batt_bms_enable()           0
+vs_batt_bms_vtrip(V)          35.0
+vs_batt_bms_itrip(A)         100.0
+vs_batt_bms_ttrip(K)         333.0
+vs_batt_imbalance()            0.0
+vs_batt_weak_cell_v(V)         0.0
+vs_batt_curr_bias(A)           0.0
+vs_batt_volt_bias(V)           0.0
+vs_batt_est_cap(C)        216000.0
+vs_batt_est_init_soc()         1.0
+vs_batt_runaway_temp(K)      353.0
+vs_batt_runaway_heat(W)        0.0
+vs_hotel_load(W)              120.0

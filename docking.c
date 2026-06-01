@@ -208,7 +208,10 @@ int appendDockFile( const char *string )
 {
     FILE *fp;
 
-    if ( (fp = fopen(DATA_DIR "/auv2dock", "a")) != NULL )
+    char dock_path[ODY_PATH_MAX];
+
+    ody_join_path( dock_path, sizeof(dock_path), DATA_DIR, "auv2dock" );
+    if ( (fp = fopen(dock_path, "a")) != NULL )
     {
 	fputs( string, fp );
 	fclose( fp );

@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/05/08 23:11:30 GMT";
+char *creation_date = "2026/05/31 23:19:06 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -40,9 +40,9 @@ const struct sensor sss[] = {
     "m_depth_rate(m/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "u_prop_pitch(m)", 0.324, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_water_speed(m/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_altitude(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_st500_range(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_st200_range(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_altitude(m)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_st500_range(m)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_st200_range(m)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "water_cond(S/m)", 3, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "water_temp(degC)", 10, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_salinity(psu)", 35, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -61,6 +61,10 @@ const struct sensor sss[] = {
     "m_propeller_speed(rpm)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_copley_voltage(V)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_copley_current(A)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_battery_voltage(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_battery_current(A)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_battery_temp(K)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_batt_soc_est()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "u_cutoff_voltage(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "c_weight1_drop(bool)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "c_weight2_drop(bool)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -72,6 +76,12 @@ const struct sensor sss[] = {
     "c_pitch(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "c_heading(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "c_speed(m/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "c_depth_behavior(index)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "c_depth_priority(index)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "c_heading_behavior(index)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "c_heading_priority(index)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "c_speed_behavior(index)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "c_speed_priority(index)", -1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_he_elev_raw(8bit)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_he_rud_raw(8bit)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_he_elev_deg(deg)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -141,6 +151,30 @@ const struct sensor sss[] = {
     "real_wdw2(N)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_current_north(m/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_current_east(m/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thruster_current(Amp)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thruster_voltage(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thruster_power(W)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thruster_torque(Nm)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thruster_thrust(N)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thr_prop_speed(rad/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thr_motor_speed(rad/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thr_inflow_speed(m/s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_thr_drive_torque(Nm)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_battery_current(Amp)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_battery_voltage(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_battery_power(W)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_battery_soc()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_battery_ocv(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_resistance(ohm)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_v_rc(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_temp(K)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_fault_heat(W)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_capacity(C)", 216000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_energy_cap(J)", 1.04e+007, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_charge_rem(C)", 216000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_energy_rem(J)", 1.04e+007, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_battery_energy_used(J)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_charge_used(C)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "read_current_from_file(bool)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_sonar_frac_dropout(0-1)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "u_bottom_type(int)", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -259,7 +293,7 @@ const struct sensor sss[] = {
     "vs_fin_stall_angle(rad)", 0.5236, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_fin_speed(rad/s)", 0.6109, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_act_delay(int)", 20, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_rud_hyst_width(rad)", 0.1396, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_rud_hyst_width(rad)", 0.0349, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_rud_hyst_center(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_elev_hyst_width(rad)", 0.0349, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_elev_hyst_center(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -267,6 +301,53 @@ const struct sensor sss[] = {
     "vs_thruster_eta()", 0.8, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_thruster_pitch(m/rad)", 0.124, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_thruster_duct_area(m^2)", 0.28, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_prop_diameter(m)", 0.28, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_wake_fraction()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_kt_scale()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_kq_scale()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_eta_scale()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_area_scale()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_motor_kt(Nm/A)", 0.034, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_motor_ke(V/rad/s)", 0.034, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_motor_r(ohm)", 0.8, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_gear_ratio()", 4, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_gear_eff()", 0.891, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_seal_friction(Nm)", 0.092, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_current_limit(Amp)", 999, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_thruster_voltage_limit(V)", 999, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_chem()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_battery_nominal_voltage(V)", 48, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_series_cells()", 32, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_parallel_strs()", 5, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_capacity(C)", 216000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_energy_cap(J)", 1.04e+007, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_initial_soc()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_r0_cell(ohm)", 0.003, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_r_wiring(ohm)", 0.01, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_r_conn(ohm)", 0.01, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_r1(ohm)", 0.02, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_c1(F)", 5000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_therm_mass(J/K)", 50000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_therm_res(K/W)", 0.3, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_age()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_cap_scale()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_r_scale()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_parasitic(A)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_max_current(A)", 100, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_min_voltage(V)", 35, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_bms_enable()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_bms_vtrip(V)", 35, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_bms_itrip(A)", 100, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_bms_ttrip(K)", 333, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_imbalance()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_weak_cell_v(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_curr_bias(A)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_volt_bias(V)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_est_cap(C)", 216000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_est_init_soc()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_runaway_temp(K)", 353, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_runaway_heat(W)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_hotel_load(W)", 30, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "rdi_binsize(m)", 2, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "rdi_numbins(int)", 50, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "rdi_range1(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -721,6 +802,10 @@ int M_THRUSTER_RAWBATT = -1;
 int M_PROPELLER_SPEED = -1;
 int M_COPLEY_VOLTAGE = -1;
 int M_COPLEY_CURRENT = -1;
+int M_BATTERY_VOLTAGE = -1;
+int M_BATTERY_CURRENT = -1;
+int M_BATTERY_TEMP = -1;
+int M_BATT_SOC_EST = -1;
 int U_CUTOFF_VOLTAGE = -1;
 int C_WEIGHT1_DROP = -1;
 int C_WEIGHT2_DROP = -1;
@@ -732,6 +817,12 @@ int C_DEPTH = -1;
 int C_PITCH = -1;
 int C_HEADING = -1;
 int C_SPEED = -1;
+int C_DEPTH_BEHAVIOR = -1;
+int C_DEPTH_PRIORITY = -1;
+int C_HEADING_BEHAVIOR = -1;
+int C_HEADING_PRIORITY = -1;
+int C_SPEED_BEHAVIOR = -1;
+int C_SPEED_PRIORITY = -1;
 int M_HE_ELEV_RAW = -1;
 int M_HE_RUD_RAW = -1;
 int M_HE_ELEV_DEG = -1;
@@ -801,6 +892,30 @@ int REAL_WDW1 = -1;
 int REAL_WDW2 = -1;
 int REAL_CURRENT_NORTH = -1;
 int REAL_CURRENT_EAST = -1;
+int REAL_THRUSTER_CURRENT = -1;
+int REAL_THRUSTER_VOLTAGE = -1;
+int REAL_THRUSTER_POWER = -1;
+int REAL_THRUSTER_TORQUE = -1;
+int REAL_THRUSTER_THRUST = -1;
+int REAL_THR_PROP_SPEED = -1;
+int REAL_THR_MOTOR_SPEED = -1;
+int REAL_THR_INFLOW_SPEED = -1;
+int REAL_THR_DRIVE_TORQUE = -1;
+int REAL_BATTERY_CURRENT = -1;
+int REAL_BATTERY_VOLTAGE = -1;
+int REAL_BATTERY_POWER = -1;
+int REAL_BATTERY_SOC = -1;
+int REAL_BATTERY_OCV = -1;
+int REAL_BATT_RESISTANCE = -1;
+int REAL_BATT_V_RC = -1;
+int REAL_BATT_TEMP = -1;
+int REAL_BATT_FAULT_HEAT = -1;
+int REAL_BATT_CAPACITY = -1;
+int REAL_BATT_ENERGY_CAP = -1;
+int REAL_BATT_CHARGE_REM = -1;
+int REAL_BATT_ENERGY_REM = -1;
+int REAL_BATTERY_ENERGY_USED = -1;
+int REAL_BATT_CHARGE_USED = -1;
 int READ_CURRENT_FROM_FILE = -1;
 int REAL_SONAR_FRAC_DROPOUT = -1;
 int U_BOTTOM_TYPE = -1;
@@ -927,6 +1042,53 @@ int VS_THRUSTER_KT = -1;
 int VS_THRUSTER_ETA = -1;
 int VS_THRUSTER_PITCH = -1;
 int VS_THRUSTER_DUCT_AREA = -1;
+int VS_THRUSTER_PROP_DIAMETER = -1;
+int VS_THRUSTER_WAKE_FRACTION = -1;
+int VS_THRUSTER_KT_SCALE = -1;
+int VS_THRUSTER_KQ_SCALE = -1;
+int VS_THRUSTER_ETA_SCALE = -1;
+int VS_THRUSTER_AREA_SCALE = -1;
+int VS_THRUSTER_MOTOR_KT = -1;
+int VS_THRUSTER_MOTOR_KE = -1;
+int VS_THRUSTER_MOTOR_R = -1;
+int VS_THRUSTER_GEAR_RATIO = -1;
+int VS_THRUSTER_GEAR_EFF = -1;
+int VS_THRUSTER_SEAL_FRICTION = -1;
+int VS_THRUSTER_CURRENT_LIMIT = -1;
+int VS_THRUSTER_VOLTAGE_LIMIT = -1;
+int VS_BATT_CHEM = -1;
+int VS_BATTERY_NOMINAL_VOLTAGE = -1;
+int VS_BATT_SERIES_CELLS = -1;
+int VS_BATT_PARALLEL_STRS = -1;
+int VS_BATT_CAPACITY = -1;
+int VS_BATT_ENERGY_CAP = -1;
+int VS_BATT_INITIAL_SOC = -1;
+int VS_BATT_R0_CELL = -1;
+int VS_BATT_R_WIRING = -1;
+int VS_BATT_R_CONN = -1;
+int VS_BATT_R1 = -1;
+int VS_BATT_C1 = -1;
+int VS_BATT_THERM_MASS = -1;
+int VS_BATT_THERM_RES = -1;
+int VS_BATT_AGE = -1;
+int VS_BATT_CAP_SCALE = -1;
+int VS_BATT_R_SCALE = -1;
+int VS_BATT_PARASITIC = -1;
+int VS_BATT_MAX_CURRENT = -1;
+int VS_BATT_MIN_VOLTAGE = -1;
+int VS_BATT_BMS_ENABLE = -1;
+int VS_BATT_BMS_VTRIP = -1;
+int VS_BATT_BMS_ITRIP = -1;
+int VS_BATT_BMS_TTRIP = -1;
+int VS_BATT_IMBALANCE = -1;
+int VS_BATT_WEAK_CELL_V = -1;
+int VS_BATT_CURR_BIAS = -1;
+int VS_BATT_VOLT_BIAS = -1;
+int VS_BATT_EST_CAP = -1;
+int VS_BATT_EST_INIT_SOC = -1;
+int VS_BATT_RUNAWAY_TEMP = -1;
+int VS_BATT_RUNAWAY_HEAT = -1;
+int VS_HOTEL_LOAD = -1;
 int RDI_BINSIZE = -1;
 int RDI_NUMBINS = -1;
 int RDI_RANGE1 = -1;
@@ -1133,6 +1295,10 @@ int *sindex[] = {
     &M_PROPELLER_SPEED,
     &M_COPLEY_VOLTAGE,
     &M_COPLEY_CURRENT,
+    &M_BATTERY_VOLTAGE,
+    &M_BATTERY_CURRENT,
+    &M_BATTERY_TEMP,
+    &M_BATT_SOC_EST,
     &U_CUTOFF_VOLTAGE,
     &C_WEIGHT1_DROP,
     &C_WEIGHT2_DROP,
@@ -1144,6 +1310,12 @@ int *sindex[] = {
     &C_PITCH,
     &C_HEADING,
     &C_SPEED,
+    &C_DEPTH_BEHAVIOR,
+    &C_DEPTH_PRIORITY,
+    &C_HEADING_BEHAVIOR,
+    &C_HEADING_PRIORITY,
+    &C_SPEED_BEHAVIOR,
+    &C_SPEED_PRIORITY,
     &M_HE_ELEV_RAW,
     &M_HE_RUD_RAW,
     &M_HE_ELEV_DEG,
@@ -1213,6 +1385,30 @@ int *sindex[] = {
     &REAL_WDW2,
     &REAL_CURRENT_NORTH,
     &REAL_CURRENT_EAST,
+    &REAL_THRUSTER_CURRENT,
+    &REAL_THRUSTER_VOLTAGE,
+    &REAL_THRUSTER_POWER,
+    &REAL_THRUSTER_TORQUE,
+    &REAL_THRUSTER_THRUST,
+    &REAL_THR_PROP_SPEED,
+    &REAL_THR_MOTOR_SPEED,
+    &REAL_THR_INFLOW_SPEED,
+    &REAL_THR_DRIVE_TORQUE,
+    &REAL_BATTERY_CURRENT,
+    &REAL_BATTERY_VOLTAGE,
+    &REAL_BATTERY_POWER,
+    &REAL_BATTERY_SOC,
+    &REAL_BATTERY_OCV,
+    &REAL_BATT_RESISTANCE,
+    &REAL_BATT_V_RC,
+    &REAL_BATT_TEMP,
+    &REAL_BATT_FAULT_HEAT,
+    &REAL_BATT_CAPACITY,
+    &REAL_BATT_ENERGY_CAP,
+    &REAL_BATT_CHARGE_REM,
+    &REAL_BATT_ENERGY_REM,
+    &REAL_BATTERY_ENERGY_USED,
+    &REAL_BATT_CHARGE_USED,
     &READ_CURRENT_FROM_FILE,
     &REAL_SONAR_FRAC_DROPOUT,
     &U_BOTTOM_TYPE,
@@ -1339,6 +1535,53 @@ int *sindex[] = {
     &VS_THRUSTER_ETA,
     &VS_THRUSTER_PITCH,
     &VS_THRUSTER_DUCT_AREA,
+    &VS_THRUSTER_PROP_DIAMETER,
+    &VS_THRUSTER_WAKE_FRACTION,
+    &VS_THRUSTER_KT_SCALE,
+    &VS_THRUSTER_KQ_SCALE,
+    &VS_THRUSTER_ETA_SCALE,
+    &VS_THRUSTER_AREA_SCALE,
+    &VS_THRUSTER_MOTOR_KT,
+    &VS_THRUSTER_MOTOR_KE,
+    &VS_THRUSTER_MOTOR_R,
+    &VS_THRUSTER_GEAR_RATIO,
+    &VS_THRUSTER_GEAR_EFF,
+    &VS_THRUSTER_SEAL_FRICTION,
+    &VS_THRUSTER_CURRENT_LIMIT,
+    &VS_THRUSTER_VOLTAGE_LIMIT,
+    &VS_BATT_CHEM,
+    &VS_BATTERY_NOMINAL_VOLTAGE,
+    &VS_BATT_SERIES_CELLS,
+    &VS_BATT_PARALLEL_STRS,
+    &VS_BATT_CAPACITY,
+    &VS_BATT_ENERGY_CAP,
+    &VS_BATT_INITIAL_SOC,
+    &VS_BATT_R0_CELL,
+    &VS_BATT_R_WIRING,
+    &VS_BATT_R_CONN,
+    &VS_BATT_R1,
+    &VS_BATT_C1,
+    &VS_BATT_THERM_MASS,
+    &VS_BATT_THERM_RES,
+    &VS_BATT_AGE,
+    &VS_BATT_CAP_SCALE,
+    &VS_BATT_R_SCALE,
+    &VS_BATT_PARASITIC,
+    &VS_BATT_MAX_CURRENT,
+    &VS_BATT_MIN_VOLTAGE,
+    &VS_BATT_BMS_ENABLE,
+    &VS_BATT_BMS_VTRIP,
+    &VS_BATT_BMS_ITRIP,
+    &VS_BATT_BMS_TTRIP,
+    &VS_BATT_IMBALANCE,
+    &VS_BATT_WEAK_CELL_V,
+    &VS_BATT_CURR_BIAS,
+    &VS_BATT_VOLT_BIAS,
+    &VS_BATT_EST_CAP,
+    &VS_BATT_EST_INIT_SOC,
+    &VS_BATT_RUNAWAY_TEMP,
+    &VS_BATT_RUNAWAY_HEAT,
+    &VS_HOTEL_LOAD,
     &RDI_BINSIZE,
     &RDI_NUMBINS,
     &RDI_RANGE1,

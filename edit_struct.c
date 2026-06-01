@@ -32,9 +32,9 @@
   sensor:             m_depth_rate(m/s) 0
   sensor:               u_prop_pitch(m) 0.324
   sensor:            m_water_speed(m/s) 0
-  sensor:                 m_altitude(m)
-  sensor:              m_st500_range(m)
-  sensor:              m_st200_range(m)
+  sensor:                 m_altitude(m) -1     (negative means no valid altimeter return)
+  sensor:              m_st500_range(m) -1
+  sensor:              m_st200_range(m) -1
   sensor:               water_cond(S/m) 3
   sensor:              water_temp(degC) 10
   sensor:               m_salinity(psu) 35
@@ -53,6 +53,10 @@
   sensor:        m_propeller_speed(rpm) 0
   sensor:           m_copley_voltage(V) 
   sensor:           m_copley_current(A) 
+  sensor:           m_battery_voltage(V) 0
+  sensor:          m_battery_current(A) 0
+  sensor:             m_battery_temp(K) 0
+  sensor:              m_batt_soc_est() 1
   sensor:           u_cutoff_voltage(V) 0
   sensor:          c_weight1_drop(bool) 0
   sensor:          c_weight2_drop(bool) 0
@@ -64,6 +68,12 @@
   sensor:                  c_pitch(rad) 0
   sensor:                c_heading(rad) 0
   sensor:                  c_speed(m/s) 0
+  sensor:       c_depth_behavior(index) -1
+  sensor:       c_depth_priority(index) -1
+  sensor:     c_heading_behavior(index) -1
+  sensor:     c_heading_priority(index) -1
+  sensor:       c_speed_behavior(index) -1
+  sensor:       c_speed_priority(index) -1
   sensor:           m_he_elev_raw(8bit)
   sensor:            m_he_rud_raw(8bit)
   sensor:            m_he_elev_deg(deg)
@@ -147,6 +157,30 @@ config: sim
   sensor:                  real_wdw2(N) 0
   sensor:       real_current_north(m/s) 0
   sensor:        real_current_east(m/s) 0
+  sensor:       real_thruster_current(Amp) 0
+  sensor:       real_thruster_voltage(V) 0
+  sensor:         real_thruster_power(W) 0
+  sensor:        real_thruster_torque(Nm) 0
+  sensor:        real_thruster_thrust(N) 0
+  sensor:        real_thr_prop_speed(rad/s) 0
+  sensor:       real_thr_motor_speed(rad/s) 0
+  sensor:        real_thr_inflow_speed(m/s) 0
+  sensor:       real_thr_drive_torque(Nm) 0
+  sensor:        real_battery_current(Amp) 0
+  sensor:        real_battery_voltage(V) 0
+  sensor:          real_battery_power(W) 0
+  sensor:            real_battery_soc() 1
+  sensor:            real_battery_ocv(V) 0
+  sensor:     real_batt_resistance(ohm) 0
+  sensor:             real_batt_v_rc(V) 0
+  sensor:             real_batt_temp(K) 0
+  sensor:       real_batt_fault_heat(W) 0
+  sensor:     real_batt_capacity(C) 216000
+  sensor:   real_batt_energy_cap(J) 1.04e7
+  sensor:     real_batt_charge_rem(C) 216000
+  sensor:     real_batt_energy_rem(J) 1.04e7
+  sensor:    real_battery_energy_used(J) 0
+  sensor:     real_batt_charge_used(C) 0
   sensor:  read_current_from_file(bool) 0
   sensor:  real_sonar_frac_dropout(0-1) 0
   sensor:            u_bottom_type(int) 1
@@ -268,7 +302,7 @@ config: vs
   sensor:        vs_fin_stall_angle(rad) 0.5236
   sensor:           vs_fin_speed(rad/s) 0.6109
   sensor:             vs_act_delay(int) 20
-  sensor:        vs_rud_hyst_width(rad) 0.1396
+  sensor:        vs_rud_hyst_width(rad) 0.0349
   sensor:       vs_rud_hyst_center(rad) 0.0
   sensor:       vs_elev_hyst_width(rad) 0.0349
   sensor:      vs_elev_hyst_center(rad) 0.0
@@ -276,6 +310,53 @@ config: vs
   sensor:            vs_thruster_eta() 0.80
   sensor:          vs_thruster_pitch(m/rad) 0.124
   sensor:       vs_thruster_duct_area(m^2) 0.28
+  sensor:    vs_thruster_prop_diameter(m) 0.28
+  sensor:    vs_thruster_wake_fraction() 1.0
+  sensor:          vs_thruster_kt_scale() 1.0
+  sensor:          vs_thruster_kq_scale() 1.0
+  sensor:         vs_thruster_eta_scale() 1.0
+  sensor:        vs_thruster_area_scale() 1.0
+  sensor:       vs_thruster_motor_kt(Nm/A) 0.034
+  sensor:    vs_thruster_motor_ke(V/rad/s) 0.034
+  sensor:        vs_thruster_motor_r(ohm) 0.800
+  sensor:        vs_thruster_gear_ratio() 4.0
+  sensor:          vs_thruster_gear_eff() 0.891
+  sensor:   vs_thruster_seal_friction(Nm) 0.092
+  sensor:    vs_thruster_current_limit(Amp) 999.0
+  sensor:    vs_thruster_voltage_limit(V) 999.0
+  sensor:              vs_batt_chem() 1
+  sensor:       vs_battery_nominal_voltage(V) 48.0
+  sensor:         vs_batt_series_cells() 32
+  sensor:       vs_batt_parallel_strs() 5
+  sensor:           vs_batt_capacity(C) 216000.0
+  sensor:         vs_batt_energy_cap(J) 1.04e7
+  sensor:          vs_batt_initial_soc() 1.0
+  sensor:          vs_batt_r0_cell(ohm) 0.003
+  sensor:         vs_batt_r_wiring(ohm) 0.01
+  sensor:            vs_batt_r_conn(ohm) 0.01
+  sensor:                vs_batt_r1(ohm) 0.02
+  sensor:                    vs_batt_c1(F) 5000.0
+  sensor:          vs_batt_therm_mass(J/K) 50000.0
+  sensor:           vs_batt_therm_res(K/W) 0.3
+  sensor:                   vs_batt_age() 0.0
+  sensor:             vs_batt_cap_scale() 1.0
+  sensor:               vs_batt_r_scale() 1.0
+  sensor:           vs_batt_parasitic(A) 0.0
+  sensor:         vs_batt_max_current(A) 100.0
+  sensor:         vs_batt_min_voltage(V) 35.0
+  sensor:             vs_batt_bms_enable() 0
+  sensor:            vs_batt_bms_vtrip(V) 35.0
+  sensor:            vs_batt_bms_itrip(A) 100.0
+  sensor:             vs_batt_bms_ttrip(K) 333.0
+  sensor:             vs_batt_imbalance() 0.0
+  sensor:          vs_batt_weak_cell_v(V) 0.0
+  sensor:            vs_batt_curr_bias(A) 0.0
+  sensor:            vs_batt_volt_bias(V) 0.0
+  sensor:             vs_batt_est_cap(C) 216000.0
+  sensor:          vs_batt_est_init_soc() 1.0
+  sensor:          vs_batt_runaway_temp(K) 353.0
+  sensor:          vs_batt_runaway_heat(W) 0.0
+  sensor:                  vs_hotel_load(W) 30.0
 endconfig
 
 config: rdi_wh
