@@ -18,6 +18,7 @@ The simulator is the correct starting point for:
 - Developing and testing new behaviors before deploying on a vehicle
 - Mission planning and rehearsal
 - Algorithm development (navigation, control, autonomy)
+- Fault injection studies and robustness testing
 - Any future MEX / MATLAB integration
 
 The architecture is described in:
@@ -34,13 +35,16 @@ The architecture is described in:
 gcc -D_SIMULATOR -o sim sim_main.c sim.c sim_bottom.c sim_current.c \
     sim_conduct.c sim_usbl.c sensor_load.c layered_control.c \
     dynamic_control.c whoi_traj.c log_data.c load_mission.c \
-    vehicle.c update.c diagnostic.c fileman.c filters.c nrutil.c \
-    lbl.c lbl_nav.c ekf_work.c waypoint.c wiggle.c yo_yo_depth.c \
-    yo_yo_temperature.c yoyo_new.c whoi_homing.c docking.c wfparse.c \
-    getopt.c -lm
+    load_fault.c vehicle.c update.c diagnostic.c fileman.c filters.c \
+    nrutil.c lbl.c lbl_nav.c ekf_work.c waypoint.c wiggle.c \
+    yo_yo_depth.c yo_yo_temperature.c yoyo_new.c whoi_homing.c \
+    docking.c wfparse.c getopt.c -lm
 
 # 2. Run with a mission file
 ./sim missions/my_mission.txt
+
+# 3. Run with fault injection
+./sim missions/my_mission.txt SFault/cg_shift_demo.fd
 ```
 
 Output files are written to `./Data/` by default (created automatically).
@@ -94,6 +98,14 @@ from which the simulator is launched.
 | `vehicle.h` | **Generated** — the data structure definition and index constants; do not edit by hand |
 | `update.c` | `update()`, `update_add()`, `init_data_structure()` |
 | `edit_struct.c` | Tool to regenerate `vehicle.c` and `vehicle.h` (see below) |
+
+### Fault injection
+
+| File | Purpose |
+|---|---|
+| `load_fault.c` | Fault injection engine: `load_faults()`, `apply_faults()` |
+| `SFault/` | Directory containing fault definition files (`*.fd`) |
+| `SFault/cg_shift_demo.fd` | Example: forward CG shift triggered at depth > 5 m |
 
 ### Data logging
 
@@ -186,10 +198,11 @@ LDFLAGS = -lm
 
 SRCS = sim_main.c sim.c sim_bottom.c sim_current.c sim_conduct.c \
        sim_usbl.c sensor_load.c layered_control.c dynamic_control.c \
-       whoi_traj.c log_data.c load_mission.c vehicle.c update.c \
-       diagnostic.c fileman.c filters.c nrutil.c lbl.c lbl_nav.c \
-       ekf_work.c waypoint.c wiggle.c yo_yo_depth.c yo_yo_temperature.c \
-       yoyo_new.c whoi_homing.c docking.c wfparse.c getopt.c
+       whoi_traj.c log_data.c load_mission.c load_fault.c vehicle.c \
+       update.c diagnostic.c fileman.c filters.c nrutil.c lbl.c \
+       lbl_nav.c ekf_work.c waypoint.c wiggle.c yo_yo_depth.c \
+       yo_yo_temperature.c yoyo_new.c whoi_homing.c docking.c \
+       wfparse.c getopt.c
 
 OBJS = $(SRCS:.c=.o)
 
@@ -418,6 +431,7 @@ Every 10th iteration (i.e., every 200 ms = 5 Hz):
 ```
 simSensors()              — load sim true state into sensor variables
 sensor_processing()       — attitude, dead reckoning, nav filtering
+apply_faults()            — evaluate and fire fault rules (if any loaded)
 layered_control()         — execute behavior stack, resolve commands
 dynamic_control()         — PID controllers, compute fin/thruster commands
 log_data()                — write changed variables to data file
@@ -453,6 +467,107 @@ While running, key presses are processed without blocking:
 
 ---
 
+## Fault Injection
+
+The simulator includes a scripted fault injection engine (`load_fault.c`) that
+lets you corrupt sensor readings or vehicle parameters at runtime according to
+rules defined in a plain-text fault definition file.
+
+### Invoking fault injection
+
+Pass the fault file as a second command-line argument:
+
+```bash
+./sim missions/my_mission.txt cg_shift_demo.fd
+```
+
+The fault engine looks for the file inside the `SFault/` directory (defined as
+`SFAULT_DIR` in `paths.h`). If the file is not found, fault injection is silently
+skipped — it is always optional.
+
+Alternatively, a mission file can specify a fault file by setting
+`vvp->fault_file_name` before the simulator starts (e.g. via a `sensor:` line
+for a data-structure variable that holds the filename). The command-line argument
+takes precedence.
+
+### Fault file format
+
+Fault files are plain text. Lines beginning with `#` are comments. Each rule
+occupies one line and has the form:
+
+```
+fault: <condition> -> <action> [; <action> ...]
+```
+
+#### Conditions
+
+| Form | Meaning |
+|---|---|
+| `sensor_name op value` | Comparison against a literal |
+| `sensor_name op sensor_name` | Comparison between two sensor variables |
+| `cond1 && cond2` | Both conditions must be true |
+| `cond1 \|\| cond2` | Either condition must be true |
+| `prob(rate)` | Fires stochastically; `rate` is probability per second |
+
+Relational operators: `>`, `<`, `>=`, `<=`, `==`, `!=`.  
+Up to 8 terms per condition. `&&` binds before `||`, evaluated left to right.
+
+#### Actions
+
+Each action is an assignment:
+```
+target_sensor = value_or_sensor_name
+```
+
+Multiple actions on one rule are separated by semicolons:
+```
+fault: m_depth > 5.0 -> vs_xg = 0.082 ; vs_yg = 0.010
+```
+
+The target and source must both be sensor variables present in the data structure
+(i.e. declared in `edit_struct.c`). Literal numeric values are also accepted on
+the right-hand side.
+
+#### Example fault file
+
+```
+# SFault/cg_shift_demo.fd
+# Forward CG shift triggered at depth > 5 m
+
+fault: m_depth > 5.0 -> vs_xg = 0.082
+```
+
+This shifts the vehicle's longitudinal center of gravity forward by 0.082 m
+(equal to the nominal CG–CB vertical separation) once the vehicle passes 5 m
+depth, introducing a nose-down pitch moment the elevator must counteract.
+
+#### Probabilistic fault example
+
+```
+# Random depth sensor spike, ~0.5 events per second on average
+fault: prob(0.5) -> m_depth = 999.0
+```
+
+### How faults integrate with logging
+
+- `apply_faults()` is called after `sensor_processing()` and before
+  `layered_control()`, so all behaviors and controllers see the corrupted values.
+- The sensor variable `M_FAULT_ACTIVE` is updated every control cycle with the
+  count of rules that fired. It is logged automatically, making it easy to see
+  exactly when faults were active in post-mission analysis.
+- `log_data()` embeds both the fault file name and the full text of the `.fd`
+  file in the ODB data file header, so every data file is self-documenting: you
+  can reconstruct the exact fault scenario from the data file alone.
+
+### Adding new fault scenarios
+
+Create a new `*.fd` file in `SFault/` — no recompilation required. Any sensor
+variable in the data structure can be used in conditions or actions. To make a
+new quantity injectable, add it to `edit_struct.c` and regenerate (see
+**Modifying the Data Structure** above).
+
+---
+
 ## Data Logging and Analysis
 
 `log_data()` runs every 200 ms and writes only variables that have changed since
@@ -468,13 +583,16 @@ On Linux, all paths resolve relative to the working directory (`.`):
 | Data files | `./Data/` |
 | System log | `./system.log` |
 | Mission files | `./Mission/` (can also use absolute paths) |
+| Fault files | `./SFault/` |
 
 Create `./Data/` before running if it does not exist, or `log_data()` will fail
 to open the output file.
 
 ### Data file format
 
-1. **ASCII header** — mission start time and data structure creation date.
+1. **ASCII header** — mission start time, data structure creation date, mission
+   file contents, and (if fault injection was used) the fault file name and the
+   full text of the `.fd` file.
 2. **ASCII index section** — maps integer indices to sensor names, e.g.
    `5 m_depth(m)`. Lines starting with `#` are comments.
 3. **Binary data section** — pairs of `(short int index, float value)`.
@@ -503,10 +621,11 @@ additional flags to `parse`.
 Before running for the first time:
 
 ```bash
-mkdir -p Data Mission
+mkdir -p Data Mission SFault
 ```
 
 Place mission files in `./Mission/` or provide a full path on the command line.
+Place fault definition files in `./SFault/`.
 The hydrodynamic coefficient files must be in the working directory:
 
 ```
@@ -514,3 +633,158 @@ The hydrodynamic coefficient files must be in the working directory:
 ./get_drag.tex
 ./get_shape.tex
 ```
+
+---
+
+## Appendix: LLM Coding Guide — Vehicle Data Structure Discipline
+
+This appendix is written specifically for AI coding assistants (LLMs) working
+on this codebase. It explains a design invariant that is easy to miss and costly
+to violate.
+
+### The core rule
+
+**Every quantity that matters — sensor readings, configuration parameters,
+behavior arguments, computed intermediate values, fault targets, anything that
+needs to be observable, configurable, or injectable — must live in the vehicle
+data structure and be accessed exclusively through `sensor()` and `update()`.**
+
+This is not a style preference. The data structure is the integration point for
+mission loading, fault injection, and data logging. A value that bypasses it is
+invisible to all three systems.
+
+### Why this matters: three consumers of every variable
+
+#### 1. Mission configuration (`load_mission.c`)
+
+The mission parser uses `match_sensor()` to look up variable names by string at
+load time and write their initial values via `update()`. If a parameter lives as
+a local `#define` or a static in a `.c` file, it cannot be set from a mission
+script. The operator has no way to adjust it without recompiling.
+
+**Correct pattern** — parameter in the data structure:
+```c
+// In edit_struct.c:
+//   sensor: uo_waypoint_arrival_radius(m)  5.0
+
+double radius = sensor( UO_WAYPOINT_ARRIVAL_RADIUS );
+```
+Now the mission script can override it:
+```
+sensor: uo_waypoint_arrival_radius(m)  10.0
+```
+
+**Wrong pattern** — hardcoded constant:
+```c
+#define ARRIVAL_RADIUS  5.0   /* cannot be tuned without recompiling */
+```
+
+#### 2. Fault injection (`load_fault.c`)
+
+The fault engine calls `match_sensor()` on both condition operands and action
+targets. It can only reference variables in the data structure. If a quantity
+(e.g. a thruster gain, a navigation filter coefficient, a sensor bias) lives
+outside the data structure, it cannot be faulted.
+
+This matters for realism: real vehicle failures manifest as corrupted sensor
+values, saturated actuator commands, or shifted physical parameters — all of
+which are data-structure variables. A robust fault injection study requires that
+every quantity of interest be in the structure.
+
+**Correct pattern** — injectable parameter:
+```c
+// In edit_struct.c:
+//   sensor: vs_xg(m)  0.0   (longitudinal CG offset)
+
+// In sim.c — reads from data structure every cycle:
+double xg = sensor( VS_XG );
+```
+Fault file can now inject:
+```
+fault: m_depth > 5.0 -> vs_xg = 0.082
+```
+
+**Wrong pattern** — static physical parameter:
+```c
+static double xg = 0.0;   /* fault injection cannot reach this */
+```
+
+#### 3. Data logging (`log_data.c`)
+
+`log_data()` iterates over `vvp->s[]` and records every variable whose timestamp
+has advanced since the last cycle. `update()` sets the timestamp; direct writes
+do not. A variable written directly is silently dropped from the log.
+
+This means: if you write to `vvp->s[i].x` instead of calling `update(i, val)`,
+the value is not logged. If you maintain state in a file-scope `static`, it is
+never logged at all. Post-mission analysis is then blind to that quantity.
+
+**Correct pattern**:
+```c
+update( M_CROSS_TRACK_ERROR, cte );   /* timestamp set; logger will record it */
+```
+
+**Wrong pattern**:
+```c
+vvp->s[M_CROSS_TRACK_ERROR].x = cte;  /* timestamp not set; not logged */
+```
+
+### Behavior arguments follow the same rule
+
+Behavior arguments (`b_arg`) are the mechanism by which a behavior exposes its
+tunable parameters to the mission system. Every parameter a behavior uses that
+an operator might want to tune must be a declared `b_arg` in `edit_struct.c`.
+
+```
+behavior: my_behavior
+  b_arg: target_depth(m)       10.0
+  b_arg: speed(m/s)             1.0
+  b_arg: behavior_active(bool)  0.0
+```
+
+Inside the behavior function, read arguments with the standard accessor:
+```c
+double depth = b->arg[ MY_BEHAVIOR_TARGET_DEPTH ].x;
+```
+
+Do not read b_args from file-scope variables or pass them as function arguments
+from outside. The mission loader populates `b->arg[]` from the mission script;
+your function just reads them.
+
+### The `edit_struct.c` → `vehicle.h/c` workflow is mandatory
+
+When you add a new variable, you must:
+
+1. Add a `sensor:` line to `edit_struct.c` with name, unit, and default value.
+2. Compile and run `edit_struct` to regenerate `vehicle.h` and `vehicle.c`.
+3. Recompile the simulator.
+
+Do not skip step 2 and attempt to add the index constant by hand to `vehicle.h`
+or add a slot to `vehicle.c`. The generated files encode array sizes, name
+strings for the logger and parser, and the index-to-name mapping used by
+`match_sensor()`. Hand-editing them produces inconsistencies that are hard to
+diagnose.
+
+### Checklist for adding any new quantity
+
+Before writing code that introduces a new value, ask:
+
+- [ ] Does the operator need to set or tune this from a mission script? → `sensor:` in `edit_struct.c` with a `u_` or `uo_` prefix.
+- [ ] Is this a measured or computed vehicle state? → `sensor:` with an `m_` prefix.
+- [ ] Do I want to be able to inject a fault into this value? → `sensor:` in `edit_struct.c` (any prefix).
+- [ ] Do I need this value in the post-mission data file? → `sensor:` in `edit_struct.c`; write only via `update()`.
+- [ ] Is this a tunable parameter of a behavior? → `b_arg:` under the relevant `behavior:` block in `edit_struct.c`.
+
+If any answer is yes, the value belongs in the data structure. The overhead of
+adding a sensor variable is negligible; the cost of missing one shows up later
+as an untuneable parameter, an unfaultable quantity, or a gap in the data log.
+
+### Summary
+
+| Action | Correct | Wrong |
+|---|---|---|
+| Read a sensor | `sensor( INDEX )` | `vvp->s[INDEX].x` |
+| Write a sensor | `update( INDEX, val )` | `vvp->s[INDEX].x = val` |
+| Tunable parameter | `sensor:` in `edit_struct.c` | `#define` or `static` |
+| Behavior parameter | `b_arg:` in `edit_struct.c` | function argument or global |
+| New variable | run `edit_struct`, recompile | hand-edit `vehicle.h` |

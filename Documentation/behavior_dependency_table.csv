@@ -1,0 +1,23 @@
+type,behavior,m_variables,vs_variables,time_to_completion
+Goal / Navigation,setpoint,none direct,vehicle model downstream,time * cycles
+Goal / Navigation,setvector,none direct,vehicle model downstream,time
+Goal / Navigation,survey_dead_reckon,m_present_time,vehicle model downstream,trans_time + 2*cycles*(time_leg1 + time_leg2) - time_leg2
+Goal / Navigation,waypoint_2d,m_pos_n; m_pos_e; m_present_time; m_dt; m_water_speed; m_pitch; m_yaw,vehicle model downstream,until waypoint capture or timeout; estimate can use waypoint distance / speed
+Goal / Navigation,whoi_homing,m_present_time; m_depth; m_pitch; m_yaw; m_usbl_time; m_usbl_azimuth; m_usbl_rdot_mean; m_inertial_az; m_inertial_el; m_cnav_status; m_cnav_axial; m_pole_present; m_bucky_raw,vehicle model downstream,"time, pole-secure, or bailout range"
+Goal / Navigation,edc_homing,none direct m_; uses e_edc_* sensors,vehicle model downstream,no time estimate; stops/returns when axial range below range_cutout
+Vertical Plane / Phase,descend,m_depth; m_altitude; m_present_time,vehicle model downstream,"min of depth-rate estimate and max_time; completion when m_depth > end_depth, altitude limit, or timeout"
+Vertical Plane / Phase,ascend,m_depth; m_present_time,vehicle model downstream,depth-rate estimate from assumed start depth to end_depth
+Vertical Plane / Phase,yo_yo,m_depth; m_altitude; m_present_time,vehicle model downstream,max_time; cycle count is state/event driven by top/bottom depth crossings
+Vertical Plane / Phase,set_elevator,m_depth; m_pitch,vehicle model downstream,"time, unless depth/pitch bounds end it first"
+Vertical Plane / Phase,set_rudder,none direct,vehicle model downstream,time
+Vertical Plane / Phase,chirp_fin,m_depth; m_present_time,vehicle model downstream,key_delay/key_depth start then duration
+Vertical Plane / Phase,wiggle,m_present_time,vehicle model downstream,time
+Vertical Plane / Phase,launch,m_depth,vehicle model downstream,until m_depth > depth or timeout
+Safety / Background / Utility,mission_timer,none direct,none,time; shuts down mission
+Safety / Background / Utility,depth_envelope,m_depth; m_altitude; m_present_time,none direct,no planned duration; intervenes when depth/altitude envelope is violated
+Safety / Background / Utility,acquire_heading,m_yaw,vehicle model downstream if used with heading control,until heading error is within acceptable_error
+Safety / Background / Utility,broadcast,m_present_time; m_pos_n; m_pos_e; m_depth,none,duration after start_time; periodic comms via cycle args
+Safety / Background / Utility,remote_delay,none in sim stub,none,stub in simulator; no timing behavior implemented here
+Safety / Background / Utility,dock,m_pole_present; m_present_time,vehicle model downstream,idle_time; applies thrust for thrust_time
+Safety / Background / Utility,undock,m_pole_present; m_present_time,vehicle model downstream,max of forward/reverse thrust windows; may recycle by cycle_time while pole remains present
+Safety / Background / Utility,setmode,none direct,vehicle model downstream if it commands axes,time; raw command-mode behavior
