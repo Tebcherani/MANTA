@@ -16,7 +16,14 @@ USERPROFILE_POSIX := $(subst \,/,$(USERPROFILE))
 -include $(USERPROFILE_POSIX)/.ody-auv-sim/Windows_Ody_C.mk
 
 TARGET  = sim
-KSIM_TARGET = ksim
+# On Linux, ksim/ is both the source directory and holds ksim/ksim.cfg at runtime,
+# so the binary cannot be named 'ksim' (linker error: is a directory).
+# On Windows, MinGW gcc appends .exe automatically so 'ksim' -> 'ksim.exe'.
+ifeq ($(OS),Windows_NT)
+    KSIM_TARGET = ksim
+else
+    KSIM_TARGET = ksim_bin
+endif
 
 SRCS = \
     sim_main.c          \
@@ -68,7 +75,7 @@ KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
 OBJS = $(SRCS:.c=.o)
 KSIM_OBJS = $(KSIM_SRCS:.c=.o)
 
-.PHONY: all clean setup debug both
+.PHONY: all clean setup debug both edit_struct
 
 all: setup $(TARGET)
 
@@ -79,6 +86,9 @@ $(KSIM_TARGET): $(KSIM_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 both: setup $(TARGET) $(KSIM_TARGET)
+
+edit_struct: edit_struct.c
+	$(CC) -o edit_struct edit_struct.c
 
 .PHONY: ksim-test ksim-run-test mission-constructor
 ksim-test: setup $(KSIM_TARGET)
@@ -98,7 +108,7 @@ setup:
 	@mkdir -p SData SMission SFault
 
 clean:
-	rm -f $(OBJS) $(TARGET) sim_debug
+	rm -f $(OBJS) $(KSIM_OBJS) $(TARGET) $(KSIM_TARGET) sim_debug edit_struct
 
 debug: CFLAGS += -fsanitize=address
 debug: clean $(TARGET)

@@ -1,3 +1,8 @@
+# ==============================================================================
+# BUILD PRODUCTS AND GENERATED FILES
+# ==============================================================================
+# Linux/Ubuntu build — do not commit compiled binaries or generated output.
+
 # Python virtual environments
 .venv/
 venv/
@@ -18,10 +23,21 @@ __pycache__/
 *.lib
 *.a
 
+# Linux compiled binaries (no extension)
+sim
+ksim_bin
+edit_struct
+parse
+sim_debug
+
 # Build/output folders
 build/
 bin/
 obj/
+dist/
+
+# PyInstaller spec files
+*.spec
 
 # Logs/temp
 *.log
@@ -31,6 +47,11 @@ behavior_log*.json
 cd
 CLAUDE.me
 edit_struct_thruster_real_naming.c
+
+# Windows-specific files (not relevant to Ubuntu build)
+ONEDRIVE_CONFIG_GUIDE.md
+*.code-workspace
+!00OdyC.code-workspace
 
 # MATLAB autosave
 *.asv
@@ -69,3 +90,6 @@ SUtilities/ksim_runs/
 *.pdf
 *.zip
 Review/*.dat
+
+# pip install artifacts
+Review/ody_review.egg-info/

@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"terminal.integrated.env.linux": {
+			"WORKSPACE_ROOT": "${workspaceFolder}"
+		},
+		"C_Cpp.default.cStandard": "gnu89",
+		"C_Cpp.default.includePath": [
+			"${workspaceFolder}"
+		],
+		"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+		"python.terminal.activateEnvironment": true,
+		"makefile.configureOnOpen": false
+	}
+}
