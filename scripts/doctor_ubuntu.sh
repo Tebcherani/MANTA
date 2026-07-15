@@ -57,6 +57,29 @@ if [ -x "$VENV_PY" ]; then
   else
     note_fail "Python dependencies are incomplete; run ./ody setup"
   fi
+  qt_xcb="$("$VENV_PY" - <<'PY'
+import glob
+import sys
+
+matches = glob.glob(
+    sys.prefix + "/lib/python*/site-packages/PyQt5/Qt5/plugins/platforms/libqxcb.so"
+)
+print(matches[0] if matches else "")
+PY
+)"
+  if [ -n "$qt_xcb" ] && command -v ldd >/dev/null 2>&1; then
+    missing_qt_libs="$(ldd "$qt_xcb" | awk '/not found/ { print $1 }' | sort -u | tr '\n' ' ')"
+    if [ -n "$missing_qt_libs" ]; then
+      note_fail "Qt xcb plugin is missing native libraries: $missing_qt_libs"
+      note_fail "install GUI libraries with: ./ody setup --system"
+    else
+      pass "Qt xcb native libraries resolved"
+    fi
+  elif [ -z "$qt_xcb" ]; then
+    note_warn "Qt xcb plugin not found under .venv"
+  else
+    note_warn "ldd not found; cannot inspect Qt xcb native libraries"
+  fi
 else
   note_warn "virtual environment missing; run ./ody setup"
 fi
