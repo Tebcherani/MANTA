@@ -115,3 +115,11 @@ and both Mission Constructor launch paths.
   automatically; you do not need to activate it first.
 - GUI tools require a working desktop display. On Windows 11 WSL this is
   normally handled by WSLg.
+- If PyQt reports that the Qt platform plugin `xcb` was found but could not be
+  initialized, install the Ubuntu Qt/XCB support libraries:
+
+```bash
+sudo apt-get install -y libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
+  libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 \
+  libxcb-xkb1 libxkbcommon-x11-0
+```
