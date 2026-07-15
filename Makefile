@@ -1,7 +1,7 @@
 # Makefile — Odyssey AUV Standalone Simulator
 # Target: Linux / GCC
 # Build: make
-# Run:   ./sim <mission_name>   (looks in ./Mission/<name>.mi)
+# Run:   ./ody sim <mission_name>   (bare names are resolved in ./SMission/)
 
 CC      = gcc
 CFLAGS  = -O2 -Wall -Wno-missing-braces -g -std=gnu89 -I.
@@ -146,6 +146,6 @@ debug: clean $(TARGET)
 #   ./get_am.tex    — hydrodynamic added-mass coefficients (read by sim.c)
 #   ./get_drag.tex  — drag coefficients (read by sim.c)
 #   ./get_shape.tex — vehicle shape parameters (read by sim.c)
-#   ./Mission/      — mission script files (.mi)
-#   ./Data/         — data output directory (created by 'make setup')
+#   ./SMission/     — mission script files (.mi)
+#   ./SData/        — data output directory (created by 'make setup')
 #   ./system.log    — runtime diagnostic log

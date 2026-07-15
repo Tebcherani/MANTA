@@ -31,24 +31,24 @@ The architecture is described in:
 ## Quick Start
 
 ```bash
-# 1. Compile (see Build section below for full details)
-gcc -D_SIMULATOR -o sim sim_main.c sim.c sim_bottom.c sim_current.c \
-    sim_conduct.c sim_usbl.c sensor_load.c layered_control.c \
-    dynamic_control.c whoi_traj.c log_data.c load_mission.c \
-    load_fault.c vehicle.c update.c diagnostic.c fileman.c filters.c \
-    nrutil.c lbl.c lbl_nav.c ekf_work.c waypoint.c wiggle.c \
-    yo_yo_depth.c yo_yo_temperature.c yoyo_new.c whoi_homing.c \
-    docking.c wfparse.c getopt.c -lm
+# First-time Ubuntu setup
+./ody setup
 
-# 2. Run with a mission file
-./sim missions/my_mission.txt
+# Build both simulator executables
+./ody build
 
-# 3. Run with fault injection
-./sim missions/my_mission.txt SFault/cg_shift_demo.fd
+# Run the full simulator with a mission from SMission/
+./ody sim dive240.mi
+
+# Run the kinematic simulator parser check
+./ody ksim
+
+# Run with fault injection
+./ody sim dive240.mi cg_shift_demo.fd
 ```
 
-Output files are written to `./Data/` by default (created automatically).
-The system log goes to `./system.log`.
+Output files are written to `./SData/` by default. The system log goes to
+`./system.log`. See `RUN_UBUNTU.md` for the concise setup and run guide.
 
 ---
 
@@ -164,7 +164,7 @@ from which the simulator is launched.
 | `ody_var.h` | Global variable declarations (`vvp`, `UseSim`, subsystem flags, etc.) |
 | `ody_func.h` | Function prototypes for all major modules |
 | `ody_name.h` | Vehicle identity — sets `#define _SIMULATOR` for this build |
-| `paths.h` | File system paths (resolves to `"."` on non-OS-9 builds) |
+| `paths.h` | Runtime path declarations for `SData/`, `SMission/`, `SFault/`, `Vehicle/`, and `system.log` |
 
 ### Configuration
 
@@ -181,39 +181,33 @@ from which the simulator is launched.
 ### Compiler and flags
 
 ```bash
-gcc -D_SIMULATOR -O2 -Wall -o sim [source files...] -lm
+make both
 ```
 
-The `-D_SIMULATOR` flag is essential. It activates the correct vehicle
-configuration block in `ody_defs.h` and `ody_name.h`, setting
-`VEHICLE_NAME "Simulator"` and enabling the right optional subsystems.
-Without it the build will fail or produce incorrect behavior.
+The current Ubuntu build uses the repository `Makefile`, GNU89 C semantics, and
+the simulator identity selected in `ody_name.h`:
+
+```c
+#define _SIMULATOR
+```
+
+Do not remove or override that vehicle identity. It activates the correct block
+in `ody_defs.h`, setting `VEHICLE_NAME "Simulator"` and enabling the right
+optional subsystems.
 
 ### Recommended Makefile
 
-```makefile
-CC      = gcc
-CFLAGS  = -D_SIMULATOR -O2 -Wall -g
-LDFLAGS = -lm
+Use the checked-in `Makefile`. It excludes hardware-only and currently broken
+legacy source files, builds `sim`, and builds the Ubuntu kinematic simulator as
+`ksim_bin` because `ksim/` is already a directory.
 
-SRCS = sim_main.c sim.c sim_bottom.c sim_current.c sim_conduct.c \
-       sim_usbl.c sensor_load.c layered_control.c dynamic_control.c \
-       whoi_traj.c log_data.c load_mission.c load_fault.c vehicle.c \
-       update.c diagnostic.c fileman.c filters.c nrutil.c lbl.c \
-       lbl_nav.c ekf_work.c waypoint.c wiggle.c yo_yo_depth.c \
-       yo_yo_temperature.c yoyo_new.c whoi_homing.c docking.c \
-       wfparse.c getopt.c
+Common targets:
 
-OBJS = $(SRCS:.c=.o)
-
-sim: $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-clean:
-	rm -f $(OBJS) sim
+```bash
+make both          # build sim and ksim_bin
+make run-sim       # run ./sim with MISSION=dive240.mi by default
+make run-ksim      # run ./ksim_bin and write a behavior log
+make clean         # remove C build products
 ```
 
 ### Known issues for the Linux port
@@ -384,8 +378,12 @@ to be compiled in.
 
 Missions are plain text files passed on the command line:
 ```bash
-./sim my_mission.txt
+./ody sim dive240.mi
 ```
+
+The wrapper passes `dive240.mi` to `sim`; `load_mission.c` resolves bare mission
+names against `SMission/`. You can also pass an explicit relative or absolute
+path.
 
 A mission file has three types of entries:
 
@@ -478,12 +476,13 @@ rules defined in a plain-text fault definition file.
 Pass the fault file as a second command-line argument:
 
 ```bash
-./sim missions/my_mission.txt cg_shift_demo.fd
+./ody sim dive240.mi cg_shift_demo.fd
 ```
 
-The fault engine looks for the file inside the `SFault/` directory (defined as
-`SFAULT_DIR` in `paths.h`). If the file is not found, fault injection is silently
-skipped — it is always optional.
+The fault engine looks for bare fault filenames inside the `SFault/` directory
+(defined as `SFAULT_DIR` in `paths.h`). If the file is not found, fault
+injection is silently skipped - it is always optional. You can also pass an
+explicit relative or absolute fault path.
 
 Alternatively, a mission file can specify a fault file by setting
 `vvp->fault_file_name` before the simulator starts (e.g. via a `sensor:` line
@@ -574,19 +573,21 @@ new quantity injectable, add it to `edit_struct.c` and regenerate (see
 the last cycle (detected via timestamp). The data file is binary with a
 self-documenting ASCII header.
 
-### File locations (from `paths.h`)
+### File locations (from `paths.c` / `paths.h`)
 
-On Linux, all paths resolve relative to the working directory (`.`):
+On Linux, runtime paths are rooted at `ODY_ROOT` when that environment variable
+is set. Otherwise they are rooted at the executable location. When you use
+`./ody`, the wrapper runs from the repository root.
 
 | Path | Location |
 |---|---|
-| Data files | `./Data/` |
+| Data files | `./SData/` |
 | System log | `./system.log` |
-| Mission files | `./Mission/` (can also use absolute paths) |
+| Mission files | `./SMission/` for bare names; explicit paths are also accepted |
 | Fault files | `./SFault/` |
+| Vehicle definitions | `./Vehicle/` |
 
-Create `./Data/` before running if it does not exist, or `log_data()` will fail
-to open the output file.
+`make setup` and `./ody setup` create `SData/`, `SMission/`, and `SFault/`.
 
 ### Data file format
 
@@ -607,7 +608,7 @@ backward-compatible across changes to the data structure.
 
 ```bash
 gcc -o parse parse.c -lm
-./parse my_data_file
+./parse SData/my_data_file
 ```
 
 Set the environment variable `ODY_AUTO_PARSE=1` to have `parse` run
@@ -621,12 +622,12 @@ additional flags to `parse`.
 Before running for the first time:
 
 ```bash
-mkdir -p Data Mission SFault
+mkdir -p SData SMission SFault
 ```
 
-Place mission files in `./Mission/` or provide a full path on the command line.
-Place fault definition files in `./SFault/`.
-The hydrodynamic coefficient files must be in the working directory:
+Place mission files in `./SMission/` or provide an explicit path on the command
+line. Place fault definition files in `./SFault/` or provide an explicit path.
+The hydrodynamic coefficient files must be available from the repository root:
 
 ```
 ./get_am.tex
