@@ -1061,7 +1061,7 @@ void load_configs( const char *name )
     FILE *fopen_fatal( const char *name, const char *type );
 				/* variables */
     FILE *fcfg;
-    char line[MAX_CHARS];
+    char line[MAX_LINE];
 
     fcfg = fopen_fatal( name, "r" );
 

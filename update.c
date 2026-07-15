@@ -45,6 +45,14 @@ void update_add( int index, double value )
 extern char *creation_date;
 extern int *sindex[];
 
+static void copy_name( char *dest, size_t dest_size, const char *src )
+{
+    if ( dest_size == 0 )
+        return;
+    strncpy( dest, src, dest_size - 1 );
+    dest[dest_size - 1] = '\0';
+}
+
 int init_data_structure()
 {
     int i, j, loud = 0;
@@ -62,7 +70,7 @@ int init_data_structure()
                                 /* initialize vvv.s[] from sss */
     for ( i = 0; i < num_sensors; i++ )
     {
-        strcpy( vvv.s[i].name, sss[i].name );
+        copy_name( vvv.s[i].name, sizeof(vvv.s[i].name), sss[i].name );
         vvv.s[i].x = sss[i].x;
         vvv.s[i].time = sss[i].time;
         if (loud)
@@ -75,11 +83,14 @@ int init_data_structure()
                                 /* initialize vvv.b[] from bTemplate */
     for ( i = 0 ; i < num_behaviors; i++ )
     {
-        strcpy( vvv.b[i].name, bTemplate[i].name );
+        copy_name( vvv.b[i].name, sizeof(vvv.b[i].name),
+                   bTemplate[i].name );
         
         for ( j = 0; j < MAX_B_ARG; j++ )
 	{
-            strcpy( vvv.b[i].arg[j].name, bTemplate[i].arg[j].name );
+            copy_name( vvv.b[i].arg[j].name,
+                       sizeof(vvv.b[i].arg[j].name),
+                       bTemplate[i].arg[j].name );
             vvv.b[i].arg[j].x = bTemplate[i].arg[j].x;
         }
     }
