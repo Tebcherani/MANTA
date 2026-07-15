@@ -19,7 +19,7 @@ RUN_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def find_ksim_executable():
-    for candidate in ("ksim.exe", "ksim"):
+    for candidate in ("ksim_bin", "ksim.exe", "ksim"):
         path = ROOT_DIR / candidate
         if path.exists() and path.is_file():
             return str(path)

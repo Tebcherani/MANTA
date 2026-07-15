@@ -1,0 +1,121 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ody: setup",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["setup"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: setup system",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["setup", "--system"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: doctor",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["doctor"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: build",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["build"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: sim dive240",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["sim", "dive240.mi"],
+            "dependsOn": "ody: build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: ksim parse dive240",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["ksim", "--parse", "dive240.mi"],
+            "dependsOn": "ody: build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: review",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["review"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: review2",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["review2"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: mission constructor",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["mission-constructor"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ody: mission constructor web",
+            "type": "shell",
+            "command": "./ody",
+            "args": ["mission-constructor-web"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        }
+    ]
+}

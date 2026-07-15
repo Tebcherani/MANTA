@@ -1,2 +1,3 @@
 *.sh text eol=lf
+ody text eol=lf
 Makefile text eol=lf

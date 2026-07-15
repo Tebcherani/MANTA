@@ -60,9 +60,10 @@ ONEDRIVE_CONFIG_GUIDE.md
 .DS_Store
 Thumbs.db
 desktop.ini
-.vscode/
-.vscode/ipch/
-.vscode/*.local.json
+/.vscode/*
+!/.vscode/tasks.json
+/.vscode/ipch/
+/.vscode/*.local.json
 *.local.mk
 
 # Simulator output/data products

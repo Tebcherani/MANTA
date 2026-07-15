@@ -998,7 +998,7 @@ class MissionConstructor(QtWidgets.QMainWindow):
 
     def _run_ksim(self) -> None:
         self._refresh_script()
-        ksim = ROOT / ("ksim.exe" if sys.platform.startswith("win") else "ksim")
+        ksim = ROOT / ("ksim.exe" if sys.platform.startswith("win") else "ksim_bin")
         if not ksim.exists():
             QtWidgets.QMessageBox.warning(self, "ksim not found", f"Build ksim first:\n{ksim}")
             return

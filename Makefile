@@ -20,10 +20,16 @@ TARGET  = sim
 # so the binary cannot be named 'ksim' (linker error: is a directory).
 # On Windows, MinGW gcc appends .exe automatically so 'ksim' -> 'ksim.exe'.
 ifeq ($(OS),Windows_NT)
+    EXEEXT = .exe
     KSIM_TARGET = ksim
 else
+    EXEEXT =
     KSIM_TARGET = ksim_bin
 endif
+SIM_EXE = ./$(TARGET)$(EXEEXT)
+KSIM_EXE = ./$(KSIM_TARGET)$(EXEEXT)
+MISSION ?= dive240.mi
+KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
     sim_main.c          \
@@ -75,7 +81,7 @@ KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
 OBJS = $(SRCS:.c=.o)
 KSIM_OBJS = $(KSIM_SRCS:.c=.o)
 
-.PHONY: all clean setup debug both edit_struct
+.PHONY: all clean setup debug both edit_struct dev-setup doctor run-sim run-ksim review review2 mission-constructor mission-constructor-web
 
 all: setup $(TARGET)
 
@@ -90,16 +96,38 @@ both: setup $(TARGET) $(KSIM_TARGET)
 edit_struct: edit_struct.c
 	$(CC) -o edit_struct edit_struct.c
 
-.PHONY: ksim-test ksim-run-test mission-constructor
+.PHONY: ksim-test ksim-run-test
 ksim-test: setup $(KSIM_TARGET)
-	./$(KSIM_TARGET).exe --parse dive240.mi
+	$(KSIM_EXE) --parse $(MISSION)
 
 ksim-run-test: setup $(KSIM_TARGET)
-	./$(KSIM_TARGET).exe --nolog --dump-behavior behavior_log.json dive240.mi
+	$(KSIM_EXE) --nolog --dump-behavior behavior_log.json $(MISSION)
 	@test -f behavior_log.json
 
+dev-setup:
+	./ody setup
+
+doctor:
+	./ody doctor
+
+run-sim: setup $(TARGET)
+	$(SIM_EXE) $(MISSION)
+
+run-ksim: setup $(KSIM_TARGET)
+	@mkdir -p SUtilities/ksim_runs
+	$(KSIM_EXE) --nolog --dump-behavior $(KSIM_BEHAVIOR) $(MISSION)
+
+review:
+	./ody review
+
+review2:
+	./ody review2
+
 mission-constructor:
-	python SUtilities/mission_constructor_app.py
+	./ody mission-constructor
+
+mission-constructor-web:
+	./ody mission-constructor-web
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<

@@ -2,6 +2,12 @@
 
 Development environment for the Odyssey AUV Simulator on Ubuntu 24.04 LTS (including WSL2).
 
+> Current quick path: use `./ody setup --system` on a fresh Ubuntu/WSL machine,
+> then use `./ody sim`, `./ody ksim`, `./ody review`, `./ody review2`, and
+> `./ody mission-constructor` for daily work. See `RUN_UBUNTU.md` for the
+> concise command guide. The notes below are retained as background and
+> troubleshooting detail.
+
 ---
 
 ## 1. Prerequisites
