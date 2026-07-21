@@ -17,45 +17,31 @@
 char msg_buf[256], syslog_file[256];
 FILE *syslog, *term = NULL;
 
-/**
- * Open the system log for writing.
- *
- * If name is NULL, the log file location is determined automatically:
- *  1. Use LOGDIR/system.log when the LOGDIR environment variable is set.
- *  2. Otherwise use the default SYSLOG_FILE path.
- *
- * If the log file cannot be opened, logging falls back to stderr and
- * the function returns -1. Returns 0 on success.
- */
-int open_syslog(const char *name) {
-    // Use stderr as the default terminal output stream.
-    if (!term)
-        term = stderr;
-    
-    // Resolve the default log file location if no path was provided.
-    if (!name) {
-        name = getenv("LOGDIR");
-        if (name)
-            sprintf(syslog_file, "%s/system.log", name);
-        else			
-            strcpy(syslog_file, SYSLOG_FILE);
+
+int open_syslog( const char *name )
+{
+    if ( !term ) term = stderr; /* set default terminal output */
+                                /* no name means try env then the */
+    if ( !name )                /* default if that fails */
+    {
+        name = getenv( "LOGDIR" );
+        if ( name )
+            sprintf( syslog_file, "%s/system.log", name );
+        else			/* from paths.h */
+            strcpy( syslog_file, SYSLOG_FILE );
     }
     else
-        strcpy(syslog_file, name);
-
-    fprintf(term, "opening %s as system log... ", syslog_file);
-    fflush(term);
-
-    syslog = fopen(syslog_file, "w");
-    if (!syslog) {
-        fputc('\n', term);
-        perror(syslog_file);
-
-        // Continue logging to stderr if the log file cannot be opened.
-        syslog = term;		
+        strcpy( syslog_file, name );
+    fprintf( term, "opening %s as system log... ", syslog_file );
+    fflush( term );
+    syslog = fopen( syslog_file, "w" );
+    if ( !syslog )
+    {
+        fputc( '\n', term );
+        perror( syslog_file );
+        syslog = term;		/* serious jleonard kludge */
         return -1;
     }
-    
     fputs( "done\n", term );
     return 0;
 }

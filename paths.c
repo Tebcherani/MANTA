@@ -118,33 +118,21 @@ static void set_root_from_argv0( const char *argv0 )
 #endif
 }
 
-/**
- * Initialize the Odyssey repository paths.
- *
- * Determines the repository root directory using the ODY_ROOT
- * environment variable if it is set; otherwise derives the root
- * from the executable path (argv[0]).
- *
- * After locating the root, constructs absolute paths to the
- * standard project directories and log files used throughout
- * the simulator.
- */
-void ody_init_paths(const char *argv0) {
+void ody_init_paths( const char *argv0 )
+{
     char *env_root;
 
-    // Determine the repository root directory.
-    env_root = getenv("ODY_ROOT");
-    if (env_root && env_root[0])
-	    copy_path(ody_root, ODY_PATH_MAX, env_root);
+    env_root = getenv( "ODY_ROOT" );
+    if ( env_root && env_root[0] )
+	copy_path( ody_root, ODY_PATH_MAX, env_root );
     else
-	    set_root_from_argv0(argv0);
+	set_root_from_argv0( argv0 );
 
-    // Construct absolute paths to project resources.
-    ody_join_path(ody_init_dir, ODY_PATH_MAX, ody_root, "Init");
-    ody_join_path(ody_data_dir, ODY_PATH_MAX, ody_root, "SData");
-    ody_join_path(ody_syslog_file, ODY_PATH_MAX, ody_root, "system.log");
-    ody_join_path(ody_mission_dir, ODY_PATH_MAX, ody_root, "SMission");
-    ody_join_path(ody_sfault_dir, ODY_PATH_MAX, ody_root, "SFault");
-    ody_join_path(ody_vehicle_dir, ODY_PATH_MAX, ody_root, "Vehicle");
-    ody_join_path(ody_lbl_logfile_name, ODY_PATH_MAX, ody_root, "lbl.log");
+    ody_join_path( ody_init_dir, ODY_PATH_MAX, ody_root, "Init" );
+    ody_join_path( ody_data_dir, ODY_PATH_MAX, ody_root, "SData" );
+    ody_join_path( ody_syslog_file, ODY_PATH_MAX, ody_root, "system.log" );
+    ody_join_path( ody_mission_dir, ODY_PATH_MAX, ody_root, "SMission" );
+    ody_join_path( ody_sfault_dir, ODY_PATH_MAX, ody_root, "SFault" );
+    ody_join_path( ody_vehicle_dir, ODY_PATH_MAX, ody_root, "Vehicle" );
+    ody_join_path( ody_lbl_logfile_name, ODY_PATH_MAX, ody_root, "lbl.log" );
 }
