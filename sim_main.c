@@ -121,53 +121,90 @@ static void dump_behavior_log_json( const char *fname )
     write_message( TERM | SLOG );
 }
 
-int main( int argc, char *argv[], char *envp[] )
-{
+/**
+ * Run the Odyssey vehicle simulation.
+ *
+ * Parses command-line options, loads the selected mission, fault, and
+ * vehicle configuration files, initializes the simulation, and advances
+ * the vehicle state through the main simulation loop.
+ *
+ * argc and argv contain the command-line arguments.
+ * envp contains the process environment.
+ *
+ * Returns the program exit status.
+ */
+int main(int argc, char *argv[], char *envp[]) {
+    // Command parsing and message buffers.
     char c, message[MAX_MODEM];
     unsigned char c1;
+
+    // Loop counters and simulation control values.
     int i, j, n, num_cycles = 1000000, pause_mode=0, dum, k; 
+    
+    // Initial actuator-related vallues and simulation timing.
     double amps = 1.35, del13 = 0.0, del24 = 0.0;
     double last_report = 0.0;
     double dt = 0.02;
-    time_t start_time;		/* used for syslog, datalog */
+    
+    // Timestamp information used by system and data logging.
+    time_t start_time;
     struct tm *tp;
+    
+    // Temporary strings and optional input files.
     char *tmp1, *tmp3;
     char *mission_file = NULL, *fault_file = NULL;
     char *vehicle_file = "Vehicle/Borealis.vd";
-				/* e is the force/moment vector, p is the
-				   position/orientation vector */
+				
+    /* 
+     * Vehicle dynamics vectors.
+     * e stores the force and moment values.
+     * p stores position and orientation values.
+     */ 
     double e[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double p[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    ody_init_paths( argv[0] );
+    // Locate the repository and initialize standard resource paths.
+    ody_init_paths(argv[0]);
 
-  /* del13 is rudder angle in radian, del24 is elevator angle in radians */
-  /* I'm pretty sure that positive rudder causes a right turn and that
-     positive elevator causes a dive */
+    /* del13 is the rudder angle (radians).
+     * del24 is the elevator angle (radians).
+     *
+     * TODO: Verify the sign convention.
+     * The current assumption is:
+     *  - Positive rudder produces a right turn.
+     *  - Positive elevator commands a dive.
+     */
 
-    open_syslog( 0 );		/* null ptr for default */
+    /* 
+     * Initialize the simulator system log.
+     * Passing NULL uses LOGDIR/system.log when LOGDIR is set;
+     * otherwise it uses the default SYSLOG_FILE path.
+     */
+    open_syslog(NULL);
 
-    strcpy( msg_buf, "MIT Sea Grant Odyssey IIB vehicle simulator\n" );
-    write_message( TERM | SLOG );
-    write_rcs( "$Revision: 2.22 $", "$Date: 1998/02/03 04:25:07 $" );
+    // Write simulator startup information to the terminal and system log. 
+    strcpy(msg_buf, "MIT Sea Grant Odyssey IIB vehicle simulator\n");
+    write_message(TERM | SLOG);
+    write_rcs("$Revision: 2.22 $", "$Date: 1998/02/03 04:25:07 $");
 
+    // Initialize the vehicle runtime state.
     init_data_structure();
 
+    // Enable simulator mode
     UseSim = 1;
 
-    /* Parse command-line arguments */
-    if ( argc < 2 )
-    {
-	fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
-        fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
-        fprintf( stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0] );
-        fprintf( stderr, "       %s --nolog mission                 (run without logging)\n", argv[0] );
-        fprintf( stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0] );
-        fprintf( stderr, "       %s --help|-h                     (show this message)\n", argv[0] );
-	exit( 1 );
+    // Parse and validate command-line arguments.
+    if (argc < 2) {
+	    fprintf(stderr, "usage: %s mission [fault_file]\n", argv[0]);
+        fprintf(stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0]);
+        fprintf(stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0]);
+        fprintf(stderr, "       %s --nolog mission                 (run without logging)\n", argv[0]);
+        fprintf(stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0]);
+        fprintf(stderr, "       %s --help|-h                       (show this message)\n", argv[0]);
+	    exit(1);
     }
     
-    /* Process CLI flags */
+    // Process command-line options and configure the simulator.
     i = 1;
     while (i < argc && argv[i][0] == '-') {
         if (!strcmp(argv[i], "--parse")) {
@@ -193,12 +230,12 @@ int main( int argc, char *argv[], char *envp[] )
                 exit(1);
             }
         } else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
-            fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
-            fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
-            fprintf( stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0] );
-            fprintf( stderr, "       %s --nolog mission                 (run without logging)\n", argv[0] );
-            fprintf( stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0] );
-            fprintf( stderr, "       %s --help|-h                     (show this message)\n", argv[0] );
+            fprintf(stderr, "usage: %s mission [fault_file]\n", argv[0] );
+            fprintf(stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0]);
+            fprintf(stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0]);
+            fprintf(stderr, "       %s --nolog mission                 (run without logging)\n", argv[0]);
+            fprintf(stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0]);
+            fprintf(stderr, "       %s --help|-h                       (show this message)\n", argv[0]);
             exit(0);
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
@@ -206,124 +243,134 @@ int main( int argc, char *argv[], char *envp[] )
         }
     }
     
-    /* Remaining positional args */
-    if (i < argc) mission_file = argv[i++];
-    if (i < argc) fault_file = argv[i++];
+    // Read the mission and optional fault file arguments.
+    if (i < argc) 
+        mission_file = argv[i++];
+    if (i < argc) 
+        fault_file = argv[i++];
     
     if (!mission_file) {
         fprintf(stderr, "Error: mission file required\n");
         exit(1);
     }
 
-    if ( vehicle_file && load_vehicle_def(vehicle_file) == -1 )
-	exit( 1 );
+    // Load the selected vehicle definition.
+    if (vehicle_file && load_vehicle_def(vehicle_file) == -1)
+	    exit(1);
     
-    if ( load_mission(mission_file) == -1 )
-	exit( 1 );
-    sprintf( msg_buf, 
-	     "vvp->nstates = %d, vvp->cstate = %d after load_mission()\n",
-	     vvp->nstates, vvp->cstate );
-    write_message( TERM | SLOG );
+    // Load and validate the mission definition.
+    if (load_mission(mission_file) == -1)
+	    exit(1);
 
-    /* If --parse mode, just exit after successful mission load */
+    // Log the initialized mission state.
+    sprintf(msg_buf, "vvp->nstates = %d, vvp->cstate = %d after load_mission()\n", vvp->nstates, vvp->cstate);
+    write_message(TERM | SLOG);
+
+    // Exit after validating the mission in parse-only mode.
     if (parse_only_mode) {
-        sprintf( msg_buf, "Mission parse successful (--parse mode, exiting)\n");
-        write_message( TERM | SLOG );
+        sprintf(msg_buf, "Mission parse successful (--parse mode, exiting)\n");
+        write_message(TERM | SLOG);
         exit(0);
     }
 
-				/* load fault injection file if specified
-				   as second argument or via data structure */
-    load_faults( fault_file ? fault_file : vvp->fault_file_name );
+	// Load the specified fault file or the default vehicle fault configuration.
+    load_faults(fault_file ? fault_file : vvp->fault_file_name);
 
-				/* use data structure initial values to set
-                                   initial position */
-    update( REAL_X, sensor(M_POS_N) );
-    update( REAL_Y, sensor(M_POS_E) );
-    update( REAL_Z, sensor(M_DEPTH) );
+	// Initialize the vehicle state from the loaded sensor values
+    update(REAL_X, sensor(M_POS_N));
+    update(REAL_Y, sensor(M_POS_E));
+    update(REAL_Z, sensor(M_DEPTH));
+
     p[1] = sensor(REAL_X);
     p[2] = sensor(REAL_Y);
     p[3] = sensor(REAL_Z);
     p[6] = sensor(REAL_PSI); 
+
     e[1] = sensor(REAL_U);
     e[2] = sensor(REAL_V);
     e[3] = sensor(REAL_W);
 
-    sprintf( msg_buf, "sim initial position: "
-	     "%.2lf %.2lf %.2lf %.2lf %.2lf %.2lf\n",
-	     p[1], p[2], p[3], p[4], p[5], p[6] );
-    write_message( MonitorSim | SLOG );
+    // Log the initial simulated vehicle position.
+    sprintf( msg_buf, "sim initial position: %.2lf %.2lf %.2lf %.2lf %.2lf %.2lf\n",
+	    p[1], p[2], p[3], p[4], p[5], p[6]);
+    write_message(MonitorSim | SLOG);
 
-    /* Initialize data logging (skip if nolog_mode) */
-    if (!nolog_mode) {
-        datafile = init_data_logging( DataFileName );
-    } else {
+    // Initialize simulation data logging or disable logging in --nolog mode.
+    if (!nolog_mode)
+        datafile = init_data_logging(DataFileName);
+    else {
         datafile = NULL;
-        sprintf( msg_buf, "Logging disabled (--nolog mode)\n");
-        write_message( TERM | SLOG );
+        sprintf(msg_buf, "Logging disabled (--nolog mode)\n");
+        write_message(TERM | SLOG);
     }
 
+    // Build the inverse inertia matrix required by the equations of motion.
     init_simulation();
 
-#ifdef SIM_MODEM_INTERFACE     /* try to change attributes of stdin */
+#ifdef SIM_MODEM_INTERFACE     
+    /* 
+     * Configure terminal input for interactive simulator controls.
+     *
+     * Switch stdin to non-canonical mode so the simulator can respond
+     * immediately to single-key commands (for example, pause and resume).
+     */
     stdin_ptr = stdin;
     n = tcgetattr(fileno(stdin_ptr), &termios_p);
 
-				/* set MIN to zero so that reads won't block */
     termios_p.c_cc[VEOF] = 0;
-
-/* Use termio to set in raw (non-canonical) mode so that chars are
-   immediately received by the program.  This will let the user type "p"
-   for pause and "r" for resume, for example */
-				/* Turn off canonical input (see termio) */
     termios_p.c_lflag &= ~0000002;
+
     n = tcsetattr(fileno(stdin), TCSANOW, &termios_p);
 #endif
 
-/* 
-   This is the MAIN LOOP: initialize time, run loop, increment time at end
-   for next cycle.
-*/
-				/* determine mission start time to nearest
-				   second in calendar format */
-    start_time = time( NULL );
-    tp = gmtime( &start_time );
+	// Get the current time and convert it to UTC calendar time.
+    start_time = time(NULL);
+    tp = gmtime(&start_time);
 
-    strftime( vvp->mission_date, 30, "%b %d, %Y %H:%M:%S", tp );
-    sprintf( msg_buf, "Calendar time: %d (%s UTC)\n", start_time,
-	     vvp->mission_date );
-    write_message( TERM | SLOG );
+    // Format and log the mission start time.
+    strftime(vvp->mission_date, 30, "%b %d, %Y %H:%M:%S", tp);
+    sprintf(msg_buf, "Calendar time: %d (%s UTC)\n", start_time, vvp->mission_date );
+    write_message(TERM | SLOG);
 
-				/* grab mission start time, also has effect
-				   of reinitializing millisec*/
-    hirestime( &vvp->mission_start_time );
+	/* 
+     * Record the high-resolution mission start time and reset the 
+     * high-resolution mission clock before the simulation begins. 
+     */
+     hirestime( &vvp->mission_start_time );
 
+    /* 
+     * Main simulation loop.
+     *
+     * Initialize the simulation clock and repeatedly advance the
+     * simulation until the mission completes or is aborted. 
+     */
+
+     // Initialize the simulation time to zero.
     sensor(M_PRESENT_TIME) = 0;
     sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
-    for ( i = 0; i < num_cycles; i++ )
-    {
-	if ( vvp->abort_mission )
-	{
-	    sprintf( msg_buf, "% 8.2f: ABORT mission because "
-		     "vvp->abort_mission = %d\n",
-		     sensor(M_PRESENT_TIME), vvp->abort_mission );
-	    write_message( TERM | SLOG );
-	    exit_gracefully( 0 );
-	}
+    
+    for (i = 0; i < num_cycles; i++) {
+        // Terminate the simulation if the mission has been aborted.
+        if (vvp->abort_mission) {
+            sprintf(msg_buf, "% 8.2f: ABORT mission because vvp->abort_mission = %d\n",
+                sensor(M_PRESENT_TIME), vvp->abort_mission);
+            write_message(TERM | SLOG);
+            exit_gracefully(0);
+        }
 
-	amps = sensor(C_THRUSTER_CURRENT);
-	del13 = sensor(C_RUDDER_ANGLE);
-	del24 = sensor(C_ELEVATOR_ANGLE);
+        // Advance the vehicle dynamics using the current control inputs.
+        amps = sensor(C_THRUSTER_CURRENT);
+        del13 = sensor(C_RUDDER_ANGLE);
+        del24 = sensor(C_ELEVATOR_ANGLE);
 
-	motion( e, p, amps, del13, del24, dt );
+	    motion(e, p, amps, del13, del24, dt);
 	    
-	if (fabs(e[1])+fabs(e[2])+fabs(e[3]) +
-	    fabs(e[4])+fabs(e[5])+fabs(e[6]) > 1.e2)
-	{
-	    strcpy( msg_buf, "UNSTABLE SIMULATION -- ABORTED\n" );
-	    write_message( TERM | SLOG );
-	    exit( 1 );
-	}
+        // Abort the simuation if the dynamics become numerically unstable.
+        if (fabs(e[1])+fabs(e[2])+fabs(e[3]) + fabs(e[4])+fabs(e[5])+fabs(e[6]) > 1.e2) {
+            strcpy(msg_buf, "UNSTABLE SIMULATION -- ABORTED\n");
+            write_message(TERM | SLOG);
+            exit(1);
+        }
 
 	if ( i % 10 == 0 )
 	{

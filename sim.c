@@ -118,78 +118,98 @@ static double M1[4],M2[4],M3[4],M4[4];
 
 /*----------------------------------------------------------------------*/
 
-void init_simulation()
-{
-    /* vs_* parameters already loaded by load_vehicle_def() -- just
-       build the inertia matrix inverse and we are ready to integrate. */
+/**
+ * Initialize the physics model.
+ *
+ * Vehicle parameters are loaded by load_vehicle_def(). This function
+ * computes the inverse inertia matrix required before numerical
+ * integration begins.
+ */
+void init_simulation() {
     lhs();
 }
 
-/*----------------------------------------------------------------------*/
-
-void lhs()			/* calculates left-hand-side of the eqn */
-{
+/**
+ * Build and invert the vehicle inertia matrix.
+ *
+ * Constructs the six-degree-of-freedom inertia matrix from the vehicle's
+ * rigid-body mass properties, center-of-gravity offsets, moments of inertia,
+ * and hydrodynamic added-mass coefficients.
+ *
+ * The resulting inverse is stored in ainv and is used by the equations of
+ * motion to convert applied forces and moments into linear and angular
+ * accelerations.
+ *
+ * Matrix indices 1 through 6 correspond to surge, sway, heave, roll,
+ * pitch, and yaw. Index 0 is unused.
+ */
+void lhs() {
     double a[7][7],work[7][7];
     int i, j, debug=0;
 
-				/* fsh checked inertia matrix 3/22/94 */
-
-    a[1][1] =  sensor(VS_MASS) - sensor(VS_XUDOT);	/* surge force */
+	// Assemble the surge force row.
+    a[1][1] = sensor(VS_MASS) - sensor(VS_XUDOT);
     a[1][2] = 0.;
     a[1][3] = 0.;
     a[1][4] = 0.;
     a[1][5] = sensor(VS_MASS) * sensor(VS_ZG);
     a[1][6] = -sensor(VS_MASS) * sensor(VS_YG);
 
-    a[2][1] = 0.;		/* sway force */
+    // Assemble the sway force row.
+    a[2][1] = 0.;		
     a[2][2] =  sensor(VS_MASS) - sensor(VS_YVDOT) ;
     a[2][3] = 0.;
     a[2][4] = -sensor(VS_MASS) * sensor(VS_ZG) - sensor(VS_YPDOT);
     a[2][5] = 0.;
     a[2][6] =  sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_YRDOT);
 
-    a[3][1] = 0.;		/* heave force */
+    // Assemble the heave force row.
+    a[3][1] = 0.;		
     a[3][2] = 0.;
     a[3][3] =  sensor(VS_MASS) - sensor(VS_ZWDOT);
     a[3][4] =  sensor(VS_MASS) * sensor(VS_YG);
     a[3][5] = -sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_ZQDOT);
     a[3][6] = 0.;
   
-    a[4][1] = 0.;		/* roll moment */
+    // Assemble the roll moment row.
+    a[4][1] = 0.;		
     a[4][2] = -sensor(VS_MASS) * sensor(VS_ZG) - sensor(VS_KVDOT);
     a[4][3] =  sensor(VS_MASS) * sensor(VS_YG);
     a[4][4] =  sensor(VS_IXX) - sensor(VS_KPDOT);
     a[4][5] = -sensor(VS_IXY);
     a[4][6] = -sensor(VS_IZX);
   
-    a[5][1] =  sensor(VS_MASS) * sensor(VS_ZG);	/* pitch moment */
+    // Assemble the pitch moment row.
+    a[5][1] =  sensor(VS_MASS) * sensor(VS_ZG);	
     a[5][2] = 0.;
     a[5][3] = -sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_MWDOT);
     a[5][4] = -sensor(VS_IXY);
     a[5][5] =  sensor(VS_IYY) - sensor(VS_MQDOT);
     a[5][6] = -sensor(VS_IYZ);
 
-    a[6][1] = -sensor(VS_MASS) * sensor(VS_YG);	/* yaw moment */
+    // Assemble the yaw moment row.
+    a[6][1] = -sensor(VS_MASS) * sensor(VS_YG);	
     a[6][2] =  sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_NVDOT);
     a[6][3] = 0.;
     a[6][4] = -sensor(VS_IZX);
     a[6][5] = -sensor(VS_IYZ);
     a[6][6] =  sensor(VS_IZZ) - sensor(VS_NRDOT);
   
-    if(debug)
-    {
-	printf("Inertia matrix: ------------ \n") ;
-	for(i=1;i<=6;i++){
-	    for(j=1;j<=6;j++)
-		printf("%6.2f  ", a[i][j]) ;
-	    printf("\n");
-	}
-	printf("\n");
+    // Optionally print the assembled inertia matrix for debugging.
+    if(debug) {
+        printf("Inertia matrix: ------------ \n") ;
+        for(i=1; i<=6; i++){
+            for(j=1; j<=6; j++)
+                printf("%6.2f  ", a[i][j]);
+            printf("\n");
+        }
+        printf("\n");
     }
 
-    if (matinv(a,ainv,6,work)==1) 
-    {
-	fprintf(syslog, "Matrix is singular in lhs of equations of motion\n");
+    // Invert the inertia matrix and store the result in ainv.
+    if (matinv(a, ainv, 6, work) == 1) {
+	    // A singular matrix cannot be used to compute accelerations.
+        fprintf(syslog, "Matrix is singular in lhs of equations of motion\n");
     }
 }
                 

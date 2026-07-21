@@ -53,86 +53,99 @@ static void copy_name( char *dest, size_t dest_size, const char *src )
     dest[dest_size - 1] = '\0';
 }
 
-int init_data_structure()
-{
+/**
+ * Initialize the vehicle runtime data structure.
+ *
+ * Copies the sensor and behavior templates into the active vehicle data
+ * structure, initializes command and state behavior assignments, associates
+ * behavior names with their function pointers, and sets default timing and
+ * mission-control values.
+ *
+ * Also initializes the vehicle rotation matrix to the identity matrix,
+ * records the data-structure creation date, and starts the mission clock.
+ *
+ * Returns 1 on success. Exits the program if the mission clock cannot
+ * be initialized.
+ */
+int init_data_structure() {
     int i, j, loud = 0;
     char *tmp;
 
-    strcpy( msg_buf, "Initializing vehicle data structure ...\n");
-    write_message( TERM | SLOG );
+    strcpy(msg_buf, "Initializing vehicle data structure ...\n");
+    write_message(TERM | SLOG);
 
+    // Select vvv as the active vehicle data structure.
     vvp = &vvv;
 
-    sprintf( msg_buf, "\t%d sensors, %d behaviors ...\n", num_sensors,
-	     num_behaviors );
-    write_message( TERM | SLOG );
+    sprintf(msg_buf, "\t%d sensors, %d behaviors ...\n", num_sensors, num_behaviors);
+    write_message(TERM | SLOG);
 
-                                /* initialize vvv.s[] from sss */
-    for ( i = 0; i < num_sensors; i++ )
-    {
-        copy_name( vvv.s[i].name, sizeof(vvv.s[i].name), sss[i].name );
+    // Copy the sensor templates into the active vehicle state.
+    for (i = 0; i < num_sensors; i++) {
+        copy_name( vvv.s[i].name, sizeof(vvv.s[i].name), sss[i].name);
         vvv.s[i].x = sss[i].x;
         vvv.s[i].time = sss[i].time;
-        if (loud)
-	{
-            sprintf( msg_buf, "  sensor: %30s %.4g\n", vvv.s[i].name,
-		     vvv.s[i].x );
-            write_message( SLOG );
+        
+        if (loud) {
+            sprintf(msg_buf, "  sensor: %30s %.4g\n", vvv.s[i].name, vvv.s[i].x);
+            write_message(SLOG);
         }
     }
-                                /* initialize vvv.b[] from bTemplate */
-    for ( i = 0 ; i < num_behaviors; i++ )
-    {
-        copy_name( vvv.b[i].name, sizeof(vvv.b[i].name),
-                   bTemplate[i].name );
+    
+    // Copy the behavior templates and their default arguments. 
+    for (i = 0 ; i < num_behaviors; i++) {
+        copy_name(vvv.b[i].name, sizeof(vvv.b[i].name), bTemplate[i].name);
         
-        for ( j = 0; j < MAX_B_ARG; j++ )
-	{
-            copy_name( vvv.b[i].arg[j].name,
-                       sizeof(vvv.b[i].arg[j].name),
-                       bTemplate[i].arg[j].name );
+        for (j = 0; j < MAX_B_ARG; j++) {
+            copy_name(vvv.b[i].arg[j].name, sizeof(vvv.b[i].arg[j].name), bTemplate[i].arg[j].name);
             vvv.b[i].arg[j].x = bTemplate[i].arg[j].x;
         }
     }
-                                /* initialize vvv.c[] to all zeros (&
-                                   behaviors to -1) */ 
-    for ( i = 0; i < MAX_COMMAND; i++ )
+    
+    // Mark all command slots as having no assigned behavior.
+    for (i = 0; i < MAX_COMMAND; i++)
         vvv.c[i].behavior = -1;
 
-    for ( j = 0; j < MAX_STATES; j++ )
+    // Mark every state command slot as having no assigned behavior.
+    for (j = 0; j < MAX_STATES; j++)
         for (i=0;i<MAX_COMMAND;i++)
             vvp->sta[j].c[i].behavior = -1;
 
-                                /* initialize sindex and bindex arrays */
-    for ( i = 0; i < num_sensors; i++ )
+    // Populate the sensor index mappings.
+    for (i = 0; i < num_sensors; i++)
         *(sindex[i]) = i;
 
-    for ( i = 0; i < num_behaviors; i++ )
+    // Associate each behavior with its implementation function.
+    for (i = 0; i < num_behaviors; i++)
         assign_behavior_fcn_ptr( bTemplate[i].name, &(vvv.b[i]) );
 
+    // Set counts and default mission-control values.
     vvv.last_s = num_sensors - 1;
     vvv.last_b = num_behaviors - 1;
-    vvv.comm_synchro = 1;	/* Sync flag for COMM process  */
-    vvv.abort_mission = 0;	/* added jleonard 11/13/95 */
-    vvv.control_cycle_time = 0.2; /* Cycle time for control loop */
-    vvv.comm_cycle_time = 1.0;	/* Cycle time for comm */
+    vvv.comm_synchro = 1;	
+    vvv.abort_mission = 0;	
+    vvv.control_cycle_time = 0.2;
+    vvv.comm_cycle_time = 1.0;	
+
+    // Initialize the vehicle rotation matrix to the identity matrix.
     vvv.rotation[0][0] = 1;     
     vvv.rotation[1][1] = 1;     
     vvv.rotation[2][2] = 1;     
 
-    tmp = strcpy( vvv.creation_date, creation_date );
-    if (tmp == NULL)
-    {
-        strcpy( msg_buf, "Error copying creation date\n" );
+    // Store the data structure creation date.
+    tmp = strcpy(vvv.creation_date, creation_date);
+    if (tmp == NULL) {
+        strcpy(msg_buf, "Error copying creation date\n");
         write_message( TERM | SLOG );
     }
-				/* grab start time for init, will be
-				   grabbed again prior to actual launch */
-    if ( hirestime(&vvp->mission_start_time) == -1 )
-    {
-	strcpy( msg_buf, "\nfatal error starting mission clock\n" );
-	write_message( TERM | SLOG );
-	exit( -1 );
+				
+    /* Initialize the mission clock. It will be reset again immediately
+     * before the vehicle is launched.
+     */
+    if (hirestime(&vvp->mission_start_time) == -1) {
+        strcpy(msg_buf, "\nfatal error starting mission clock\n");
+        write_message(TERM | SLOG);
+        exit(-1);
     }
 
     return 1;
