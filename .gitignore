@@ -94,3 +94,6 @@ Review/*.dat
 
 # pip install artifacts
 Review/ody_review.egg-info/
+
+# Docker files
+.env

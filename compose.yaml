@@ -1,0 +1,32 @@
+services:
+  simulator:
+    build:
+      context: .
+    image: odyssey_sim
+
+    user: "${HOST_UID}:${HOST_GID}"
+
+    volumes:
+      - type: bind
+        source: ./SMission
+        target: /odyssey/SMission
+        read_only: true
+
+      - type: bind
+        source: ./Vehicle
+        target: /odyssey/Vehicle
+        read_only: true
+
+      - type: bind
+        source: ./SFault
+        target: /odyssey/SFault
+        read_only: true
+
+      - type: bind
+        source: ./SEnvironment
+        target: /odyssey/SEnvironment
+        read_only: true
+
+      - type: bind
+        source: ./SData
+        target: /odyssey/SData

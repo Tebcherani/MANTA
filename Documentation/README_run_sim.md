@@ -16,6 +16,34 @@ After installation, verify Docker is working by running:
 docker --version
 ```
 
+## Initial Setup
+
+The Docker Compose configuration uses a `.env` file to determine the user and group IDs that should be used when running the simulator. This ensures that output files created in bind-mounted directories are owned by the current user instead of `root`.
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Determine your user and group IDs:
+
+```bash
+id -u
+id -g
+```
+
+Open `.env` and replace the placeholder values with the values returned by the above commands.
+
+For example:
+
+```text
+HOST_UID=1000
+HOST_GID=1000
+```
+
+This setup only needs to be performed once on each machine.
+
 ## Building the Docker Image
 
 The simulator image only needs to be rebuilt when the simulator source code or Dockerfile changes.
@@ -23,15 +51,15 @@ The simulator image only needs to be rebuilt when the simulator source code or D
 Build the image by executing:
 
 ```bash
-./build_sim.sh
+docker compose build
 ```
 
 ## Running the Simulator
 
-Run the simulator using:
+Run the simulator container using:
 
 ```bash
-./run_sim.sh
+docker compose run --rm simulator
 ```
 
 By default, the simulator executes the mission specified in the Docker image.
@@ -39,13 +67,13 @@ By default, the simulator executes the mission specified in the Docker image.
 To run a different mission file, provide its name as a command-line argument:
 
 ```bash
-./run_sim.sh <mission_file>
+docker compose run --rm simulator <mission_file>
 ```
 
 For example:
 
 ```bash
-./run_sim.sh dive240.mi
+docker compose run --rm simulator dive240.mi
 ```
 
 ## Input and Output
@@ -69,11 +97,11 @@ Simulation output is written directly to the `SData` directory on the host files
 ```text
 Modify simulator source code
         ↓
-./build_sim.sh
+docker compose build
         ↓
 Edit mission or configuration files
         ↓
-./run_sim.sh <mission_file>
+docker compose run --rm simulator <mission_file>
         ↓
 Analyze results in SData/
 ```
