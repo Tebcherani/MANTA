@@ -16,4 +16,5 @@ COPY . .
 
 RUN make clean && make sim
 
-CMD ["./sim"]
+ENTRYPOINT ["./sim"]
+CMD ["dive240.mi"]

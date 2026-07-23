@@ -1,0 +1,11 @@
+.git
+.gitignore
+*.o
+sim
+sim_debug
+ksim_bin
+edit_struct
+system.log
+SData/*
+__pycache__/
+*.pyc
