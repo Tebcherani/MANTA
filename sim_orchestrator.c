@@ -147,8 +147,6 @@ int main( int argc, char *argv[], char *envp[] )
     char c, message[MAX_MODEM];
     unsigned char c1;
     int i, j, n, pause_mode=0, dum, k; 
-    double amps = 1.35, del13 = 0.0, del24 = 0.0;
-    double last_report = 0.0;
     time_t start_time;		/* used for syslog, datalog */
     struct tm *tp;
     char *tmp1, *tmp3;
@@ -162,10 +160,6 @@ int main( int argc, char *argv[], char *envp[] )
      positive elevator causes a dive */
 
     open_syslog( 0 );		/* null ptr for default */
-
-    strcpy( msg_buf, "MIT Sea Grant Odyssey IIB vehicle simulator\n" );
-    write_message( TERM | SLOG );
-    write_rcs( "$Revision: 2.22 $", "$Date: 1998/02/03 04:25:07 $" );
 
     init_data_structure();
 
@@ -327,17 +321,13 @@ int main( int argc, char *argv[], char *envp[] )
 	    exit_gracefully( 0 );
 	}
 
-	amps = sensor(C_THRUSTER_CURRENT);
-	del13 = sensor(C_RUDDER_ANGLE);
-	del24 = sensor(C_ELEVATOR_ANGLE);
-
-	if (update_odyssey_state(&odyssey_state, amps, del13, del24, sim_config.timestep) != 0) {
+    // Update Odyssey state
+	if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) {
         close_sim_log();
         return EXIT_FAILURE;
     }
 
-	if ( i % sim_config.control_period == 0 )
-	{
+	if (i % sim_config.control_period == 0) {
 				/* to call sensor_LBL, sensor_USBL, ... */
 	    simSensors();
 	    sensor_processing();

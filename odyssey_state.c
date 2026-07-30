@@ -46,13 +46,11 @@ int init_odyssey_state(odyssey_state_t *state) {
     return 0;
 }
 
-int update_odyssey_state(
-    odyssey_state_t *state, 
-    double thruster_current,
-    double rudder_angle,
-    double elevator_angle,
-    double sim_time
-) {
+int update_odyssey_state(odyssey_state_t *state, double time) {
+    double thruster_current;
+    double rudder_angle;
+    double elevator_angle;
+    
     if (state == NULL) {
         write_to_sim_log(
             "Failed to update Odyssey state: "
@@ -61,13 +59,17 @@ int update_odyssey_state(
         return -1;
     }
 
+    thruster_current = sensor(C_THRUSTER_CURRENT);
+    rudder_angle = sensor(C_RUDDER_ANGLE);
+    elevator_angle = sensor(C_ELEVATOR_ANGLE);
+
     motion(
         state->force_moment,
         state->position_orientation,
         thruster_current,
         rudder_angle,
         elevator_angle,
-        sim_time
+        time
     );
 
     if (fabs(state->force_moment[1]) +
