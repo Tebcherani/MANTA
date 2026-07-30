@@ -6,6 +6,6 @@ typedef struct {
 } world_state_t;
 
 int init_world_state(world_state_t *state);
-int update_world_state(world_state_t *state, double sim_time);
+int update_world_state(world_state_t *state, double timestep);
 
 #endif

@@ -46,7 +46,7 @@ int init_odyssey_state(odyssey_state_t *state) {
     return 0;
 }
 
-int update_odyssey_state(odyssey_state_t *state, double time) {
+int update_odyssey_state(odyssey_state_t *state, double timestep) {
     double thruster_current;
     double rudder_angle;
     double elevator_angle;
@@ -69,7 +69,7 @@ int update_odyssey_state(odyssey_state_t *state, double time) {
         thruster_current,
         rudder_angle,
         elevator_angle,
-        time
+        timestep
     );
 
     if (fabs(state->force_moment[1]) +

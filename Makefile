@@ -64,7 +64,8 @@ SRCS = \
     sim_config.c        \
     sim_log.c           \
     world_state.c       \
-    odyssey_state.c
+    odyssey_state.c     \
+    sim_state.c
 
 KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/sim_kinematic.c \

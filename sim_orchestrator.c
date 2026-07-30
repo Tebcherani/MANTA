@@ -22,6 +22,7 @@
 
 #include "sim_config.h"
 #include "sim_log.h"
+#include "sim_state.h"
 #include "world_state.h"
 #include "odyssey_state.h"
 
@@ -129,12 +130,18 @@ static void dump_behavior_log_json( const char *fname )
 int main( int argc, char *argv[], char *envp[] )
 {
     sim_config_t sim_config;
+    sim_state_t sim_state;
     world_state_t world_state;
     odyssey_state_t odyssey_state;
 
     if (open_sim_log() != 0) return EXIT_FAILURE;
 
     if (init_sim(&sim_config) != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+
+    if (init_sim_state(&sim_state) != 0) {
         close_sim_log();
         return EXIT_FAILURE;
     }
@@ -396,7 +403,14 @@ int main( int argc, char *argv[], char *envp[] )
 	    }
 	}
 #endif
-				/* update clock for next control cycle */
+	
+    // Update simulation state
+    if (update_sim_state(&sim_state, sim_config.timestep) != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+
+    /* update clock for next control cycle */
 	sensor( M_PRESENT_TIME ) += sim_config.timestep;
 	sensor_time(M_PRESENT_TIME) =
 	    (long int) (1000 * sensor(M_PRESENT_TIME));

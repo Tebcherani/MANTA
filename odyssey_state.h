@@ -7,6 +7,6 @@ typedef struct {
 } odyssey_state_t;
 
 int init_odyssey_state(odyssey_state_t *state);
-int update_odyssey_state(odyssey_state_t *state, double time);
+int update_odyssey_state(odyssey_state_t *state, double timestep);
 
 #endif

@@ -15,7 +15,7 @@ int init_world_state(world_state_t *state) {
     return 0;
 }
 
-int update_world_state(world_state_t *state, double sim_time) {
+int update_world_state(world_state_t *state, double timestep) {
     if (state == NULL) {
         write_to_sim_log(
             "Failed to update world state: "
@@ -27,7 +27,7 @@ int update_world_state(world_state_t *state, double sim_time) {
     /*
      * World models will eventually be updated here.
      */
-    (void)sim_time;
+    (void)timestep;
 
     return 0;
 }
