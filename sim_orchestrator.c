@@ -23,6 +23,7 @@
 #include "sim_config.h"
 #include "sim_log.h"
 #include "world_state.h"
+#include "odyssey_state.h"
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
@@ -129,6 +130,7 @@ int main( int argc, char *argv[], char *envp[] )
 {
     sim_config_t sim_config;
     world_state_t world_state;
+    odyssey_state_t odyssey_state;
 
     if (open_sim_log() != 0) return EXIT_FAILURE;
 
@@ -138,6 +140,11 @@ int main( int argc, char *argv[], char *envp[] )
     }
 
     if (init_world_state(&world_state) != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+
+    if (init_odyssey_state(&odyssey_state) != 0) {
         close_sim_log();
         return EXIT_FAILURE;
     }
@@ -152,10 +159,6 @@ int main( int argc, char *argv[], char *envp[] )
     char *tmp1, *tmp3;
     char *mission_file = NULL, *fault_file = NULL;
     char *vehicle_file = "Vehicle/Borealis.vd";
-				/* e is the force/moment vector, p is the
-				   position/orientation vector */
-    double e[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double p[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     ody_init_paths( argv[0] );
 
@@ -259,18 +262,31 @@ int main( int argc, char *argv[], char *envp[] )
     update( REAL_X, sensor(M_POS_N) );
     update( REAL_Y, sensor(M_POS_E) );
     update( REAL_Z, sensor(M_DEPTH) );
-    p[1] = sensor(REAL_X);
-    p[2] = sensor(REAL_Y);
-    p[3] = sensor(REAL_Z);
-    p[6] = sensor(REAL_PSI); 
-    e[1] = sensor(REAL_U);
-    e[2] = sensor(REAL_V);
-    e[3] = sensor(REAL_W);
+    
+    odyssey_state.position_orientation[1] = sensor(REAL_X);
+    odyssey_state.position_orientation[2] = sensor(REAL_Y);
+    odyssey_state.position_orientation[3] = sensor(REAL_Z);
+    odyssey_state.position_orientation[6] = sensor(REAL_PSI); 
+    
+    odyssey_state.force_moment[1] = sensor(REAL_U);
+    odyssey_state.force_moment[2] = sensor(REAL_V);
+    odyssey_state.force_moment[3] = sensor(REAL_W);
 
-    sprintf( msg_buf, "sim initial position: "
-	     "%.2lf %.2lf %.2lf %.2lf %.2lf %.2lf\n",
-	     p[1], p[2], p[3], p[4], p[5], p[6] );
-    write_message( MonitorSim | SLOG );
+    write_to_sim_log(
+        "Odyssey initial position:\n"
+        "  North   : %.2lf\n"
+        "  East    : %.2lf\n"
+        "  Depth   : %.2lf\n"
+        "  Roll    : %.2lf\n"
+        "  Pitch   : %.2lf\n"
+        "  Heading : %.2lf\n",
+        odyssey_state.position_orientation[1],
+        odyssey_state.position_orientation[2],
+        odyssey_state.position_orientation[3],
+        odyssey_state.position_orientation[4],
+        odyssey_state.position_orientation[5],
+        odyssey_state.position_orientation[6]
+    );
 
     /* Initialize data logging (skip if nolog_mode) */
     if (!nolog_mode) {
@@ -326,6 +342,12 @@ int main( int argc, char *argv[], char *envp[] )
             return EXIT_FAILURE;
         }
 
+        // Update Odyssey state
+        if (update_odyssey_state(&odyssey_state, sensor(M_PRESENT_TIME)) != 0) {
+            close_sim_log();
+            return EXIT_FAILURE;
+        }
+
 
 	if ( vvp->abort_mission )
 	{
@@ -340,11 +362,18 @@ int main( int argc, char *argv[], char *envp[] )
 	del13 = sensor(C_RUDDER_ANGLE);
 	del24 = sensor(C_ELEVATOR_ANGLE);
 
-	motion( e, p, amps, del13, del24, sim_config.timestep);
-	    
-	if (fabs(e[1])+fabs(e[2])+fabs(e[3]) +
-	    fabs(e[4])+fabs(e[5])+fabs(e[6]) > 1.e2)
-	{
+	motion(odyssey_state.force_moment, 
+        odyssey_state.position_orientation, 
+        amps, del13, del24, sim_config.timestep
+    );
+	   
+    if (fabs(odyssey_state.force_moment[1]) +
+        fabs(odyssey_state.force_moment[2]) +
+        fabs(odyssey_state.force_moment[3]) +
+        fabs(odyssey_state.force_moment[4]) +
+        fabs(odyssey_state.force_moment[5]) +
+        fabs(odyssey_state.force_moment[6]) > 1.e2)
+    {
 	    strcpy( msg_buf, "UNSTABLE SIMULATION -- ABORTED\n" );
 	    write_message( TERM | SLOG );
 	    exit( 1 );

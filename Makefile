@@ -32,7 +32,7 @@ MISSION ?= dive240.mi
 KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
-    sim_main.c          \
+    sim_orchestrator.c  \
     sim.c               \
     sim_bottom.c        \
     sim_current.c       \
@@ -63,7 +63,8 @@ SRCS = \
     load_fault.c        \
     sim_config.c        \
     sim_log.c           \
-    world_state.c
+    world_state.c       \
+    odyssey_state.c
 
 KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/sim_kinematic.c \
