@@ -10,7 +10,7 @@ int init_world_state(world_state_t *state) {
     }
 
     state->temp = 0;
-    write_to_sim_log("World state initialized.\n");
+    write_to_sim_log("World state initialized.\n\n");
 
     return 0;
 }

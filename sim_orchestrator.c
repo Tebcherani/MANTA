@@ -144,11 +144,6 @@ int main( int argc, char *argv[], char *envp[] )
         return EXIT_FAILURE;
     }
 
-    if (init_odyssey_state(&odyssey_state) != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
     char c, message[MAX_MODEM];
     unsigned char c1;
     int i, j, n, pause_mode=0, dum, k; 
@@ -263,30 +258,11 @@ int main( int argc, char *argv[], char *envp[] )
     update( REAL_Y, sensor(M_POS_E) );
     update( REAL_Z, sensor(M_DEPTH) );
     
-    odyssey_state.position_orientation[1] = sensor(REAL_X);
-    odyssey_state.position_orientation[2] = sensor(REAL_Y);
-    odyssey_state.position_orientation[3] = sensor(REAL_Z);
-    odyssey_state.position_orientation[6] = sensor(REAL_PSI); 
-    
-    odyssey_state.force_moment[1] = sensor(REAL_U);
-    odyssey_state.force_moment[2] = sensor(REAL_V);
-    odyssey_state.force_moment[3] = sensor(REAL_W);
-
-    write_to_sim_log(
-        "Odyssey initial position:\n"
-        "  North   : %.2lf\n"
-        "  East    : %.2lf\n"
-        "  Depth   : %.2lf\n"
-        "  Roll    : %.2lf\n"
-        "  Pitch   : %.2lf\n"
-        "  Heading : %.2lf\n",
-        odyssey_state.position_orientation[1],
-        odyssey_state.position_orientation[2],
-        odyssey_state.position_orientation[3],
-        odyssey_state.position_orientation[4],
-        odyssey_state.position_orientation[5],
-        odyssey_state.position_orientation[6]
-    );
+    // Initialize Odyssey state
+    if (init_odyssey_state(&odyssey_state) != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
 
     /* Initialize data logging (skip if nolog_mode) */
     if (!nolog_mode) {
