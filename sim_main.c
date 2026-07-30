@@ -21,6 +21,7 @@
 #include "vehicle.h"
 
 #include "sim_config.h"
+#include "sim_log.h"
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
@@ -126,9 +127,13 @@ static void dump_behavior_log_json( const char *fname )
 int main( int argc, char *argv[], char *envp[] )
 {
     sim_config_t sim_config;
-    init_sim(&sim_config);
 
+    if (open_sim_log() != 0) return EXIT_FAILURE;
 
+    if (init_sim(&sim_config) != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
 
     char c, message[MAX_MODEM];
     unsigned char c1;
@@ -408,6 +413,13 @@ int main( int argc, char *argv[], char *envp[] )
 	update( M_DT, 10*sim_config.timestep);
     }
     exit_gracefully( 0 );
+
+    // Close simulation log
+    if (close_sim_log() != 0) {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
 
 
