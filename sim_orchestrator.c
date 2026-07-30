@@ -404,11 +404,10 @@ int main( int argc, char *argv[], char *envp[] )
         return EXIT_FAILURE;
     }
 
-    /* update clock for next control cycle */
-	sensor( M_PRESENT_TIME ) = sim_state.sim_time;
-	sensor_time(M_PRESENT_TIME) =
-	    (long int) (1000 * sensor(M_PRESENT_TIME));
-	update( M_DT, sim_config.control_period * sim_config.timestep);
+    // Update clock for next control cycle
+	sensor(M_PRESENT_TIME) = sim_state.sim_time;
+	sensor_time(M_PRESENT_TIME) = (long int) (1000 * sensor(M_PRESENT_TIME));
+	update(M_DT, sim_config.control_period * sim_config.timestep);
     }
     exit_gracefully( 0 );
 
