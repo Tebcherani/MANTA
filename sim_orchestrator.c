@@ -313,51 +313,47 @@ int main( int argc, char *argv[], char *envp[] )
             return EXIT_FAILURE;
         }
 
-	if ( vvp->abort_mission )
-	{
-	    sprintf( msg_buf, "% 8.2f: ABORT mission because "
-		     "vvp->abort_mission = %d\n",
-		     sensor(M_PRESENT_TIME), vvp->abort_mission );
-	    write_message( TERM | SLOG );
-	    exit_gracefully( 0 );
-	}
+	    if (vvp->abort_mission) {
+            sprintf( msg_buf, "% 8.2f: ABORT mission because "
+                "vvp->abort_mission = %d\n",
+                sensor(M_PRESENT_TIME), vvp->abort_mission );
+            write_message( TERM | SLOG );
+            exit_gracefully( 0 );
+        }
 
-    // Update Odyssey state
-	if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
+        // Update Odyssey state
+        if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) {
+            close_sim_log();
+            return EXIT_FAILURE;
+        }
 
-	if (i % sim_config.control_period == 0) {
-				/* to call sensor_LBL, sensor_USBL, ... */
-	    simSensors();
-	    sensor_processing();
+	    if (sim_state.current_cycle % sim_config.control_period == 0) {
+            /* to call sensor_LBL, sensor_USBL, ... */
+            simSensors();
+            sensor_processing();
 
-				/* inject faults: after sensors so control
+			/* inject faults: after sensors so control
 				   sees corrupted values; before control laws
 				   so vs_* changes affect this cycle's physics */
-	    apply_faults();
+	        apply_faults();
 
-	    layered_control();
+            layered_control();
+            dynamic_control();
 
-	    dynamic_control();
+            /* Capture behavior activity for ksim/mission verification */
+            capture_behavior_activity();
 
-	    /* Capture behavior activity for ksim/mission verification */
-	    capture_behavior_activity();
+	        if (!nolog_mode) log_data( datafile );
 
-	    if (!nolog_mode)
-	        log_data( datafile );
+	        if( !stack_busy(&vvp->c[0]) ) {
+                sprintf( msg_buf, "% 8.2f: state %d completed\n",
+                    sensor(M_PRESENT_TIME), vvp->cstate++ );
+                write_message( TERM | SLOG );
 
-	    if( !stack_busy(&vvp->c[0]) )
-	    {
-		sprintf( msg_buf, "% 8.2f: state %d completed\n",
-			 sensor(M_PRESENT_TIME), vvp->cstate++ );
-		write_message( TERM | SLOG );
-
-		if( vvp->cstate >= vvp->nstates )
-		    exit_gracefully( 0 );
+                if( vvp->cstate >= vvp->nstates )
+                    exit_gracefully( 0 );
+	        }
 	    }
-	}
 
 /* see if user has pressed any keys, i.e. to pause the program or
    interrogate values in the data structure (simulated modem) */
@@ -398,18 +394,19 @@ int main( int argc, char *argv[], char *envp[] )
 	}
 #endif
 	
-    // Update simulation state
-    if (update_sim_state(&sim_state, sim_config.timestep) != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
+        // Update simulation state
+        if (update_sim_state(&sim_state, sim_config.timestep) != 0) {
+            close_sim_log();
+            return EXIT_FAILURE;
+        }
+
+        // Update clock for next control cycle
+        sensor(M_PRESENT_TIME) = sim_state.sim_time;
+        sensor_time(M_PRESENT_TIME) = (long int) (1000 * sensor(M_PRESENT_TIME));
+        update(M_DT, sim_config.control_period * sim_config.timestep);
     }
 
-    // Update clock for next control cycle
-	sensor(M_PRESENT_TIME) = sim_state.sim_time;
-	sensor_time(M_PRESENT_TIME) = (long int) (1000 * sensor(M_PRESENT_TIME));
-	update(M_DT, sim_config.control_period * sim_config.timestep);
-    }
-    exit_gracefully( 0 );
+    exit_gracefully(0);
 
     // Close simulation log
     if (close_sim_log() != 0) {
