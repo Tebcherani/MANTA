@@ -154,7 +154,6 @@ int main( int argc, char *argv[], char *envp[] )
     char c, message[MAX_MODEM];
     unsigned char c1;
     int i, j, n, pause_mode=0, dum, k; 
-    time_t start_time;		/* used for syslog, datalog */
     struct tm *tp;
     char *tmp1, *tmp3;
     char *mission_file = NULL, *fault_file = NULL;
@@ -295,15 +294,10 @@ int main( int argc, char *argv[], char *envp[] )
    This is the MAIN LOOP: initialize time, run loop, increment time at end
    for next cycle.
 */
-				/* determine mission start time to nearest
-				   second in calendar format */
-    start_time = time( NULL );
-    tp = gmtime( &start_time );
-
-    strftime( vvp->mission_date, 30, "%b %d, %Y %H:%M:%S", tp );
-    sprintf( msg_buf, "Calendar time: %d (%s UTC)\n", start_time,
-	     vvp->mission_date );
-    write_message( TERM | SLOG );
+	// Determine mission start time to nearest second in calendar format
+    tp = gmtime(&sim_state.calendar_start_time);
+    strftime(vvp->mission_date, 30, "%b %d, %Y %H:%M:%S", tp);
+    write_to_sim_log("Calendar time: %s UTC\n", vvp->mission_date);
 
 				/* grab mission start time, also has effect
 				   of reinitializing millisec*/
