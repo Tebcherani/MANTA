@@ -22,6 +22,7 @@
 
 #include "sim_config.h"
 #include "sim_log.h"
+#include "world_state.h"
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
@@ -127,10 +128,16 @@ static void dump_behavior_log_json( const char *fname )
 int main( int argc, char *argv[], char *envp[] )
 {
     sim_config_t sim_config;
+    world_state_t world_state;
 
     if (open_sim_log() != 0) return EXIT_FAILURE;
 
     if (init_sim(&sim_config) != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+
+    if (init_world_state(&world_state) != 0) {
         close_sim_log();
         return EXIT_FAILURE;
     }

@@ -44,7 +44,7 @@ int init_sim(sim_config_t *config) {
         "Simulation configuration initialized.\n"
         "  Number of cycles: %d\n"
         "  Timestep: %.6f seconds\n"
-        "  Control period: %d cycles\n",
+        "  Control period: %d cycles\n\n",
         config->num_cycles,
         config->timestep,
         config->control_period

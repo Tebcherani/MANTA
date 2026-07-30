@@ -28,7 +28,7 @@ int open_sim_log(void) {
         return -1;
     }
 
-    if (write_to_sim_log("Simulation log opened: %s\n", path) != 0) {
+    if (write_to_sim_log("Simulation log opened: %s\n\n", path) != 0) {
         fclose(file);
         file = NULL;
         return -1;

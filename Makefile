@@ -62,7 +62,8 @@ SRCS = \
     sim_stubs.c         \
     load_fault.c        \
     sim_config.c        \
-    sim_log.c
+    sim_log.c           \
+    world_state.c
 
 KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/sim_kinematic.c \
