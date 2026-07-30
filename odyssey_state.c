@@ -46,7 +46,13 @@ int init_odyssey_state(odyssey_state_t *state) {
     return 0;
 }
 
-int update_odyssey_state(odyssey_state_t *state, double sim_time) {
+int update_odyssey_state(
+    odyssey_state_t *state, 
+    double thruster_current,
+    double rudder_angle,
+    double elevator_angle,
+    double sim_time
+) {
     if (state == NULL) {
         write_to_sim_log(
             "Failed to update Odyssey state: "
@@ -55,10 +61,28 @@ int update_odyssey_state(odyssey_state_t *state, double sim_time) {
         return -1;
     }
 
-    /*
-     * Odyssey models will eventually be updated here.
-     */
-    (void)sim_time;
+    motion(
+        state->force_moment,
+        state->position_orientation,
+        thruster_current,
+        rudder_angle,
+        elevator_angle,
+        sim_time
+    );
+
+    if (fabs(state->force_moment[1]) +
+        fabs(state->force_moment[2]) +
+        fabs(state->force_moment[3]) +
+        fabs(state->force_moment[4]) +
+        fabs(state->force_moment[5]) +
+        fabs(state->force_moment[6]) > 1.e2
+    ) {
+	    write_to_sim_log(
+            "Failed to update Odyssey state: "
+            "simulation became unstable.\n"
+        );
+        return -1;
+	}
 
     return 0;
 }

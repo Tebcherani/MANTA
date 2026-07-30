@@ -7,6 +7,12 @@ typedef struct {
 } odyssey_state_t;
 
 int init_odyssey_state(odyssey_state_t *state);
-int update_odyssey_state(odyssey_state_t *state, double sim_time);
+int update_odyssey_state(
+    odyssey_state_t *state, 
+    double thruster_current,
+    double rudder_angle,
+    double elevator_angle,
+    double sim_time
+);
 
 #endif

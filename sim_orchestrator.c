@@ -318,13 +318,6 @@ int main( int argc, char *argv[], char *envp[] )
             return EXIT_FAILURE;
         }
 
-        // Update Odyssey state
-        if (update_odyssey_state(&odyssey_state, sensor(M_PRESENT_TIME)) != 0) {
-            close_sim_log();
-            return EXIT_FAILURE;
-        }
-
-
 	if ( vvp->abort_mission )
 	{
 	    sprintf( msg_buf, "% 8.2f: ABORT mission because "
@@ -338,22 +331,10 @@ int main( int argc, char *argv[], char *envp[] )
 	del13 = sensor(C_RUDDER_ANGLE);
 	del24 = sensor(C_ELEVATOR_ANGLE);
 
-	motion(odyssey_state.force_moment, 
-        odyssey_state.position_orientation, 
-        amps, del13, del24, sim_config.timestep
-    );
-	   
-    if (fabs(odyssey_state.force_moment[1]) +
-        fabs(odyssey_state.force_moment[2]) +
-        fabs(odyssey_state.force_moment[3]) +
-        fabs(odyssey_state.force_moment[4]) +
-        fabs(odyssey_state.force_moment[5]) +
-        fabs(odyssey_state.force_moment[6]) > 1.e2)
-    {
-	    strcpy( msg_buf, "UNSTABLE SIMULATION -- ABORTED\n" );
-	    write_message( TERM | SLOG );
-	    exit( 1 );
-	}
+	if (update_odyssey_state(&odyssey_state, amps, del13, del24, sim_config.timestep) != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
 
 	if ( i % sim_config.control_period == 0 )
 	{
