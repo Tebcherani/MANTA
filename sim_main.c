@@ -320,6 +320,13 @@ int main( int argc, char *argv[], char *envp[] )
     sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
     for ( i = 0; i < sim_config.num_cycles; i++ )
     {
+        // Update world state
+        if (update_world_state(&world_state, sensor(M_PRESENT_TIME)) != 0) {
+            close_sim_log();
+            return EXIT_FAILURE;
+        }
+
+
 	if ( vvp->abort_mission )
 	{
 	    sprintf( msg_buf, "% 8.2f: ABORT mission because "
