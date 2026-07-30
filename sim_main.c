@@ -20,6 +20,8 @@
 #include "paths.h"
 #include "vehicle.h"
 
+#include "sim_config.h"
+
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
 int  load_vehicle_def( const char * );
@@ -123,12 +125,16 @@ static void dump_behavior_log_json( const char *fname )
 
 int main( int argc, char *argv[], char *envp[] )
 {
+    sim_config_t sim_config;
+    init_sim(&sim_config);
+
+
+
     char c, message[MAX_MODEM];
     unsigned char c1;
-    int i, j, n, num_cycles = 1000000, pause_mode=0, dum, k; 
+    int i, j, n, pause_mode=0, dum, k; 
     double amps = 1.35, del13 = 0.0, del24 = 0.0;
     double last_report = 0.0;
-    double dt = 0.02;
     time_t start_time;		/* used for syslog, datalog */
     struct tm *tp;
     char *tmp1, *tmp3;
@@ -300,7 +306,7 @@ int main( int argc, char *argv[], char *envp[] )
 
     sensor(M_PRESENT_TIME) = 0;
     sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
-    for ( i = 0; i < num_cycles; i++ )
+    for ( i = 0; i < sim_config.num_cycles; i++ )
     {
 	if ( vvp->abort_mission )
 	{
@@ -315,7 +321,7 @@ int main( int argc, char *argv[], char *envp[] )
 	del13 = sensor(C_RUDDER_ANGLE);
 	del24 = sensor(C_ELEVATOR_ANGLE);
 
-	motion( e, p, amps, del13, del24, dt );
+	motion( e, p, amps, del13, del24, sim_config.timestep);
 	    
 	if (fabs(e[1])+fabs(e[2])+fabs(e[3]) +
 	    fabs(e[4])+fabs(e[5])+fabs(e[6]) > 1.e2)
@@ -396,10 +402,10 @@ int main( int argc, char *argv[], char *envp[] )
 	}
 #endif
 				/* update clock for next control cycle */
-	sensor( M_PRESENT_TIME ) += dt;
+	sensor( M_PRESENT_TIME ) += sim_config.timestep;
 	sensor_time(M_PRESENT_TIME) =
 	    (long int) (1000 * sensor(M_PRESENT_TIME));
-	update( M_DT, 10*dt );
+	update( M_DT, 10*sim_config.timestep);
     }
     exit_gracefully( 0 );
 }

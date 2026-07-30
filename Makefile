@@ -60,7 +60,8 @@ SRCS = \
     docking.c           \
     getopt.c            \
     sim_stubs.c         \
-    load_fault.c
+    load_fault.c        \
+    sim_config.c
 
 KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/sim_kinematic.c \
