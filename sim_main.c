@@ -336,7 +336,7 @@ int main( int argc, char *argv[], char *envp[] )
 	    exit( 1 );
 	}
 
-	if ( i % 10 == 0 )
+	if ( i % sim_config.control_period == 0 )
 	{
 				/* to call sensor_LBL, sensor_USBL, ... */
 	    simSensors();
@@ -410,7 +410,7 @@ int main( int argc, char *argv[], char *envp[] )
 	sensor( M_PRESENT_TIME ) += sim_config.timestep;
 	sensor_time(M_PRESENT_TIME) =
 	    (long int) (1000 * sensor(M_PRESENT_TIME));
-	update( M_DT, 10*sim_config.timestep);
+	update( M_DT, sim_config.control_period * sim_config.timestep);
     }
     exit_gracefully( 0 );
 

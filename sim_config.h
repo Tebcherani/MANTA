@@ -4,6 +4,7 @@
 typedef struct {
     double timestep;
     int num_cycles;
+    int control_period; // Run the sensor processing and control code once every N simulation cycles
 } sim_config_t;
 
 int init_sim(sim_config_t *config);
