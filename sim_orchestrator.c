@@ -297,11 +297,7 @@ int main( int argc, char *argv[], char *envp[] )
 	// Determine mission start time to nearest second in calendar format
     tp = gmtime(&sim_state.calendar_start_time);
     strftime(vvp->mission_date, 30, "%b %d, %Y %H:%M:%S", tp);
-    write_to_sim_log("Calendar time: %s UTC\n", vvp->mission_date);
-
-				/* grab mission start time, also has effect
-				   of reinitializing millisec*/
-    hirestime( &vvp->mission_start_time );
+    hirestime(&vvp->mission_start_time);
 
     sensor(M_PRESENT_TIME) = 0;
     sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
@@ -313,11 +309,8 @@ int main( int argc, char *argv[], char *envp[] )
         }
 
 	    if (vvp->abort_mission) {
-            sprintf( msg_buf, "% 8.2f: ABORT mission because "
-                "vvp->abort_mission = %d\n",
-                sensor(M_PRESENT_TIME), vvp->abort_mission );
-            write_message( TERM | SLOG );
-            exit_gracefully( 0 );
+            write_to_sim_log("%8.2f: Mission aborted because vvp->abort_mission = %d\n", sim_state.sim_time, vvp->abort_mission);
+            exit_gracefully(0);
         }
 
         // Update Odyssey state
@@ -344,7 +337,7 @@ int main( int argc, char *argv[], char *envp[] )
 
 	        if (!nolog_mode) log_data( datafile );
 
-	        if( !stack_busy(&vvp->c[0]) ) {
+	        if(!stack_busy(&vvp->c[0])) {
                 sprintf( msg_buf, "% 8.2f: state %d completed\n",
                     sensor(M_PRESENT_TIME), vvp->cstate++ );
                 write_message( TERM | SLOG );
