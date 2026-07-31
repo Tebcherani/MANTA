@@ -75,11 +75,9 @@ KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
 #   yoyo_new.c          — file begins with email headers; broken C
 #   yo_yo_depth.c       — missing includes and broken syntax; excluded pending fix
 #   yo_yo_temperature.c — same as above
-#   ekf_work.c          — requires matrix library (libody_dev.a) not present
 #   sensor_kvh.c        — same matrix library dependency; heading_reference() stubbed
 #   serial.c            — hardware serial bus; unreachable in sim; stubs in sim_stubs.c
 #   ody_serio.c         — same; stubs in sim_stubs.c
-#   wfparse.c           — standalone post-processing utility with its own main()
 #   io_utils.c          — contains only hardware I/O functions not needed by the simulator
 
 OBJS = $(SRCS:.c=.o)

@@ -139,7 +139,6 @@ from which the simulator is launched.
 | `yoyo_new.c` | Updated yo-yo behavior |
 | `whoi_homing.c` | USBL acoustic homing behaviors |
 | `docking.c` | Docking behavior |
-| `wfparse.c` | Waypoint file parser (used by `waypoint.c`) |
 
 ### Utility and support
 
