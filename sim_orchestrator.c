@@ -305,8 +305,7 @@ int main( int argc, char *argv[], char *envp[] )
 
     sensor(M_PRESENT_TIME) = 0;
     sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
-    for ( i = 0; i < sim_config.num_cycles; i++ )
-    {
+    while (sim_state.current_cycle < sim_config.num_cycles) {
         // Update world state
         if (update_world_state(&world_state, sensor(M_PRESENT_TIME)) != 0) {
             close_sim_log();
