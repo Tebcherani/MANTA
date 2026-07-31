@@ -451,18 +451,6 @@ separately from the estimated navigation variables (`M_POS_N`, `M_POS_E`,
 The simulation aborts automatically if the total velocity exceeds 100 m/s
 (numerical instability check).
 
-### Interactive keys (if compiled with `-DSIM_MODEM_INTERFACE`)
-
-While running, key presses are processed without blocking:
-
-| Key | Action |
-|---|---|
-| `p` | Pause simulation |
-| `r` | Resume simulation |
-| `d` | Print current depth |
-| `t` | Print current mission time |
-| `x` | Call `exit_gracefully()` and quit |
-
 ---
 
 ## Fault Injection

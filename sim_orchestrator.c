@@ -151,19 +151,12 @@ int main( int argc, char *argv[], char *envp[] )
         return EXIT_FAILURE;
     }
 
-    char c, message[MAX_MODEM];
-    unsigned char c1;
-    int i, j, n, pause_mode=0, dum, k; 
+    int i; 
     struct tm *tp;
-    char *tmp1, *tmp3;
     char *mission_file = NULL, *fault_file = NULL;
     char *vehicle_file = "Vehicle/Borealis.vd";
 
     ody_init_paths( argv[0] );
-
-  /* del13 is rudder angle in radian, del24 is elevator angle in radians */
-  /* I'm pretty sure that positive rudder causes a right turn and that
-     positive elevator causes a dive */
 
     open_syslog( 0 );		/* null ptr for default */
 
@@ -275,21 +268,6 @@ int main( int argc, char *argv[], char *envp[] )
 
     init_simulation();
 
-#ifdef SIM_MODEM_INTERFACE     /* try to change attributes of stdin */
-    stdin_ptr = stdin;
-    n = tcgetattr(fileno(stdin_ptr), &termios_p);
-
-				/* set MIN to zero so that reads won't block */
-    termios_p.c_cc[VEOF] = 0;
-
-/* Use termio to set in raw (non-canonical) mode so that chars are
-   immediately received by the program.  This will let the user type "p"
-   for pause and "r" for resume, for example */
-				/* Turn off canonical input (see termio) */
-    termios_p.c_lflag &= ~0000002;
-    n = tcsetattr(fileno(stdin), TCSANOW, &termios_p);
-#endif
-
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end
    for next cycle.
@@ -346,45 +324,6 @@ int main( int argc, char *argv[], char *envp[] )
                     exit_gracefully( 0 );
 	        }
 	    }
-
-/* see if user has pressed any keys, i.e. to pause the program or
-   interrogate values in the data structure (simulated modem) */
-
-#ifdef SIM_MODEM_INTERFACE
-	j = read(fileno(stdin_ptr),  &c);
-	if (j>0) {
-				/* do switch(c) to determine appropriate
-                                   action (e.g. pause, resume) */
-	    switch(c) {
-	    case 'd':
-		if (pause_mode) fprintf(stderr, "\nstatus paused: ");
-		fprintf(stderr, "m_depth=%.2lf\n", sensor(M_DEPTH));
-		break;
-	    case 'p':
-		fprintf(stderr, "\npausing\n");
-		pause_mode = 1;
-		break;
-	    case 'r':
-		fprintf(stderr, "\nresuming\n");
-		pause_mode = 0;
-		break;
-	    case 'x':
-		fprintf(stderr, "\nCalling exit_gracefully()\n");
-		(void) exit_gracefully( 0 );
-		pause_mode = 0;
-		break;
-	    case 't':
-		if (pause_mode) fprintf(stderr, "\nstatus paused: ");
-		fprintf(stderr, "m_present_time=%.2lf\n", sensor(M_PRESENT_TIME));
-		break;
-	    default:
-		if (pause_mode) fprintf(stderr, "\nstatus paused: ");
-		fprintf(stderr, "\nt=%.2lf sim_modem unrecognized char is %c\n", 
-			sensor(M_PRESENT_TIME), c);
-		break;
-	    }
-	}
-#endif
 	
         // Update simulation state
         if (update_sim_state(&sim_state, sim_config.timestep) != 0) {
