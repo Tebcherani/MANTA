@@ -71,14 +71,10 @@ KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/ksim_stubs.c
 
 # Files intentionally excluded and why:
-#   main.c              — real-vehicle entry point; replaced by sim_main.c
 #   yoyo_new.c          — file begins with email headers; broken C
 #   yo_yo_depth.c       — missing includes and broken syntax; excluded pending fix
 #   yo_yo_temperature.c — same as above
-#   sensor_kvh.c        — same matrix library dependency; heading_reference() stubbed
-#   serial.c            — hardware serial bus; unreachable in sim; stubs in sim_stubs.c
 #   ody_serio.c         — same; stubs in sim_stubs.c
-#   io_utils.c          — contains only hardware I/O functions not needed by the simulator
 
 OBJS = $(SRCS:.c=.o)
 KSIM_OBJS = $(KSIM_SRCS:.c=.o)
