@@ -39,9 +39,6 @@ FILE *datafile;
 char DataFileName[ODY_PATH_MAX];
 double gasdev();
 
-static char tmp2[80];
-static double north0, east0;
-
 /* CLI flags for ksim / mission verification modes */
 static int parse_only_mode = 0;  /* --parse: load mission and exit */
 static int nolog_mode = 0;        /* --nolog: skip data file logging */
@@ -156,24 +153,21 @@ int main( int argc, char *argv[], char *envp[] )
     char *mission_file = NULL, *fault_file = NULL;
     char *vehicle_file = "Vehicle/Borealis.vd";
 
-    ody_init_paths( argv[0] );
-
-    open_syslog( 0 );		/* null ptr for default */
-
+    ody_init_paths(argv[0]);
+    open_syslog(0);		/* null ptr for default */
     init_data_structure();
 
     UseSim = 1;
 
     /* Parse command-line arguments */
-    if ( argc < 2 )
-    {
-	fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
+    if (argc < 2) {
+	    fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
         fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
         fprintf( stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0] );
         fprintf( stderr, "       %s --nolog mission                 (run without logging)\n", argv[0] );
         fprintf( stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0] );
         fprintf( stderr, "       %s --help|-h                     (show this message)\n", argv[0] );
-	exit( 1 );
+	    exit(1);
     }
     
     /* Process CLI flags */
@@ -224,11 +218,9 @@ int main( int argc, char *argv[], char *envp[] )
         exit(1);
     }
 
-    if ( vehicle_file && load_vehicle_def(vehicle_file) == -1 )
-	exit( 1 );
+    if (vehicle_file && load_vehicle_def(vehicle_file) == -1) exit(1);
     
-    if ( load_mission(mission_file) == -1 )
-	exit( 1 );
+    if (load_mission(mission_file) == -1) exit( 1 );
     sprintf( msg_buf, 
 	     "vvp->nstates = %d, vvp->cstate = %d after load_mission()\n",
 	     vvp->nstates, vvp->cstate );
