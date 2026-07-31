@@ -83,15 +83,6 @@ int remote_delay( struct behavior *b, int priority, int level )
     return 0;
 }
 
-/*----------------------------------------------------------------------*
- * get_argos: stub — ARGOS transmitter not present in sim.
- * Called from exit_gracefully() when ARGOS_MSG is defined.
- *----------------------------------------------------------------------*/
-void get_argos( long size )
-{
-    (void)size;
-}
-
 /*======================================================================*
  * Serial-bus stubs (would live in serial.c / ody_serio.c)
  *

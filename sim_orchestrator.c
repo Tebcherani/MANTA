@@ -16,7 +16,6 @@
 #include <unistd.h>
 
 #include "diagnostic.h"
-#include "filters.h"
 #include "paths.h"
 #include "vehicle.h"
 
@@ -32,7 +31,6 @@ int  load_vehicle_def( const char * );
 int  hirestime( double * );
 int  stack_busy( struct command * );
 void handle_modem( void );
-void get_argos( long );
 
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
@@ -273,7 +271,7 @@ int main( int argc, char *argv[], char *envp[] )
     sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
     while (sim_state.current_cycle < sim_config.num_cycles) {
         // Update world state
-        if (update_world_state(&world_state, sensor(M_PRESENT_TIME)) != 0) {
+        if (update_world_state(&world_state, sim_config.timestep) != 0) {
             close_sim_log();
             return EXIT_FAILURE;
         }
@@ -387,8 +385,6 @@ void exit_gracefully( int exit_status )
 #endif
 				/* generate entry in tabular file */
     write_tab();
-#ifdef ARGOS_MSG
-    get_argos( size );
-#endif
+
     exit( 0 );
 }

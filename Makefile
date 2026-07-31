@@ -49,7 +49,6 @@ SRCS = \
     update.c            \
     diagnostic.c        \
     fileman.c           \
-    filters.c           \
     nrutil.c            \
     lbl.c               \
     lbl_nav.c           \

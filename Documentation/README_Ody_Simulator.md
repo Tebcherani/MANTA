@@ -147,8 +147,6 @@ from which the simulator is launched.
 |---|---|
 | `diagnostic.c` | Message routing to terminal and syslog (`write_message()`, `open_syslog()`) |
 | `diagnostic.h` | Status codes, `TERM`/`SLOG` flags, prototypes |
-| `filters.c` | Ring-buffer median filter (`RB_Init()`, `RB_AddVal()`, etc.) |
-| `filters.h` | Ring-buffer types and prototypes |
 | `nrutil.c` | Numerical Recipes support routines (used by `sim.c`) |
 | `nrutil.h` | Numerical Recipes prototypes |
 | `getopt.c` | POSIX `getopt` implementation |
