@@ -143,6 +143,13 @@ int main(int argc, char *argv[])
         close_sim_log();
         return EXIT_FAILURE;
     }
+
+    if (init_odyssey() != 0) {
+        close_odyssey_log();
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+    
     init_data_structure();
 
     int i; 
