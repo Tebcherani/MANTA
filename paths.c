@@ -80,43 +80,6 @@ int ody_file_exists( const char *path )
     return 1;
 }
 
-static void set_root_from_argv0( const char *argv0 )
-{
-    char cwd[ODY_PATH_MAX];
-    char tmp[ODY_PATH_MAX];
-    char *slash, *backslash, *sep;
-
-#ifdef _OSK
-    copy_path( ody_root, ODY_PATH_MAX, "/dd/usr/auvlab/ody" );
-    return;
-#else
-    if ( getcwd(cwd, sizeof(cwd)) == NULL )
-	copy_path( cwd, sizeof(cwd), "." );
-
-    if ( !argv0 || !has_dir_separator(argv0) )
-    {
-	copy_path( ody_root, ODY_PATH_MAX, cwd );
-	return;
-    }
-
-    copy_path( tmp, sizeof(tmp), argv0 );
-    slash = strrchr( tmp, '/' );
-    backslash = strrchr( tmp, '\\' );
-    sep = slash > backslash ? slash : backslash;
-    if ( sep )
-	*sep = '\0';
-
-    if ( tmp[0] == '\0' )
-	copy_path( ody_root, ODY_PATH_MAX, cwd );
-    else if ( strlen(tmp) >= 2 && tmp[1] == ':' )
-	copy_path( ody_root, ODY_PATH_MAX, tmp );
-    else if ( tmp[0] == '/' || tmp[0] == '\\' )
-	copy_path( ody_root, ODY_PATH_MAX, tmp );
-    else
-	ody_join_path( ody_root, ODY_PATH_MAX, cwd, tmp );
-#endif
-}
-
 void ody_init_paths(void)
 {
     char *env_root;
