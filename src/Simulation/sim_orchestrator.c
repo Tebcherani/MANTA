@@ -9,14 +9,17 @@
 #include "diagnostic.h"
 #include "vehicle.h"
 
-#include "sim_config.h"
-#include "sim_log.h"
-#include "sim_state.h"
+#include "command_line.h"
 #include "odyssey_config.h"
 #include "odyssey_log.h"
 #include "odyssey_model.h"
 #include "odyssey_state.h"
+#include "sim_config.h"
+#include "sim_log.h"
+#include "sim_state.h"
 #include "world_state.h"
+
+static command_line_options_t options;
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
@@ -27,11 +30,6 @@ void handle_modem( void );
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
 char DataFileName[ODY_PATH_MAX];
-
-/* CLI flags for ksim / mission verification modes */
-static int parse_only_mode = 0;  /* --parse: load mission and exit */
-static int nolog_mode = 0;        /* --nolog: skip data file logging */
-static char behavior_dump_file[256] = "";  /* --dump-behavior: JSON output file */
 
 /* In-memory behavior activity capture (max 100k cycles for ksim) */
 #define MAX_BEHAVIOR_LOG 100000
@@ -154,70 +152,27 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    int i; 
-    struct tm *tp;
-    char *mission_file = NULL, *fault_file = NULL;
-    UseSim = 1;
+    if (parse_command_line(argc, argv, &options) != 0) {
+        print_command_line_help(argv[0]);
+        return EXIT_FAILURE;
+    }
 
-    /* Parse command-line arguments */
-    if (argc < 2) {
-	    fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
-        fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
-        fprintf( stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0] );
-        fprintf( stderr, "       %s --nolog mission                 (run without logging)\n", argv[0] );
-        fprintf( stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0] );
-        fprintf( stderr, "       %s --help|-h                     (show this message)\n", argv[0] );
-	    exit(1);
+    if (options.show_help) {
+        print_command_line_help(argv[0]);
+        return EXIT_SUCCESS;
     }
+
+    struct tm *tp;
+    UseSim = 1;
     
-    /* Process CLI flags */
-    i = 1;
-    while (i < argc && argv[i][0] == '-') {
-        if (!strcmp(argv[i], "--parse")) {
-            parse_only_mode = 1;
-            i++;
-        } else if (!strcmp(argv[i], "--nolog")) {
-            nolog_mode = 1;
-            i++;
-        } else if (!strcmp(argv[i], "--dump-behavior")) {
-            if (i+1 < argc) {
-                strcpy(behavior_dump_file, argv[i+1]);
-                i += 2;
-            } else {
-                fprintf(stderr, "Error: --dump-behavior requires filename\n");
-                exit(1);
-            }
-        } else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
-            fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
-            fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
-            fprintf( stderr, "       %s --parse mission                 (parse only, no run)\n", argv[0] );
-            fprintf( stderr, "       %s --nolog mission                 (run without logging)\n", argv[0] );
-            fprintf( stderr, "       %s --dump-behavior FILE mission    (run and dump behavior log)\n", argv[0] );
-            fprintf( stderr, "       %s --help|-h                     (show this message)\n", argv[0] );
-            exit(0);
-        } else {
-            fprintf(stderr, "Unknown option: %s\n", argv[i]);
-            exit(1);
-        }
-    }
-    
-    /* Remaining positional args */
-    if (i < argc) mission_file = argv[i++];
-    if (i < argc) fault_file = argv[i++];
-    
-    if (!mission_file) {
-        fprintf(stderr, "Error: mission file required\n");
-        exit(1);
-    }
-    
-    if (load_mission(mission_file) == -1) exit( 1 );
+    if (load_mission(options.mission_file) == -1) exit( 1 );
     sprintf( msg_buf, 
 	     "vvp->nstates = %d, vvp->cstate = %d after load_mission()\n",
 	     vvp->nstates, vvp->cstate );
     write_message( TERM | SLOG );
 
     /* If --parse mode, just exit after successful mission load */
-    if (parse_only_mode) {
+    if (options.parse_only) {
         sprintf( msg_buf, "Mission parse successful (--parse mode, exiting)\n");
         write_message( TERM | SLOG );
         exit(0);
@@ -225,7 +180,7 @@ int main(int argc, char *argv[]) {
 
 				/* load fault injection file if specified
 				   as second argument or via data structure */
-    load_faults( fault_file ? fault_file : vvp->fault_file_name );
+    load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name );
 
 				/* use data structure initial values to set
                                    initial position */
@@ -240,7 +195,7 @@ int main(int argc, char *argv[]) {
     }
 
     /* Initialize data logging (skip if nolog_mode) */
-    if (!nolog_mode) {
+    if (!options.nolog) {
         datafile = init_data_logging( DataFileName );
     } else {
         datafile = NULL;
@@ -295,7 +250,7 @@ int main(int argc, char *argv[]) {
             /* Capture behavior activity for ksim/mission verification */
             capture_behavior_activity();
 
-	        if (!nolog_mode) log_data( datafile );
+	        if (!options.nolog) log_data( datafile );
 
 	        if(!stack_busy(&vvp->c[0])) {
                 sprintf( msg_buf, "% 8.2f: state %d completed\n",
@@ -349,8 +304,8 @@ void exit_gracefully( int exit_status )
 	fclose( datafile );
     }
 
-    if (behavior_dump_file[0]) {
-        dump_behavior_log_json(behavior_dump_file);
+    if (options.behavior_dump_file[0]) {
+        dump_behavior_log_json(options.behavior_dump_file);
     }
 
     sprintf( msg_buf, "Mission finished -- data file: %s\n", 

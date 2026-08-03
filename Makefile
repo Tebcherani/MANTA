@@ -4,7 +4,12 @@
 # Run:   ./ody sim <mission_name> 
 
 CC       = gcc
-CPPFLAGS = -I. -Isrc/Simulation -Isrc/World -Isrc/Odyssey
+CPPFLAGS = -I.          \
+    -Isrc/Application   \
+    -Isrc/Common        \
+    -Isrc/Odyssey       \
+    -Isrc/Simulation    \
+    -Isrc/World
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS  = -lm
 
@@ -33,6 +38,7 @@ MISSION ?= dive240.mi
 KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
+    src/Application/command_line.c      \
     src/Odyssey/odyssey_config.c        \
     src/Odyssey/odyssey_log.c           \
     src/Odyssey/odyssey_model.c         \
