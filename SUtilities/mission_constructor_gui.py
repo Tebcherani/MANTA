@@ -20,6 +20,7 @@ except ImportError:  # direct script execution
 
 ROOT = Path(__file__).resolve().parents[1]
 MISSION_DIR = ROOT / "assets" / "Missions"
+FAULT_DIR = ROOT / "assets" / "Faults"
 RUN_DIR = Path(__file__).resolve().parent / "ksim_runs"
 RUN_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -989,7 +990,7 @@ class MissionConstructor(QtWidgets.QMainWindow):
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             self,
             "Save failure script",
-            str(ROOT / "SFault" / default_name),
+            str(FAULT_DIR / default_name),
             "Fault files (*.fd);;All files (*)",
         )
         if not path:

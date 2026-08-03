@@ -4,8 +4,9 @@ services:
       context: .
     image: odyssey_sim
     environment: 
-      ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
       ODYSSEY_DATA_DIR: /odyssey/output/Data
+      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
+      ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
       ODYSSEY_LOG_PATH: /odyssey/output/Logs/odyssey.log
       SIM_LOG_PATH: /odyssey/output/Logs/simulation.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
@@ -20,11 +21,6 @@ services:
       - type: bind
         source: ./assets
         target: /odyssey/assets
-        read_only: true
-
-      - type: bind
-        source: ./SFault
-        target: /odyssey/SFault
         read_only: true
 
       - type: bind

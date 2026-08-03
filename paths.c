@@ -16,7 +16,6 @@ char ody_root[ODY_PATH_MAX] = ".";
 char ody_init_dir[ODY_PATH_MAX] = "./Init";
 char ody_data_dir[ODY_PATH_MAX];
 char ody_mission_dir[ODY_PATH_MAX];
-char ody_sfault_dir[ODY_PATH_MAX] = "./SFault";
 char ody_lbl_logfile_name[ODY_PATH_MAX] = "./lbl.log";
 
 static int has_dir_separator( const char *path )
@@ -88,7 +87,6 @@ void ody_init_paths(void)
 	copy_path(ody_root, ODY_PATH_MAX, env_root);
 
     ody_join_path( ody_init_dir, ODY_PATH_MAX, ody_root, "Init" );
-    ody_join_path( ody_sfault_dir, ODY_PATH_MAX, ody_root, "SFault" );
     ody_join_path( ody_lbl_logfile_name, ODY_PATH_MAX, ody_root, "lbl.log" );
 
     odyssey_data_dir = getenv("ODYSSEY_DATA_DIR");

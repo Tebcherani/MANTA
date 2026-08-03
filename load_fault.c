@@ -2,7 +2,7 @@
    Odyssey AUV Simulator -- Fault Injection Engine
    load_fault.c
 
-   Parses a fault definition file (*.fd) from SFault/ and evaluates
+   Parses a fault definition file (*.fd) and evaluates
    fault rules every control cycle via apply_faults().
 
    See fault_injection_spec.md for full language description.
@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include "diagnostic.h"
-#include "paths.h"
+#include "odyssey_config.h"
 #include "vehicle.h"
 
 /* drand48 is not available on Windows/MinGW -- use rand() fallback */

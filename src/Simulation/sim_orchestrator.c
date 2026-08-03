@@ -4,9 +4,7 @@
 #include <malloc.h>
 #include <time.h>
 #include <unistd.h>
-
 #include <string.h>
-#include <unistd.h>
 
 #include "diagnostic.h"
 #include "paths.h"

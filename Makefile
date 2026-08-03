@@ -33,6 +33,7 @@ MISSION ?= dive240.mi
 KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
+    src/Odyssey/odyssey_config.c        \
     src/Odyssey/odyssey_log.c           \
     src/Odyssey/odyssey_model.c         \
     src/Odyssey/odyssey_state.c         \
@@ -128,9 +129,6 @@ mission-constructor-web:
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
-
-setup:
-	@mkdir -p SFault
 
 clean:
 	rm -f $(OBJS) $(KSIM_OBJS) $(TARGET) $(KSIM_TARGET) sim_debug edit_struct
