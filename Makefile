@@ -70,9 +70,6 @@ KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/ksim_stubs.c
 
 # Files intentionally excluded and why:
-#   yoyo_new.c          — file begins with email headers; broken C
-#   yo_yo_depth.c       — missing includes and broken syntax; excluded pending fix
-#   yo_yo_temperature.c — same as above
 #   ody_serio.c         — same; stubs in sim_stubs.c
 
 OBJS = $(SRCS:.c=.o)
