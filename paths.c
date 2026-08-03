@@ -18,7 +18,6 @@ char ody_data_dir[ODY_PATH_MAX] = "./SData";
 char ody_syslog_file[ODY_PATH_MAX] = "./system.log";
 char ody_mission_dir[ODY_PATH_MAX] = "./SMission";
 char ody_sfault_dir[ODY_PATH_MAX] = "./SFault";
-char ody_vehicle_dir[ODY_PATH_MAX] = "./Vehicle";
 char ody_lbl_logfile_name[ODY_PATH_MAX] = "./lbl.log";
 
 static int has_dir_separator( const char *path )
@@ -133,6 +132,5 @@ void ody_init_paths( const char *argv0 )
     ody_join_path( ody_syslog_file, ODY_PATH_MAX, ody_root, "system.log" );
     ody_join_path( ody_mission_dir, ODY_PATH_MAX, ody_root, "SMission" );
     ody_join_path( ody_sfault_dir, ODY_PATH_MAX, ody_root, "SFault" );
-    ody_join_path( ody_vehicle_dir, ODY_PATH_MAX, ody_root, "Vehicle" );
     ody_join_path( ody_lbl_logfile_name, ODY_PATH_MAX, ody_root, "lbl.log" );
 }

@@ -5,10 +5,7 @@
 
 int init_sim(sim_config_t *config) {
     if (config == NULL) {
-        write_to_sim_log(
-            "Failed to initialize simulation configuration: "
-            "config pointer is NULL.\n"
-        );
+        write_to_sim_log("Failed to initialize simulation configuration: config pointer is NULL.\n");
         return -1;
     }
 

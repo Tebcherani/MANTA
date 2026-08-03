@@ -8,10 +8,7 @@ int init_sim_state(sim_state_t *state) {
     struct tm *time_ptr;
 
     if (state == NULL) {
-        write_to_sim_log(
-            "Failed to initialize simulation state: "
-            "state pointer is NULL.\n"
-        );
+        write_to_sim_log("Failed to initialize simulation state: state pointer is NULL.\n");
         return -1;
     }
 
@@ -20,10 +17,7 @@ int init_sim_state(sim_state_t *state) {
     state->calendar_start_time = time(NULL);
 
     if (state->calendar_start_time == (time_t)-1) {
-        write_to_sim_log(
-            "Failed to initialize simulation state: "
-            "could not obtain calendar start time.\n"
-        );
+        write_to_sim_log("Failed to initialize simulation state: could not obtain calendar start time.\n");
         return -1;
     }
 
@@ -31,10 +25,7 @@ int init_sim_state(sim_state_t *state) {
     time_ptr = gmtime(&state->calendar_start_time);
     
     if (time_ptr == NULL) {
-        write_to_sim_log(
-            "Failed to initialize simulation state: "
-            "could not convert calendar start time.\n"
-        );
+        write_to_sim_log("Failed to initialize simulation state: could not convert calendar start time.\n");
         return -1;
     }
 
@@ -56,10 +47,7 @@ int init_sim_state(sim_state_t *state) {
 int update_sim_state(sim_state_t *state, double time)
 {
     if (state == NULL) {
-        write_to_sim_log(
-            "Failed to update simulation state: "
-            "state pointer is NULL.\n"
-        );
+        write_to_sim_log("Failed to update simulation state: state pointer is NULL.\n");
         return -1;
     }
 

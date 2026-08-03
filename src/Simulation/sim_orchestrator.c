@@ -16,11 +16,11 @@
 #include "sim_log.h"
 #include "sim_state.h"
 #include "world_state.h"
+#include "odyssey_model.h"
 #include "odyssey_state.h"
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
-int  load_vehicle_def( const char * );
 int  hirestime( double * );
 int  stack_busy( struct command * );
 void handle_modem( void );
@@ -141,13 +141,17 @@ int main(int argc, char *argv[])
     int i; 
     struct tm *tp;
     char *mission_file = NULL, *fault_file = NULL;
-    char *vehicle_file = "Vehicle/Borealis.vd";
 
     ody_init_paths(argv[0]);
     open_syslog(0);		/* null ptr for default */
     init_data_structure();
 
     UseSim = 1;
+
+    if (init_odyssey_model() != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
 
     /* Parse command-line arguments */
     if (argc < 2) {
@@ -177,14 +181,6 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Error: --dump-behavior requires filename\n");
                 exit(1);
             }
-        } else if (!strcmp(argv[i], "--vehicle")) {
-            if (i+1 < argc) {
-                vehicle_file = argv[i+1];
-                i += 2;
-            } else {
-                fprintf(stderr, "Error: --vehicle requires filename\n");
-                exit(1);
-            }
         } else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
             fprintf( stderr, "usage: %s mission [fault_file]\n", argv[0] );
             fprintf( stderr, "       %s --vehicle FILE mission          (load vehicle definition)\n", argv[0] );
@@ -207,8 +203,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error: mission file required\n");
         exit(1);
     }
-
-    if (vehicle_file && load_vehicle_def(vehicle_file) == -1) exit(1);
     
     if (load_mission(mission_file) == -1) exit( 1 );
     sprintf( msg_buf, 

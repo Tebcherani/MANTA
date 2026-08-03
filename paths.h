@@ -26,7 +26,6 @@ extern char ody_data_dir[ODY_PATH_MAX];
 extern char ody_syslog_file[ODY_PATH_MAX];
 extern char ody_mission_dir[ODY_PATH_MAX];
 extern char ody_sfault_dir[ODY_PATH_MAX];
-extern char ody_vehicle_dir[ODY_PATH_MAX];
 extern char ody_lbl_logfile_name[ODY_PATH_MAX];
 
 void ody_init_paths( const char *argv0 );
@@ -41,7 +40,6 @@ void ody_join_path( char *out, int out_size, const char *dir,
 #define SYSLOG_FILE ody_syslog_file
 #define MISSION_DIR ody_mission_dir
 #define SFAULT_DIR ody_sfault_dir
-#define VEHICLE_DIR ody_vehicle_dir
 #define LBL_LOGFILE_NAME ody_lbl_logfile_name
 
 #endif

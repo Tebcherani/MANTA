@@ -7,9 +7,7 @@ int init_odyssey_state(odyssey_state_t *state) {
     int i;
     
     if (state == NULL) {
-        write_to_sim_log(
-            "Failed to initialize Odyssey state: "
-            "state pointer is NULL.\n");
+        write_to_sim_log("Failed to initialize Odyssey state: state pointer is NULL.\n");
         return -1;
     }
 
@@ -52,10 +50,7 @@ int update_odyssey_state(odyssey_state_t *state, double timestep) {
     double elevator_angle;
     
     if (state == NULL) {
-        write_to_sim_log(
-            "Failed to update Odyssey state: "
-            "state pointer is NULL.\n"
-        );
+        write_to_sim_log("Failed to update Odyssey state: state pointer is NULL.\n");
         return -1;
     }
 
@@ -79,10 +74,7 @@ int update_odyssey_state(odyssey_state_t *state, double timestep) {
         fabs(state->force_moment[5]) +
         fabs(state->force_moment[6]) > 1.e2
     ) {
-	    write_to_sim_log(
-            "Failed to update Odyssey state: "
-            "simulation became unstable.\n"
-        );
+	    write_to_sim_log("Failed to update Odyssey state: simulation became unstable.\n");
         return -1;
 	}
 
