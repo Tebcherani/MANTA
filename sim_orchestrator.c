@@ -1,10 +1,3 @@
-/*----------------------------------------------------------------------*
-   Copyright (C) 1994-1997, Massachusetts Institute of Technology.
-	 Sea Grant Autonomous Underwater Vehicles Laboratory.
-			 All rights reserved.
-  $Id: sim_main.c,v 2.22 1998/02/03 04:25:07 bamoran Exp $
- *----------------------------------------------------------------------*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -35,7 +28,6 @@ void handle_modem( void );
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
 char DataFileName[ODY_PATH_MAX];
-double gasdev();
 
 /* CLI flags for ksim / mission verification modes */
 static int parse_only_mode = 0;  /* --parse: load mission and exit */
