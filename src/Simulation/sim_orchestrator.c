@@ -114,7 +114,7 @@ static void dump_behavior_log_json( const char *fname )
     write_message( TERM | SLOG );
 }
 
-int main( int argc, char *argv[], char *envp[] )
+int main(int argc, char *argv[])
 {
     sim_config_t sim_config;
     sim_state_t sim_state;

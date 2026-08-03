@@ -3,9 +3,10 @@
 # Build: make
 # Run:   ./ody sim <mission_name>   (bare names are resolved in ./SMission/)
 
-CC      = gcc
-CFLAGS  = -O2 -Wall -Wno-missing-braces -g -std=gnu89 -I.
-LDFLAGS = -lm
+CC       = gcc
+CPPFLAGS = -I. -Isrc/Simulation
+CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
+LDFLAGS  = -lm
 
 # Machine-specific overrides belong outside the OneDrive workspace.
 # Example Windows path:
@@ -32,7 +33,10 @@ MISSION ?= dive240.mi
 KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
-    sim_orchestrator.c  \
+    src/Simulation/sim_config.c         \
+    src/Simulation/sim_log.c            \
+    src/Simulation/sim_orchestrator.c   \
+    src/Simulation/sim_state.c          \
     sim.c               \
     sim_bottom.c        \
     sim_current.c       \
@@ -59,11 +63,8 @@ SRCS = \
     getopt.c            \
     sim_stubs.c         \
     load_fault.c        \
-    sim_config.c        \
-    sim_log.c           \
     world_state.c       \
-    odyssey_state.c     \
-    sim_state.c
+    odyssey_state.c     
 
 KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/sim_kinematic.c \
@@ -124,7 +125,7 @@ mission-constructor-web:
 	./ody mission-constructor-web
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 setup:
 	@mkdir -p SData SMission SFault
