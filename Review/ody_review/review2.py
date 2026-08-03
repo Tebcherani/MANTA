@@ -42,14 +42,18 @@ _PANELS: list[tuple[str, object, bool, int]] = [
 
 def _find_sdata() -> Path:
     candidates = [
-        Path(__file__).resolve().parent.parent.parent / "SData",
-        Path.cwd() / "SData",
-        Path.cwd().parent / "SData",
+        Path(__file__).resolve().parent.parent.parent / "output" / "Data",
+        Path.cwd() / "output" / "Data",
+        Path.cwd().parent / "output" / "Data",
     ]
+
     for candidate in candidates:
         if candidate.is_dir():
             return candidate
-    return candidates[0]
+
+    raise FileNotFoundError(
+        "Could not locate output/Data."
+    )
 
 
 def _list_obd_files(sdata: Path) -> list[Path]:

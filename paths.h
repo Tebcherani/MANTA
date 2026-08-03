@@ -28,7 +28,7 @@ extern char ody_mission_dir[ODY_PATH_MAX];
 extern char ody_sfault_dir[ODY_PATH_MAX];
 extern char ody_lbl_logfile_name[ODY_PATH_MAX];
 
-void ody_init_paths( const char *argv0 );
+void ody_init_paths(void);
 int ody_path_is_explicit( const char *path );
 int ody_file_exists( const char *path );
 void ody_join_path( char *out, int out_size, const char *dir,

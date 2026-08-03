@@ -19,7 +19,7 @@ the one-time Python venv and package setup.
 git clone <repo-url>
 cd <repo-directory>
 
-make both          # builds sim and ksim_bin; also creates SData/ SMission/ SFault/
+make both          # builds sim and ksim_bin; also creates SMission/ SFault/
 make edit_struct   # builds the data-structure generation tool
 ```
 

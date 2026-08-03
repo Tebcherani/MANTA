@@ -129,7 +129,7 @@ mission-constructor-web:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 setup:
-	@mkdir -p SData SMission SFault
+	@mkdir -p SMission SFault
 
 clean:
 	rm -f $(OBJS) $(KSIM_OBJS) $(TARGET) $(KSIM_TARGET) sim_debug edit_struct
@@ -143,5 +143,3 @@ debug: clean $(TARGET)
 #   ./get_drag.tex  — drag coefficients (read by sim.c)
 #   ./get_shape.tex — vehicle shape parameters (read by sim.c)
 #   ./SMission/     — mission script files (.mi)
-#   ./SData/        — data output directory (created by 'make setup')
-#   ./system.log    — runtime diagnostic log

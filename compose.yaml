@@ -4,6 +4,7 @@ services:
       context: .
     image: odyssey_sim
     environment: 
+      ODYSSEY_DATA_DIR: /odyssey/output/Data
       ODYSSEY_LOG_PATH: /odyssey/output/Logs/odyssey.log
       SIM_LOG_PATH: /odyssey/output/Logs/simulation.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
@@ -19,7 +20,7 @@ services:
         source: ./assets/Vehicles
         target: /odyssey/assets/Vehicles
         read_only: true
-
+      
       - type: bind
         source: ./SMission
         target: /odyssey/SMission
@@ -34,7 +35,3 @@ services:
         source: ./SEnvironment
         target: /odyssey/SEnvironment
         read_only: true
-
-      - type: bind
-        source: ./SData
-        target: /odyssey/SData

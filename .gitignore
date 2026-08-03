@@ -48,33 +48,15 @@ cd
 CLAUDE.me
 edit_struct_thruster_real_naming.c
 
-# Windows-specific files (not relevant to Ubuntu build)
-ONEDRIVE_CONFIG_GUIDE.md
-*.code-workspace
-!00OdyC.code-workspace
-
 # MATLAB autosave
 *.asv
-
-# Windows / OS / editor files
-.DS_Store
-Thumbs.db
-desktop.ini
-/.vscode/*
-!/.vscode/tasks.json
-/.vscode/ipch/
-/.vscode/*.local.json
-*.local.mk
 
 # Simulator output/data products
 *.obd
 
 # Simulator runtime output directories
 Data/
-SData/
-
-# System/runtime logs
-system.log
+Logs/
 
 # External CBOFS exploration tooling
 SEnvironment/_cbofs*

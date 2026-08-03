@@ -2,7 +2,7 @@ function mfile = ody_parse(run_name)
 % ODY_PARSE  Parse an Odyssey binary data file (.obd) — pure Matlab.
 %            Replaces parse.exe, which was not included in the Windows build.
 %
-%   mfile = ody_parse()              % auto-selects newest .obd in SData\
+%   mfile = ody_parse()              % auto-selects newest .obd \
 %   mfile = ody_parse('S2609501')    % parse a specific run
 %
 % Reads the .obd binary format written by log_data.c and produces:

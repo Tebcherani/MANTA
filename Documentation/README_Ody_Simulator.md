@@ -607,7 +607,7 @@ additional flags to `parse`.
 Before running for the first time:
 
 ```bash
-mkdir -p SData SMission SFault
+mkdir -p SMission SFault
 ```
 
 Place mission files in `./SMission/` or provide an explicit path on the command

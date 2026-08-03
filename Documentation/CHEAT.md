@@ -19,7 +19,7 @@
 git clone https://github.com/jbellingham01/Odyssey_Simulator.git
 cd Odyssey_Simulator
 
-make          # compiles sim; also creates SData/ SMission/ SFault/
+make          # compiles sim; also creates SMission/ SFault/
 ```
 
 `make` calls `make setup` automatically, so the runtime directories are created for you.
@@ -43,7 +43,7 @@ If missing, `sim.c` falls back to built-in Draper coefficients (less accurate).
 | `make` | Build `sim` (and run `make setup`) |
 | `make clean` | Remove `.o` files and `sim` executable |
 | `make debug` | Build with AddressSanitizer → produces `sim_debug` |
-| `make setup` | Create `SData/` `SMission/` `SFault/` (idempotent) |
+| `make setup` | Create `SMission/` `SFault/` (idempotent) |
 | `make ksim` | Build the nominal kinematic verification executable `ksim.exe` |
 | `make ksim-test` | Build `ksim.exe` and run a mission parse-only smoke test |
 | `make ksim-run-test` | Build `ksim.exe` and run `dive240.mi` with `--nolog --dump-behavior` |
@@ -84,8 +84,8 @@ The fault file name is relative to `SFault/`; you do not need to write the full 
 
 | Location | Contents |
 |---|---|
-| `SData/S<YYMMDDN>.obd` | Binary data log (auto-named by date/sequence) |
-| `SData/Simulator.tab` | Tab file written at session end |
+| `Data/S<YYMMDDN>.obd` | Binary data log (auto-named by date/sequence) |
+| `Data/Simulator.tab` | Tab file written at session end |
 | `system.log` | Diagnostic / syslog messages |
 
 ### Mission file format (`.mi` in `SMission/`)

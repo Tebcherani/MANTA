@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     struct tm *tp;
     char *mission_file = NULL, *fault_file = NULL;
 
-    ody_init_paths(argv[0]);
+    ody_init_paths();
     open_syslog(0);		/* null ptr for default */
     init_data_structure();
 
