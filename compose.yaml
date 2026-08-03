@@ -17,7 +17,7 @@ services:
     
       - type: bind
         source: ./assets/Vehicles
-        target: /odyssey/Vehicles
+        target: /odyssey/assets/Vehicles
         read_only: true
 
       - type: bind
