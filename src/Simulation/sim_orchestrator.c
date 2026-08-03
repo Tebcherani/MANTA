@@ -113,8 +113,7 @@ static void dump_behavior_log_json( const char *fname )
     write_message( TERM | SLOG );
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     sim_config_t sim_config;
     sim_state_t sim_state;
     world_state_t world_state;
@@ -150,15 +149,15 @@ int main(int argc, char *argv[])
 
     init_data_structure();
 
-    int i; 
-    struct tm *tp;
-    char *mission_file = NULL, *fault_file = NULL;
-    UseSim = 1;
-
     if (init_odyssey_model() != 0) {
         close_sim_log();
         return EXIT_FAILURE;
     }
+
+    int i; 
+    struct tm *tp;
+    char *mission_file = NULL, *fault_file = NULL;
+    UseSim = 1;
 
     /* Parse command-line arguments */
     if (argc < 2) {
