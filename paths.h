@@ -20,18 +20,9 @@
 
 #define ODY_PATH_MAX 512
 
-extern char ody_root[ODY_PATH_MAX];
-extern char ody_init_dir[ODY_PATH_MAX];
-extern char ody_lbl_logfile_name[ODY_PATH_MAX];
-
-void ody_init_paths(void);
 int ody_path_is_explicit( const char *path );
 int ody_file_exists( const char *path );
 void ody_join_path( char *out, int out_size, const char *dir,
 		    const char *name );
-
-#define ODY_ROOT ody_root
-#define INIT_DIR ody_init_dir
-#define LBL_LOGFILE_NAME ody_lbl_logfile_name
 
 #endif

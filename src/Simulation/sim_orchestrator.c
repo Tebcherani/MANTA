@@ -137,8 +137,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    ody_init_paths();
-
     if (open_odyssey_log() != 0) {
         close_sim_log();
         return EXIT_FAILURE;
@@ -149,7 +147,7 @@ int main(int argc, char *argv[])
         close_sim_log();
         return EXIT_FAILURE;
     }
-    
+
     init_data_structure();
 
     int i; 

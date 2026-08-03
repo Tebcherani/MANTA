@@ -12,9 +12,6 @@
 
 #include "paths.h"
 
-char ody_root[ODY_PATH_MAX] = ".";
-char ody_init_dir[ODY_PATH_MAX] = "./Init";
-char ody_lbl_logfile_name[ODY_PATH_MAX] = "./lbl.log";
 
 static int has_dir_separator( const char *path )
 {
@@ -74,16 +71,4 @@ int ody_file_exists( const char *path )
 	return 0;
     fclose( fp );
     return 1;
-}
-
-void ody_init_paths(void)
-{
-    char *env_root;
-    const char *odyssey_log_path, *odyssey_data_dir, *odyssey_mission_dir;
-
-    env_root = getenv("ODY_ROOT");
-	copy_path(ody_root, ODY_PATH_MAX, env_root);
-
-    ody_join_path( ody_init_dir, ODY_PATH_MAX, ody_root, "Init" );
-    ody_join_path( ody_lbl_logfile_name, ODY_PATH_MAX, ody_root, "lbl.log" );
 }
