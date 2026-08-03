@@ -4,7 +4,7 @@
 # Run:   ./ody sim <mission_name>   (bare names are resolved in ./SMission/)
 
 CC       = gcc
-CPPFLAGS = -I. -Isrc/Simulation -Isrc/World
+CPPFLAGS = -I. -Isrc/Simulation -Isrc/World -Isrc/Odyssey
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS  = -lm
 
@@ -33,6 +33,7 @@ MISSION ?= dive240.mi
 KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
+    src/Odyssey/odyssey_state.c         \
     src/Simulation/sim_config.c         \
     src/Simulation/sim_log.c            \
     src/Simulation/sim_orchestrator.c   \
@@ -63,8 +64,7 @@ SRCS = \
     docking.c           \
     getopt.c            \
     sim_stubs.c         \
-    load_fault.c        \
-    odyssey_state.c     
+    load_fault.c
 
 KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
     ksim/sim_kinematic.c \
