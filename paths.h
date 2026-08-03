@@ -18,8 +18,6 @@
 
 #include "ody_name.h"		/* for vehicle identification */
 
-#define ODY_PATH_MAX 512
-
 int ody_path_is_explicit( const char *path );
 int ody_file_exists( const char *path );
 void ody_join_path( char *out, int out_size, const char *dir,

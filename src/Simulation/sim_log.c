@@ -5,7 +5,7 @@
 #include "sim_log.h"
 
 static FILE *file = NULL;
-static char path[512];
+static char path[PATH_SIZE];
 
 int open_sim_log(void) {
     // Get simulation log file path from Docker compose

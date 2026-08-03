@@ -13,6 +13,7 @@
 #include "sim_config.h"
 #include "sim_log.h"
 #include "sim_state.h"
+#include "odyssey_config.h"
 #include "odyssey_log.h"
 #include "odyssey_model.h"
 #include "odyssey_state.h"
