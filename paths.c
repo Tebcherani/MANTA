@@ -120,6 +120,7 @@ static void set_root_from_argv0( const char *argv0 )
 void ody_init_paths( const char *argv0 )
 {
     char *env_root;
+    const char *odyssey_log_path;
 
     env_root = getenv( "ODY_ROOT" );
     if ( env_root && env_root[0] )
@@ -129,8 +130,10 @@ void ody_init_paths( const char *argv0 )
 
     ody_join_path( ody_init_dir, ODY_PATH_MAX, ody_root, "Init" );
     ody_join_path( ody_data_dir, ODY_PATH_MAX, ody_root, "SData" );
-    ody_join_path( ody_syslog_file, ODY_PATH_MAX, ody_root, "system.log" );
     ody_join_path( ody_mission_dir, ODY_PATH_MAX, ody_root, "SMission" );
     ody_join_path( ody_sfault_dir, ODY_PATH_MAX, ody_root, "SFault" );
     ody_join_path( ody_lbl_logfile_name, ODY_PATH_MAX, ody_root, "lbl.log" );
+
+    odyssey_log_path = getenv("ODYSSEY_LOG_PATH");
+    copy_path(ody_syslog_file, ODY_PATH_MAX, odyssey_log_path);
 }
