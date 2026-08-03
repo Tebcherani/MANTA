@@ -12,7 +12,7 @@
 
 #include "diagnostic.h"
 #include "fileman.h"
-#include "paths.h"
+#include "odyssey_config.h"
 #include "vehicle.h"
 
 				/* prototypes */

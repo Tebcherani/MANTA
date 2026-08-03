@@ -5,6 +5,7 @@
 #include "sim_log.h"
 
 char ody_data_dir[512];
+char ody_mission_dir[512];
 char ody_sfault_dir[512];
 
 static int copy_env_path(char *destination, int destination_size, const char *env_name) {
@@ -26,6 +27,9 @@ static int copy_env_path(char *destination, int destination_size, const char *en
 int init_odyssey(void) {
     if (copy_env_path(ody_data_dir, 512, "ODYSSEY_DATA_DIR") != 0) return -1;
     write_to_sim_log("Odyssey data directory initialized: %s\n", ody_data_dir);
+
+    if (copy_env_path(ody_mission_dir, 512, "ODYSSEY_MISSION_DIR") != 0) return -1;
+    write_to_sim_log("Odyssey mission directory initialized: %s\n", ody_mission_dir);
 
     if (copy_env_path(ody_sfault_dir, 512, "ODYSSEY_FAULT_DIR") != 0) return -1;
     write_to_sim_log("Odyssey fault directory initialized: %s\n", ody_sfault_dir);
