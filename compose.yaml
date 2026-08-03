@@ -4,6 +4,7 @@ services:
       context: .
     image: odyssey_sim
     environment: 
+      ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ODYSSEY_LOG_PATH: /odyssey/output/Logs/odyssey.log
       SIM_LOG_PATH: /odyssey/output/Logs/simulation.log
@@ -17,13 +18,8 @@ services:
         target: /odyssey/output
     
       - type: bind
-        source: ./assets/Vehicles
-        target: /odyssey/assets/Vehicles
-        read_only: true
-      
-      - type: bind
-        source: ./SMission
-        target: /odyssey/SMission
+        source: ./assets
+        target: /odyssey/assets
         read_only: true
 
       - type: bind

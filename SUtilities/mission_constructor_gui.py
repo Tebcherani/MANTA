@@ -19,6 +19,7 @@ except ImportError:  # direct script execution
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MISSION_DIR = ROOT / "assets" / "Missions"
 RUN_DIR = Path(__file__).resolve().parent / "ksim_runs"
 RUN_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -920,7 +921,7 @@ class MissionConstructor(QtWidgets.QMainWindow):
         if not self._confirm_discard_current_mission():
             return
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Open mission", str(ROOT / "SMission"), "Mission files (*.mi *.txt);;All files (*)"
+            self, "Open mission", str(MISSION_DIR), "Mission files (*.mi *.txt);;All files (*)"
         )
         if not path:
             return
@@ -942,7 +943,7 @@ class MissionConstructor(QtWidgets.QMainWindow):
 
     def _save_mission_as(self) -> bool:
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Save mission", str(ROOT / "SMission" / self.mission.filename),
+            self, "Save mission", str(MISSION_DIR / self.mission.filename),
             "Mission files (*.mi);;All files (*)",
         )
         if not path:

@@ -16,7 +16,7 @@ char ody_root[ODY_PATH_MAX] = ".";
 char ody_init_dir[ODY_PATH_MAX] = "./Init";
 char ody_data_dir[ODY_PATH_MAX];
 char ody_syslog_file[ODY_PATH_MAX];
-char ody_mission_dir[ODY_PATH_MAX] = "./SMission";
+char ody_mission_dir[ODY_PATH_MAX];
 char ody_sfault_dir[ODY_PATH_MAX] = "./SFault";
 char ody_lbl_logfile_name[ODY_PATH_MAX] = "./lbl.log";
 
@@ -83,13 +83,12 @@ int ody_file_exists( const char *path )
 void ody_init_paths(void)
 {
     char *env_root;
-    const char *odyssey_log_path, *odyssey_data_dir;
+    const char *odyssey_log_path, *odyssey_data_dir, *odyssey_mission_dir;
 
     env_root = getenv("ODY_ROOT");
 	copy_path(ody_root, ODY_PATH_MAX, env_root);
 
     ody_join_path( ody_init_dir, ODY_PATH_MAX, ody_root, "Init" );
-    ody_join_path( ody_mission_dir, ODY_PATH_MAX, ody_root, "SMission" );
     ody_join_path( ody_sfault_dir, ODY_PATH_MAX, ody_root, "SFault" );
     ody_join_path( ody_lbl_logfile_name, ODY_PATH_MAX, ody_root, "lbl.log" );
 
@@ -98,4 +97,7 @@ void ody_init_paths(void)
 
     odyssey_data_dir = getenv("ODYSSEY_DATA_DIR");
     copy_path(ody_data_dir, ODY_PATH_MAX, odyssey_data_dir);
+
+    odyssey_mission_dir = getenv("ODYSSEY_MISSION_DIR");
+    copy_path(ody_mission_dir, ODY_PATH_MAX, odyssey_mission_dir);
 }

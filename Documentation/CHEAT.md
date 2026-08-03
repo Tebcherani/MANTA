@@ -19,7 +19,7 @@
 git clone https://github.com/jbellingham01/Odyssey_Simulator.git
 cd Odyssey_Simulator
 
-make          # compiles sim; also creates SMission/ SFault/
+make          # compiles sim; also creates SFault/
 ```
 
 `make` calls `make setup` automatically, so the runtime directories are created for you.
@@ -43,7 +43,7 @@ If missing, `sim.c` falls back to built-in Draper coefficients (less accurate).
 | `make` | Build `sim` (and run `make setup`) |
 | `make clean` | Remove `.o` files and `sim` executable |
 | `make debug` | Build with AddressSanitizer → produces `sim_debug` |
-| `make setup` | Create `SMission/` `SFault/` (idempotent) |
+| `make setup` | Create `SFault/` (idempotent) |
 | `make ksim` | Build the nominal kinematic verification executable `ksim.exe` |
 | `make ksim-test` | Build `ksim.exe` and run a mission parse-only smoke test |
 | `make ksim-run-test` | Build `ksim.exe` and run `dive240.mi` with `--nolog --dump-behavior` |

@@ -1,7 +1,7 @@
 # Makefile — Odyssey AUV Standalone Simulator
 # Target: Linux / GCC
 # Build: make
-# Run:   ./ody sim <mission_name>   (bare names are resolved in ./SMission/)
+# Run:   ./ody sim <mission_name> 
 
 CC       = gcc
 CPPFLAGS = -I. -Isrc/Simulation -Isrc/World -Isrc/Odyssey
@@ -129,7 +129,7 @@ mission-constructor-web:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 setup:
-	@mkdir -p SMission SFault
+	@mkdir -p SFault
 
 clean:
 	rm -f $(OBJS) $(KSIM_OBJS) $(TARGET) $(KSIM_TARGET) sim_debug edit_struct
@@ -142,4 +142,3 @@ debug: clean $(TARGET)
 #   ./get_am.tex    — hydrodynamic added-mass coefficients (read by sim.c)
 #   ./get_drag.tex  — drag coefficients (read by sim.c)
 #   ./get_shape.tex — vehicle shape parameters (read by sim.c)
-#   ./SMission/     — mission script files (.mi)
