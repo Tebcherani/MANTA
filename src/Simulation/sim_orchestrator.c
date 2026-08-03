@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "diagnostic.h"
-#include "paths.h"
 #include "vehicle.h"
 
 #include "sim_config.h"
