@@ -33,6 +33,7 @@ MISSION ?= dive240.mi
 KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
+    src/Odyssey/odyssey_log.c           \
     src/Odyssey/odyssey_model.c         \
     src/Odyssey/odyssey_state.c         \
     src/Simulation/sim_config.c         \

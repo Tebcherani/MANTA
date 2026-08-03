@@ -15,9 +15,10 @@
 #include "sim_config.h"
 #include "sim_log.h"
 #include "sim_state.h"
-#include "world_state.h"
+#include "odyssey_log.h"
 #include "odyssey_model.h"
 #include "odyssey_state.h"
+#include "world_state.h"
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission( char * );
@@ -138,14 +139,17 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    ody_init_paths();
+
+    if (open_odyssey_log() != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+    init_data_structure();
+
     int i; 
     struct tm *tp;
     char *mission_file = NULL, *fault_file = NULL;
-
-    ody_init_paths();
-    open_syslog(0);		/* null ptr for default */
-    init_data_structure();
-
     UseSim = 1;
 
     if (init_odyssey_model() != 0) {
@@ -315,7 +319,12 @@ int main(int argc, char *argv[])
 
     exit_gracefully(0);
 
-    // Close simulation log
+    // Close logs
+    if (close_odyssey_log() != 0) {
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+
     if (close_sim_log() != 0) {
         return EXIT_FAILURE;
     }
@@ -362,8 +371,6 @@ void exit_gracefully( int exit_status )
 
         system( tmp );
     }
-
-    if ( syslog!=NULL ) fclose( syslog );
 
 #ifdef ODY_MODEM
     if ( modemlog != NULL )
