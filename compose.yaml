@@ -4,20 +4,24 @@ services:
       context: .
     image: odyssey_sim
     environment: 
-      SIM_LOG_PATH: /odyssey/SData/simulation.log
+      SIM_LOG_PATH: /odyssey/output/Logs/simulation.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
 
     user: "${HOST_UID}:${HOST_GID}"
 
     volumes:
       - type: bind
-        source: ./SMission
-        target: /odyssey/SMission
-        read_only: true
-
+        source: ./output
+        target: /odyssey/output
+    
       - type: bind
         source: ./assets/Vehicles
         target: /odyssey/Vehicles
+        read_only: true
+
+      - type: bind
+        source: ./SMission
+        target: /odyssey/SMission
         read_only: true
 
       - type: bind
