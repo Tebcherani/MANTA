@@ -4,7 +4,7 @@
 # Run:   ./ody sim <mission_name>   (bare names are resolved in ./SMission/)
 
 CC       = gcc
-CPPFLAGS = -I. -Isrc/Simulation
+CPPFLAGS = -I. -Isrc/Simulation -Isrc/World
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS  = -lm
 
@@ -37,6 +37,7 @@ SRCS = \
     src/Simulation/sim_log.c            \
     src/Simulation/sim_orchestrator.c   \
     src/Simulation/sim_state.c          \
+    src/World/world_state.c             \
     sim.c               \
     sim_bottom.c        \
     sim_current.c       \
@@ -63,7 +64,6 @@ SRCS = \
     getopt.c            \
     sim_stubs.c         \
     load_fault.c        \
-    world_state.c       \
     odyssey_state.c     
 
 KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
