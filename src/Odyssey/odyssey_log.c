@@ -14,9 +14,7 @@ int open_odyssey_log(void) {
         return -1;
     }
 
-    open_syslog((char *)log_path);
-
-    if (syslog == NULL || syslog == term) {
+    if (open_syslog(log_path) != 0) {
         write_to_sim_log("Failed to open Odyssey log: %s\n", log_path);
         return -1;
     }
