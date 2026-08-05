@@ -184,7 +184,7 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 		      int noisy )
 {
     double r[NXP], dz, xq, yq ;
-    int i, i0,i1, ngood, iworst, result, num_iter, lsresult ;
+    int i, i0,i1, ngood, iworst, result, num_iter;
 
     lbl_inc_index(lbl) ;
     lbl->new_fix = 0;
@@ -226,7 +226,6 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 #ifdef DEBUG
 	printf("running ls_soln2\n") ;
 #endif
-	lsresult=ls_soln2(r,xq,yq,lbl,&(lbl->error),&num_iter) ;
 		/* if the error is below the set tolerance, soln is good */
 	if(lbl->error < lbl->fix_tol)
 	{
