@@ -15,6 +15,7 @@
 #include "odyssey_model.h"
 #include "odyssey_state.h"
 #include "sim_config.h"
+#include "sim_exit.h"
 #include "sim_log.h"
 #include "sim_state.h"
 #include "world_state.h"
@@ -120,80 +121,34 @@ int main(int argc, char *argv[]) {
 
     if (parse_command_line(argc, argv, &options) != 0) {
         print_command_line_help(argv[0]);
-        return EXIT_FAILURE;
+        exit_sim(EXIT_FAILURE);
     }
 
     if (options.show_help) {
         print_command_line_help(argv[0]);
-        return EXIT_SUCCESS;
+        exit_sim(EXIT_SUCCESS);
     }
 
-    if (open_sim_log() != 0) return EXIT_FAILURE;
-
-    if (init_sim_config(&sim_config) != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (init_sim_state(&sim_state) != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (init_world_state(&world_state) != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (open_odyssey_log() != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (init_odyssey_config() != 0) {
-        close_odyssey_log();
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
+    if (open_sim_log() != 0) return exit_sim(EXIT_FAILURE);
+    if (init_sim_config(&sim_config) != 0) return exit_sim(EXIT_FAILURE);
+    if (init_sim_state(&sim_state) != 0) return exit_sim(EXIT_FAILURE);
+    if (init_world_state(&world_state) != 0) return exit_sim(EXIT_FAILURE);
+    if (open_odyssey_log() != 0) return exit_sim(EXIT_FAILURE);
+    if (init_odyssey_config() != 0) return exit_sim(EXIT_FAILURE);
     init_data_structure();
+    if (init_odyssey_model() != 0) return exit_sim(EXIT_FAILURE);
+    if (load_mission((char *)options.mission_file) != 0) return exit_sim(EXIT_FAILURE);
 
-    if (init_odyssey_model() != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (load_mission((char *)options.mission_file) != 0) {
-        close_odyssey_log();
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
     write_to_sim_log("Mission loaded: %d states, current state %d\n", vvp->nstates, vvp->cstate);
 
     if (options.parse_only) {
         write_to_sim_log("Mission parsed successfully. Exiting (--parse).\n");
-        close_odyssey_log();
-        close_sim_log();
-        return EXIT_SUCCESS;
+        return exit_sim(EXIT_SUCCESS);
     }
 
-    if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) {
-        close_odyssey_log();
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-    
-    if (init_odyssey_state(&odyssey_state) != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) {
-        close_odyssey_log();
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
+    if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) return exit_sim(EXIT_FAILURE);
+    if (init_odyssey_state(&odyssey_state) != 0) return exit_sim(EXIT_FAILURE);
+    if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) return exit_sim(EXIT_FAILURE);
     lhs();  // Initialize Odyssey dynamics
 
     struct tm *tp;
@@ -203,35 +158,17 @@ int main(int argc, char *argv[]) {
    This is the MAIN LOOP: initialize time, run loop, increment time at end
    for next cycle.
 */
-	if (init_mission_time(&sim_state) != 0) {
-        close_odyssey_log();
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (update_sim_state(&sim_state, 0.0) != 0) {
-        close_odyssey_log();
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
+	if (init_mission_time(&sim_state) != 0) return exit_sim(EXIT_FAILURE);
+    if (update_sim_state(&sim_state, 0.0) != 0) return exit_sim(EXIT_FAILURE);
 
     while (sim_state.current_cycle < sim_config.num_cycles) {
-        if (update_world_state(&world_state, sim_config.timestep) != 0) {
-            close_odyssey_log();
-            close_sim_log();
-            return EXIT_FAILURE;
-        }
-
 	    if (vvp->abort_mission) {
             write_to_sim_log("%8.2f: Mission aborted because vvp->abort_mission = %d\n", sim_state.sim_time, vvp->abort_mission);
-            exit_gracefully(0);
+            return exit_sim(EXIT_SUCCESS);
         }
 
-        // Update Odyssey state
-        if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) {
-            close_sim_log();
-            return EXIT_FAILURE;
-        }
+        if (update_world_state(&world_state, sim_config.timestep) != 0) return exit_sim(EXIT_FAILURE);
+        if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) return exit_sim(EXIT_FAILURE);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
             /* to call sensor_LBL, sensor_USBL, ... */
@@ -261,30 +198,13 @@ int main(int argc, char *argv[]) {
 	        }
 	    }
 	
-        // Update simulation state
-        if (update_sim_state(&sim_state, sim_config.timestep) != 0) {
-            close_sim_log();
-            return EXIT_FAILURE;
-        }
+        if (update_sim_state(&sim_state, sim_config.timestep) != 0) return exit_sim(EXIT_FAILURE);
 
         // Update clock for next control cycle
-        sensor(M_PRESENT_TIME) = sim_state.sim_time;
-        sensor_time(M_PRESENT_TIME) = (long int) (1000 * sensor(M_PRESENT_TIME));
         update(M_DT, sim_config.control_period * sim_config.timestep);
     }
 
-    exit_gracefully(0);
-
-    if (close_odyssey_log() != 0) {
-        close_sim_log();
-        return EXIT_FAILURE;
-    }
-
-    if (close_sim_log() != 0) {
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+    exit_sim(EXIT_FAILURE);
 }
 
 

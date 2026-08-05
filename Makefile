@@ -34,6 +34,7 @@ SRCS = \
     src/Odyssey/odyssey_model.c         \
     src/Odyssey/odyssey_state.c         \
     src/Simulation/sim_config.c         \
+    src/Simulation/sim_exit.c           \
     src/Simulation/sim_log.c            \
     src/Simulation/sim_orchestrator.c   \
     src/Simulation/sim_state.c          \
