@@ -27,18 +27,19 @@ SIM_EXE = ./$(TARGET)$(EXEEXT)
 MISSION ?= dive240.mi
 
 SRCS = \
-    src/Application/command_line.c      \
-    src/Odyssey/odyssey_config.c        \
-    src/Odyssey/odyssey_data_logger.c   \
-    src/Odyssey/odyssey_log.c           \
-    src/Odyssey/odyssey_model.c         \
-    src/Odyssey/odyssey_state.c         \
-    src/Simulation/sim_config.c         \
-    src/Simulation/sim_exit.c           \
-    src/Simulation/sim_log.c            \
-    src/Simulation/sim_orchestrator.c   \
-    src/Simulation/sim_state.c          \
-    src/World/world_state.c             \
+    src/Application/command_line.c          \
+    src/Odyssey/odyssey_config.c            \
+    src/Odyssey/odyssey_data_logger.c       \
+    src/Odyssey/odyssey_log.c               \
+    src/Odyssey/odyssey_model.c             \
+    src/Odyssey/odyssey_state.c             \
+    src/Simulation/sim_behavior_logger.c    \
+    src/Simulation/sim_config.c             \
+    src/Simulation/sim_exit.c               \
+    src/Simulation/sim_log.c                \
+    src/Simulation/sim_orchestrator.c       \
+    src/Simulation/sim_state.c              \
+    src/World/world_state.c                 \
     sim.c               \
     sim_bottom.c        \
     sim_current.c       \

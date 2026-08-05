@@ -20,98 +20,17 @@
 #include "sim_state.h"
 #include "world_state.h"
 
-static command_line_options_t options;
+command_line_options_t options;
 
 /* Forward declarations for functions defined in other translation units */
-int  load_mission( char * );
-int  hirestime( double * );
-int  stack_busy( struct command * );
-void handle_modem( void );
+int  load_mission(char *);
+int  stack_busy(struct command *);
+void handle_modem(void);
 void lhs(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
 char DataFileName[ODY_PATH_MAX];
-
-/* In-memory behavior activity capture */
-#define MAX_BEHAVIOR_LOG 100000
-struct behavior_log_entry {
-    double time;
-    int state;
-    int priority;
-    int behavior_id;
-    int heading_mode;
-    int depth_mode;
-    int speed_mode;
-    double c0_heading;
-    double c0_depth;
-    double c0_speed;
-} behavior_log[MAX_BEHAVIOR_LOG];
-static int behavior_log_count = 0;
-
-/* Capture behavior activity for verification */
-static void capture_behavior_activity( void )
-{
-    int i;
-    if (behavior_log_count >= MAX_BEHAVIOR_LOG) return;
-    
-    behavior_log[behavior_log_count].time = sensor(M_PRESENT_TIME);
-    behavior_log[behavior_log_count].state = vvp->cstate;
-    behavior_log[behavior_log_count].heading_mode = vvp->c[0].heading_mode;
-    behavior_log[behavior_log_count].depth_mode = vvp->c[0].depth_mode;
-    behavior_log[behavior_log_count].speed_mode = vvp->c[0].speed_mode;
-    behavior_log[behavior_log_count].c0_heading = vvp->c[0].heading[0];
-    behavior_log[behavior_log_count].c0_depth = vvp->c[0].depth[0];
-    behavior_log[behavior_log_count].c0_speed = vvp->c[0].speed[0];
-    
-    /* Log active behavior at highest priority */
-    behavior_log[behavior_log_count].behavior_id = -1;
-    behavior_log[behavior_log_count].priority = -1;
-    for (i = 0; i < MAX_COMMAND; i++) {
-        if (vvp->sta[vvp->cstate].c[i].behavior != -1) {
-            behavior_log[behavior_log_count].behavior_id = vvp->sta[vvp->cstate].c[i].behavior;
-            behavior_log[behavior_log_count].priority = i;
-            break;
-        }
-    }
-    
-    behavior_log_count++;
-}
-
-/* Dump behavior log as JSON for mission verification */
-static void dump_behavior_log_json( const char *fname )
-{
-    FILE *fp;
-    int i;
-    
-    fp = fopen(fname, "w");
-    if (!fp) {
-        sprintf( msg_buf, "Cannot open %s for behavior dump\n", fname );
-        write_message( TERM | SLOG );
-        return;
-    }
-    
-    fprintf(fp, "[\n");
-    for (i = 0; i < behavior_log_count; i++) {
-        fprintf(fp, "  {\n");
-        fprintf(fp, "    \"time\": %.2f,\n", behavior_log[i].time);
-        fprintf(fp, "    \"state\": %d,\n", behavior_log[i].state);
-        fprintf(fp, "    \"behavior_id\": %d,\n", behavior_log[i].behavior_id);
-        fprintf(fp, "    \"priority\": %d,\n", behavior_log[i].priority);
-        fprintf(fp, "    \"heading_mode\": %d,\n", behavior_log[i].heading_mode);
-        fprintf(fp, "    \"depth_mode\": %d,\n", behavior_log[i].depth_mode);
-        fprintf(fp, "    \"speed_mode\": %d,\n", behavior_log[i].speed_mode);
-        fprintf(fp, "    \"c0_heading\": %.4f,\n", behavior_log[i].c0_heading);
-        fprintf(fp, "    \"c0_depth\": %.4f,\n", behavior_log[i].c0_depth);
-        fprintf(fp, "    \"c0_speed\": %.4f\n", behavior_log[i].c0_speed);
-        fprintf(fp, "  }%s\n", (i < behavior_log_count-1) ? "," : "");
-    }
-    fprintf(fp, "]\n");
-    fclose(fp);
-    
-    sprintf( msg_buf, "Behavior log dumped to %s (%d entries)\n", fname, behavior_log_count );
-    write_message( TERM | SLOG );
-}
 
 int main(int argc, char *argv[]) {
     sim_config_t sim_config;
@@ -129,26 +48,26 @@ int main(int argc, char *argv[]) {
         exit_sim(EXIT_SUCCESS);
     }
 
-    if (open_sim_log() != 0) return exit_sim(EXIT_FAILURE);
-    if (init_sim_config(&sim_config) != 0) return exit_sim(EXIT_FAILURE);
-    if (init_sim_state(&sim_state) != 0) return exit_sim(EXIT_FAILURE);
-    if (init_world_state(&world_state) != 0) return exit_sim(EXIT_FAILURE);
-    if (open_odyssey_log() != 0) return exit_sim(EXIT_FAILURE);
-    if (init_odyssey_config() != 0) return exit_sim(EXIT_FAILURE);
+    if (open_sim_log() != 0) exit_sim(EXIT_FAILURE);
+    if (init_sim_config(&sim_config) != 0) exit_sim(EXIT_FAILURE);
+    if (init_sim_state(&sim_state) != 0) exit_sim(EXIT_FAILURE);
+    if (init_world_state(&world_state) != 0) exit_sim(EXIT_FAILURE);
+    if (open_odyssey_log() != 0) exit_sim(EXIT_FAILURE);
+    if (init_odyssey_config() != 0) exit_sim(EXIT_FAILURE);
     init_data_structure();
-    if (init_odyssey_model() != 0) return exit_sim(EXIT_FAILURE);
-    if (load_mission((char *)options.mission_file) != 0) return exit_sim(EXIT_FAILURE);
+    if (init_odyssey_model() != 0) exit_sim(EXIT_FAILURE);
+    if (load_mission((char *)options.mission_file) != 0) exit_sim(EXIT_FAILURE);
 
     write_to_sim_log("Mission loaded: %d states, current state %d\n", vvp->nstates, vvp->cstate);
 
     if (options.parse_only) {
         write_to_sim_log("Mission parsed successfully. Exiting (--parse).\n");
-        return exit_sim(EXIT_SUCCESS);
+        exit_sim(EXIT_SUCCESS);
     }
 
-    if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) return exit_sim(EXIT_FAILURE);
-    if (init_odyssey_state(&odyssey_state) != 0) return exit_sim(EXIT_FAILURE);
-    if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) return exit_sim(EXIT_FAILURE);
+    if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) exit_sim(EXIT_FAILURE);
+    if (init_odyssey_state(&odyssey_state) != 0) exit_sim(EXIT_FAILURE);
+    if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) exit_sim(EXIT_FAILURE);
     lhs();  // Initialize Odyssey dynamics
 
     struct tm *tp;
@@ -158,17 +77,17 @@ int main(int argc, char *argv[]) {
    This is the MAIN LOOP: initialize time, run loop, increment time at end
    for next cycle.
 */
-	if (init_mission_time(&sim_state) != 0) return exit_sim(EXIT_FAILURE);
-    if (update_sim_state(&sim_state, 0.0) != 0) return exit_sim(EXIT_FAILURE);
+	if (init_mission_time(&sim_state) != 0) exit_sim(EXIT_FAILURE);
+    if (update_sim_state(&sim_state, 0.0) != 0) exit_sim(EXIT_FAILURE);
 
     while (sim_state.current_cycle < sim_config.num_cycles) {
 	    if (vvp->abort_mission) {
             write_to_sim_log("%8.2f: Mission aborted because vvp->abort_mission = %d\n", sim_state.sim_time, vvp->abort_mission);
-            return exit_sim(EXIT_SUCCESS);
+            exit_sim(EXIT_SUCCESS);
         }
 
-        if (update_world_state(&world_state, sim_config.timestep) != 0) return exit_sim(EXIT_FAILURE);
-        if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) return exit_sim(EXIT_FAILURE);
+        if (update_world_state(&world_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE);
+        if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
             /* to call sensor_LBL, sensor_USBL, ... */
@@ -198,7 +117,7 @@ int main(int argc, char *argv[]) {
 	        }
 	    }
 	
-        if (update_sim_state(&sim_state, sim_config.timestep) != 0) return exit_sim(EXIT_FAILURE);
+        if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE);
 
         // Update clock for next control cycle
         update(M_DT, sim_config.control_period * sim_config.timestep);
