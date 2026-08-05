@@ -415,6 +415,7 @@ int ascend( struct behavior *b, int priority, int level )
 int broadcast( struct behavior *b, int priority, int level )
 {
     enum { START, DURATION, XS_DELAY, XS_CYCLE, UAM_DELAY, UAM_CYCLE };
+    double dock2auv;
 
     switch ( b->state )
     {
@@ -653,7 +654,7 @@ int survey_dead_reckon( struct behavior *b, int priority, int level )
     register struct command *cmd = &vvp->c[priority];
     enum { T_HEAD, T_TIME, L1_HEAD, L1_TIME, L2_HEAD, L2_TIME, CYCLE,
 	   DEPTH, T_SPEED, S_SPEED };
-    double elapsed = 0, frac, period, ipart;
+    double elapsed = 0, heading, speed, frac, period, ipart;
 
     switch ( b->state )
     {	
@@ -760,6 +761,7 @@ int mission_timer( struct behavior *b, int priority, int level )
 int acquire_heading(struct behavior *b, int priority, int level)
 {
   double heading, heading_err, active;
+  char message[MAX_MODEM];
   
   heading = b->arg[0].x;
   heading_err = b->arg[1].x;
@@ -1028,6 +1030,7 @@ int set_rudder(struct behavior *b, int priority, int level)
 
 int set_elevator(struct behavior *b, int priority, int level)
 {
+    char message[MAX_MODEM];
     static const int Max_depth = 4;
     static const int Min_depth = 5;
     static const int Max_pitch = 6;

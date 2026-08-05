@@ -165,6 +165,7 @@ void load_accel(void)
     double ax,ay,az;
     double p,q,r,pdot,qdot,rdot;
     double u,v,w,udot,vdot,wdot;
+    double noise;
     double theta,phi;
 				/* load real velocities and acceleration
                                    (linear and angular) */
@@ -350,7 +351,7 @@ void simEdgeTechLBL()
     static double bias_amplitude, noise_amplitude;
     static double north_ping, east_ping, depth_ping;
 
-    int i, offset;
+    int i, j, offset;
     double dist1, dist2, time_of_flight;
     double since_cycle, present_time;
     double noise, bias;
@@ -735,9 +736,16 @@ void simLXT(void)
 
 int handle_modem()
 {
+    static int init=0;
+    int status;
     int monitor_high_level_control = 0;
 
 #ifdef ODY_MODEM
+    if ( !init )
+    {
+	init = 1;
+	status = init_modem();
+    }
     write_modem();
 #endif /* ODY_MODEM */
 
