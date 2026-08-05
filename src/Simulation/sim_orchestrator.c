@@ -181,21 +181,14 @@ int main(int argc, char *argv[]) {
         close_sim_log();
         return EXIT_FAILURE;
     }
-
-    struct tm *tp;
-    UseSim = 1;
-
-				/* use data structure initial values to set
-                                   initial position */
-    update( REAL_X, sensor(M_POS_N) );
-    update( REAL_Y, sensor(M_POS_E) );
-    update( REAL_Z, sensor(M_DEPTH) );
     
-    // Initialize Odyssey state
     if (init_odyssey_state(&odyssey_state) != 0) {
         close_sim_log();
         return EXIT_FAILURE;
     }
+
+    struct tm *tp;
+    UseSim = 1;
 
     /* Initialize data logging (skip if nolog_mode) */
     if (!options.nolog) {

@@ -16,6 +16,11 @@ int init_odyssey_state(odyssey_state_t *state) {
         state->position_orientation[i] = 0.0;
     }
 
+    // Use data structure initial values to set initial position
+    update(REAL_X, sensor(M_POS_N));
+    update(REAL_Y, sensor(M_POS_E));
+    update(REAL_Z, sensor(M_DEPTH));
+
     state->position_orientation[1] = sensor(REAL_X);
     state->position_orientation[2] = sensor(REAL_Y);
     state->position_orientation[3] = sensor(REAL_Z);
