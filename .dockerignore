@@ -3,7 +3,6 @@
 *.o
 sim
 sim_debug
-ksim_bin
 edit_struct
 system.log
 __pycache__/

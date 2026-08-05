@@ -8,14 +8,6 @@
 #ifndef PATHS_H
 #define PATHS_H
 
-
-/*----------------------------------------------------------------------
-  Runtime paths are rooted at the simulator directory by default.  This
-  lets sim/ksim be launched from any working directory while preserving
-  the traditional DATA_DIR, MISSION_DIR, etc. names used throughout the
-  code.  ODY_ROOT in the environment overrides the detected root.
-  ----------------------------------------------------------------------*/
-
 #include "ody_name.h"		/* for vehicle identification */
 
 int ody_path_is_explicit( const char *path );

@@ -13,14 +13,13 @@ usage() {
 Usage: ./ody <command> [args]
 
 Setup:
-  ./ody setup [--system] [--no-build]   create/update .venv and build sim + ksim
+  ./ody setup [--system] [--no-build]   create/update .venv and build sim
   ./ody doctor                          check Ubuntu tools, venv, build outputs, GUI display
-  ./ody build                           build sim and ksim_bin
+  ./ody build                           build sim
   ./ody clean                           remove C build products
 
 Run:
   ./ody sim [mission] [fault_file]       run ./sim, default mission is dive240.mi
-  ./ody ksim [args]                     run ./ksim_bin, default is --parse dive240.mi
   ./ody review [args]                   launch Odyssey Review GUI
   ./ody review2 [args]                  launch Review2 compare GUI or CLI
   ./ody mission-constructor             launch PyQt mission constructor
@@ -33,7 +32,6 @@ Short aliases:
 Examples:
   ./ody setup --system
   ./ody sim B9801810.mi
-  ./ody ksim --nolog --dump-behavior SUtilities/ksim_runs/latest.json dive240.mi
   ./ody review
   ./ody review2 SData/run1.obd SData/run2.obd --opts all --save Review/compare_out
 EOF
@@ -48,12 +46,6 @@ ensure_venv() {
 ensure_sim() {
   if [ ! -x "$REPO_ROOT/sim" ]; then
     make -C "$REPO_ROOT" sim
-  fi
-}
-
-ensure_ksim() {
-  if [ ! -x "$REPO_ROOT/ksim_bin" ]; then
-    make -C "$REPO_ROOT" ksim_bin
   fi
 }
 
@@ -119,15 +111,6 @@ case "$cmd" in
     exec ./sim "$@"
     ;;
 
-  ksim)
-    ensure_ksim
-    if [ "$#" -eq 0 ]; then
-      set -- --parse "$DEFAULT_MISSION"
-    fi
-    cd "$REPO_ROOT"
-    exec ./ksim_bin "$@"
-    ;;
-
   review)
     ensure_venv
     cd "$REPO_ROOT"
@@ -144,13 +127,6 @@ case "$cmd" in
     ensure_venv
     cd "$REPO_ROOT"
     exec "$VENV_PY" SUtilities/launch_mission_constructor.py "$@"
-    ;;
-
-  mission-constructor-web|mc-web)
-    ensure_venv
-    ensure_ksim
-    cd "$REPO_ROOT"
-    exec "$VENV_PY" SUtilities/mission_constructor_app.py "$@"
     ;;
 
   *)

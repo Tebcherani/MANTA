@@ -25,7 +25,6 @@ __pycache__/
 
 # Linux compiled binaries (no extension)
 sim
-ksim_bin
 edit_struct
 parse
 sim_debug
@@ -64,9 +63,6 @@ SEnvironment/cbofs_probe.json
 SEnvironment/_erddap_explore.py
 SEnvironment/wl_*.csv
 SEnvironment/wl_summary_*.csv
-
-# Generated kinematic-sim artifacts
-SUtilities/ksim_runs/
 
 # Generated analysis artifacts
 *.png

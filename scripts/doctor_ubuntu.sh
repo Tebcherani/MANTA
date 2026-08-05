@@ -90,12 +90,6 @@ else
   note_warn "sim executable missing; run ./ody build"
 fi
 
-if [ -x "$REPO_ROOT/ksim_bin" ]; then
-  pass "ksim_bin executable exists"
-else
-  note_warn "ksim_bin executable missing; run ./ody build"
-fi
-
 if [ -n "${DISPLAY-}" ] || [ -n "${WAYLAND_DISPLAY-}" ]; then
   pass "GUI display is available"
 else

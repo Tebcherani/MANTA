@@ -44,24 +44,6 @@ If missing, `sim.c` falls back to built-in Draper coefficients (less accurate).
 | `make clean` | Remove `.o` files and `sim` executable |
 | `make debug` | Build with AddressSanitizer → produces `sim_debug` |
 | `make setup` | Create `SFault/` (idempotent) |
-| `make ksim` | Build the nominal kinematic verification executable `ksim.exe` |
-| `make ksim-test` | Build `ksim.exe` and run a mission parse-only smoke test |
-| `make ksim-run-test` | Build `ksim.exe` and run `dive240.mi` with `--nolog --dump-behavior` |
-
-### Kinematic verification with `ksim`
-
-`ksim` is a separate verification executable that uses the same mission loader and control pipeline as `sim`, but replaces the hydrodynamic simulator with a nominal kinematic motion model.
-
-Use it for mission validation without full hydrodynamics:
-
-```bash
-./ksim.exe --parse dive240.mi
-./ksim.exe --nolog --dump-behavior behavior_log.json dive240.mi
-```
-
-`--parse` loads the mission and exits; `--nolog` suppresses runtime data output; `--dump-behavior` writes in-memory behavior activity to JSON.
-
-A new Python app is available at `SUtilities/mission_constructor_app.py`. It serves the mission constructor in a browser, runs `ksim`, and shows behavior timeline results in the `Results` tab.
 
 ### Note on `-D_SIMULATOR`
 

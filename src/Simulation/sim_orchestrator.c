@@ -31,7 +31,7 @@ extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
 char DataFileName[ODY_PATH_MAX];
 
-/* In-memory behavior activity capture (max 100k cycles for ksim) */
+/* In-memory behavior activity capture */
 #define MAX_BEHAVIOR_LOG 100000
 struct behavior_log_entry {
     double time;
@@ -47,7 +47,7 @@ struct behavior_log_entry {
 } behavior_log[MAX_BEHAVIOR_LOG];
 static int behavior_log_count = 0;
 
-/* Capture behavior activity for ksim verification */
+/* Capture behavior activity for verification */
 static void capture_behavior_activity( void )
 {
     int i;
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
             layered_control();
             dynamic_control();
 
-            /* Capture behavior activity for ksim/mission verification */
+            /* Capture behavior activity for mission verification */
             capture_behavior_activity();
 
 	        if (!options.nolog) log_data( datafile );

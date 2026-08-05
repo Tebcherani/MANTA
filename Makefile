@@ -22,20 +22,9 @@ USERPROFILE_POSIX := $(subst \,/,$(USERPROFILE))
 -include $(USERPROFILE_POSIX)/.ody-auv-sim/Windows_Ody_C.mk
 
 TARGET  = sim
-# On Linux, ksim/ is both the source directory and holds ksim/ksim.cfg at runtime,
-# so the binary cannot be named 'ksim' (linker error: is a directory).
-# On Windows, MinGW gcc appends .exe automatically so 'ksim' -> 'ksim.exe'.
-ifeq ($(OS),Windows_NT)
-    EXEEXT = .exe
-    KSIM_TARGET = ksim
-else
-    EXEEXT =
-    KSIM_TARGET = ksim_bin
-endif
+EXEEXT =
 SIM_EXE = ./$(TARGET)$(EXEEXT)
-KSIM_EXE = ./$(KSIM_TARGET)$(EXEEXT)
 MISSION ?= dive240.mi
-KSIM_BEHAVIOR ?= SUtilities/ksim_runs/latest_behavior.json
 
 SRCS = \
     src/Application/command_line.c      \
@@ -75,38 +64,20 @@ SRCS = \
     sim_stubs.c         \
     load_fault.c
 
-KSIM_SRCS = $(filter-out sim.c,$(SRCS)) \
-    ksim/sim_kinematic.c \
-    ksim/ksim_stubs.c
-
 # Files intentionally excluded and why:
 #   ody_serio.c         — same; stubs in sim_stubs.c
 
 OBJS = $(SRCS:.c=.o)
-KSIM_OBJS = $(KSIM_SRCS:.c=.o)
 
-.PHONY: all clean setup debug both edit_struct dev-setup doctor run-sim run-ksim review review2 mission-constructor mission-constructor-web
+.PHONY: all clean setup debug both edit_struct dev-setup doctor run-sim review review2 mission-constructor mission-constructor-web
 
-all: setup $(TARGET)
+all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(KSIM_TARGET): $(KSIM_OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-both: setup $(TARGET) $(KSIM_TARGET)
-
 edit_struct: edit_struct.c
 	$(CC) -o edit_struct edit_struct.c
-
-.PHONY: ksim-test ksim-run-test
-ksim-test: setup $(KSIM_TARGET)
-	$(KSIM_EXE) --parse $(MISSION)
-
-ksim-run-test: setup $(KSIM_TARGET)
-	$(KSIM_EXE) --nolog --dump-behavior behavior_log.json $(MISSION)
-	@test -f behavior_log.json
 
 dev-setup:
 	./ody setup
@@ -114,12 +85,8 @@ dev-setup:
 doctor:
 	./ody doctor
 
-run-sim: setup $(TARGET)
+run-sim: $(TARGET)
 	$(SIM_EXE) $(MISSION)
-
-run-ksim: setup $(KSIM_TARGET)
-	@mkdir -p SUtilities/ksim_runs
-	$(KSIM_EXE) --nolog --dump-behavior $(KSIM_BEHAVIOR) $(MISSION)
 
 review:
 	./ody review
@@ -137,7 +104,7 @@ mission-constructor-web:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJS) $(KSIM_OBJS) $(TARGET) $(KSIM_TARGET) sim_debug edit_struct
+	rm -f $(OBJS) $(TARGET) sim_debug edit_struct
 
 debug: CFLAGS += -fsanitize=address
 debug: clean $(TARGET)
