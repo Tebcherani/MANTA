@@ -84,5 +84,8 @@ int update_sim_state(sim_state_t *state, double time)
     state->current_cycle++;
     state->sim_time += time;
 
+    sensor(M_PRESENT_TIME) = state->sim_time;
+    sensor_time(M_PRESENT_TIME) = (long)(1000.0 * state->sim_time);
+
     return 0;
 }

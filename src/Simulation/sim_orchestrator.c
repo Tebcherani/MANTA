@@ -209,11 +209,15 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    sensor(M_PRESENT_TIME) = 0;
-    sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
+    if (update_sim_state(&sim_state, 0.0) != 0) {
+        close_odyssey_log();
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+
     while (sim_state.current_cycle < sim_config.num_cycles) {
-        // Update world state
         if (update_world_state(&world_state, sim_config.timestep) != 0) {
+            close_odyssey_log();
             close_sim_log();
             return EXIT_FAILURE;
         }
