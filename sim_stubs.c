@@ -133,5 +133,4 @@ int millisec( void )
 }
 
 /* hardware stubs - never called in simulator mode */
-int  ody_open_port( char *name, int bau, int par, unsigned char eor ) { return -1; }
 int send( int port, char *string ) { return -1; }

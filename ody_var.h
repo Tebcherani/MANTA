@@ -99,7 +99,7 @@ extern int ErrorLoad, StatusLoad, UseLoad, MonitorLoad;
 
 #ifdef EDGEPS8000
 extern int LBLTransponderMode;  /* If mode = 0, then in pinger mode */
-extern int ErrorLBL, MonitorLBL, StatusLBL, UseLBL;
+extern int ErrorLBL, MonitorLBL, UseLBL;
 #endif
 				/* Tritech ST-200 */
 EXTERN int ErrorAltimeter, StatusAltimeter, UseAltimeter, MonitorAltimeter;

@@ -14,12 +14,9 @@
 #include "ody_serio.h"
 #include "vehicle.h"
 
-int  ody_open_port( char *name, int bau, int par, unsigned char eor );
-void cyl_nav( double rBucky, double rLower );
-
 #if defined EDGEPS8000		/* EdgeTech PS8000 Transceiver */
 
-int ErrorLBL = STATUS_NOT_SELECTED, MonitorLBL, StatusLBL, UseLBL;
+int ErrorLBL = STATUS_NOT_SELECTED, MonitorLBL, UseLBL;
 int LBLTransponderMode;
 
 				/* globals for serial i/o */

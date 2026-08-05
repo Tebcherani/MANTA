@@ -248,7 +248,6 @@ void home_in( struct behavior *b, int priority, int level )
 				   issues) */
 	cmd->heading[0] = modPi( az + sensor(M_YAW) + bArg(HDG_OFF) );
 
-				/* do cyl_nav depth */
 	rBucky = 0.5*sensor(U_SPEED_OF_SOUND)*(sensor(M_BUCKY_RAW) -
 					       sensor(U_BUCKY_TAT));
 
@@ -301,52 +300,6 @@ void search(  struct behavior *b, int priority, int level )
     cmd->heading[0] = SRCH_HDG[idreg];
 
     return;
-}
-
-/*-----------------------------------------------------------------------*
-  cyl_nav: D. Yoerger's cylindrical navigation solution to the vertical
-  component of the AUV homing problem.  After much deliberation (I'm being
-  nice) we've decided to add a 2nd LBL transponder about 100 m below the
-  docking station.  This approach uses two ranges to calculate a
-  cylindrical solution, axisymmetric about the possibly tilted mooring
-  wire, that will define a goal depth for the vehicle to attain.
-
-  Rbucky: acoustic range to homing beacon ("Bucky" ball)
-  Rlower: acoustic range to the LOWER xpndr
-
-  B. A. Moran, 12-Jan-1998
- *-----------------------------------------------------------------------*/
-
-void cyl_nav( double Rbucky, double Rlower )
-{
-    double ztemp, arg, vbl;
-
-    vbl = sensor( U_DOCK_VBL );
-				/* if we're on the baseline, use the range
-				   to the lower xpndr as the axial value */
-    if ( Rbucky + Rlower < vbl )
-    {
-    	update( M_CNAV_AXIAL, vbl - Rlower );
-        update( M_CNAV_RADIAL, 0 );
-	update( M_CNAV_STATUS, 1 );
-	return;
-    }
-				/* quadratic form of solution, checks
-                                   discrimanent for existence */
-    ztemp = (-Rlower*Rlower + Rbucky*Rbucky + vbl*vbl)/(2.0*vbl) ;
-    arg = Rbucky*Rbucky - ztemp*ztemp ;
-
-				/* imaginary sol'n would arise if circles
-				   fail to intersect */
-    if ( arg < 0 )
-    {
-	update( M_CNAV_STATUS, 0 );
-	return;
-    }
-				/* store real, valid sol'n in data struct */
-    update( M_CNAV_RADIAL, sqrt(arg) );
-    update( M_CNAV_AXIAL, ztemp );
-    update( M_CNAV_STATUS, 1 );
 }
 
 #endif /* WHOI_USBL */
