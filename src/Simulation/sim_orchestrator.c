@@ -190,15 +190,12 @@ int main(int argc, char *argv[]) {
     struct tm *tp;
     UseSim = 1;
 
-    /* Initialize data logging (skip if nolog_mode) */
-    if (!options.nolog) {
-        datafile = init_data_logging( DataFileName );
-    } else {
-        datafile = NULL;
-        sprintf( msg_buf, "Logging disabled (--nolog mode)\n");
-        write_message( TERM | SLOG );
+    if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) {
+        close_odyssey_log();
+        close_sim_log();
+        return EXIT_FAILURE;
     }
-
+    
     init_simulation();
 
 /* 
@@ -272,7 +269,6 @@ int main(int argc, char *argv[]) {
 
     exit_gracefully(0);
 
-    // Close logs
     if (close_odyssey_log() != 0) {
         close_sim_log();
         return EXIT_FAILURE;

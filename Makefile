@@ -29,6 +29,7 @@ MISSION ?= dive240.mi
 SRCS = \
     src/Application/command_line.c      \
     src/Odyssey/odyssey_config.c        \
+    src/Odyssey/odyssey_data_logger.c   \
     src/Odyssey/odyssey_log.c           \
     src/Odyssey/odyssey_model.c         \
     src/Odyssey/odyssey_state.c         \
