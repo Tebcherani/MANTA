@@ -187,15 +187,15 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    struct tm *tp;
-    UseSim = 1;
-
     if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) {
         close_odyssey_log();
         close_sim_log();
         return EXIT_FAILURE;
     }
-    
+
+    struct tm *tp;
+    UseSim = 1;
+
     init_simulation();
 
 /* 
