@@ -38,12 +38,12 @@ int main(int argc, char *argv[]) {
 
     if (parse_command_line(argc, argv, &options) != 0) {
         print_command_line_help(argv[0]);
-        exit_sim(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     if (options.show_help) {
         print_command_line_help(argv[0]);
-        exit_sim(EXIT_SUCCESS);
+        return EXIT_SUCCESS;
     }
 
     if (open_sim_log() != 0) exit_sim(EXIT_FAILURE);
