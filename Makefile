@@ -42,7 +42,6 @@ SRCS = \
     src/Simulation/sim_state.c              \
     src/World/world_state.c                 \
     sim.c               \
-    sim_bottom.c        \
     sim_current.c       \
     sim_conduct.c       \
     sim_usbl.c          \
