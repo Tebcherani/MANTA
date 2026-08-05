@@ -39,7 +39,7 @@ int init_current_params();   /* fixed: was init_currents_params */
 
 void sim_current()
 {
-  int index, index_x, index_y, x_max, y_max;
+  int index, index_x, index_y, y_max;
   float east, north;
   static int init=-1;
 
