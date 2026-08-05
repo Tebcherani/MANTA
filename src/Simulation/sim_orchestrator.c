@@ -90,31 +90,16 @@ int main(int argc, char *argv[]) {
         if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            /* to call sensor_LBL, sensor_USBL, ... */
             simSensors();
             sensor_processing();
-
-			/* inject faults: after sensors so control
-				   sees corrupted values; before control laws
-				   so vs_* changes affect this cycle's physics */
 	        apply_faults();
-
             layered_control();
             dynamic_control();
 
-            /* Capture behavior activity for mission verification */
             capture_behavior_activity();
+	        if (!options.nolog) log_data(datafile);
 
-	        if (!options.nolog) log_data( datafile );
-
-	        if(!stack_busy(&vvp->c[0])) {
-                sprintf( msg_buf, "% 8.2f: state %d completed\n",
-                    sensor(M_PRESENT_TIME), vvp->cstate++ );
-                write_message( TERM | SLOG );
-
-                if( vvp->cstate >= vvp->nstates )
-                    exit_gracefully( 0 );
-	        }
+	        if (update_odyssey_mission()) exit_sim(EXIT_SUCCESS);
 	    }
 	
         if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE);

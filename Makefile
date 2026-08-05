@@ -31,6 +31,7 @@ SRCS = \
     src/Odyssey/odyssey_config.c            \
     src/Odyssey/odyssey_data_logger.c       \
     src/Odyssey/odyssey_log.c               \
+    src/Odyssey/odyssey_mission.c           \
     src/Odyssey/odyssey_model.c             \
     src/Odyssey/odyssey_state.c             \
     src/Simulation/sim_behavior_logger.c    \
