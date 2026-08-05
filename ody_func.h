@@ -37,6 +37,7 @@ double modPi( double );
 
 				/* load_mission.c */
 int load_state( char * );
+int match_sensor(const char *name);
 
 				/* thruster.c */
 int init_thruster( int );

@@ -18,6 +18,7 @@
 
 #include "diagnostic.h"
 #include "odyssey_config.h"
+#include "paths.h"
 #include "vehicle.h"
 
 /* drand48 is not available on Windows/MinGW -- use rand() fallback */

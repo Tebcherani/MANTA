@@ -11,6 +11,7 @@
 #include "diagnostic.h"
 #include "paths.h"
 #include "odyssey_config.h"
+#include "paths.h"
 #include "vehicle.h"
 
 #include <string.h>
