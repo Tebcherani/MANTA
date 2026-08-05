@@ -86,26 +86,3 @@ void write_rcs( const char *rev, const char *date )
     strcat( msg_buf, "\n" );
     write_message( TERM | SLOG );
 }
-
-
-/*-------------------------------------------------------------------------
-  Data structure diagnostic routines
-  -----------------------------------------------------------------------*/
-
-void dump_b_arg( FILE *fp, struct b_arg *ba )
-{
-    fprintf( fp, "% 29s % .6g\n", ba->name, ba->x );
-}
-
-void dump_behavior( FILE *fp, struct behavior *b )
-{
-    register int arg;
-
-    fprintf( fp, "%s %d % .2g % .2g 0x%x 0x%x\n", b->name, b->state,
-	     b->start_time, b->end_time, b->fcn, b->arg );
-    for ( arg = 0; arg < MAX_B_ARG; arg++ )
-    {
-	fprintf( fp, "  arg % 2d: ", arg );
-	dump_b_arg( fp, &b->arg[arg] );
-    }
-}
