@@ -200,34 +200,4 @@ int undock( struct behavior *b, int priority, int level )
     return 0;
 }
 
-
-/*-----------------------------------------------------------------------*
-  appendDockFile: add specified string to end of "auv2dock" file in data
-  directory
- *-----------------------------------------------------------------------*/
-
-int appendDockFile( const char *string )
-{
-    FILE *fp;
-
-    char dock_path[ODY_PATH_MAX];
-
-    ody_join_path( dock_path, sizeof(dock_path), DATA_DIR, "auv2dock" );
-    if ( (fp = fopen(dock_path, "a")) != NULL )
-    {
-	fputs( string, fp );
-	fclose( fp );
-
-	sprintf( msg_buf, "AUV2DOCK: %s", string );
-				/* ensure newline character */
-	if ( string[strlen(string) - 1] != '\n' )
-	    strcat( msg_buf, "\n" );
-
-	write_message( TERM | SLOG );
-
-	return 0;
-    }
-    return -1;
-}
-
 #endif /* WHOI_USBL */

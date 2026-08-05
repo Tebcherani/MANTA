@@ -151,7 +151,4 @@ int start_psa916( void );
 int read_psa916( void );
 #endif /* PSA_916 */
 
-				/* docking.c */
-int appendDockFile( const char *string );
-
 #endif /* ODY_FUNC_H */
