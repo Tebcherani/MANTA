@@ -24,8 +24,6 @@ command_line_options_t options;
 
 /* Forward declarations for functions defined in other translation units */
 int  load_mission(char *);
-int  stack_busy(struct command *);
-void handle_modem(void);
 void lhs(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
@@ -109,54 +107,4 @@ int main(int argc, char *argv[]) {
     }
 
     exit_sim(EXIT_FAILURE);
-}
-
-
-void exit_gracefully( int exit_status )
-{
-    char tmp[256], *tmp1, *tmp2;
-    long size = 0;
-
-    handle_modem();      /* send any remaining modem messages */
-    
-    if ( datafile )
-    {
-	fflush( datafile );
-	size = ftell( datafile );
-	fclose( datafile );
-    }
-
-    if (options.behavior_dump_file[0]) {
-        dump_behavior_log_json(options.behavior_dump_file);
-    }
-
-    sprintf( msg_buf, "Mission finished -- data file: %s\n", 
-	     vvp->data_file_name); 
-    write_message( TERM | SLOG );
-
-#ifdef ODY_MODEM
-    load_modem( msg_buf );   /* jleonard 6/28/96 */
-    write_modem(); 
-#endif
-				/* 01/10/94 adding an "auto_parse" option */
-    tmp1 = getenv("ODY_AUTO_PARSE");
-    tmp2 = getenv("ODY_PARSE_OPTION");
-
-    if ( tmp1 )
-    {
-        if ( tmp2 )
-	    sprintf( tmp, "parse -o %s %s", tmp2, vvp->data_file_name );
-        else sprintf( tmp, "parse %s", vvp->data_file_name );
-
-        system( tmp );
-    }
-
-#ifdef ODY_MODEM
-    if ( modemlog != NULL )
-	fclose( modemlog );
-#endif
-				/* generate entry in tabular file */
-    write_tab();
-
-    exit( 0 );
 }
