@@ -2,6 +2,36 @@
 
 #include "sim_log.h"
 #include "sim_state.h"
+#include "vehicle.h"
+
+int hirestime(double *time_value);
+
+int init_mission_time(sim_state_t *state) {
+    struct tm *time_info;
+
+    time_info = gmtime(&state->calendar_start_time);
+    if (time_info == NULL) {
+        write_to_sim_log("Failed to initialize simulation time: could not convert calendar start time.\n");
+        return -1;
+    }
+
+    if (strftime(vvp->mission_date, sizeof(vvp->mission_date), "%b %d, %Y %H:%M:%S", time_info) == 0) {
+        write_to_sim_log("Failed to initialize simulation time: could not format mission start time.\n");
+        return -1;
+    }
+
+    if (hirestime(&vvp->mission_start_time) != 0) {
+        write_to_sim_log("Failed to initialize the Odyssey mission start time.\n");
+        return -1;
+    }
+
+    write_to_sim_log(
+        "Simulation time initialized.\n"
+        "  Mission start: %s UTC\n", vvp->mission_date
+    );
+
+    return 0;
+}
 
 int init_sim_state(sim_state_t *state) {
     char time_string[32];

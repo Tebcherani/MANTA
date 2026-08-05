@@ -63,8 +63,7 @@
 
 /*------------------- function prototypes -------------------------------*/
 
-void init_simulation();
-static void lhs();
+void lhs();
 void fins(double *, double, double);
 
 /*------------------- generic constants -------------------------------*/
@@ -115,15 +114,6 @@ static double M1[4],M2[4],M3[4],M4[4];
 
    Thruster model from J. G. Bellingham 1/94, fsh 5/95.          */
 
-
-/*----------------------------------------------------------------------*/
-
-void init_simulation()
-{
-    /* vs_* parameters already loaded by load_vehicle_def() -- just
-       build the inertia matrix inverse and we are ready to integrate. */
-    lhs();
-}
 
 /*----------------------------------------------------------------------*/
 

@@ -26,6 +26,7 @@ int  load_mission( char * );
 int  hirestime( double * );
 int  stack_busy( struct command * );
 void handle_modem( void );
+void lhs(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
@@ -193,19 +194,20 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    lhs();  // Initialize Odyssey dynamics
+
     struct tm *tp;
     UseSim = 1;
-
-    init_simulation();
 
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end
    for next cycle.
 */
-	// Determine mission start time to nearest second in calendar format
-    tp = gmtime(&sim_state.calendar_start_time);
-    strftime(vvp->mission_date, 30, "%b %d, %Y %H:%M:%S", tp);
-    hirestime(&vvp->mission_start_time);
+	if (init_mission_time(&sim_state) != 0) {
+        close_odyssey_log();
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
 
     sensor(M_PRESENT_TIME) = 0;
     sensor_time(M_PRESENT_TIME) = (long) (1000*sensor(M_PRESENT_TIME));
