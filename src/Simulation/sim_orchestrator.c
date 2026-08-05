@@ -169,15 +169,15 @@ int main(int argc, char *argv[]) {
     }
     write_to_sim_log("Mission loaded: %d states, current state %d\n", vvp->nstates, vvp->cstate);
 
+    if (options.parse_only) {
+        write_to_sim_log("Mission parsed successfully. Exiting (--parse).\n");
+        close_odyssey_log();
+        close_sim_log();
+        return EXIT_SUCCESS;
+    }
+
     struct tm *tp;
     UseSim = 1;
-
-    /* If --parse mode, just exit after successful mission load */
-    if (options.parse_only) {
-        sprintf( msg_buf, "Mission parse successful (--parse mode, exiting)\n");
-        write_message( TERM | SLOG );
-        exit(0);
-    }
 
 				/* load fault injection file if specified
 				   as second argument or via data structure */
