@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-void exit_sim(int exit_status);
+void exit_sim(int exit_status, int mission_started);
 
 #endif

@@ -14,10 +14,8 @@ extern command_line_options_t options;
 int handle_modem(void);
 int write_tab(void);
 
-void exit_sim(int exit_status) {
+void exit_sim(int exit_status, int mission_started) {
     int cleanup_failed = 0;
-
-    handle_modem();
 
     if (datafile != NULL) {
         if (fflush(datafile) != 0) cleanup_failed = 1;
@@ -26,9 +24,12 @@ void exit_sim(int exit_status) {
         datafile = NULL;
     }
 
-    if (options.behavior_dump_file[0] != '\0') dump_behavior_log_json(options.behavior_dump_file);
-    write_to_sim_log("Mission finished -- data file: %s\n", vvp->data_file_name);
-    write_tab();
+    if (mission_started) {
+        handle_modem();
+        if (options.behavior_dump_file[0] != '\0') dump_behavior_log_json(options.behavior_dump_file);
+        write_to_sim_log("Mission finished -- data file: %s\n", vvp->data_file_name);
+        write_tab();
+    }
 
     if (close_odyssey_log() != 0) cleanup_failed = 1;
     if (close_sim_log() != 0) cleanup_failed = 1;
