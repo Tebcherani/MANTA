@@ -7,6 +7,7 @@
 char ody_data_dir[PATH_SIZE];
 char ody_mission_dir[PATH_SIZE];
 char ody_sfault_dir[PATH_SIZE];
+char ody_vehicle_dir[PATH_SIZE];
 
 static int copy_env_path(char *destination, int destination_size, const char *env_name) {
     const char *value;

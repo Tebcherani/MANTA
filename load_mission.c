@@ -89,6 +89,130 @@ int load_mission( const char *fname )
 }
 
 /*-------------------------------------------------------------------------
+  LOAD_VEHICLE_DEF: load vehicle physical parameters (vs_*) from a
+  vehicle definition (.vd) file.  Call BEFORE load_mission().
+
+  File format mirrors mission-file sensor lines:
+
+      # comments start with # % or *
+      vehicle: <name>            <- must match VEHICLE_NAME or load fails
+      vs_<name>(<units>) <value>
+      vs_<name>(<units>) <value>
+      ...
+
+  Rules:
+   - Header 'vehicle:' must match this build's VEHICLE_NAME.
+   - Names must begin with 'vs_' (catches typos that would otherwise
+     silently clobber an m_/c_/u_ sensor).
+   - Unknown vs_* name -> hard error (catches stale references).
+   - vs_* not mentioned in the file -> keeps its compile-time default
+     from edit_struct.c (so old .vd files keep working as the data
+     structure grows).
+  -----------------------------------------------------------------------*/
+
+int load_vehicle_def( const char *fname )
+{
+    FILE *fptr;
+    char line[MAX_LINE], name[MAX_CHARS], header[MAX_CHARS];
+    char *expect, *actual;
+    double value;
+    int index, lineno = 0, n_set = 0, header_seen = 0;
+
+    if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
+	strcpy( fullpath, fname );
+    else
+	ody_join_path( fullpath, sizeof(fullpath), VEHICLE_DIR, fname );
+    if ( (fptr = fopen(fullpath, "r")) == NULL ) {
+        sprintf( msg_buf, "%s: %s\n", fullpath, strerror(errno) );
+        write_message( TERM | SLOG );
+        return -1;
+    }
+    sprintf( msg_buf, "vehicle definition: %s ...\n", fullpath );
+    write_message( TERM | SLOG );
+
+    while ( fgets(line, sizeof(line), fptr) != NULL ) {
+        lineno++;
+				/* skip blank lines and comments */
+        if ( line[0] == '\n' || line[0] == '\r' ||
+             line[0] == '#'  || line[0] == '%' || line[0] == '*' )
+            continue;
+
+				/* first real line must be the vehicle header */
+        if ( !header_seen ) {
+            if ( sscanf(line, " vehicle: %s", header) != 1 ) {
+                sprintf( msg_buf, "%s: missing 'vehicle:' header at "
+                         "line %d\n", fname, lineno );
+                write_message( TERM | SLOG );
+                fclose(fptr);
+                return -1;
+            }
+            if ( strcmp(header, VEHICLE_NAME) != 0 ) {
+                sprintf( msg_buf, "%s: definition is for '%s', this "
+                         "build is '%s'\n", fname, header, VEHICLE_NAME );
+                write_message( TERM | SLOG );
+                fclose(fptr);
+                return -1;
+            }
+            header_seen = 1;
+            continue;
+        }
+
+				/* parse "<name> <value>" */
+        if ( sscanf(line, " %s %lg", name, &value) != 2 ) {
+            sprintf( msg_buf, "%s line %d: cannot parse: %s",
+                     fname, lineno, line );
+            write_message( TERM | SLOG );
+            fclose(fptr);
+            return -1;
+        }
+
+				/* only vs_* fields allowed */
+        if ( strncmp(name, "vs_", 3) != 0 ) {
+            sprintf( msg_buf, "%s line %d: '%s' is not a vs_* parameter\n",
+                     fname, lineno, name );
+            write_message( TERM | SLOG );
+            fclose(fptr);
+            return -1;
+        }
+
+				/* look up by name */
+        if ( (index = match_sensor(name)) < 0 ) {
+            sprintf( msg_buf, "%s line %d: unknown parameter '%s'\n",
+                     fname, lineno, name );
+            write_message( TERM | SLOG );
+            fclose(fptr);
+            return -1;
+        }
+
+				/* convert units if given */
+        expect = strchr( vvp->s[index].name, '(' );
+        actual = strchr( name, '(' );
+        if ( expect && actual &&
+             convert_units( expect, actual, value, &value ) ) {
+            sprintf( msg_buf, "%s line %d: unknown units in '%s'\n",
+                     fname, lineno, name );
+            write_message( TERM | SLOG );
+            fclose(fptr);
+            return -1;
+        }
+
+        update( index, value );
+        n_set++;
+    }
+
+    fclose( fptr );
+
+    if ( !header_seen ) {
+        sprintf( msg_buf, "%s: empty vehicle definition file\n", fname );
+        write_message( TERM | SLOG );
+        return -1;
+    }
+    sprintf( msg_buf, "vehicle definition: %d parameters set\n", n_set );
+    write_message( TERM | SLOG );
+    return 0;
+}
+
+/*-------------------------------------------------------------------------
   READ_FLAGS: this is a pretty good copy of load_init from earlier
   revisions, but we now explicitly look for "state:"
   -----------------------------------------------------------------------*/

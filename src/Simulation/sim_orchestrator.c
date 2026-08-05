@@ -117,6 +117,16 @@ int main(int argc, char *argv[]) {
     world_state_t world_state;
     odyssey_state_t odyssey_state;
 
+    if (parse_command_line(argc, argv, &options) != 0) {
+        print_command_line_help(argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    if (options.show_help) {
+        print_command_line_help(argv[0]);
+        return EXIT_SUCCESS;
+    }
+
     if (open_sim_log() != 0) return EXIT_FAILURE;
 
     if (init_sim(&sim_config) != 0) {
@@ -150,16 +160,6 @@ int main(int argc, char *argv[]) {
     if (init_odyssey_model() != 0) {
         close_sim_log();
         return EXIT_FAILURE;
-    }
-
-    if (parse_command_line(argc, argv, &options) != 0) {
-        print_command_line_help(argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    if (options.show_help) {
-        print_command_line_help(argv[0]);
-        return EXIT_SUCCESS;
     }
 
     struct tm *tp;

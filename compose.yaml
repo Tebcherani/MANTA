@@ -2,7 +2,11 @@ services:
   simulator:
     build:
       context: .
+      
     image: odyssey_sim
+
+    command: ["dive240.mi"]
+
     environment: 
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
