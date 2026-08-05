@@ -25,7 +25,7 @@ static int copy_env_path(char *destination, int destination_size, const char *en
     return 0;
 }
 
-int init_odyssey(void) {
+int init_odyssey_config(void) {
     if (copy_env_path(ody_data_dir, PATH_SIZE, "ODYSSEY_DATA_DIR") != 0) return -1;
     write_to_sim_log("Odyssey data directory initialized: %s\n", ody_data_dir);
 

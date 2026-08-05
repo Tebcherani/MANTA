@@ -13,6 +13,6 @@ extern char ody_mission_dir[PATH_SIZE];
 extern char ody_sfault_dir[PATH_SIZE];
 extern char ody_vehicle_dir[PATH_SIZE];
 
-int init_odyssey(void);
+int init_odyssey_config(void);
 
 #endif

@@ -3,7 +3,7 @@
 #include "sim_config.h"
 #include "sim_log.h"
 
-int init_sim(sim_config_t *config) {
+int init_sim_config(sim_config_t *config) {
     if (config == NULL) {
         write_to_sim_log("Failed to initialize simulation configuration: config pointer is NULL.\n");
         return -1;

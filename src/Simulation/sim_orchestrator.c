@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 
     if (open_sim_log() != 0) return EXIT_FAILURE;
 
-    if (init_sim(&sim_config) != 0) {
+    if (init_sim_config(&sim_config) != 0) {
         close_sim_log();
         return EXIT_FAILURE;
     }
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (init_odyssey() != 0) {
+    if (init_odyssey_config() != 0) {
         close_odyssey_log();
         close_sim_log();
         return EXIT_FAILURE;
