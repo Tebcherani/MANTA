@@ -43,10 +43,4 @@ typedef struct {
 
 } ody_dev_t;
 
-				/* function prototypes */
-int serio_read( serio_t *s );
-char *serio_gets( char *s, int n, serio_t *serio );
-int serio_flush( serio_t *serbuf );
-serio_t *serio_init( serio_t *serbuf, char *buf, unsigned bufsiz );
-
 #endif /* ODY_SERIO_H */

@@ -82,12 +82,6 @@ const char *get_fault_file_name( void );
 
 int send( int port, char *string );
 int millisec( void );
-int csend( int, char *, int );
-int confirm( int, char *, int );
-int confirm2(int, char *, char *, int );
-int get_reply( int, char *, int );
-int clear_port( int );
-int open_serial_port( char *, int baud, int parity );
 
 				/* sim.c — full prototypes required by modern GCC */
 void motion( double *e, double *p, double Amps, double Del13,

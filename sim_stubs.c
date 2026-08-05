@@ -92,30 +92,6 @@ int remote_delay( struct behavior *b, int priority, int level )
  *======================================================================*/
 #include "ody_serio.h"
 
-int confirm( int port, char *echo, int time_out )
-    { (void)port; (void)echo; (void)time_out; return -1; }
-
-int confirm2( int port, char *echo1, char *echo2, int time_out )
-    { (void)port; (void)echo1; (void)echo2; (void)time_out; return -1; }
-
-int csend( int port, char *command, int time_out )
-    { (void)port; (void)command; (void)time_out; return -1; }
-
-int get_reply( int port, char *reply, int time_out )
-    { (void)port; (void)reply; (void)time_out; return -1; }
-
-int open_serial_port( char *name, int baud, int parity )
-    { (void)name; (void)baud; (void)parity; return -1; }
-
-serio_t *serio_init( serio_t *serbuf, char *buf, unsigned bufsiz )
-    { (void)buf; (void)bufsiz; return serbuf; }
-
-char *serio_gets( char *s, int n, serio_t *serio )
-    { (void)s; (void)n; (void)serio; return NULL; }
-
-int serio_flush( serio_t *serbuf )
-    { (void)serbuf; return 0; }
-
 /* timing stubs */
 int hirestime( double *hires )
 {
