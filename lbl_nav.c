@@ -312,15 +312,6 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 #endif
 }
 
-void init_fix(fix_t *fix)
-{
-    fix->position.x=fix->position.y=fix->position.z= 0.0 ;
-    fix->time = fix->last_time = 0.0 ;
-    fix->time=-100.0 ;
-    fix->new=0 ;
-    fix->num_fixes=0 ;
-}
-
 int lbl_inc_index(lbl_t *lbl)
 {
     (lbl->index)++ ;

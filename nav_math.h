@@ -26,7 +26,6 @@ typedef struct
 } fix_t ;
 
 double sgn(double x);
-void init_fix(fix_t *fix);
 void copy_vector(vector_t *dest, vector_t *source);
 double shape(double x, double y, int n, double x0, double y0, double rx, double ry) ;
 void init_rls2_matrices(double psi[], double R[2][2], double Theta[]) ;
