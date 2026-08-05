@@ -16,14 +16,12 @@ int  stack_busy(struct command *);
 void exit_gracefully( int exit_status )
 {
     char tmp[256], *tmp1, *tmp2;
-    long size = 0;
 
     handle_modem();      /* send any remaining modem messages */
     
     if ( datafile )
     {
 	fflush( datafile );
-	size = ftell( datafile );
 	fclose( datafile );
     }
 
