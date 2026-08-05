@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <math.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "diagnostic.h"
 #include "fileman.h"
@@ -220,7 +219,6 @@ int load_vehicle_def( const char *fname )
 
 int read_flags( FILE *fptr )
 {
-    char string[60];
     int value;
     double dvalue;
 
