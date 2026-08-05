@@ -74,83 +74,6 @@ void monitor_msg( int sensor_id, int Monitor )
 }
 
 /*----------------------------------------------------------------------*
-
- *----------------------------------------------------------------------*/
-
-static int dump_count = 0;
-
-void init_dump( int Monitor )
-{
-    if ( Monitor & DUMP )
-    {
-	dump_count = 0;
-	fputs( "0000000 ", syslog );
-    }
-}
-
-int dump_char( char c, int Monitor )
-{
-    if ( Monitor & DUMP )
-    {
-	++dump_count;
-	if ( !iscntrl(c) )
-	    fprintf( syslog, " %c ", c );
-	else
-	    fprintf( syslog, "%02x ", c );
-	if ( dump_count && !(dump_count % 0x10) )
-	    fprintf( syslog, "\n%07x ", dump_count );
-    }
-}
-
-void stop_dump( int Monitor )
-{
-    if ( Monitor & DUMP )
-    {
-	fputc( '\n', syslog );
-    }
-}
-
-int dump_buf( char *buf, int len, int Monitor )
-{
-    if ( Monitor & DUMP )
-    {
-	int i;
-	init_dump( Monitor );
-	for ( i = 0; i < len; i++ )
-	    dump_char( buf[i], Monitor );
-	stop_dump( Monitor );
-    }
-}
-
-/*-----------------------------------------------------------------------*
-  Error messages, for now just making them up as I go, maybe later make it
-  more systematic but for now this should do JJL 6-Feb-94
- *-----------------------------------------------------------------------*/
-
-static char* status_tab[] = {
-    "OK",
-    "Not Selected",
-    "Not Connected",
-    "Uninitialized",
-    "Couldn't open serial port",
-    "Comms OK but no signals from sensor",
-    "Sail1 error",
-    "Fin comms OK but index failed",
-    "Couldn't fork process"
-};
-
-
-void status_msg( enum ody_dev_status status, char *string )
-{
-    if ( status == STATUS_OK || status == STATUS_NOT_SELECTED )
-	strcpy( string, status_tab[status] );
-    else
-	sprintf( string, "%*s", 15+strlen(status_tab[status]),
-		 status_tab[status] );
-    return;
-}
-
-/*----------------------------------------------------------------------*
   Revision control message strings
  *----------------------------------------------------------------------*/
 
@@ -169,11 +92,6 @@ void write_rcs( const char *rev, const char *date )
   Data structure diagnostic routines
   -----------------------------------------------------------------------*/
 
-void dump_sensor( FILE *fp, struct sensor *s )
-{
-    fprintf( fp, "% 29s % d % .6g\n", s->name, s->time, s->x );
-}
-
 void dump_b_arg( FILE *fp, struct b_arg *ba )
 {
     fprintf( fp, "% 29s % .6g\n", ba->name, ba->x );
@@ -189,63 +107,5 @@ void dump_behavior( FILE *fp, struct behavior *b )
     {
 	fprintf( fp, "  arg % 2d: ", arg );
 	dump_b_arg( fp, &b->arg[arg] );
-    }
-}
-
-void dump_command( FILE *fp, struct command *c )
-{
-    register int arg;
-    fprintf( fp, "d_mode % d h_mode % d s_mode % d\n",
-	     c->depth_mode, c->heading_mode, c->speed_mode );
-    for ( arg = 0; arg < MAX_C_ARG; arg++ )
-	fprintf( fp, "% 17.3f % 9.3f % 9.3f\n", c->depth[arg],
-		 c->heading[arg], c->speed[arg] );
-    fprintf( fp, "    beh % d: ", c->behavior );
-    dump_behavior( fp, &c->b );
-}
-
-void dump_state( FILE *fp, struct state *s )
-{
-    register int cmd;
-    fprintf( fp, "%s\n", s->name );
-    for ( cmd = 0; cmd < MAX_COMMAND; cmd++ )
-    {
-	fprintf( fp, "cmd %d: ", cmd );
-	dump_command( fp, &s->c[cmd] );
-    }
-}
-
-void dump_data_structure( FILE *fp )
-{
-				/* local vars */
-    register int sen, beh, cmd, sta;
-
-    fprintf( fp, "c_date: %s\nm_date: %s\nf_name: %s\n",
-	     vvp->creation_date, vvp->mission_date, vvp->data_file_name );
-
-    fprintf( fp, "last_s: %d s: 0x%08x\n", vvp->last_s, vvp->s );
-    for ( sen = 0; sen <= vvp->last_s; sen++ )
-    {
-	fprintf( fp, "  sen % 3d: ", sen );
-	dump_sensor( fp, &vvp->s[sen] );
-    }
-
-    fprintf( fp, "last_b: %d b: 0x%08x\n", vvp->last_b, vvp->b );
-    for ( beh = 0; beh <= vvp->last_b; beh++ )
-    {
-	fprintf( fp, "beh % 2d: ", beh );
-	dump_behavior( fp, &vvp->b[beh] );
-    }
-
-    fprintf( fp, "last_c: %d c: 0x%08x\n", vvp->last_c, vvp->c );
-    for ( cmd = 0; cmd <= vvp->last_c; cmd++ )
-    {
-	fprintf( fp, "cmd % d: ", cmd );
-	dump_command( fp, &vvp->c[cmd] );
-    }
-    for ( sta = 0; sta < vvp->nstates; sta++ )
-    {
-	fprintf( fp, "sta %d: ", sta );
-	dump_state( fp, &vvp->sta[sta] );
     }
 }

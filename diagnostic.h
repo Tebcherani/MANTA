@@ -29,11 +29,6 @@ extern FILE *syslog, *term;
                                 /* prototypes */
 void write_message( int monitor );
 int open_syslog( const char *name );
-void status_msg( enum ody_dev_status status, char *string );
-void init_dump( int Monitor );
-int dump_char( char c, int Monitor );
-void stop_dump( int Monitor );
-int dump_buf( char *buf, int len, int Monitor );
 void write_rcs( const char *rev, const char *date );
 
 #endif /* DIAGNOSTIC_H */
