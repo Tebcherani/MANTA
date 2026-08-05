@@ -67,7 +67,7 @@ void ABE_LBL()
 				   convergence parms */
     static int uninitialized = 1;
     static int numXP;		/* number active transponders */
-    double ds, dx, dy;
+    double dx, dy;
     int ii, jj, offset, numGood;
 
     if ( uninitialized )
