@@ -98,8 +98,6 @@ void init_simulation();
 double thruster_torque( double real_amps, double w_speed );
 double thruster_force( double real_amps, double w_speed );
 double act_model( double des_angle, double angle, double dt );
-void   mmul( int na, int nb, int nc, int l, int m, int n,
-             double a[][7], double b[][7], double c[][7] );
 int    matinv( double a[][7], double ainv[][7], int n, double adum[][7] );
 double hysteresis( double, double, double, double, double );
 int get_hydro( );

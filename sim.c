@@ -56,7 +56,7 @@
  |   fins()                              computes forces caused by fins
  |   act_model()                         fin actuator model (just a delay) 
  |   thruster_force(),thruster_torque()  thruster model
- |   matinv(), mmul()                    matrix routines
+ |   matinv()                            matrix routines
  | 
  *-----------------------------------------------------------------------*/
 
@@ -1491,36 +1491,6 @@ for (k=2;k<=n;k++)
    };
 
 return (ier);
-}
-
-
-/* **********************************************************************
-  subroutine mmul (na,nb,nc,l,m,n,a,b,c)
-* *********************************************************************** */
-void mmul( int na, int nb, int nc, int l, int m, int n, double a[][7], double b[][7], double c[][7] )
-{
-int i,j,k;
-/*     double precision a(na,n),b(nb,l),c(nc,l)   
-
-  [a]*[b] =[c] 
-  
-     a is m x n,  b is n x l, and c is m x l       
-
-        na    row dimension of a as declared in calling unit
-        nb    row dimension of b as declared in calling unit
-       nc    row dimension of c as declared in calling unit
-        l     number of columns of the matrices b and c
-        m     number of rows of the matrices a and c
-        n     number of columns of a and number of rows of b
-*/
-for (j=1;j<=l;j++)   
-   {
-    for (i=1;i<=m;i++) 
-       c[i][j]=0.0e0;        
-    for (k=1;k<=n;k++)  
-       for (i=1;i<=m;i++) 
-           c[i][j] += a[i][k] * b[k][j];
-   }
 }
 
 #ifndef Macintosh
