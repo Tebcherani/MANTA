@@ -68,7 +68,6 @@ int main(int argc, char *argv[]) {
     if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) exit_sim(EXIT_FAILURE);
     lhs();  // Initialize Odyssey dynamics
 
-    struct tm *tp;
     UseSim = 1;
 
 /* 
