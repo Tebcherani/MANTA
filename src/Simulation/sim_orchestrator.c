@@ -176,12 +176,14 @@ int main(int argc, char *argv[]) {
         return EXIT_SUCCESS;
     }
 
+    if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) {
+        close_odyssey_log();
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+
     struct tm *tp;
     UseSim = 1;
-
-				/* load fault injection file if specified
-				   as second argument or via data structure */
-    load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name );
 
 				/* use data structure initial values to set
                                    initial position */
