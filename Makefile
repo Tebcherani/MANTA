@@ -68,9 +68,6 @@ SRCS = \
     load_fault.c        \
     odyssey_legacy_exit.c 
 
-# Files intentionally excluded and why:
-#   ody_serio.c         — same; stubs in sim_stubs.c
-
 OBJS = $(SRCS:.c=.o)
 
 .PHONY: all clean setup debug both edit_struct dev-setup doctor run-sim review review2 mission-constructor mission-constructor-web
