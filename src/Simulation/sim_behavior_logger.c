@@ -60,7 +60,6 @@ void capture_behavior_activity(void) {
 int dump_behavior_log_json(const char *filename) {
     FILE *file;
     int entry_index;
-    int write_failed = 0;
 
     if (filename == NULL || filename[0] == '\0') {
         write_to_sim_log("Failed to dump behavior log: filename is empty.\n");
