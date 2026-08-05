@@ -757,144 +757,11 @@ int matinv3(double a[][3], double ainv[][3], double min_det, double *pdet)
     return result;
 }
 
-void init_rls2_matrices(double psi[],double R[2][2], double Theta[])
-{
-    int i, j ;
-    for(i=0;i<2;i++)Theta[i]=0.0 ;
-    for(i=0;i<2;i++)for(j=0;j<2;j++)R[i][j]=0.0 ;
-    R[1][1] = 1.0 ;
-}
-void update_rls2_soln(double R[2][2], double Theta[], int n, double gamma,
-		double psi[], double y, double *perror)
-{
-    int i, j ;
-    double PPt[2][2], Rinv[2][2], det, yhat ;
-
-    PPt[0][0] = psi[0]*psi[0] ;
-    PPt[1][0] = PPt[0][1] = psi[1]*psi[0] ;
-    PPt[1][1] = psi[1]*psi[1] ;
-    for(i=0;i<2;i++)
-	for(j=0;j<2;j++)R[i][j] += gamma*(PPt[i][j] - R[i][j]) ;
-    yhat = psi[0]*Theta[0] + psi[1]*Theta[1] ;
-    *perror = y - yhat ;
-    if(n > 3)
-    {
-	matinv2(R,Rinv,.00001,&det) ;
-	Theta[0] += gamma*(*perror)*(Rinv[0][0]*psi[0] + Rinv[0][1]*psi[1]) ;
-	Theta[1] += gamma*(*perror)*(Rinv[1][0]*psi[0] + Rinv[1][1]*psi[1]) ;
-    }
-
-}
-
-void init_rls3_matrices(double R[][3], double Theta[])
-{
-    int i, j ;
-    for(i=0;i<3;i++)
-	for(j=0;j<3;j++)R[i][j] = 0.0 ;
-    for(i=0;i<3;i++)Theta[i]=0.0 ;
-    R[1][1] = 1.0 ; 
-}
-
-void update_rls3_soln( double R[][3], double Theta[], int n, double gamma,
-		       double psi[], double y, double *perror )
-{
-    int i, j ;
-    double PPt[3][3], Rinv[3][3], det ;
-
-    for(i=0;i<3;i++)
-	for(j=0;j<3;j++)PPt[i][j] = psi[i]*psi[j] ;
-    for(i=0;i<3;i++)
-	for(j=0;j<3;j++)R[i][j] += gamma*(PPt[i][j] - R[i][j]) ;
-
-    *perror = y - psi[0]*Theta[0] - psi[1]*Theta[1] - psi[2]*Theta[2] ;
-    if(n > 3)
-    {
-	matinv3(R,Rinv,.00001,&det) ;
-	for(i=0;i<3;i++)
-	    for(j=0;j<3;j++)Theta[i] += gamma*(*perror)*Rinv[i][j]*psi[j] ;
-    }
-}
-
-void init_ls3_matrices(double AtA[][3], double AtB[])
-{
-    int i, j ;
-    for(i=0;i<3;i++)
-    {
-	AtB[i] = 0.0 ;
-	for(j=0;j<3;j++)AtA[i][j] = 0.0 ;
-    }
-}
-
-void update_ls3_matrices( double a[], double b, 
-			  double AtA[][3], double AtB[] )
-{
-    int i, j ;
-    for(i=0;i<3;i++)
-    {
-	AtB[i] += a[i]*b ;
-	for(j=0;j<3;j++)AtA[i][j] += a[i]*a[j] ;
-    }
-}
-
-int solve_ls3(double AtA[][3], double AtB[], double x[], double *pdet)
-{
-    int result, i, j ;
-    double AtAinv[3][3] ;
-    result = matinv3(AtA, AtAinv, 0.0001,pdet) ;
-    for(i=0;i<3;i++)x[i]=0.0;
-    if(!result)return(result) ;
-    for(i=0;i<3;i++)
-	for(j=0;j<3;j++) x[i] += AtAinv[i][j]*AtB[j] ;
-    return(result) ;
-}
-
-double ls3_error(double Theta[], double x[], double y)
-{
-    return(y-(Theta[0]*x[0] + Theta[1]*x[1] + Theta[2]*x[2])) ;
-}
-
 double atan2_fix(double x, double y)
 {
     if ( (fabs(x)<.0001) && (fabs(y)<.0001) ) return (0.0);
     return (atan2(x,y));
 }
-
-
-void nav2_depth( vector_t *pa, vector_t *pb, double ra, double rb,
-		 double depth, int nside, vector_t *pd )
-{
-    double da,db,ra2,rb2 ;
-    double x0,y0,dx,dy,theta ;
-    double s,c,rab2 ;
-    double arg;
-				/* net rotation parameters */
-    dx = pb->x-pa->x ;
-    dy = pb->y-pa->y ;
-    theta = atan2_fix(dy,dx) ;
-    s = sin(theta) ;
-    c = cos(theta) ;
-				/* correct ranges for depth */
-    da = depth-pa->z ;
-    db = depth-pb->z ;
-
-    ra2 = ra*ra - da*da ;
-    rb2 = rb*rb - db*db ;
-
-				/* compute solution in net coordinates */
-    rab2 = dx*dx+dy*dy ;
-    if (rab2==0) x0=0;
-    else x0 = (rab2+ra2-rb2)/(2.0*sqrt(rab2));
-    arg=ra2-x0*x0;
-
-    if (arg<0.0) arg=0.0;
-    y0 = sqrt(arg) ;
-    if(nside < 1)y0 = -y0 ;
-				/* transform to world coordinates */
-    pd->x = pa->x + c*x0 - s*y0 ;
-    pd->y = pa->y + s*x0 + c*y0 ;
-    pd->z = depth ;
-}
-
 
 void sort(int n, double ra[])
 {
@@ -956,34 +823,6 @@ double median(double x[],int n)
 #else
 #define LONG
 #endif
-
-double ran1( LONG int *idum )
-{
-    long int j,k;
-    static LONG int iy=0;
-    static LONG int iv[NTAB];
-    double temp;
-
-    if (*idum <= 0 || !iy) {
-	if (-(*idum) < 1) *idum=1;
-	else *idum = -(*idum);
-	for (j=NTAB+7;j>=0;j--) {
-	    k=(*idum)/IQ;
-	    *idum=IA*(*idum-k*IQ)-IR*k;
-	    if (*idum < 0) *idum += IM;
-	    if (j < NTAB) iv[j] = *idum;
-	}
-	iy=iv[0];
-    }
-    k=(*idum)/IQ;
-    *idum=IA*(*idum-k*IQ)-IR*k;
-    if (*idum < 0) *idum += IM;
-    j=iy/NDIV;
-    iy=iv[j];
-    iv[j] = *idum;
-    if ((temp=AM*iy) > RNMX) return RNMX;
-    else return temp;
-}
 
 double oline(vector_t *x0, vector_t *x1, vector_t *x)
 {
