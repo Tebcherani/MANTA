@@ -48,11 +48,11 @@ int main(int argc, char *argv[]) {
 
     if (open_sim_log() != 0) exit_sim(EXIT_FAILURE);
     if (init_sim_config(&sim_config) != 0) exit_sim(EXIT_FAILURE);
-    if (init_sim_state(&sim_state) != 0) exit_sim(EXIT_FAILURE);
     if (init_world_state(&world_state) != 0) exit_sim(EXIT_FAILURE);
     if (open_odyssey_log() != 0) exit_sim(EXIT_FAILURE);
     if (init_odyssey_config() != 0) exit_sim(EXIT_FAILURE);
     init_data_structure();
+    if (init_sim_state(&sim_state) != 0) exit_sim(EXIT_FAILURE);
     if (init_odyssey_model() != 0) exit_sim(EXIT_FAILURE);
     if (load_mission((char *)options.mission_file) != 0) exit_sim(EXIT_FAILURE);
 
@@ -75,7 +75,6 @@ int main(int argc, char *argv[]) {
    for next cycle.
 */
 	if (init_mission_time(&sim_state) != 0) exit_sim(EXIT_FAILURE);
-    if (update_sim_state(&sim_state, 0.0) != 0) exit_sim(EXIT_FAILURE);
 
     while (sim_state.current_cycle < sim_config.num_cycles) {
 	    if (vvp->abort_mission) {

@@ -51,6 +51,9 @@ int init_sim_state(sim_state_t *state) {
         return -1;
     }
 
+    sensor(M_PRESENT_TIME) = state->sim_time;
+    sensor_time(M_PRESENT_TIME) = (long)(1000.0 * state->sim_time);
+
     // Get time in UTC
     time_ptr = gmtime(&state->calendar_start_time);
     
