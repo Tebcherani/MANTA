@@ -11,7 +11,6 @@
 #include <stdio.h>
 
 int set_filesize( FILE *fp, unsigned sizeMB );
-int truncate_file( FILE *fp );
 
 extern unsigned InitDataFileSize; /* in MBytes */
 

@@ -45,38 +45,3 @@ int set_filesize( FILE *fp, unsigned sizeMB )
 #endif /* _OSK */
     return 0;
 }
-
-
-/*----------------------------------------------------------------------*
-  TRUNCATE_FILE: shrink preallocated file down to its "true" size.  Flushes
-  the buffer and then sets the size of the file to be the position of EOF.
-  Error diagnostics as well as the final size of the file are recorded.
- *----------------------------------------------------------------------*/
-
-int truncate_file( FILE *fp )
-{
-#ifdef _OSK
-    error_code error;
-    path_id path;
-    u_int32 position;
-
-    fflush( fp );
-    path = _fileno( fp );
-
-    if ( error = _os_gs_pos( path, &position ) )
-        sprintf( msg_buf, "truncate_file: %s\n", strerror( error ) );
-    else
-    {
-        if ( error = _os_ss_size( path, position ) )
-            sprintf( msg_buf, "truncate_file: %s\n", strerror( error ) );
-        else
-            sprintf( msg_buf, "data file truncated to %u bytes\n", position );
-    }
-    write_message( TERM | SLOG );
-    if ( error )
-	return -1;
-    return position;
-#else
-    return 0;
-#endif /* _OSK */
-}
