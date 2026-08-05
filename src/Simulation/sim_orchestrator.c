@@ -162,11 +162,12 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (load_mission(options.mission_file) == -1) exit( 1 );
-    sprintf( msg_buf, 
-	     "vvp->nstates = %d, vvp->cstate = %d after load_mission()\n",
-	     vvp->nstates, vvp->cstate );
-    write_message( TERM | SLOG );
+    if (load_mission((char *)options.mission_file) != 0) {
+        close_odyssey_log();
+        close_sim_log();
+        return EXIT_FAILURE;
+    }
+    write_to_sim_log("Mission loaded: %d states, current state %d\n", vvp->nstates, vvp->cstate);
 
     struct tm *tp;
     UseSim = 1;
