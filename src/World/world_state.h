@@ -5,7 +5,15 @@ typedef struct {
     int temp;
 } world_state_t;
 
+typedef struct {
+    double timestep;
+} world_step_request_t;
+
+typedef struct {
+    int status;
+} world_step_result_t;
+
 int init_world_state(world_state_t *state);
-int update_world_state(world_state_t *state, double timestep);
+world_step_result_t update_world_state(world_state_t *state, const world_step_request_t *request);
 
 #endif

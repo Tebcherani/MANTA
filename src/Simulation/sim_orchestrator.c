@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
     sim_state_t sim_state;
     world_state_t world_state;
     odyssey_state_t odyssey_state;
+    world_step_request_t world_request;
+    world_step_result_t world_result;
 
     int mission_started = 0;
 
@@ -85,7 +87,11 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS, mission_started);
         }
 
-        if (update_world_state(&world_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
+        // Update world state
+        world_request.timestep = sim_config.timestep;
+        world_result = update_world_state(&world_state, &world_request);
+        if (world_result.status != 0) exit_sim(EXIT_FAILURE, mission_started);
+        
         if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {

@@ -15,19 +15,16 @@ int init_world_state(world_state_t *state) {
     return 0;
 }
 
-int update_world_state(world_state_t *state, double timestep) {
-    if (state == NULL) {
-        write_to_sim_log(
-            "Failed to update world state: "
-            "state pointer is NULL.\n"
-        );
-        return -1;
-    }
+world_step_result_t update_world_state(world_state_t *state, const world_step_request_t *request) {
+    world_step_result_t result;
 
     /*
      * World models will eventually be updated here.
      */
-    (void)timestep;
+    (void)state;
+    (void)request;
 
-    return 0;
+    result.status = 0;
+
+    return result;
 }
