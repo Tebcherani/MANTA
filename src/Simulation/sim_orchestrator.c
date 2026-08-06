@@ -15,6 +15,7 @@
 #include "odyssey_config.h"
 #include "odyssey_log.h"
 #include "odyssey_model.h"
+#include "odyssey_nav.h"
 #include "odyssey_sensors.h"
 #include "odyssey_state.h"
 #include "sim_config.h"
@@ -107,9 +108,12 @@ int main(int argc, char *argv[]) {
                 write_to_sim_log("Failed to update Odyssey sensors.\n");
                 exit_sim(EXIT_FAILURE, mission_started);
             }
+
+            if (update_odyssey_nav() != 0) {
+                write_to_sim_log("Failed to update Odyssey navigation.\n");
+                exit_sim(EXIT_FAILURE, mission_started);
+            }
             
-            simple_dead_reckoning();
-            LBL_position();
 	        apply_faults();
             layered_control();
             dynamic_control();
