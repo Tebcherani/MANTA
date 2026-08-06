@@ -222,27 +222,18 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
                                    error criteria ! */
 	    lbl->xhat.x = lbl->position[lbl->index].x ;
 	    lbl->xhat.y = lbl->position[lbl->index].y ;
-#ifdef LBLPRT
-	    if(noisy)printf("good soln with %d ranges\n",ngood) ;
-#endif
 	    break ;
 	}
 	else
 	{
 	    iworst = findwrst(lbl,r); /* pick worst range based on xhat */
 	    lbl->good[iworst] = RANGE_HIGH_ERROR ;  /* make it not good */
-#ifdef LBLPRT
-	    if(noisy)printf("range %d is bad\n",iworst) ;
-#endif
 	}
 	/* the while loop will exit if ngood is not > 2 */	
     }
 				/* only do the 2-range soln if not lost */
     if( (ngood == 2) && (!lbl->lost))
     {
-#ifdef LBLPRT
-	if(noisy)printf("computing 2 range solution ") ;
-#endif
 				/* get the indices of the first two good
                                    ranges */
 	get_indices(lbl) ;
@@ -251,10 +242,6 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 	chside(&(lbl->xhat), lbl) ;
 	i0 = lbl->baseline.i0 ;
 	i1 = lbl->baseline.i1 ;
-#ifdef LBLPRT
-	if(noisy)printf("2 range soln with xpndrs %d %d ranges %.1lf %.1lf\n",
-			i0,i1,r[i0],r[i1]) ;
-#endif
 		/* crunch the 2-range soln, it returns false if you're too
 			close to the baseline */
 	if((result=nav2_xy(lbl->xp+i0, lbl->xp+i1,
@@ -283,18 +270,6 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 	fix->fix_status = NAV_STALE ;
     }
     if(fix->time-fix->last_time > lbl->timeout)fix->fix_status = NAV_TIMED_OUT ;
-#ifdef LBLPRT
-    if(noisy)
-    {
-	printf("index: %d\n",lbl->index) ;
-	printf("     ra     rb     rc    rd     x       y      z     ta     tb     tc  status\n") ;
-	for(i=0;i<LBL_NUM_RANGES;i++)
-	    printf("%d %6.1lf %6.1lf %6.1lf %6.1lf %6.1lf %6.1lf %6.1lf %6.1lf %6.1lf %6.1lf   %d\n",i,
-		   lbl->range[0][i],lbl->range[1][i],lbl->range[2][i],lbl->range[3][i],
-		   lbl->position[i].x,lbl->position[i].y,lbl->position[i].z,	
-		   lbl->time[0][i],lbl->time[1][i],lbl->time[2][i],lbl->status[i]) ;
-    }
-#endif
 }
 
 int lbl_inc_index(lbl_t *lbl)
