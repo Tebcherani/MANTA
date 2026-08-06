@@ -30,7 +30,7 @@ void lhs(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
-char DataFileName[ODY_PATH_MAX];
+char DataFileName[PATH_SIZE];
 
 int main(int argc, char *argv[]) {
     sim_config_t sim_config;

@@ -12,6 +12,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "common_defs.h"
 #include "diagnostic.h"
 #include "paths.h"
 #include "vehicle.h"
@@ -169,7 +170,7 @@ static void write_fault_header( FILE *datafile )
 static void write_mission_header( FILE *datafile )
 {
     FILE       *fmi;
-    char        mi_path[ODY_PATH_MAX];
+    char        mi_path[PATH_SIZE];
     char        line[MAX_LINE];
     int         n_lines = 0;
     const char *fname   = get_mission_file_name();
@@ -234,7 +235,7 @@ FILE *init_data_logging( char *DataFileName )
     do {
 	++RunNumber;
 	
-	snprintf( DataFileName, ODY_PATH_MAX, "%s/%c%s%02d.obd",
+	snprintf( DataFileName, PATH_SIZE, "%s/%c%s%02d.obd",
 		  DATA_DIR, PREFIX_CHAR, fname_string, RunNumber );
 
 #define MODE F_OK		/* UNIX test for existence using access() */
