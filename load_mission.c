@@ -244,13 +244,13 @@ int read_flags( FILE *fptr )
 	{
 	    UseSim = value;
 	    fprintf( stderr, "UseSim               %d\n", value );
-	    UseAltimeter = UseSail1 = 0;
+	    UseAltimeter = 0;
 
 #if  defined _EDC
 	    UseEDC = 0;
 	    ErrorEDC = STATUS_NOT_SELECTED;
 #endif
-	    ErrorAltimeter = ErrorSail1 = STATUS_NOT_SELECTED;
+	    ErrorAltimeter = STATUS_NOT_SELECTED;
 	    fprintf( stderr, "Entering on-board sim mode" 
 		     " disabling all other devices\n" );
 
@@ -263,10 +263,9 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseSail1 %d", &value))==1) {
-	    UseSail1 = value;
-	    fprintf(stderr, "UseSail1       %d\n", UseSail1);
-	    fprintf(syslog, "UseSail1       %d\n", UseSail1);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseSail1 setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseSail1 setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseWatchdog %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseWatchdog setting: %d\n", value);

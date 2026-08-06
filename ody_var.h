@@ -18,7 +18,6 @@ extern const int num_behaviors, num_sensors;
 EXTERN struct vehicle vvv, *vvp;
 
 /* Globals of serial port file numbers (Perhaps use a structure) */
-EXTERN int Sail1;                /* sail 1 port number */
 EXTERN int AltimeterSonar;        /* Altimeter sonar port number */
 
 EXTERN int AltimeterPortNumber;        /* 1 or 85 for /t1 or /t85 */
@@ -36,9 +35,6 @@ EXTERN char MissionFileName[60];
  | we could get in more trouble by simply turning the system off instead
  | of hoping the problem was a temporary glitch
  *---------------------------------------------------------------------*/
-				/* serial ascii instrumentation loop */
-EXTERN int ErrorSail1, StatusSail1, UseSail1, MonitorSail1;
-
 				/* simulator mode */
 extern int UseSim, MonitorSim;
 
