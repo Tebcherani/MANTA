@@ -1,6 +1,7 @@
 #ifndef WORLD_SIM_H
 #define WORLD_SIM_H
 
+#include "world_protocol.h"
 #include "world_state.h"
 
 typedef struct {
