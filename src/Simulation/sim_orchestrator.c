@@ -109,7 +109,6 @@ int main(int argc, char *argv[]) {
             load_depth();
             load_water_speed();
             load_water_param();
-            sim_current();
 #ifdef WHOI_USBL
             simulate_usbl();
 #endif

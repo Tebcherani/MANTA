@@ -43,7 +43,6 @@ SRCS = \
     src/World/world_sim.c                   \
     src/World/world_state.c                 \
     sim.c               \
-    sim_current.c       \
     sim_conduct.c       \
     sim_usbl.c          \
     sensor_load.c       \
