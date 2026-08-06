@@ -15,6 +15,7 @@
 #include "odyssey_config.h"
 #include "odyssey_log.h"
 #include "odyssey_model.h"
+#include "odyssey_sensors.h"
 #include "odyssey_state.h"
 #include "sim_config.h"
 #include "sim_exit.h"
@@ -102,21 +103,11 @@ int main(int argc, char *argv[]) {
         if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            init_rotation();
-            load_angular_rate();
-            load_accel(); 
-            load_magnetic();
-            load_depth();
-            load_water_speed();
-            load_water_param();
-#ifdef WHOI_USBL
-            simulate_usbl();
-#endif
-            handle_modem();
-            heading_reference();
-            simLBL();
-
-
+            if (update_odyssey_sensors() != 0) {
+                write_to_sim_log("Failed to update Odyssey sensors.\n");
+                exit_sim(EXIT_FAILURE, mission_started);
+            }
+            
             simple_dead_reckoning();
             LBL_position();
 	        apply_faults();
