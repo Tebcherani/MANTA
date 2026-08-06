@@ -11,13 +11,11 @@
 
 #include "command_line.h"
 #include "odyssey_config.h"
-#include "odyssey_control.h"
 #include "odyssey_data_logger.h"
 #include "odyssey_log.h"
 #include "odyssey_mission.h"
 #include "odyssey_model.h"
-#include "odyssey_nav.h"
-#include "odyssey_sensors.h"
+#include "odyssey_sim.h"
 #include "odyssey_state.h"
 #include "sim_behavior_logger.h"
 #include "sim_config.h"
@@ -84,18 +82,8 @@ int main(int argc, char *argv[]) {
         if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            if (update_odyssey_sensors() != 0) {
-                write_to_sim_log("Failed to update Odyssey sensors.\n");
-                exit_sim(EXIT_FAILURE, mission_started);
-            }
-
-            if (update_odyssey_nav() != 0) {
-                write_to_sim_log("Failed to update Odyssey navigation.\n");
-                exit_sim(EXIT_FAILURE, mission_started);
-            }
-            
-	        if (update_odyssey_control() != 0) {
-                write_to_sim_log("Failed to update Odyssey control.\n");
+            if (update_odyssey_cycle() != 0) {
+                write_to_sim_log("Failed to update Odyssey state.\n");
                 exit_sim(EXIT_FAILURE, mission_started);
             }
 
