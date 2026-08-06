@@ -76,8 +76,6 @@ int main(int argc, char *argv[]) {
     if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) exit_sim(EXIT_FAILURE, mission_started);
     lhs();  // Initialize Odyssey dynamics
 
-    UseSim = 1;
-
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end
    for next cycle.

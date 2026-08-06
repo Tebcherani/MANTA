@@ -242,25 +242,14 @@ int read_flags( FILE *fptr )
 				   codes and take appropriate actions */
 	if ( sscanf(linebuf, "UseSim %d", &value) == 1 )
 	{
-	    UseSim = value;
-	    fprintf( stderr, "UseSim               %d\n", value );
-	    UseAltimeter = 0;
-
-#if  defined _EDC
-	    UseEDC = 0;
-	    ErrorEDC = STATUS_NOT_SELECTED;
-#endif
-	    ErrorAltimeter = STATUS_NOT_SELECTED;
-	    fprintf( stderr, "Entering on-board sim mode" 
-		     " disabling all other devices\n" );
-
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseSim setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseSim setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseAltimeter %d", &value))==1) {
-	    UseAltimeter = value;
-	    fprintf(stderr, "UseAltimeter       %d\n", UseAltimeter);
-	    fprintf(syslog, "UseAltimeter       %d\n", UseAltimeter);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseAltimeter setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseAltimeter setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseSail1 %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseSail1 setting: %d\n", value);
@@ -324,10 +313,9 @@ int read_flags( FILE *fptr )
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorAltimeter %d", &value))==1) {
-	    MonitorAltimeter = value;
-	    fprintf(stderr, "MonitorAltimeter   %d\n", MonitorAltimeter);
-	    fprintf(syslog, "MonitorAltimeter   %d\n", MonitorAltimeter);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorAltimeter setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorAltimeter setting: %d\n", value);
+    	continue;
 	}
 #ifdef EDGEPS8000
 	if ( (sscanf(linebuf, "UseLBL %d", &value))==1) {
@@ -475,22 +463,17 @@ int read_flags( FILE *fptr )
 	    fprintf(syslog, "MonitorSim  %d\n", MonitorSim);
 	    continue;
 	}
-	if ( (sscanf(linebuf, "AltimeterFrequency %d", 
-		     &value))==1)
+	if ( (sscanf(linebuf, "AltimeterFrequency %d", &value))==1)
 	{
-	    AltimeterFrequency = value;
-	    fprintf(stderr, "AltimeterFrequency  %d\n", 
-		    AltimeterFrequency);
-	    fprintf(syslog, "AltimeterFrequency  %d\n", 
-		    AltimeterFrequency);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete AltimeterFrequency setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete AltimeterFrequency setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseOld200 %d", &value))==1)
 	{
-	    UseOld200 = value;
-	    fprintf(stderr, "UseOld200  %d\n", UseOld200);
-	    fprintf(syslog, "UseOld200  %d\n", UseOld200);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseOld200 setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseOld200 setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "DeadManSwitchEnabled %d", 
 		     &value))==1)
@@ -514,32 +497,21 @@ int read_flags( FILE *fptr )
 	}
 	if ( (sscanf(linebuf, "AltimeterPortNumber %d", &value))==1)
 	{
-	    if ((value==1) || (value==85)) {
-		AltimeterPortNumber = value; 
-		fprintf(stderr, "AltimeterPortNumber  %d\n", 
-			AltimeterPortNumber); 
-		fprintf(syslog, "AltimeterPortNumber  %d\n", 
-			AltimeterPortNumber);
-	    } else {
-		fprintf(stderr, "invalid altimter port number %d\n", value);
-		fprintf(syslog, "invalid altimter port number %d\n", value);
-	    }
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete AltimeterPortNumber setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete AltimeterPortNumber setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UsePort %d", &value))==1)
 	{
-	    UsePort = value;
-	    fprintf(stderr, "UsePort  %d\n", UsePort);
-	    fprintf(syslog, "UsePort  %d\n", UsePort);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UsePort setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UsePort setting: %d\n", value);
+    	continue;
 	}
-	if ( (sscanf(linebuf, "UseStarboard %d", 
-		     &value))==1)
+	if ( (sscanf(linebuf, "UseStarboard %d", &value))==1)
 	{
-	    UseStarboard = value;
-	    fprintf(stderr, "UseStarboard  %d\n", UseStarboard);
-	    fprintf(syslog, "UseStarboard  %d\n", UseStarboard);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseStarboard setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseStarboard setting: %d\n", value);
+    	continue;
 	}
 
 #ifdef WHOI_USBL

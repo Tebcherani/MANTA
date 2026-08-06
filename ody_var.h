@@ -18,9 +18,6 @@ extern const int num_behaviors, num_sensors;
 EXTERN struct vehicle vvv, *vvp;
 
 /* Globals of serial port file numbers (Perhaps use a structure) */
-EXTERN int AltimeterSonar;        /* Altimeter sonar port number */
-
-EXTERN int AltimeterPortNumber;        /* 1 or 85 for /t1 or /t85 */
 EXTERN int RunNumber;
 EXTERN int DeadManSwitchEnabled;  /* for aborting mission from RF modem */
 EXTERN int NewMissionFileEnabled; /* for reading new mission during run */
@@ -36,7 +33,7 @@ EXTERN char MissionFileName[60];
  | of hoping the problem was a temporary glitch
  *---------------------------------------------------------------------*/
 				/* simulator mode */
-extern int UseSim, MonitorSim;
+extern int MonitorSim;
 
 EXTERN int MonitorDataLogging;
 EXTERN int MonitorLayeredControl;
@@ -45,15 +42,6 @@ EXTERN int MonitorLayeredControl;
 extern int LBLTransponderMode;  /* If mode = 0, then in pinger mode */
 extern int ErrorLBL, MonitorLBL, UseLBL;
 #endif
-				/* Tritech ST-200 */
-EXTERN int ErrorAltimeter, StatusAltimeter, UseAltimeter, MonitorAltimeter;
-EXTERN int OldAltimeter;	/* 0 = new, 1 = old altimeters */
-EXTERN int OldAltimeterID;	/* 1 for 200kHz, 2 for Stbd 500 kHz, 3 for
-				   Port 500kHz */ 
-EXTERN int UsePort;		/* for old sonars, enable one by one */
-EXTERN int UseStarboard;
-EXTERN int UseOld200;
-EXTERN int AltimeterFrequency;	/* 500 vs 200 kHz (applies to new only) */
 
 				/* whoi_usbl */
 #ifdef WHOI_USBL
