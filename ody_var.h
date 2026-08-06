@@ -82,11 +82,6 @@ EXTERN int AltimeterFrequency;	/* 500 vs 200 kHz (applies to new only) */
 #ifdef SBE_25
 extern int UseCondTemp, MonitorCondTemp, StatusCondTemp, ErrorCondTemp;
 #endif
-
-#ifdef PSA_916			/* Datasonics PSA_916 Altimeter */
-EXTERN int UsePSA, MonitorPSA, StatusPSA, ErrorPSA;
-#endif
-
 				/* whoi_usbl */
 #ifdef WHOI_USBL
 EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;

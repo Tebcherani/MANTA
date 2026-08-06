@@ -112,11 +112,6 @@ config: kvh_dgc
   sensor:             dgc_calcount(int)
 endconfig
 
-config: psa_916
-  sensor:                m_psa_range(m) 99.99
-  sensor:                psa_pitch(rad) 0.4363 (25 deg)
-endconfig
-
 config: sbe_25
   sensor:             sbe_temp_freq(Hz)
   sensor:             sbe_cond_freq(Hz)

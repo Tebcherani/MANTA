@@ -2,7 +2,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
-#define CREATION_DATE "2026/05/31 23:19:06 GMT"
+#define CREATION_DATE "2026/08/06 02:36:54 GMT"
 
 extern int M_PRESENT_TIME;
 extern int M_DT;
@@ -104,8 +104,6 @@ extern int DGC_AUTOCAL;
 extern int DGC_CALMERIT;
 extern int DGC_LOCMERIT;
 extern int DGC_CALCOUNT;
-extern int M_PSA_RANGE;
-extern int PSA_PITCH;
 extern int SBE_TEMP_FREQ;
 extern int SBE_COND_FREQ;
 extern int M_OBS;

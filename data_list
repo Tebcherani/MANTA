@@ -98,8 +98,6 @@
   sensor:             dgc_calmerit(int)
   sensor:             dgc_locmerit(int)
   sensor:             dgc_calcount(int)
-  sensor:                m_psa_range(m) 99.99
-  sensor:                psa_pitch(rad) 0.4363
   sensor:             sbe_temp_freq(Hz)
   sensor:             sbe_cond_freq(Hz)
   sensor:                      m_obs(?)
@@ -155,9 +153,9 @@
   sensor:             real_batt_temp(K) 0
   sensor:       real_batt_fault_heat(W) 0
   sensor:         real_batt_capacity(C) 216000
-  sensor:       real_batt_energy_cap(J) 1.04e+007
+  sensor:       real_batt_energy_cap(J) 1.04e+07
   sensor:       real_batt_charge_rem(C) 216000
-  sensor:       real_batt_energy_rem(J) 1.04e+007
+  sensor:       real_batt_energy_rem(J) 1.04e+07
   sensor:   real_battery_energy_used(J) 0
   sensor:      real_batt_charge_used(C) 0
   sensor:  read_current_from_file(bool) 0
@@ -305,7 +303,7 @@
   sensor:        vs_batt_series_cells() 32
   sensor:       vs_batt_parallel_strs() 5
   sensor:           vs_batt_capacity(C) 216000
-  sensor:         vs_batt_energy_cap(J) 1.04e+007
+  sensor:         vs_batt_energy_cap(J) 1.04e+07
   sensor:         vs_batt_initial_soc() 1
   sensor:          vs_batt_r0_cell(ohm) 0.003
   sensor:         vs_batt_r_wiring(ohm) 0.01
@@ -407,7 +405,7 @@
   sensor:         u_lbl_dr_threshold(m) 20
   sensor:             m_lbl_dr_north(m) 0
   sensor:              m_lbl_dr_east(m) 0
-  sensor:            m_lbl_ping_time(s) -1e+006
+  sensor:            m_lbl_ping_time(s) -1e+06
   sensor:              m_lbl_num_used()
   sensor:                m_lbl_valid1()
   sensor:                m_lbl_valid2()
@@ -557,7 +555,7 @@
   b_arg:                  direction_k() 0
   b_arg:            heading_offset(rad) 0
   b_arg:         pole_transient_time(s) 0
-  b_arg:               bailout_range(m) -1e+006
+  b_arg:               bailout_range(m) -1e+06
   b_arg:           cnav_enable_range(m) 100
  behavior: edc_homing 11
   b_arg:                 elev_gain(num) 0

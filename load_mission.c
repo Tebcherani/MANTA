@@ -589,23 +589,6 @@ int read_flags( FILE *fptr )
 	}
 #endif
 
-#ifdef PSA_916
-	if ( sscanf(linebuf, "UsePSA %d", &value) == 1 )
-	{
-	    UsePSA = value;
-	    sprintf( msg_buf, "UsePSA   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-	if ( sscanf(linebuf, "MonitorPSA %d", &value) == 1 )
-	{
-	    MonitorPSA = value;
-	    sprintf( msg_buf, "MonitorPSA %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif /* PSA_916 */
-
 #ifdef RDI_WH
 	if ( sscanf(linebuf, "UseRDI %d", &value) == 1 )
 	{

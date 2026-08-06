@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/05/31 23:19:06 GMT";
+char *creation_date = "2026/08/06 02:36:54 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -113,8 +113,6 @@ const struct sensor sss[] = {
     "dgc_calmerit(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "dgc_locmerit(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "dgc_calcount(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_psa_range(m)", 99.99, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "psa_pitch(rad)", 0.4363, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "sbe_temp_freq(Hz)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "sbe_cond_freq(Hz)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_obs(?)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -170,9 +168,9 @@ const struct sensor sss[] = {
     "real_batt_temp(K)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_batt_fault_heat(W)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_batt_capacity(C)", 216000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "real_batt_energy_cap(J)", 1.04e+007, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_energy_cap(J)", 1.04e+07, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_batt_charge_rem(C)", 216000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "real_batt_energy_rem(J)", 1.04e+007, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "real_batt_energy_rem(J)", 1.04e+07, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_battery_energy_used(J)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_batt_charge_used(C)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "read_current_from_file(bool)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -320,7 +318,7 @@ const struct sensor sss[] = {
     "vs_batt_series_cells()", 32, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_batt_parallel_strs()", 5, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_batt_capacity(C)", 216000, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "vs_batt_energy_cap(J)", 1.04e+007, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "vs_batt_energy_cap(J)", 1.04e+07, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_batt_initial_soc()", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_batt_r0_cell(ohm)", 0.003, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_batt_r_wiring(ohm)", 0.01, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -422,7 +420,7 @@ const struct sensor sss[] = {
     "u_lbl_dr_threshold(m)", 20, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_dr_north(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_dr_east(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_lbl_ping_time(s)", -1e+006, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
+    "m_lbl_ping_time(s)", -1e+06, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_num_used()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_valid1()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_lbl_valid2()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -616,7 +614,7 @@ const struct behavior bTemplate[] = {
         "direction_k()", 0,
         "heading_offset(rad)", 0,
         "pole_transient_time(s)", 0,
-        "bailout_range(m)", -1e+006,
+        "bailout_range(m)", -1e+06,
         "cnav_enable_range(m)", 100,
     "edc_homing", 0, -1., 0., 0,
         "elev_gain(num)", 0,
@@ -854,8 +852,6 @@ int DGC_AUTOCAL = -1;
 int DGC_CALMERIT = -1;
 int DGC_LOCMERIT = -1;
 int DGC_CALCOUNT = -1;
-int M_PSA_RANGE = -1;
-int PSA_PITCH = -1;
 int SBE_TEMP_FREQ = -1;
 int SBE_COND_FREQ = -1;
 int M_OBS = -1;
@@ -1347,8 +1343,6 @@ int *sindex[] = {
     &DGC_CALMERIT,
     &DGC_LOCMERIT,
     &DGC_CALCOUNT,
-    &M_PSA_RANGE,
-    &PSA_PITCH,
     &SBE_TEMP_FREQ,
     &SBE_COND_FREQ,
     &M_OBS,
