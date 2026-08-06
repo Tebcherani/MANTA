@@ -29,6 +29,5 @@ extern FILE *syslog, *term;
                                 /* prototypes */
 void write_message( int monitor );
 int open_syslog( const char *name );
-void write_rcs( const char *rev, const char *date );
 
 #endif /* DIAGNOSTIC_H */

@@ -72,17 +72,3 @@ void monitor_msg( int sensor_id, int Monitor )
 	     sensor_name(sensor_id), sensor(sensor_id) );
     write_message( Monitor );
 }
-
-/*----------------------------------------------------------------------*
-  Revision control message strings
- *----------------------------------------------------------------------*/
-
-void write_rcs( const char *rev, const char *date )
-{
-    sprintf( msg_buf, "\t%.*s", strlen(rev+1)-2, rev+1 );
-    if ( date )
-	sprintf( &msg_buf[strlen(msg_buf)], ", %.*s", strlen(date+1)-2,
-		 date+1 );
-    strcat( msg_buf, "\n" );
-    write_message( TERM | SLOG );
-}

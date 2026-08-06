@@ -259,7 +259,6 @@ FILE *init_data_logging( char *DataFileName )
   
     sprintf( msg_buf, "Data Logger (binary file v%d)\n", loggerVersion );
     write_message( TERM | SLOG );
-    write_rcs( "$Revision: 2.22 $", "$Date: 1998/02/03 04:25:07 $" );
 
 /* Generate unique file name for binary data by concatenation of
    appropriate prefix char, year (00-99), day (001-366), run number
