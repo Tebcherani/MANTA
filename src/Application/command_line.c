@@ -5,7 +5,6 @@
 
 void print_command_line_help(const char *program_name) {
     fprintf(stderr, "usage: %s mission [fault_file]\n", program_name);
-    fprintf(stderr, "       %s --parse [mission_file]\n", program_name);
     fprintf(stderr, "       %s --nolog [mission_file]\n", program_name);
     fprintf(stderr, "       %s --dump-behavior FILE [mission_file]\n", program_name);
     fprintf(stderr, "       %s --help|-h\n", program_name);
