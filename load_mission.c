@@ -752,23 +752,6 @@ int read_flags( FILE *fptr )
 	}
 #endif /* EDC_COUPLE */
 
-#ifdef METRABYTE
-	if ( sscanf(linebuf, "UseMetraByte %d", &value) == 1 )
-	{
-	    UseMetraByte = value;
-	    sprintf( msg_buf, "UseMetraByte   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-	if ( sscanf(linebuf, "MonitorMetraByte %d", &value) == 1 )
-	{
-	    MonitorMetraByte = value;
-	    sprintf( msg_buf, "MonitorMetraByte   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif /* METRABYTE */
-
 #if defined WHOI_LATCH
 	if ( sscanf(linebuf, "UseLatchMotor %d", &value) == 1 )
 	{

@@ -145,8 +145,4 @@ extern int UseSideScan, MonitorSideScan, StatusSideScan, ErrorSideScan;
 extern int UseRDI, MonitorRDI, StatusRDI, ErrorRDI;
 #endif
 
-#ifdef METRABYTE		/* Keithley Metrabyte */
-EXTERN int UseMetraByte, MonitorMetraByte, StatusMetraByte, ErrorMetraByte;
-#endif
-
 #endif /* ODY_VAR_H */
