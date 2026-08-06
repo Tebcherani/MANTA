@@ -10,6 +10,12 @@
 
 #include <stdio.h>
 
+int  simulate_usbl(void);
+int  handle_modem(void);
+void heading_reference(void);
+void sim_conduct(void);
+void LBL_position(void);
+
 struct behavior;
                                 /* main.c */
 void exit_gracefully( int );

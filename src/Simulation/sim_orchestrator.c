@@ -30,11 +30,6 @@ command_line_options_t options;
 /* Forward declarations for functions defined in other translation units */
 int  load_mission(char *);
 void lhs(void);
-int  simulate_usbl(void);
-int  handle_modem(void);
-void heading_reference(void);
-void sim_conduct(void);
-void LBL_position(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;

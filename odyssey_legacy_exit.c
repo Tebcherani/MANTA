@@ -10,7 +10,6 @@
 extern FILE *datafile;
 extern command_line_options_t options;
 
-void handle_modem(void);
 int  stack_busy(struct command *);
 
 void exit_gracefully( int exit_status )
