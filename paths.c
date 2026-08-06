@@ -5,10 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifndef _OSK
 #include <unistd.h>
-#endif
 
 #include "paths.h"
 

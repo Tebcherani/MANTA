@@ -24,10 +24,7 @@ static double pitch_control( double pitch_now, double pitch_des, double
 			     pitch_rate, double kpp, double kdp, double
 			     kip, double dt );
 
-
-#ifndef _OSK
 static const double rho = 1.025e3;  /* kg/m^3 seawater density */
-#endif
 
 				/* global variables */
 static traj_t h_traj, d_traj;
@@ -101,23 +98,6 @@ void dynamic_control( void )
         des_speed = vvp->c[0].speed[0];
 	update( C_SPEED, vvp->c[0].speed[0] );
 
-#ifdef _OSK
-   /*------------------------------------------------------------------*
-     The old model uses a drag power that is quadratic in desired speed,
-     which contradicts hydrodynamic theory. This model uses a cubic power
-     law that combines the fudge into effective C_d.
-
-                      I_des = 1/2 rho U^3 Cd A / V_batt
-
-     V_batt ~ 47.5 under load, A ~ 0.25 m^2, rho = 1025, combine all
-     constants yields 2.6978
-    *------------------------------------------------------------------*/
-
-	thruster_current =
-	    2.6978 * sensor(EFFECTIVE_DRAG_COEFF) * pow(des_speed,3);
-
-#else  /* _OSK */
-
         LHS = -sensor(VS_XUABU)*pow(des_speed,2.)*( 2.455 - 2.175*des_speed + 
 					 0.75*pow(des_speed,2.) ) ;
         des_omega = ( sensor(VS_THRUSTER_DUCT_AREA)*rho*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*des_speed + 
@@ -129,8 +109,8 @@ void dynamic_control( void )
                             .5*sensor(VS_THRUSTER_DUCT_AREA)*rho*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*pow(des_speed,2.))/sensor(VS_THRUSTER_KT);
 				/* make sign same as desired speed */
 	thruster_current *= sgn(des_speed);
-#endif /* _OSK */
-        break;
+
+    break;
     }
 				/* limit to +- 5 amps, update */
     thruster_current = limit( thruster_current, 5.0, -5.0 );

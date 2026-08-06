@@ -729,12 +729,7 @@ END
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#ifdef _OSK
-#include "getopt.h"
-#else
 #include <unistd.h>
-#endif
 
 #include "ody_defs.h"
 #include "ody_types.h"

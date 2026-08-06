@@ -63,7 +63,6 @@ SRCS = \
     whoi_homing.c       \
     edc_homing.c        \
     docking.c           \
-    getopt.c            \
     sim_stubs.c         \
     load_fault.c        \
     odyssey_legacy_exit.c 

@@ -10,10 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-
-#ifndef _OSK
 #include <unistd.h>
-#endif
 
 #include "diagnostic.h"
 #include "fileman.h"
@@ -30,11 +27,7 @@ const char *get_fault_file_path( void );
 const char *get_mission_file_name( void );
 const char *get_mission_file_path( void );
 
-#ifdef _OSK
-extern int CycleCount;
-#else
 int CycleCount=0;
-#endif
 
 /*------------------------------------------------------------------*
  | log_data
@@ -276,11 +269,8 @@ FILE *init_data_logging( char *DataFileName )
 	
 	snprintf( DataFileName, ODY_PATH_MAX, "%s/%c%s%02d.obd",
 		  DATA_DIR, PREFIX_CHAR, fname_string, RunNumber );
-#ifdef _OSK
-#define MODE 0			/* OS-9 test for existence using access() */
-#else
+
 #define MODE F_OK		/* UNIX test for existence using access() */
-#endif
 
     } while ( access(DataFileName, MODE) != -1 );
 

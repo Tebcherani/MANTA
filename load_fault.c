@@ -22,10 +22,8 @@
 #include "vehicle.h"
 
 /* drand48 is not available on Windows/MinGW -- use rand() fallback */
-#ifndef _OSK
 #ifndef drand48
 #define drand48() ((double)rand()/RAND_MAX)
-#endif
 #endif
 
 /* Use a local buffer size to avoid conflict with ody_defs.h MAX_LINE */

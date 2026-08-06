@@ -30,20 +30,13 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifndef _OSK
 #ifndef drand48
 #define drand48() ((double)rand()/RAND_MAX)
 #endif
-#endif
-
 
 #include "diagnostic.h"
 #include "vehicle.h"
 #include "odyssey_log.h"
-
-#ifdef _OSK
-  double drand48();
-#endif
 
 
 /*-----------------------------------------------------------------------*
@@ -1515,20 +1508,5 @@ double gasdev()
     iset = 0;
     return gset;
   }
-}
-#endif
-
-/* jleonard 09/08/96 drand48 is available on SGI but not on OS-9,
-   so we defined our own. (improve it later)  */
-#ifdef _OSK
-double drand48()
-{
-  int i;
-  double x;
-
-  i = rand();
-  x = ((double) i)/32767;
-  if ((x<0)||(x>1)) fprintf(stderr, "Error in drand48(), value is %lf\n", x);
-  return(x);
 }
 #endif

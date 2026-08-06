@@ -306,9 +306,7 @@ void load_sonar(void) {}
 void load_water_param(void)
 {
     update( WATER_TEMP, 10 * exp(-pow(sensor(REAL_Z)/30,2)) );
-#ifndef _OSK
     sim_conduct();
-#endif
 }
 
 /*--------------------------------------------------------------------------*
@@ -959,45 +957,19 @@ void calc_rotation_matrix( void )
 #ifdef USE_CURRENT_SIM
 void load_currents()
 {
-#ifndef _OSK
     sim_current();
-#endif
 }
 #endif
 
 
 /*-------------------------------------------------------------------------
-  sensor_processing: top half is on board vehicle code, bottom half is
-  simulator code (delimited by #ifdef _OSK)
+  sensor_processing
   -----------------------------------------------------------------------*/
 
 void sensor_processing( void )
 {
-#ifdef _OSK
-    double altitude;
-				/* differentiate between Datasonics and the
-				   Tritech ST??? altimeters */
-#ifdef PSA_916
-    altitude = sensor(M_PSA_RANGE) * cos(sensor(M_PITCH) + sensor(PSA_PITCH));
-#else
-    altitude = sensor(M_ST200_RANGE) * cos(sensor(M_PITCH));
-#endif
-    altitude *= cos(sensor(M_ROLL));
-
-    update( M_ALTITUDE, altitude );
-
-    heading_reference();
-    calc_rotation_matrix();
-    simple_dead_reckoning();
-    if ( UseLBL && !ErrorLBL )
-	LBL_position();
-
-#else  /* _OSK */
-
     simple_dead_reckoning();
     LBL_position();
-
-#endif /* _OSK */
 }
 
 
