@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/08/06 02:36:54 GMT";
+char *creation_date = "2026/08/06 02:46:30 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -108,7 +108,6 @@ const struct sensor sss[] = {
     "u_wp_x_track_gain", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_xte(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_dtw(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "c_camera_fire(bool)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "dgc_autocal()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "dgc_calmerit(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "dgc_locmerit(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -440,12 +439,6 @@ const struct sensor sss[] = {
     "m_ekf_east(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "u_lbl_transponder_mode(bool)", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_sidescan_no(int)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_accel_x(m/s^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_accel_y(m/s^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_accel_z(m/s^2)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_mag_x(gauss)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_mag_y(gauss)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_mag_z(gauss)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_usbl_count()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_usbl_azimuth(rad)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_usbl_elevation(rad)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -847,7 +840,6 @@ int T_DEPTH = -1;
 int U_WP_X_TRACK_GAIN = -1;
 int WP_XTE = -1;
 int WP_DTW = -1;
-int C_CAMERA_FIRE = -1;
 int DGC_AUTOCAL = -1;
 int DGC_CALMERIT = -1;
 int DGC_LOCMERIT = -1;
@@ -1179,12 +1171,6 @@ int M_EKF_NORTH = -1;
 int M_EKF_EAST = -1;
 int U_LBL_TRANSPONDER_MODE = -1;
 int M_SIDESCAN_NO = -1;
-int M_ACCEL_X = -1;
-int M_ACCEL_Y = -1;
-int M_ACCEL_Z = -1;
-int M_MAG_X = -1;
-int M_MAG_Y = -1;
-int M_MAG_Z = -1;
 int M_USBL_COUNT = -1;
 int M_USBL_AZIMUTH = -1;
 int M_USBL_ELEVATION = -1;
@@ -1338,7 +1324,6 @@ int *sindex[] = {
     &U_WP_X_TRACK_GAIN,
     &WP_XTE,
     &WP_DTW,
-    &C_CAMERA_FIRE,
     &DGC_AUTOCAL,
     &DGC_CALMERIT,
     &DGC_LOCMERIT,
@@ -1670,12 +1655,6 @@ int *sindex[] = {
     &M_EKF_EAST,
     &U_LBL_TRANSPONDER_MODE,
     &M_SIDESCAN_NO,
-    &M_ACCEL_X,
-    &M_ACCEL_Y,
-    &M_ACCEL_Z,
-    &M_MAG_X,
-    &M_MAG_Y,
-    &M_MAG_Z,
     &M_USBL_COUNT,
     &M_USBL_AZIMUTH,
     &M_USBL_ELEVATION,

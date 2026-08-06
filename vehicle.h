@@ -2,7 +2,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
-#define CREATION_DATE "2026/08/06 02:36:54 GMT"
+#define CREATION_DATE "2026/08/06 02:46:30 GMT"
 
 extern int M_PRESENT_TIME;
 extern int M_DT;
@@ -99,7 +99,6 @@ extern int T_DEPTH;
 extern int U_WP_X_TRACK_GAIN;
 extern int WP_XTE;
 extern int WP_DTW;
-extern int C_CAMERA_FIRE;
 extern int DGC_AUTOCAL;
 extern int DGC_CALMERIT;
 extern int DGC_LOCMERIT;
@@ -431,12 +430,6 @@ extern int M_EKF_NORTH;
 extern int M_EKF_EAST;
 extern int U_LBL_TRANSPONDER_MODE;
 extern int M_SIDESCAN_NO;
-extern int M_ACCEL_X;
-extern int M_ACCEL_Y;
-extern int M_ACCEL_Z;
-extern int M_MAG_X;
-extern int M_MAG_Y;
-extern int M_MAG_Z;
 extern int M_USBL_COUNT;
 extern int M_USBL_AZIMUTH;
 extern int M_USBL_ELEVATION;

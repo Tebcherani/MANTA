@@ -93,7 +93,6 @@
   sensor:             u_wp_x_track_gain 0
   sensor:                     wp_xte(m)
   sensor:                     wp_dtw(m)
-  sensor:           c_camera_fire(bool) 0
   sensor:                 dgc_autocal() 0
   sensor:             dgc_calmerit(int)
   sensor:             dgc_locmerit(int)
@@ -425,12 +424,6 @@
   sensor:                 m_ekf_east(m) 0
   sensor:  u_lbl_transponder_mode(bool) 1
   sensor:            m_sidescan_no(int) 0
-  sensor:              m_accel_x(m/s^2) 0
-  sensor:              m_accel_y(m/s^2) 0
-  sensor:              m_accel_z(m/s^2) 0
-  sensor:                m_mag_x(gauss) 0
-  sensor:                m_mag_y(gauss) 0
-  sensor:                m_mag_z(gauss) 0
   sensor:                m_usbl_count()
   sensor:           m_usbl_azimuth(rad)
   sensor:         m_usbl_elevation(rad)
