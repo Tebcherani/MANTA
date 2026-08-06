@@ -32,13 +32,6 @@
 
 #define EXTERN extern		/* EXTERN hack jleonard */
 
-#define SAIL1_TIMEOUT   500	/* 500 mSecs */
-
-#define SHARED       0x8000	/* Data module definitions */
-#define SINGLE_USER  0x00
-#define DATAMOD      0x400
-#define RD_WRT_DATA  0x09
-
 #define VEHICLE_NAME "Simulator"
 #define PREFIX_CHAR  'S'
 
@@ -46,8 +39,5 @@
 #define SBE_25         "/t83"	/* Sea Bird CTD */
 #define WHOI_USBL      "/t84"	/* WHOI USBL homing system */
 #define WHOI_LATCH		/* latch motor and switches */
-#define PAROSCI        "/t86"    
-#define SAIL1          "/t87"        
-#define ARGOS_MSG
 
 #endif
