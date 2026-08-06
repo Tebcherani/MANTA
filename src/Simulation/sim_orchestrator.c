@@ -9,8 +9,6 @@
 #include "diagnostic.h"
 #include "vehicle.h"
 
-#include "world_sim.h"
-
 #include "command_line.h"
 #include "odyssey_config.h"
 #include "odyssey_control.h"
@@ -44,9 +42,6 @@ int main(int argc, char *argv[]) {
     sim_config_t sim_config;
     sim_state_t sim_state;
     odyssey_state_t odyssey_state;
-    world_sim_t world_sim;
-    world_step_request_t world_request;
-    world_result_t world_result;
 
     int mission_started = 0;
 
@@ -62,7 +57,6 @@ int main(int argc, char *argv[]) {
 
     if (open_sim_log() != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_sim_config(&sim_config) != 0) exit_sim(EXIT_FAILURE, mission_started);
-    if (init_world_sim(&world_sim) != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (open_odyssey_log() != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_odyssey_config() != 0) exit_sim(EXIT_FAILURE, mission_started);
     init_data_structure();
@@ -97,11 +91,6 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS, mission_started);
         }
 
-        // Update world state
-        world_request.timestep = sim_config.timestep;
-        world_result = step_world_sim(&world_sim, &world_request);
-        if (world_result.status != 0) exit_sim(EXIT_FAILURE, mission_started);
-        
         if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {

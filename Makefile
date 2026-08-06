@@ -43,8 +43,6 @@ SRCS = \
     src/Simulation/sim_log.c                \
     src/Simulation/sim_orchestrator.c       \
     src/Simulation/sim_state.c              \
-    src/World/world_sim.c                   \
-    src/World/world_state.c                 \
     sim.c               \
     sim_conduct.c       \
     sim_usbl.c          \
