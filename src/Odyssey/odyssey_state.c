@@ -1,6 +1,7 @@
+#include <math.h>
+
 #include "odyssey_state.h"
 #include "sim_log.h"
-
 #include "vehicle.h"
 
 int init_odyssey_state(odyssey_state_t *state) {
