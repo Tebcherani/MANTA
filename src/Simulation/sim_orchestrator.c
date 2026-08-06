@@ -66,11 +66,6 @@ int main(int argc, char *argv[]) {
 
     write_to_sim_log("Mission loaded: %d states, current state %d\n", vvp->nstates, vvp->cstate);
 
-    if (options.parse_only) {
-        write_to_sim_log("Mission parsed successfully. Exiting (--parse).\n");
-        exit_sim(EXIT_SUCCESS, mission_started);
-    }
-
     if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_odyssey_state(&odyssey_state) != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) exit_sim(EXIT_FAILURE, mission_started);

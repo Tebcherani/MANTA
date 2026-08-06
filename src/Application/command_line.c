@@ -16,7 +16,6 @@ int parse_command_line(int argc, char *argv[], command_line_options_t *options) 
 
     if (options == NULL) return -1;
 
-    options->parse_only = 0;
     options->nolog = 0;
     options->show_help = 0;
     options->mission_file = NULL;
@@ -26,10 +25,7 @@ int parse_command_line(int argc, char *argv[], command_line_options_t *options) 
     argument_index = 1;
 
     while (argument_index < argc && argv[argument_index][0] == '-') {
-        if (!strcmp(argv[argument_index], "--parse")) {
-            options->parse_only = 1;
-            argument_index++;
-        } else if (!strcmp(argv[argument_index], "--nolog")) {
+        if (!strcmp(argv[argument_index], "--nolog")) {
             options->nolog = 1;
             argument_index++;
         } else if (!strcmp(argv[argument_index], "--dump-behavior")) {

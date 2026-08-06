@@ -4,7 +4,6 @@
 #include "common_defs.h"
 
 typedef struct {
-    int parse_only;
     int nolog;
     int show_help;
 
