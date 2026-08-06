@@ -32,7 +32,6 @@ double oline(vector_t *x0, vector_t *x1, vector_t *x) ;
 double median(double x[],int n) ;
 double atan2_fix(double x, double y);
 int matinv3(double a[][3], double ainv[][3], double min_det, double *pdet);
-int matinv2(double a[2][2], double ainv[2][2], double min_det, double *pdet);
 #ifdef LBLSIM
 double gasdev(long int *idum) ;
 #else

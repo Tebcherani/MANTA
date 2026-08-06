@@ -17,10 +17,8 @@
 #include "vehicle.h"
 
 int  lsquick2( double r[], lbl_t *lbl, double *perror );
-int  ls_soln2( double r[], double xstart, double ystart, lbl_t *lbl, double *error, int *num_iter );
 int  findwrst( lbl_t *lbl, double r[] );
 int  nav2_xy( vector_t *pa, vector_t *pb, double ra, double rb, lbl_side_t side, double min_angle, vector_t *pos );
-int  psuedo2( double J[NXP][2], double Jpinv[2][NXP] );
 
 /*----------------------------------------------------------------------*
   New LBL navigation using Dana Yoerger's ABE algorithm installed on CCB97
@@ -183,8 +181,8 @@ void ABE_LBL()
 void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 		      int noisy )
 {
-    double r[NXP], dz, xq, yq ;
-    int i, i0,i1, ngood, iworst, result, num_iter;
+    double r[NXP], dz;
+    int i, i0,i1, ngood, iworst, result;
 
     lbl_inc_index(lbl) ;
     lbl->new_fix = 0;
@@ -221,11 +219,7 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 	lsquick2(r,lbl,&(lbl->error));
 				/* set the strarting point for ls_soln to
                                    the lsquick2 solution */
-	xq = lbl->position[lbl->index].x ;
-	yq = lbl->position[lbl->index].y ;
-#ifdef DEBUG
-	printf("running ls_soln2\n") ;
-#endif
+
 		/* if the error is below the set tolerance, soln is good */
 	if(lbl->error < lbl->fix_tol)
 	{
@@ -424,94 +418,6 @@ int lsquick2(double r[], lbl_t *lbl, double *perror)
     return(1) ;
 }
 
-int ls_soln2( double r[], double xstart, double ystart, lbl_t *lbl,
-	      double *perror,int *num_iter )
-{
-
-    double J[NXP][2],Jpinv[2][NXP],rtest[NXP] ;
-    double x[2];
-    double ngood, good[NXP],dx,dy,dr,error_last ;
-    int i,j,k,ind ;
-    ngood = 0.0 ;
-#ifdef DEBUG
-    printf("checking ranges\n") ;
-#endif
-    for(i=0;i<NXP;i++)
-    {
-	good[i] = 0.0 ;
-	if(lbl->good[i] == RANGE_GOOD)
-	{
-	    good[i] = 1.0 ;
-	    ngood += 1.0 ;
-	}
-    }
-    x[0] = xstart ;
-    x[1] = ystart ;
-    j=0;
-    while(1)
-    {
-#ifdef DEBUG
-	printf("cmputing rtest\n") ;
-#endif
-	for(i=0;i<NXP;i++)
-	{
-	    dx = x[0]-lbl->xp[i].x ;
-	    dy = x[1]-lbl->xp[i].y ;
-	    rtest[i] = sqrt(dx*dx + dy*dy) ;
-	    if(j%(lbl->num_steps_pinv) == 0)
-	    {
-#ifdef DEBUG
-		printf("computing J\n") ;
-#endif
-		if(rtest[i] > 1.0)
-		{
-		    J[i][0] = good[i]*dx/rtest[i] ;
-		    J[i][1] = good[i]*dy/rtest[i] ;
-		}
-		else J[i][0]=J[i][1]=0.0 ;
-	    }
-	}
-	if(j%(lbl->num_steps_pinv) == 0)
-	{
-#ifdef DEBUG
-	    printf("computing Jpinv\n") ;
-#endif
-	    if(!psuedo2(J,Jpinv))
-	    {
-		lbl->error = 9999.;
-		return(-1) ;
-	    }
-	}
-#ifdef DEBUG
-	printf("updating\n") ;
-#endif
-	for(i=0;i<2;i++)
-	    for(k=0;k<NXP;k++)
-		x[i] += lbl->alpha*Jpinv[i][k]*(r[k]-rtest[k]) ;
-	*perror = 0.0 ;
-#ifdef DEBUG
-	printf("computing error\n") ;
-#endif
-	for(i=0;i<NXP;i++)
-	{
-	    dr = rtest[i]-r[i] ;
-	    *perror += good[i]*dr*dr ;
-	}
-	*perror = sqrt(*perror/ngood) ;
-	*num_iter = j++ ;
-				/* if error has stopped decreasing, we're
-                                   done */
-	if(j > 2)
-	    if( (error_last-*perror)/error_last < .01)break ;
-	if(j > lbl->max_iter)return(-2) ;
-	error_last = *perror ;
-    }
-    ind = lbl->index ;
-    lbl->position[ind].x = x[0] ;
-    lbl->position[ind].y = x[1] ;
-    return((int)ngood) ;
-}
-
 /*
 returns the index of the range that disagrees with the estimated
 position by the largest amount
@@ -656,35 +562,6 @@ void psuedo3(double A[NXP][3], double B[NXP], double x[])
     }
 }
 
-int psuedo2(double J[NXP][2], double Jpinv[2][NXP])
-{
-    double JtJ[2][2], JtJinv[2][2], det ;
-    int i, j, k ;
-				/* compute Jtranspose*J */
-    for(i=0;i<2;i++)
-    {
-	for(j=0;j<2;j++)
-	{
-	    JtJ[i][j] = 0.0 ;
-	    for(k=0;k<NXP;k++)JtJ[i][j] += J[k][i]*J[k][j];
-	}
-    }
-				/* compute inverse of JtJ */ 
-    if(matinv2(JtJ,JtJinv,0.00001,&det) < 0)return(0) ;
-				/* compute Jpinv = JtJinv*Jt */
-    for(i=0;i<2;i++)
-    {
-	for(j=0;j<NXP;j++)
-	{
-	    Jpinv[i][j]=0.0 ;
-	    for(k=0;k<2;k++)
-		Jpinv[i][j] += JtJinv[i][k]*J[j][k];
-	}
-    }
-    return(1);
-}
-
-
 void copy_vector( vector_t *dest, vector_t *source )
 {
 				/* why not memcpy? */
@@ -693,25 +570,6 @@ void copy_vector( vector_t *dest, vector_t *source )
     dest->z = source->z ;
 }
 
-int matinv2(double X[2][2],double Xi[2][2],double min_det, double *pdet)
-{
-    double d;
-    int result;
-
-    d = X[1][1] * X[0][0] - X[1][0] * X[0][1];
-
-    Xi[0][0] =  X[1][1] / d;
-    Xi[0][1] = -X[0][1] / d;
-    Xi[1][0] = -X[1][0] / d;
-    Xi[1][1] =  X[0][0] / d;
-    *pdet = d;
-    result = 1;
-    if (fabs(d) < min_det) {
-        Xi[0][0] = Xi[0][1] = Xi[1][0] = Xi[1][1] = 0.0;
-        result = 0;
-    }
-    return result;
-}
 double det3(double a[][3])
 {
     double result ;
