@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/08/06 02:46:30 GMT";
+char *creation_date = "2026/08/06 02:49:55 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -345,29 +345,6 @@ const struct sensor sss[] = {
     "vs_batt_runaway_temp(K)", 353, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_batt_runaway_heat(W)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_hotel_load(W)", 30, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_binsize(m)", 2, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_numbins(int)", 50, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_range1(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_range2(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_range3(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_range4(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_alt(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_vel1(m/s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_vel2(m/s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_vel3(m/s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_vel4(m/s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_dn(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "rdi_de(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_samp()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_vx(m/s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_vy(m/s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_vz(m/s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_a1(dB)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_a2(dB)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_a3(dB)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_c1(%)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_c2(%)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "adv_c3(%)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "edge_tr_xs_time(s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "edge_am200_bacs()", 617505, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "edge_xs_databyte()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -438,7 +415,6 @@ const struct sensor sss[] = {
     "m_ekf_north(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_ekf_east(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "u_lbl_transponder_mode(bool)", 1, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_sidescan_no(int)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_usbl_count()", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_usbl_azimuth(rad)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_usbl_elevation(rad)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -1077,29 +1053,6 @@ int VS_BATT_EST_INIT_SOC = -1;
 int VS_BATT_RUNAWAY_TEMP = -1;
 int VS_BATT_RUNAWAY_HEAT = -1;
 int VS_HOTEL_LOAD = -1;
-int RDI_BINSIZE = -1;
-int RDI_NUMBINS = -1;
-int RDI_RANGE1 = -1;
-int RDI_RANGE2 = -1;
-int RDI_RANGE3 = -1;
-int RDI_RANGE4 = -1;
-int RDI_ALT = -1;
-int RDI_VEL1 = -1;
-int RDI_VEL2 = -1;
-int RDI_VEL3 = -1;
-int RDI_VEL4 = -1;
-int RDI_DN = -1;
-int RDI_DE = -1;
-int ADV_SAMP = -1;
-int ADV_VX = -1;
-int ADV_VY = -1;
-int ADV_VZ = -1;
-int ADV_A1 = -1;
-int ADV_A2 = -1;
-int ADV_A3 = -1;
-int ADV_C1 = -1;
-int ADV_C2 = -1;
-int ADV_C3 = -1;
 int EDGE_TR_XS_TIME = -1;
 int EDGE_AM200_BACS = -1;
 int EDGE_XS_DATABYTE = -1;
@@ -1170,7 +1123,6 @@ int M_MAHALA4 = -1;
 int M_EKF_NORTH = -1;
 int M_EKF_EAST = -1;
 int U_LBL_TRANSPONDER_MODE = -1;
-int M_SIDESCAN_NO = -1;
 int M_USBL_COUNT = -1;
 int M_USBL_AZIMUTH = -1;
 int M_USBL_ELEVATION = -1;
@@ -1561,29 +1513,6 @@ int *sindex[] = {
     &VS_BATT_RUNAWAY_TEMP,
     &VS_BATT_RUNAWAY_HEAT,
     &VS_HOTEL_LOAD,
-    &RDI_BINSIZE,
-    &RDI_NUMBINS,
-    &RDI_RANGE1,
-    &RDI_RANGE2,
-    &RDI_RANGE3,
-    &RDI_RANGE4,
-    &RDI_ALT,
-    &RDI_VEL1,
-    &RDI_VEL2,
-    &RDI_VEL3,
-    &RDI_VEL4,
-    &RDI_DN,
-    &RDI_DE,
-    &ADV_SAMP,
-    &ADV_VX,
-    &ADV_VY,
-    &ADV_VZ,
-    &ADV_A1,
-    &ADV_A2,
-    &ADV_A3,
-    &ADV_C1,
-    &ADV_C2,
-    &ADV_C3,
     &EDGE_TR_XS_TIME,
     &EDGE_AM200_BACS,
     &EDGE_XS_DATABYTE,
@@ -1654,7 +1583,6 @@ int *sindex[] = {
     &M_EKF_NORTH,
     &M_EKF_EAST,
     &U_LBL_TRANSPONDER_MODE,
-    &M_SIDESCAN_NO,
     &M_USBL_COUNT,
     &M_USBL_AZIMUTH,
     &M_USBL_ELEVATION,

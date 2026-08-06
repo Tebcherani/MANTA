@@ -589,23 +589,6 @@ int read_flags( FILE *fptr )
 	}
 #endif
 
-#ifdef RDI_WH
-	if ( sscanf(linebuf, "UseRDI %d", &value) == 1 )
-	{
-	    UseRDI = value;
-	    sprintf( msg_buf, "UseRDI   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-	if ( sscanf(linebuf, "MonitorRDI %d", &value) == 1 )
-	{
-	    MonitorRDI = value;
-	    sprintf( msg_buf, "MonitorRDI %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif /* RDI_WH */
-
 #if defined WHOI_LATCH
 	if ( sscanf(linebuf, "UseLatchMotor %d", &value) == 1 )
 	{

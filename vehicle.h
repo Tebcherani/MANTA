@@ -2,7 +2,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
-#define CREATION_DATE "2026/08/06 02:46:30 GMT"
+#define CREATION_DATE "2026/08/06 02:49:55 GMT"
 
 extern int M_PRESENT_TIME;
 extern int M_DT;
@@ -336,29 +336,6 @@ extern int VS_BATT_EST_INIT_SOC;
 extern int VS_BATT_RUNAWAY_TEMP;
 extern int VS_BATT_RUNAWAY_HEAT;
 extern int VS_HOTEL_LOAD;
-extern int RDI_BINSIZE;
-extern int RDI_NUMBINS;
-extern int RDI_RANGE1;
-extern int RDI_RANGE2;
-extern int RDI_RANGE3;
-extern int RDI_RANGE4;
-extern int RDI_ALT;
-extern int RDI_VEL1;
-extern int RDI_VEL2;
-extern int RDI_VEL3;
-extern int RDI_VEL4;
-extern int RDI_DN;
-extern int RDI_DE;
-extern int ADV_SAMP;
-extern int ADV_VX;
-extern int ADV_VY;
-extern int ADV_VZ;
-extern int ADV_A1;
-extern int ADV_A2;
-extern int ADV_A3;
-extern int ADV_C1;
-extern int ADV_C2;
-extern int ADV_C3;
 extern int EDGE_TR_XS_TIME;
 extern int EDGE_AM200_BACS;
 extern int EDGE_XS_DATABYTE;
@@ -429,7 +406,6 @@ extern int M_MAHALA4;
 extern int M_EKF_NORTH;
 extern int M_EKF_EAST;
 extern int U_LBL_TRANSPONDER_MODE;
-extern int M_SIDESCAN_NO;
 extern int M_USBL_COUNT;
 extern int M_USBL_AZIMUTH;
 extern int M_USBL_ELEVATION;

@@ -87,8 +87,4 @@ extern int UseCondTemp, MonitorCondTemp, StatusCondTemp, ErrorCondTemp;
 EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;
 #endif
 
-#ifdef RDI_WH			/* RDI Workhorse ADCP */
-extern int UseRDI, MonitorRDI, StatusRDI, ErrorRDI;
-#endif
-
 #endif /* ODY_VAR_H */

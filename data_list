@@ -330,29 +330,6 @@
   sensor:       vs_batt_runaway_temp(K) 353
   sensor:       vs_batt_runaway_heat(W) 0
   sensor:              vs_hotel_load(W) 30
-  sensor:                rdi_binsize(m) 2
-  sensor:              rdi_numbins(int) 50
-  sensor:                 rdi_range1(m)
-  sensor:                 rdi_range2(m)
-  sensor:                 rdi_range3(m)
-  sensor:                 rdi_range4(m)
-  sensor:                    rdi_alt(m)
-  sensor:                 rdi_vel1(m/s)
-  sensor:                 rdi_vel2(m/s)
-  sensor:                 rdi_vel3(m/s)
-  sensor:                 rdi_vel4(m/s)
-  sensor:                     rdi_dn(m)
-  sensor:                     rdi_de(m)
-  sensor:                    adv_samp()
-  sensor:                   adv_vx(m/s)
-  sensor:                   adv_vy(m/s)
-  sensor:                   adv_vz(m/s)
-  sensor:                    adv_a1(dB)
-  sensor:                    adv_a2(dB)
-  sensor:                    adv_a3(dB)
-  sensor:                     adv_c1(%)
-  sensor:                     adv_c2(%)
-  sensor:                     adv_c3(%)
   sensor:            edge_tr_xs_time(s)
   sensor:             edge_am200_bacs() 617505
   sensor:            edge_xs_databyte() 0
@@ -423,7 +400,6 @@
   sensor:                m_ekf_north(m) 0
   sensor:                 m_ekf_east(m) 0
   sensor:  u_lbl_transponder_mode(bool) 1
-  sensor:            m_sidescan_no(int) 0
   sensor:                m_usbl_count()
   sensor:           m_usbl_azimuth(rad)
   sensor:         m_usbl_elevation(rad)
