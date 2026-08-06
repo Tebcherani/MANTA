@@ -80,7 +80,6 @@ int         load_faults        ( const char *fname );
 void        apply_faults       ( void );
 const char *get_fault_file_name( void );
 
-int send( int port, char *string );
 int millisec( void );
 
 				/* sim.c — full prototypes required by modern GCC */

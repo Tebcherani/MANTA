@@ -106,6 +106,3 @@ int millisec( void )
     clock_gettime( CLOCK_MONOTONIC, &ts );
     return (long)(ts.tv_sec * 1000L + ts.tv_nsec / 1000000L);
 }
-
-/* hardware stubs - never called in simulator mode */
-int send( int port, char *string ) { return -1; }
