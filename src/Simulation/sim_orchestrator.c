@@ -13,6 +13,7 @@
 
 #include "command_line.h"
 #include "odyssey_config.h"
+#include "odyssey_control.h"
 #include "odyssey_log.h"
 #include "odyssey_model.h"
 #include "odyssey_nav.h"
@@ -114,9 +115,10 @@ int main(int argc, char *argv[]) {
                 exit_sim(EXIT_FAILURE, mission_started);
             }
             
-	        apply_faults();
-            layered_control();
-            dynamic_control();
+	        if (update_odyssey_control() != 0) {
+                write_to_sim_log("Failed to update Odyssey control.\n");
+                exit_sim(EXIT_FAILURE, mission_started);
+            }
 
             capture_behavior_activity();
 	        if (!options.nolog) log_data(datafile);
