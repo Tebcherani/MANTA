@@ -36,8 +36,6 @@ EXTERN char MissionFileName[60];
  | we could get in more trouble by simply turning the system off instead
  | of hoping the problem was a temporary glitch
  *---------------------------------------------------------------------*/
-				/* kvh compass */
-extern int UseKVH_DGC, MonitorKVH_DGC;
 				/* kvh inclinometer */
 extern int UseKVH_DGI, MonitorKVH_DGI;
 

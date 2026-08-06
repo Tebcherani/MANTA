@@ -93,10 +93,6 @@
   sensor:             u_wp_x_track_gain 0
   sensor:                     wp_xte(m)
   sensor:                     wp_dtw(m)
-  sensor:                 dgc_autocal() 0
-  sensor:             dgc_calmerit(int)
-  sensor:             dgc_locmerit(int)
-  sensor:             dgc_calcount(int)
   sensor:             sbe_temp_freq(Hz)
   sensor:             sbe_cond_freq(Hz)
   sensor:                      m_obs(?)

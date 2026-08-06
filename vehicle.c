@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/08/06 02:49:55 GMT";
+char *creation_date = "2026/08/06 17:01:30 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -108,10 +108,6 @@ const struct sensor sss[] = {
     "u_wp_x_track_gain", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_xte(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_dtw(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "dgc_autocal()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "dgc_calmerit(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "dgc_locmerit(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "dgc_calcount(int)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "sbe_temp_freq(Hz)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "sbe_cond_freq(Hz)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_obs(?)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -816,10 +812,6 @@ int T_DEPTH = -1;
 int U_WP_X_TRACK_GAIN = -1;
 int WP_XTE = -1;
 int WP_DTW = -1;
-int DGC_AUTOCAL = -1;
-int DGC_CALMERIT = -1;
-int DGC_LOCMERIT = -1;
-int DGC_CALCOUNT = -1;
 int SBE_TEMP_FREQ = -1;
 int SBE_COND_FREQ = -1;
 int M_OBS = -1;
@@ -1276,10 +1268,6 @@ int *sindex[] = {
     &U_WP_X_TRACK_GAIN,
     &WP_XTE,
     &WP_DTW,
-    &DGC_AUTOCAL,
-    &DGC_CALMERIT,
-    &DGC_LOCMERIT,
-    &DGC_CALCOUNT,
     &SBE_TEMP_FREQ,
     &SBE_COND_FREQ,
     &M_OBS,

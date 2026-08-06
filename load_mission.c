@@ -244,8 +244,7 @@ int read_flags( FILE *fptr )
 	{
 	    UseSim = value;
 	    fprintf( stderr, "UseSim               %d\n", value );
-	    UseAltimeter = UseSail1 = UseKVH_DGI =
-		UseKVH_DGC = 0;
+	    UseAltimeter = UseSail1 = UseKVH_DGI = 0;
 
 #if  defined _EDC
 	    UseEDC = 0;
@@ -306,11 +305,9 @@ int read_flags( FILE *fptr )
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseKVH_DGC %d", &value))==1) {
-	    UseKVH_DGC = value;
-                
-	    fprintf(stderr, "UseKVH_DGC  %d\n", UseKVH_DGC);
-	    fprintf(syslog, "UseKVH_DGC  %d\n", UseKVH_DGC);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseKVH_DGC setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseKVH_DGC setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseKVH_DGI %d", &value))==1) {
 	    UseKVH_DGI = value;
@@ -320,11 +317,9 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorKVH_DGC %d", &value))==1) {
-	    MonitorKVH_DGC = value;
-                
-	    fprintf(stderr, "MonitorKVH_DGC  %d\n", MonitorKVH_DGC);
-	    fprintf(syslog, "MonitorKVH_DGC  %d\n", MonitorKVH_DGC);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorKVH_DGC setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorKVH_DGC setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorKVH_DGI %d", &value))==1) {
 	    MonitorKVH_DGI = value;

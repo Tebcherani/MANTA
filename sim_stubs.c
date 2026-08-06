@@ -14,10 +14,6 @@
 #include "vehicle.h"
 #include "time.h"
 
-
-/*--- KVH DGC compass (kvh.c deleted) ---*/
-int UseKVH_DGC    = 0, MonitorKVH_DGC = 0;
-
 /*--- KVH DGI inclinometer (kvh.c deleted) ---*/
 int UseKVH_DGI    = 0, MonitorKVH_DGI = 0;
 
