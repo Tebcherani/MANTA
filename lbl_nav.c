@@ -195,15 +195,9 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 	if( rxyz[i] > fabs(dz) )
 	    r[i] = sqrt(rxyz[i]*rxyz[i] - dz*dz) ; 
     }
-#ifdef DEBUG	
-    printf("xy ranges computed\n") ;
-#endif
     lbl->position[lbl->index].z = lbl->depth ;
     /* ranges are declared not good if they are: too long, fail the median
        filter test, they are too old */
-#ifdef DEBUG
-    printf("running median filter\n") ;
-#endif
     for (i=0; i < NXP; i++)
     {
 	lbl->good[i]=check_range(r[i],t,i,lbl) ;
@@ -214,9 +208,6 @@ void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix,
 				/* try to get a soln with more than 2 ranges */
     while( (ngood=num_good(lbl)) > 2)
     {
-#ifdef DEBUG
-	printf("running lsquick2\n") ;
-#endif
 	lsquick2(r,lbl,&(lbl->error));
 				/* set the strarting point for ls_soln to
                                    the lsquick2 solution */

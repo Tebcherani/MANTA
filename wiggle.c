@@ -48,10 +48,6 @@ int wiggle( struct behavior *b, int priority, int level )
 				   this cycle elapsed (0 <= rt < 1)  */
     reduced_time = fmod(sensor(M_PRESENT_TIME) - b->start_time,
 			bArg(PERIOD)) / bArg(PERIOD);
-#ifdef DEBUG
-    fprintf( stderr, "% 8.2f: reduced %4.2f\n", sensor(M_PRESENT_TIME),
-	     reduced_time );
-#endif
 
     cmd->speed_mode = S_CURRENT;
     cmd->speed[0] = bArg(THRUST);
