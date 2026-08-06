@@ -1487,7 +1487,6 @@ for (k=2;k<=n;k++)
 return (ier);
 }
 
-#ifndef Macintosh
 double gasdev()
 {
   static int iset=0;
@@ -1509,4 +1508,3 @@ double gasdev()
     return gset;
   }
 }
-#endif
