@@ -101,40 +101,6 @@ int log_data( FILE *datafile )
 
 	first = 0;
 
-#ifdef JOHN_VERBOSE
-				/* log behavior arguments (jleonard
-                                   11/2/94) */
-    for ( i = 0; i < MAX_COMMAND; i++ )
-    {
-	beh_id = vvp->c[i].behavior;
-    
-	if ( beh_id != -1 )
-	{
-	    offset = vvp->last_s + 1 + (MAX_B_ARG * (i-1));
-
-	    for ( j = 0; j < MAX_B_ARG; j++ )
-	    { 
-		if (vvp->b[beh_id].arg[j].time >= last_log_time) {
-		    index = offset + 1 + j;
-		    dummy = fwrite( (void *) &i, 2, 1, datafile );
-          
-		    if (dummy<1)
-			fprintf(syslog,
-				"cycle %d fwrite of index %d returns "
-				"%d in log_data\n", i, CycleCount, dummy);
-
-		    temp_float = (float) vvp->b[beh_id].arg[j].x;
-		    fwrite((void *) &temp_float, 4, 1, datafile); 
-          
-		    if (dummy<1) 
-			fprintf(syslog,
-				"cycle %d fwrite of value %d returns "
-				"%d in log_data\n", i, CycleCount, dummy);
-		}
-	    }
-	}
-    }
-#endif /* JOHN_VERBOSE */
     last_elapsed_time = (float) (millisec() - my_start_time);
     last_log_time = sensor_time(M_PRESENT_TIME);
 }
