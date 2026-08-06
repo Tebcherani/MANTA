@@ -87,8 +87,6 @@ int main(int argc, char *argv[]) {
 
             capture_behavior_activity();
 	        if (!options.nolog) log_data(datafile);
-
-	        if (update_odyssey_mission()) exit_sim(EXIT_SUCCESS, mission_started);
 	    }
 	
         if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
