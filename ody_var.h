@@ -128,13 +128,9 @@ extern int Camera, CameraOnTime, CameraOffTime;
 extern int UseCamera, MonitorCamera, StatusCamera, ErrorCamera;
 #endif
 
-				/* ody_modem and whoi_usbl */
-#if    defined ODY_MODEM || defined WHOI_USBL
+				/* whoi_usbl */
+#ifdef WHOI_USBL
 EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;
-EXTERN int ModemInterval;
-#ifndef WHOI_USBL
-EXTERN FILE *modemlog;		/* modemlog only for ODY_MODEM */
-#endif
 #endif
 
 #ifdef ODY_SIDESCAN		/* IOS Doppler Sidescan Sonar */

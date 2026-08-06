@@ -738,15 +738,6 @@ int handle_modem()
     int status;
     int monitor_high_level_control = 0;
 
-#ifdef ODY_MODEM
-    if ( !init )
-    {
-	init = 1;
-	status = init_modem();
-    }
-    write_modem();
-#endif /* ODY_MODEM */
-
     if( strlen(vvp->modem_send) > 0 )
     {
 	sprintf( msg_buf, "\nModem t=%.2lf %s\n", 

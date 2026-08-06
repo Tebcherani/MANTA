@@ -15,7 +15,6 @@
 #define MAX_SENSOR      550
 #define MAX_BEHAVIOR    30
 #define MAX_COMMAND     30
-#define MAX_MODEM       500
 #define MAX_FILE_NAME   512
 #define MAX_STATES      3
 #define MAX_STATE_NAME  128

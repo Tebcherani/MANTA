@@ -622,7 +622,7 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 
-#if defined ODY_MODEM || defined WHOI_USBL
+#ifdef WHOI_USBL
 	if ( sscanf(linebuf, "UseModem %d", &value) == 1 )
 	{
 	    UseModem = value;
@@ -637,15 +637,6 @@ int read_flags( FILE *fptr )
 	    write_message( TERM | SLOG );
 	    continue;
 	}
-#ifndef WHOI_USBL
-	if ( sscanf(linebuf, "ModemInterval %d", &value) == 1 )
-	{
-	    ModemInterval = value;
-	    sprintf( msg_buf, "ModemInterval   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif /* WHOI_USBL */
 #endif
 
 #ifdef ODY_SIDESCAN

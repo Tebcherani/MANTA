@@ -33,9 +33,6 @@ void exit_gracefully( int exit_status )
 	     vvp->data_file_name); 
     write_message( TERM | SLOG );
 
-#ifdef ODY_MODEM
-    write_modem(); 
-#endif
 				/* 01/10/94 adding an "auto_parse" option */
     tmp1 = getenv("ODY_AUTO_PARSE");
     tmp2 = getenv("ODY_PARSE_OPTION");
@@ -49,10 +46,6 @@ void exit_gracefully( int exit_status )
         system( tmp );
     }
 
-#ifdef ODY_MODEM
-    if ( modemlog != NULL )
-	fclose( modemlog );
-#endif
 				/* generate entry in tabular file */
     write_tab();
 
