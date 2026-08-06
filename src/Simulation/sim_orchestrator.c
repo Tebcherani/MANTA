@@ -26,6 +26,12 @@ command_line_options_t options;
 /* Forward declarations for functions defined in other translation units */
 int  load_mission(char *);
 void lhs(void);
+int  simulate_usbl(void);
+int  handle_modem(void);
+void heading_reference(void);
+void sim_conduct(void);
+void sim_current(void);
+void LBL_position(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
 FILE *datafile;
@@ -37,7 +43,7 @@ int main(int argc, char *argv[]) {
     odyssey_state_t odyssey_state;
     world_sim_t world_sim;
     world_step_request_t world_request;
-    world_step_result_t world_result;
+    world_result_t world_result;
 
     int mission_started = 0;
 
@@ -96,7 +102,22 @@ int main(int argc, char *argv[]) {
         if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            simSensors();
+            init_rotation();
+            load_angular_rate();
+            load_accel(); 
+            load_magnetic();
+            load_depth();
+            load_water_speed();
+            load_water_param();
+            sim_current();
+#ifdef WHOI_USBL
+            simulate_usbl();
+#endif
+            handle_modem();
+            heading_reference();
+            simLBL();
+
+
             simple_dead_reckoning();
             LBL_position();
 	        apply_faults();

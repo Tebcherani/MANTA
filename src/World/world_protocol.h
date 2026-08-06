@@ -7,6 +7,6 @@ typedef struct {
 
 typedef struct {
     int status;
-} world_step_result_t;
+} world_result_t;
 
 #endif /* WORLD_PROTOCOL_H */

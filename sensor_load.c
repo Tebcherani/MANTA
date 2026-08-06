@@ -18,17 +18,8 @@
 #define drand48() ((double)rand()/RAND_MAX)
 #endif
 
-/* forward declarations for functions in other translation units */
-int  simulate_usbl( void );
-int  handle_modem( void );
-void heading_reference( void );
-void sim_conduct( void );
-void sim_current( void );
-void LBL_position( void );
-
 #define USE_KVH 1 /* comment out to use sensor_AHRS.c + modify makefile */
 /* #define KALMAN_LBL 1 /* comment out to have all tofs output together */
-#define USE_CURRENT_SIM 1 /* comment out to ignore current simulator: JSW */
 
 #define G        (double) 9.81
 
@@ -55,9 +46,7 @@ void load_angular_rate();
 void load_depth();
 void load_water_speed( void );
 void load_magnetic();
-void load_sonar();
 void load_water_param();
-void simLXT( void );
 double gasdev();
 
 #ifdef USE_KVH
@@ -65,10 +54,6 @@ double gasdev();
   void load_inclinometers(double,double); 
   void low_pass_filter(double[2],double[2]);
 #endif
-#ifdef USE_CURRENT_SIM
-  void load_currents();
-#endif
-
 
 double mr[4][4];
 
@@ -82,42 +67,6 @@ void simLBL()
     simEdgeTechLBL();
 #endif
 }
-
-/* ============================================================ */
-/* MASTER SENSOR LOADING ROUTINE                                */
-
-void simSensors( void )
-{
-    init_rotation();
-    load_angular_rate();
-
-    /* JV (5/22/95) inclinos are loaded in load_accel() if KVH selected */
-    load_accel(); 
-
-    /* JV (5/23/95) compass is loaded in load_magnetic() if KVH selected */
-    load_magnetic();
-
-    load_depth();
-    load_water_speed();
-    load_sonar();
-    load_water_param();
-
-#ifdef USE_CURRENT_SIM
-    load_currents();
-#endif
-#ifdef _USBL
-    simLXT();
-#endif
-
-#ifdef WHOI_USBL
-    simulate_usbl();
-#endif
-    handle_modem();
-				/* in sensor_kvh.c */
-    heading_reference();
-    simLBL();
-}
-/* ============================================================ */
 
 /* ------------------------------------------------------------ */
 /* Initialize rotation matrices */
@@ -291,13 +240,6 @@ void load_water_speed( void )
     double gasdev();
     update( M_WATER_SPEED, sensor(REAL_U) + 0.02*gasdev() );
 }
-
-
-/* ------------------------------------------------------------ */
-/* Calculate sensed OA Sonar readings...
-*/
-
-void load_sonar(void) {}
 
 /* ------------------------------------------------------------ */
 /* Calculate sensed temperature and conductivity readings...
@@ -613,122 +555,6 @@ void simLBL4EKF()
             time_received[i]=0;
 }
 
-/*--------------------------------------------------------------------------*
- Calculate sensed USBL readings...                                 
- This routine assumes the following:                        
-     1) north mark of usbl is oriented to vehicle top
-     2) usbl takes 20 s to warm up
-     3) no shadowing effects of vehicle
-
- Note - if beacon behind vehicle, this will give the same
- results as if beacon in front - (forwards backwards                
- ambiguity). Also note that this is unrealistic in that        
- signals originating behind the vehicle should be masked by        
- the vehicle body.                                                
- *--------------------------------------------------------------------------*/
-
-#ifdef _USBL
-void simLXT(void)
-{
-  int index,flag;
-  double north,east,depth;
-  double x,y,z,r,azimuth,elevation,range,error,beac_bearing;
-  double warm_up = 1.0;
-  double time_delay=2.0;  /* time between measurements on beacon 1 and 2 */
-  static double time_ready,time_update1,time_update2;
-  static int last_active = 0;
-  
-  /*--- USBL takes warm_up (s) to become active after being turned on */
-  if (sensor(C_USBL_ACTIVE) == 1.0) {
-    if (last_active == 0) {
-      last_active = 1;
-      time_ready = sensor(M_PRESENT_TIME) + warm_up;
-      time_update1 = time_ready;
-      time_update2 = time_update1+time_delay;
-    }
-    if (sensor(M_PRESENT_TIME) < time_ready)        /*--- Wait until warm-up complete */
-      return;
-  }
-  
-  else {
-    last_active = 0;
-    return; 
-  }
-  
-  /*--- return if none of the beacon can be detected at current time */
-  if ((sensor(M_PRESENT_TIME) < time_update1) && (sensor(M_PRESENT_TIME) < time_update2))
-    return;
-  
-  /*--- 1st detected beacon is the 1st valid one in structure */
-  if ( sensor(M_PRESENT_TIME) >= time_update1 ) {
-    /*--- find index of the 1st valid beacon in structure */
-    flag=0; index=-1;
-    do {
-      index++;
-      if ((fabs(sensor(C_USBL_INTEROGATE_1)-usbl_if[index])<0.1)
-          &&
-          ((fabs(sensor(C_USBL_REPLY_1)-usbl_rf[index]) < 0.1)||
-           (fabs(sensor(C_USBL_REPLY_2)-usbl_rf[index]) < 0.1)))
-        flag++;
-    } while (flag!=1);
-  }
-  
-  /*--- 2nd detected beacon is the 2nd valid one in structure */
-  if ( sensor(M_PRESENT_TIME) >= time_update2 ) {
-    /*--- find index of the 2nd valid beacon in structure */
-    flag=0; index=-1;
-    do {
-      index++;
-      if ((fabs(sensor(C_USBL_INTEROGATE_1)-usbl_if[index])<0.1)
-          &&
-          ((fabs(sensor(C_USBL_REPLY_1)-usbl_rf[index]) < 0.1)||
-           (fabs(sensor(C_USBL_REPLY_2)-usbl_rf[index]) < 0.1)))
-        flag++;
-    } while (flag!=2);
-  }
-  
-  /*--- position of the detected beacon in vehicle frame */
-  north = usbl_north[index] - sensor(REAL_X);
-  east = usbl_east[index] - sensor(REAL_Y);
-  depth = usbl_depth[index] - sensor(REAL_Z);
-  x = (mr[1][1]*north + mr[1][2]*east + mr[1][3]*depth);
-  y = (mr[2][1]*north + mr[2][2]*east + mr[2][3]*depth);
-  z = (mr[3][1]*north + mr[3][2]*east + mr[3][3]*depth);
-  
-  /*--- exact elevation, azimuth,range */
-  r = sqrt(y*y+z*z);
-  elevation = fabs(atan(x/r));
-  azimuth = atan2(y,-z);
-  if (y<0) azimuth+=2.0*PI;
-  range=sqrt(r*r+x*x);
-  /*--- bearing of the beacon in the vehicle frame */
-  beac_bearing=atan2(sin(azimuth),tan(elevation));
-  
-  /*--- case 1st beacon has been detected */
-  if ( sensor(M_PRESENT_TIME) >= time_update1 ) {
-    /*--- next time beacon 1 will be detected */
-    time_update1 += sensor(C_USBL_RATE)+time_delay;
-    
-    update(M_USBL_AZIMUTH_1,azimuth);
-    update(M_USBL_ELEVATION_1,elevation);
-    update(M_USBL_RANGE_1,range);
-    /* printf("updated 1 at %ld\n", sensor_time(M_USBL_RANGE_1)); */
-  }
-  
-  /*--- case 2ndt beacon has been detected */        
-  if ( sensor(M_PRESENT_TIME) >= time_update2 ) {
-    /*--- next time beacon 2 will be detected */
-    time_update2 += sensor(C_USBL_RATE)+time_delay;
-    
-    update(M_USBL_AZIMUTH_2,azimuth);
-    update(M_USBL_ELEVATION_2,elevation);
-    update(M_USBL_RANGE_2,range);
-    /* printf("updated 2 at %ld\n", sensor_time(M_USBL_RANGE_2)); */
-  }
-  
-}
-#endif
-
 /* ============================================================ */
 /* Display & clear modem send string.                           */
 
@@ -897,15 +723,6 @@ int i,j;
 
 }
 #endif
-
-/* Added 05-20-96 by JSWillcox */
-#ifdef USE_CURRENT_SIM
-void load_currents()
-{
-    sim_current();
-}
-#endif
-
 
 /*-----------------------------------------------------------------------*
   getXSDataByte: set appropriate bits of databyte that is to be sent

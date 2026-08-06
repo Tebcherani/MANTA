@@ -15,8 +15,8 @@ int init_world_state(world_state_t *state) {
     return 0;
 }
 
-world_step_result_t update_world_state(world_state_t *state, const world_step_request_t *request) {
-    world_step_result_t result;
+world_result_t update_world_state(world_state_t *state, const world_step_request_t *request) {
+    world_result_t result;
 
     /*
      * World models will eventually be updated here.
