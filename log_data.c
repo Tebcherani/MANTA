@@ -21,6 +21,8 @@
 #include "vehicle.h"
 #include "odyssey_config.h"
 #include "paths.h"
+#include "odyssey_log.h"
+
 
 static int loggerVersion = 2;	/* file format version number */
 const char *get_fault_file_name( void );

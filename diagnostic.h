@@ -8,8 +8,6 @@
 #ifndef DIAGNOSTIC_H
 #define DIAGNOSTIC_H
 
-#include <stdio.h>		/* required because of syslog & term */
-
 #define TERM 001		/* for terminal monitoring */
 #define SLOG 002		/* for syslog monitoring */
 #define DUMP 004		/* hex dump to syslog file */
@@ -23,11 +21,8 @@ enum ody_dev_status {
 };
 
 extern char msg_buf[];		/* buffer for storing diagnostics */
-extern char syslog_file[];	/* full path name of syslog */
-extern FILE *syslog, *term;
 
                                 /* prototypes */
-void write_message( int monitor );
-int open_syslog( const char *name );
+void write_message(int monitor);
 
 #endif /* DIAGNOSTIC_H */

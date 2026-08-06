@@ -22,6 +22,7 @@
 
 #include "diagnostic.h"		/* MITSG */
 #include "vehicle.h"
+#include "odyssey_log.h"
 
 int stack_busy( struct command *cmd );
 int getXSDataByte( void );

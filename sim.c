@@ -39,6 +39,7 @@
 
 #include "diagnostic.h"
 #include "vehicle.h"
+#include "odyssey_log.h"
 
 #ifdef _OSK
   double drand48();

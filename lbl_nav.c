@@ -15,6 +15,7 @@
 #include "nav_math.h"
 #include "lbl.h"
 #include "vehicle.h"
+#include "odyssey_log.h"
 
 int  lsquick2( double r[], lbl_t *lbl, double *perror );
 int  findwrst( lbl_t *lbl, double r[] );

@@ -1,8 +1,11 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "diagnostic.h"
 #include "odyssey_log.h"
 #include "sim_log.h"
+
+FILE *syslog = NULL;
 
 int open_odyssey_log(void) {
     const char *log_path;
@@ -14,7 +17,9 @@ int open_odyssey_log(void) {
         return -1;
     }
 
-    if (open_syslog(log_path) != 0) {
+    syslog = fopen(log_path, "w");
+
+    if (syslog == NULL) {
         write_to_sim_log("Failed to open Odyssey log: %s\n", log_path);
         return -1;
     }
@@ -25,7 +30,7 @@ int open_odyssey_log(void) {
 }
 
 int close_odyssey_log(void) {
-    if (syslog == NULL || syslog == term) return 0;
+    if (syslog == NULL) return 0;
 
     if (fclose(syslog) != 0) {
         write_to_sim_log("Failed to close Odyssey log.\n");

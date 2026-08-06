@@ -14,6 +14,8 @@
 #include "odyssey_config.h"
 #include "paths.h"
 #include "vehicle.h"
+#include "odyssey_log.h"
+
 
 				/* prototypes */
 int convert_units( const char *, const char *, const double,
@@ -242,7 +244,7 @@ int read_flags( FILE *fptr )
 	if ( sscanf(linebuf, "UseSim %d", &value) == 1 )
 	{
 	    UseSim = value;
-	    fprintf( term, "UseSim               %d\n", value );
+	    fprintf( stderr, "UseSim               %d\n", value );
 	    UseAltimeter = UseWatchdog = UseThruster = UseElevator =
 		UseRudder = UseParosci = UseSail1 = UseKVH_DGI =
 		UseKVH_DGC = 0;
@@ -254,117 +256,117 @@ int read_flags( FILE *fptr )
 	    ErrorAltimeter = ErrorWatchdog = ErrorThruster = 
 		ErrorElevator = ErrorRudder = ErrorParosci = ErrorSail1 = 
 		ErrorKVH_DGI = ErrorKVH_DGC = STATUS_NOT_SELECTED;
-	    fprintf( term, "Entering on-board sim mode" 
+	    fprintf( stderr, "Entering on-board sim mode" 
 		     " disabling all other devices\n" );
 
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseAltimeter %d", &value))==1) {
 	    UseAltimeter = value;
-	    fprintf(term, "UseAltimeter       %d\n", UseAltimeter);
+	    fprintf(stderr, "UseAltimeter       %d\n", UseAltimeter);
 	    fprintf(syslog, "UseAltimeter       %d\n", UseAltimeter);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseSail1 %d", &value))==1) {
 	    UseSail1 = value;
-	    fprintf(term, "UseSail1       %d\n", UseSail1);
+	    fprintf(stderr, "UseSail1       %d\n", UseSail1);
 	    fprintf(syslog, "UseSail1       %d\n", UseSail1);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseWatchdog %d", &value))==1) {
 	    UseWatchdog = value;
-	    fprintf(term, "UseWatchdog %d\n", UseWatchdog);
+	    fprintf(stderr, "UseWatchdog %d\n", UseWatchdog);
 	    fprintf(syslog, "UseWatchdog %d\n", UseWatchdog);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseThruster %d", &value))==1) {
 	    UseThruster = value;
-	    fprintf(term, "UseThruster %d\n", UseThruster);
+	    fprintf(stderr, "UseThruster %d\n", UseThruster);
 	    fprintf(syslog, "UseThruster %d\n", UseThruster);
 	    continue;
 	}
 	if ( sscanf(linebuf, "FinHECalibrate %d", &value) == 1 )
 	{
 	    FinHECalibrate = value;
-	    fprintf(term, "FinHECalibrate %d\n", FinHECalibrate);
+	    fprintf(stderr, "FinHECalibrate %d\n", FinHECalibrate);
 	    fprintf(syslog, "FinHECalibrate %d\n", FinHECalibrate);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "HallEffectIndex %d", &value))==1) {
 	    HallEffectIndex = value;
-	    fprintf(term, "HallEffectIndex %d\n", HallEffectIndex);
+	    fprintf(stderr, "HallEffectIndex %d\n", HallEffectIndex);
 	    fprintf(syslog, "HallEffectIndex %d\n", HallEffectIndex);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseElevator %d", &value))==1) {
 	    UseElevator = value;
-	    fprintf(term, "UseElevator %d\n", UseElevator);
+	    fprintf(stderr, "UseElevator %d\n", UseElevator);
 	    fprintf(syslog, "UseElevator %d\n", UseElevator);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseRudder %d", &value))==1) {
 	    UseRudder = value;
-	    fprintf(term, "UseRudder   %d\n", UseRudder);
+	    fprintf(stderr, "UseRudder   %d\n", UseRudder);
 	    fprintf(syslog, "UseRudder   %d\n", UseRudder);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseParosci %d", &value))==1) {
 	    UseParosci = value;
                 
-	    fprintf(term, "UseParosci  %d\n", UseParosci);
+	    fprintf(stderr, "UseParosci  %d\n", UseParosci);
 	    fprintf(syslog, "UseParosci  %d\n", UseParosci);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseKVH_DGC %d", &value))==1) {
 	    UseKVH_DGC = value;
                 
-	    fprintf(term, "UseKVH_DGC  %d\n", UseKVH_DGC);
+	    fprintf(stderr, "UseKVH_DGC  %d\n", UseKVH_DGC);
 	    fprintf(syslog, "UseKVH_DGC  %d\n", UseKVH_DGC);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseKVH_DGI %d", &value))==1) {
 	    UseKVH_DGI = value;
                 
-	    fprintf(term, "UseKVH_DGI  %d\n", UseKVH_DGI);
+	    fprintf(stderr, "UseKVH_DGI  %d\n", UseKVH_DGI);
 	    fprintf(syslog, "UseKVH_DGI  %d\n", UseKVH_DGI);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorKVH_DGC %d", &value))==1) {
 	    MonitorKVH_DGC = value;
                 
-	    fprintf(term, "MonitorKVH_DGC  %d\n", MonitorKVH_DGC);
+	    fprintf(stderr, "MonitorKVH_DGC  %d\n", MonitorKVH_DGC);
 	    fprintf(syslog, "MonitorKVH_DGC  %d\n", MonitorKVH_DGC);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorKVH_DGI %d", &value))==1) {
 	    MonitorKVH_DGI = value;
                 
-	    fprintf(term, "MonitorKVH_DGI  %d\n", MonitorKVH_DGI);
+	    fprintf(stderr, "MonitorKVH_DGI  %d\n", MonitorKVH_DGI);
 	    fprintf(syslog, "MonitorKVH_DGI  %d\n", MonitorKVH_DGI);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorAltimeter %d", &value))==1) {
 	    MonitorAltimeter = value;
-	    fprintf(term, "MonitorAltimeter   %d\n", MonitorAltimeter);
+	    fprintf(stderr, "MonitorAltimeter   %d\n", MonitorAltimeter);
 	    fprintf(syslog, "MonitorAltimeter   %d\n", MonitorAltimeter);
 	    continue;
 	}
 #ifdef EDGEPS8000
 	if ( (sscanf(linebuf, "UseLBL %d", &value))==1) {
 	    UseLBL = value;
-	    fprintf(term, "UseLBL   %d\n", UseLBL);
+	    fprintf(stderr, "UseLBL   %d\n", UseLBL);
 	    fprintf(syslog, "UseLBL   %d\n", UseLBL);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorLBL %d", &value))==1) {
 	    MonitorLBL = value;
-	    fprintf(term, "MonitorLBL   %d\n", MonitorLBL);
+	    fprintf(stderr, "MonitorLBL   %d\n", MonitorLBL);
 	    fprintf(syslog, "MonitorLBL   %d\n", MonitorLBL);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "LBLTransponderMode %d", &value))==1) {
 	    LBLTransponderMode = value;
-	    fprintf(term, "LBLTransponderMode %d\n", LBLTransponderMode);
+	    fprintf(stderr, "LBLTransponderMode %d\n", LBLTransponderMode);
 	    fprintf(syslog, "LBLTransponderMode %d\n", LBLTransponderMode);
 	    continue;
 	}
@@ -374,13 +376,13 @@ int read_flags( FILE *fptr )
 	if ( (sscanf(linebuf, "UseCondTemp %d", &value))==1)
 	{
 	    UseCondTemp = value;
-	    fprintf(term, "UseCondTemp   %d\n", UseCondTemp);
+	    fprintf(stderr, "UseCondTemp   %d\n", UseCondTemp);
 	    fprintf(syslog, "UseCondTemp   %d\n", UseCondTemp);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorCondTemp %d", &value))==1) {
 	    MonitorCondTemp = value;
-	    fprintf(term, "MonitorCondTemp   %d\n", MonitorCondTemp);
+	    fprintf(stderr, "MonitorCondTemp   %d\n", MonitorCondTemp);
 	    fprintf(syslog, "MonitorCondTemp   %d\n", MonitorCondTemp);
 	    continue;
 	}
@@ -389,32 +391,32 @@ int read_flags( FILE *fptr )
 #if defined ODY_CAMERA
 	if ( (sscanf(linebuf, "UseCamera %d", &value))==1) {
 	    UseCamera = value;
-	    fprintf(term, "UseCamera   %d\n", UseCamera);
+	    fprintf(stderr, "UseCamera   %d\n", UseCamera);
 	    fprintf(syslog, "UseCamera   %d\n", UseCamera);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorCamera %d", &value))==1) {
 	    MonitorCamera = value;
-	    fprintf(term, "MonitorCamera   %d\n", MonitorCamera);
+	    fprintf(stderr, "MonitorCamera   %d\n", MonitorCamera);
 	    fprintf(syslog, "MonitorCamera   %d\n", MonitorCamera);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "CameraOnTime %d", &value))==1) {
 	    CameraOnTime = value;
-	    fprintf(term, "CameraOnTime   %d\n", CameraOnTime);
+	    fprintf(stderr, "CameraOnTime   %d\n", CameraOnTime);
 	    fprintf(syslog, "CameraOnTime   %d\n", CameraOnTime);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "CameraOffTime %d", &value))==1) {
 	    CameraOffTime = value;
-	    fprintf(term, "CameraOffTime   %d\n", CameraOffTime);
+	    fprintf(stderr, "CameraOffTime   %d\n", CameraOffTime);
 	    fprintf(syslog, "CameraOffTime   %d\n", CameraOffTime);
 	    continue;
 	}
 #endif /* ODY_CAMERA */
 	if ( (sscanf(linebuf, "MonitorLayeredControl  %d", &value))==1) {
 	    MonitorLayeredControl = value;
-	    fprintf(term, "MonitorLayeredControl    %d\n", 
+	    fprintf(stderr, "MonitorLayeredControl    %d\n", 
 		    MonitorLayeredControl);
 	    fprintf(syslog, "MonitorLayeredControl    %d\n", 
 		    MonitorLayeredControl);
@@ -422,43 +424,43 @@ int read_flags( FILE *fptr )
 	}
 	if ( (sscanf(linebuf, "MonitorWatchdog %d", &value))==1) {
 	    MonitorWatchdog = value;
-	    fprintf(term, "MonitorWatchdog %d\n", MonitorWatchdog);
+	    fprintf(stderr, "MonitorWatchdog %d\n", MonitorWatchdog);
 	    fprintf(syslog, "MonitorWatchdog %d\n", MonitorWatchdog);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorThruster %d", &value))==1) {
 	    MonitorThruster = value;
-	    fprintf(term, "MonitorThruster %d\n", MonitorThruster);
+	    fprintf(stderr, "MonitorThruster %d\n", MonitorThruster);
 	    fprintf(syslog, "MonitorThruster %d\n", MonitorThruster);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorElevator %d", &value))==1) {
 	    MonitorElevator = value;
-	    fprintf(term, "MonitorElevator %d\n", MonitorElevator);
+	    fprintf(stderr, "MonitorElevator %d\n", MonitorElevator);
 	    fprintf(syslog, "MonitorElevator %d\n", MonitorElevator);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorRudder %d", &value))==1) {
 	    MonitorRudder = value;
-	    fprintf(term, "MonitorRudder   %d\n", MonitorRudder);
+	    fprintf(stderr, "MonitorRudder   %d\n", MonitorRudder);
 	    fprintf(syslog, "MonitorRudder   %d\n", MonitorRudder);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorParosci %d", &value))==1) {
 	    MonitorParosci = value;
-	    fprintf(term, "MonitorParosci  %d\n", MonitorParosci);
+	    fprintf(stderr, "MonitorParosci  %d\n", MonitorParosci);
 	    fprintf(syslog, "MonitorParosci  %d\n", MonitorParosci);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "Countdown %d", &value))==1) {
 	    Countdown = value;
-	    fprintf(term, "Countdown   %d\n", Countdown);
+	    fprintf(stderr, "Countdown   %d\n", Countdown);
 	    fprintf(syslog, "Countdown   %d\n", Countdown);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "CommandedTime %d", &value))==1) {
 	    CommandedTime = value;
-	    fprintf(term, "CommandedTime  %d\n", CommandedTime);
+	    fprintf(stderr, "CommandedTime  %d\n", CommandedTime);
 	    fprintf(syslog, "CommandedTime  %d\n", CommandedTime);
 	    continue;
 	}
@@ -470,66 +472,66 @@ int read_flags( FILE *fptr )
 	}
 	if ( (sscanf(linebuf, "CommandedHeading %lf", &dvalue))==1) {
 	    CommandedHeading = dvalue;
-	    fprintf(term, "CommandedHeading  %lf\n", CommandedHeading);
+	    fprintf(stderr, "CommandedHeading  %lf\n", CommandedHeading);
 	    fprintf(syslog, "CommandedHeading  %lf\n", CommandedHeading);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "CommandedHeadingDegrees %lf", &dvalue))==1) {
 	    CommandedHeadingDegrees = dvalue;
-	    fprintf(term, "CommandedHeadingDegrees  %lf\n", 
+	    fprintf(stderr, "CommandedHeadingDegrees  %lf\n", 
 		    CommandedHeadingDegrees);
 	    fprintf(syslog, "CommandedHeadingDegrees  %lf\n", 
 		    CommandedHeadingDegrees);
 	    CommandedHeading = D2R(CommandedHeadingDegrees);
-	    fprintf(term, "CommandedHeading %lf\n", CommandedHeading);
+	    fprintf(stderr, "CommandedHeading %lf\n", CommandedHeading);
 	    fprintf(syslog, "CommandedHeading %lf\n", CommandedHeading);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "CommandedDepth %lf", &dvalue))==1) {
 	    CommandedDepth = dvalue;
-	    fprintf(term, "CommandedDepth  %lf\n", CommandedDepth);
+	    fprintf(stderr, "CommandedDepth  %lf\n", CommandedDepth);
 	    fprintf(syslog, "CommandedDepth  %lf\n", CommandedDepth);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "DebugMode %d", &value))==1) {
 	    DebugMode = value;
-	    fprintf(term, "DebugMode  %d\n", DebugMode);
+	    fprintf(stderr, "DebugMode  %d\n", DebugMode);
 	    fprintf(syslog, "DebugMode  %d\n", DebugMode);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "CommsDebugMode %d", &value))==1) {
 	    CommsDebugMode = value;
-	    fprintf(term, "CommsDebugMode  %d\n", CommsDebugMode);
+	    fprintf(stderr, "CommsDebugMode  %d\n", CommsDebugMode);
 	    fprintf(syslog, "CommsDebugMode  %d\n", CommsDebugMode);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "TimingDebugMode %d", &value))==1) {
 	    TimingDebugMode = value;
-	    fprintf(term, "TimingDebugMode  %d\n", TimingDebugMode);
+	    fprintf(stderr, "TimingDebugMode  %d\n", TimingDebugMode);
 	    fprintf(syslog, "TimingDebugMode  %d\n", TimingDebugMode);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "WatchdogTimeoutMinutes %d", &value))==1) {
 	    WatchdogTimeoutMinutes = value;
-	    fprintf(term, "WatchdogTimeoutMinutes %d\n", WatchdogTimeoutMinutes);
+	    fprintf(stderr, "WatchdogTimeoutMinutes %d\n", WatchdogTimeoutMinutes);
 	    fprintf(syslog, "WatchdogTimeoutMinutes %d\n", WatchdogTimeoutMinutes);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "WatchdogTimeoutHours %d", &value))==1) {
 	    WatchdogTimeoutHours = value;
-	    fprintf(term, "WatchdogTimeoutHours %d\n", WatchdogTimeoutHours);
+	    fprintf(stderr, "WatchdogTimeoutHours %d\n", WatchdogTimeoutHours);
 	    fprintf(syslog, "WatchdogTimeoutHours %d\n", WatchdogTimeoutHours);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "InitDataFileSize %d", &value))==1) {
 	    InitDataFileSize = value;
-	    fprintf(term, "InitDataFileSize  %u\n", InitDataFileSize);
+	    fprintf(stderr, "InitDataFileSize  %u\n", InitDataFileSize);
 	    fprintf(syslog, "InitDataFileSize  %u\n", InitDataFileSize);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseKalmanFilter %d", &value))==1) {
 	    UseKalmanFilter = value;
-	    fprintf(term, "UseKalmanFilter  %d\n", UseKalmanFilter );
+	    fprintf(stderr, "UseKalmanFilter  %d\n", UseKalmanFilter );
 	    fprintf(syslog, "UseKalmanFilter  %d\n", UseKalmanFilter );
 	    continue;
 	}
@@ -537,13 +539,13 @@ int read_flags( FILE *fptr )
 	if ( (tmp = sscanf(linebuf, "UseEDC %d",
 			   &value)) == 1 ) {
 	    UseEDC= value;
-	    fprintf(term, "UseEDC  %d\n", UseEDC );
+	    fprintf(stderr, "UseEDC  %d\n", UseEDC );
 	    fprintf(syslog, "UseEDC  %d\n", UseEDC );
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorEDC %d", &value))==1) {
 	    MonitorEDC = value;
-	    fprintf(term, "MonitorEDC  %d\n", MonitorEDC );
+	    fprintf(stderr, "MonitorEDC  %d\n", MonitorEDC );
 	    fprintf(syslog, "MonitorEDC  %d\n", MonitorEDC );
 	    continue;
 	}
@@ -551,7 +553,7 @@ int read_flags( FILE *fptr )
 	if ( (sscanf(linebuf, "MonitorSim %d", &value))==1)
 	{
 	    MonitorSim = value;
-	    fprintf(term, "MonitorSim  %d\n", MonitorSim);
+	    fprintf(stderr, "MonitorSim  %d\n", MonitorSim);
 	    fprintf(syslog, "MonitorSim  %d\n", MonitorSim);
 	    continue;
 	}
@@ -559,7 +561,7 @@ int read_flags( FILE *fptr )
 		     &value))==1)
 	{
 	    AltimeterFrequency = value;
-	    fprintf(term, "AltimeterFrequency  %d\n", 
+	    fprintf(stderr, "AltimeterFrequency  %d\n", 
 		    AltimeterFrequency);
 	    fprintf(syslog, "AltimeterFrequency  %d\n", 
 		    AltimeterFrequency);
@@ -568,7 +570,7 @@ int read_flags( FILE *fptr )
 	if ( (sscanf(linebuf, "UseOld200 %d", &value))==1)
 	{
 	    UseOld200 = value;
-	    fprintf(term, "UseOld200  %d\n", UseOld200);
+	    fprintf(stderr, "UseOld200  %d\n", UseOld200);
 	    fprintf(syslog, "UseOld200  %d\n", UseOld200);
 	    continue;
 	}
@@ -576,7 +578,7 @@ int read_flags( FILE *fptr )
 		     &value))==1)
 	{
 	    DeadManSwitchEnabled = value;
-	    fprintf(term, "DeadManSwitchEnabled  %d\n", 
+	    fprintf(stderr, "DeadManSwitchEnabled  %d\n", 
 		    DeadManSwitchEnabled);
 	    fprintf(syslog, "DeadManSwitchEnabled  %d\n", 
 		    DeadManSwitchEnabled);
@@ -586,7 +588,7 @@ int read_flags( FILE *fptr )
 		     &value))==1)
 	{
 	    NewMissionFileEnabled = value;
-	    fprintf(term, "NewMissionFileEnabled  %d\n", 
+	    fprintf(stderr, "NewMissionFileEnabled  %d\n", 
 		    NewMissionFileEnabled);
 	    fprintf(syslog, "NewMissionFileEnabled  %d\n", 
 		    NewMissionFileEnabled);
@@ -596,12 +598,12 @@ int read_flags( FILE *fptr )
 	{
 	    if ((value==1) || (value==85)) {
 		AltimeterPortNumber = value; 
-		fprintf(term, "AltimeterPortNumber  %d\n", 
+		fprintf(stderr, "AltimeterPortNumber  %d\n", 
 			AltimeterPortNumber); 
 		fprintf(syslog, "AltimeterPortNumber  %d\n", 
 			AltimeterPortNumber);
 	    } else {
-		fprintf(term, "invalid altimter port number %d\n", value);
+		fprintf(stderr, "invalid altimter port number %d\n", value);
 		fprintf(syslog, "invalid altimter port number %d\n", value);
 	    }
 	    continue;
@@ -609,7 +611,7 @@ int read_flags( FILE *fptr )
 	if ( (sscanf(linebuf, "UsePort %d", &value))==1)
 	{
 	    UsePort = value;
-	    fprintf(term, "UsePort  %d\n", UsePort);
+	    fprintf(stderr, "UsePort  %d\n", UsePort);
 	    fprintf(syslog, "UsePort  %d\n", UsePort);
 	    continue;
 	}
@@ -617,7 +619,7 @@ int read_flags( FILE *fptr )
 		     &value))==1)
 	{
 	    UseStarboard = value;
-	    fprintf(term, "UseStarboard  %d\n", UseStarboard);
+	    fprintf(stderr, "UseStarboard  %d\n", UseStarboard);
 	    fprintf(syslog, "UseStarboard  %d\n", UseStarboard);
 	    continue;
 	}
@@ -786,7 +788,7 @@ int read_flags( FILE *fptr )
 
 	if ( strlen(linebuf) > 1 )
 	{
-	    fprintf( term, 
+	    fprintf( stderr, 
 		     "read flags %s: no match, exiting ...\n", linebuf );
 	    exit_gracefully( -1 );
 	}
@@ -1072,7 +1074,7 @@ int skip_comments( FILE *file )
 				/* eat rest of line */
     if ( fgets(line, sizeof(line), file) == NULL )
     {
-	fprintf(term, "skip_comments() eof encountered\n");
+	fprintf(stderr, "skip_comments() eof encountered\n");
 	return EOF;
     }
     fprintf(syslog, "%s\n", line);
