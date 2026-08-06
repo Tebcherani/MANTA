@@ -12,11 +12,14 @@
 #include "command_line.h"
 #include "odyssey_config.h"
 #include "odyssey_control.h"
+#include "odyssey_data_logger.h"
 #include "odyssey_log.h"
+#include "odyssey_mission.h"
 #include "odyssey_model.h"
 #include "odyssey_nav.h"
 #include "odyssey_sensors.h"
 #include "odyssey_state.h"
+#include "sim_behavior_logger.h"
 #include "sim_config.h"
 #include "sim_exit.h"
 #include "sim_log.h"
@@ -31,7 +34,6 @@ int  simulate_usbl(void);
 int  handle_modem(void);
 void heading_reference(void);
 void sim_conduct(void);
-void sim_current(void);
 void LBL_position(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
@@ -115,4 +117,5 @@ int main(int argc, char *argv[]) {
     }
 
     exit_sim(EXIT_FAILURE, mission_started);
+    return EXIT_FAILURE;
 }
