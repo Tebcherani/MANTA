@@ -109,8 +109,6 @@ void load_water_speed( void );
 void load_sonar( void );
 void load_water_param( void );
 void calc_rotation_matrix( void );
-double *e2b( double *xe );
-double *b2e( double *xb );
 void simLBL4EKF();
 void sensor_processing( void );
 

@@ -955,35 +955,6 @@ void calc_rotation_matrix( void )
     vvp->rotation[2][2] = cph*ct;
 }
 
-double *e2b( double *xe )
-{
-    static double xb[3];
-
-    xb[0] = vvp->rotation[0][0]*xe[0] + vvp->rotation[0][1]*xe[1] +
-	vvp->rotation[0][2]*xe[2];
-    xb[1] = vvp->rotation[1][0]*xe[0] + vvp->rotation[1][1]*xe[1] +
-	vvp->rotation[1][2]*xe[2];
-    xb[2] = vvp->rotation[2][0]*xe[0] + vvp->rotation[2][1]*xe[1] +
-	vvp->rotation[2][2]*xe[2];
-
-    return xb;
-}
-
-double *b2e( double *xb )
-{
-    static double xe[3];
-
-    xe[0] = vvp->rotation[0][0]*xb[0] + vvp->rotation[1][0]*xb[1] +
-	vvp->rotation[2][0]*xb[2];
-    xe[1] = vvp->rotation[0][1]*xb[0] + vvp->rotation[1][1]*xb[1] +
-	vvp->rotation[2][1]*xb[2];
-    xe[2] = vvp->rotation[0][2]*xb[0] + vvp->rotation[1][2]*xb[1] +
-	vvp->rotation[2][2]*xb[2];
-
-    return xe;
-}
-
-
 /* Added 05-20-96 by JSWillcox */
 #ifdef USE_CURRENT_SIM
 void load_currents()
