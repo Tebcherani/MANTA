@@ -16,40 +16,10 @@
 
 
 /*--- KVH DGC compass (kvh.c deleted) ---*/
-int ErrorKVH_DGC  = 0, StatusKVH_DGC  = 0,
-    UseKVH_DGC    = 0, MonitorKVH_DGC = 0;
+int UseKVH_DGC    = 0, MonitorKVH_DGC = 0;
 
 /*--- KVH DGI inclinometer (kvh.c deleted) ---*/
-int ErrorKVH_DGI  = 0, StatusKVH_DGI  = 0,
-    UseKVH_DGI    = 0, MonitorKVH_DGI = 0;
-
-/*--- Paroscientific pressure sensor (parosci.c deleted) ---*/
-int ErrorParosci  = 0, StatusParosci  = 0,
-    UseParosci    = 0, MonitorParosci = 0;
-
-/*--- Watchdog (watchdog.c deleted) ---*/
-int ErrorWatchdog  = 0, StatusWatchdog  = 0,
-    UseWatchdog    = 0, MonitorWatchdog = 0;
-
-/*--- Thruster (thruster.c deleted) ---*/
-int ErrorThruster  = 0, StatusThruster  = 0,
-    UseThruster    = 0, MonitorThruster = 0;
-
-/*--- Fins / rudder / elevator (fins.c deleted) ---*/
-int ErrorRudder    = 0, StatusRudder    = 0,
-    UseRudder      = 0, MonitorRudder   = 0;
-int ErrorElevator  = 0, StatusElevator  = 0,
-    UseElevator    = 0, MonitorElevator = 0;
-int HallEffectIndex = 0, FinHECalibrate = 0;
-
-/*--- CTD / SBE-25 (cond_temp.c deleted, SBE_25 defined for _SIMULATOR) ---*/
-int ErrorCondTemp  = 0, StatusCondTemp  = 0,
-    UseCondTemp    = 0, MonitorCondTemp = 0;
-
-
-/*--- WHOI latch (whoi_latch.c deleted, WHOI_LATCH defined for _SIMULATOR) ---*/
-int ErrorLatchMotor  = 0, StatusLatchMotor  = 0,
-    UseLatchMotor    = 0, MonitorLatchMotor = 0;
+int UseKVH_DGI    = 0, MonitorKVH_DGI = 0;
 
 /*----------------------------------------------------------------------*
  * heading_reference: simplified version for simulator use.

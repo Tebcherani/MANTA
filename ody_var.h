@@ -37,33 +37,18 @@ EXTERN char MissionFileName[60];
  | of hoping the problem was a temporary glitch
  *---------------------------------------------------------------------*/
 				/* kvh compass */
-extern int ErrorKVH_DGC, StatusKVH_DGC, UseKVH_DGC, MonitorKVH_DGC;
+extern int UseKVH_DGC, MonitorKVH_DGC;
 				/* kvh inclinometer */
-extern int ErrorKVH_DGI, StatusKVH_DGI, UseKVH_DGI, MonitorKVH_DGI;
-
-				/* Paroscientific Digiquartz */
-extern int ErrorParosci, StatusParosci, UseParosci, MonitorParosci;
+extern int UseKVH_DGI, MonitorKVH_DGI;
 
 				/* serial ascii instrumentation loop */
 EXTERN int ErrorSail1, StatusSail1, UseSail1, MonitorSail1;
-				/* MITSG Watchdog board */
-extern int ErrorWatchdog, StatusWatchdog, UseWatchdog, MonitorWatchdog;
-				/* MITSG thruster */
-extern int ErrorThruster, StatusThruster, UseThruster, MonitorThruster;
 
-				/* MITSG/WHOI fins */
-extern int ErrorRudder, StatusRudder, UseRudder, MonitorRudder;
-extern int ErrorElevator, StatusElevator, UseElevator, MonitorElevator;
-extern int HallEffectIndex, FinHECalibrate;
 				/* simulator mode */
 extern int UseSim, MonitorSim;
 
 EXTERN int MonitorDataLogging;
 EXTERN int MonitorLayeredControl;
-
-#ifdef WHOI_LATCH
-extern int ErrorLatchMotor, StatusLatchMotor, UseLatchMotor, MonitorLatchMotor;
-#endif
 
 #ifdef EDGEPS8000
 extern int LBLTransponderMode;  /* If mode = 0, then in pinger mode */
@@ -79,9 +64,6 @@ EXTERN int UseStarboard;
 EXTERN int UseOld200;
 EXTERN int AltimeterFrequency;	/* 500 vs 200 kHz (applies to new only) */
 
-#ifdef SBE_25
-extern int UseCondTemp, MonitorCondTemp, StatusCondTemp, ErrorCondTemp;
-#endif
 				/* whoi_usbl */
 #ifdef WHOI_USBL
 EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;

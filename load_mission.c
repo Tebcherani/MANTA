@@ -244,17 +244,14 @@ int read_flags( FILE *fptr )
 	{
 	    UseSim = value;
 	    fprintf( stderr, "UseSim               %d\n", value );
-	    UseAltimeter = UseWatchdog = UseThruster = UseElevator =
-		UseRudder = UseParosci = UseSail1 = UseKVH_DGI =
+	    UseAltimeter = UseSail1 = UseKVH_DGI =
 		UseKVH_DGC = 0;
 
 #if  defined _EDC
 	    UseEDC = 0;
 	    ErrorEDC = STATUS_NOT_SELECTED;
 #endif
-	    ErrorAltimeter = ErrorWatchdog = ErrorThruster = 
-		ErrorElevator = ErrorRudder = ErrorParosci = ErrorSail1 = 
-		ErrorKVH_DGI = ErrorKVH_DGC = STATUS_NOT_SELECTED;
+	    ErrorAltimeter = ErrorSail1 = STATUS_NOT_SELECTED;
 	    fprintf( stderr, "Entering on-board sim mode" 
 		     " disabling all other devices\n" );
 
@@ -273,48 +270,40 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 	if ( (sscanf(linebuf, "UseWatchdog %d", &value))==1) {
-	    UseWatchdog = value;
-	    fprintf(stderr, "UseWatchdog %d\n", UseWatchdog);
-	    fprintf(syslog, "UseWatchdog %d\n", UseWatchdog);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseWatchdog setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseWatchdog setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseThruster %d", &value))==1) {
-	    UseThruster = value;
-	    fprintf(stderr, "UseThruster %d\n", UseThruster);
-	    fprintf(syslog, "UseThruster %d\n", UseThruster);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseThruster setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseThruster setting: %d\n", value);
+    	continue;
 	}
 	if ( sscanf(linebuf, "FinHECalibrate %d", &value) == 1 )
 	{
-	    FinHECalibrate = value;
-	    fprintf(stderr, "FinHECalibrate %d\n", FinHECalibrate);
-	    fprintf(syslog, "FinHECalibrate %d\n", FinHECalibrate);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete FinHECalibrate setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete FinHECalibrate setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "HallEffectIndex %d", &value))==1) {
-	    HallEffectIndex = value;
-	    fprintf(stderr, "HallEffectIndex %d\n", HallEffectIndex);
-	    fprintf(syslog, "HallEffectIndex %d\n", HallEffectIndex);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete HallEffectIndex setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete HallEffectIndex setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseElevator %d", &value))==1) {
-	    UseElevator = value;
-	    fprintf(stderr, "UseElevator %d\n", UseElevator);
-	    fprintf(syslog, "UseElevator %d\n", UseElevator);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseElevator setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseElevator setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseRudder %d", &value))==1) {
-	    UseRudder = value;
-	    fprintf(stderr, "UseRudder   %d\n", UseRudder);
-	    fprintf(syslog, "UseRudder   %d\n", UseRudder);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseRudder setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseRudder setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseParosci %d", &value))==1) {
-	    UseParosci = value;
-                
-	    fprintf(stderr, "UseParosci  %d\n", UseParosci);
-	    fprintf(syslog, "UseParosci  %d\n", UseParosci);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseParosci setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseParosci setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseKVH_DGC %d", &value))==1) {
 	    UseKVH_DGC = value;
@@ -371,21 +360,17 @@ int read_flags( FILE *fptr )
 	}
 #endif
 
-#ifdef SBE_25
 	if ( (sscanf(linebuf, "UseCondTemp %d", &value))==1)
 	{
-	    UseCondTemp = value;
-	    fprintf(stderr, "UseCondTemp   %d\n", UseCondTemp);
-	    fprintf(syslog, "UseCondTemp   %d\n", UseCondTemp);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseCondTemp setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseCondTemp setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorCondTemp %d", &value))==1) {
-	    MonitorCondTemp = value;
-	    fprintf(stderr, "MonitorCondTemp   %d\n", MonitorCondTemp);
-	    fprintf(syslog, "MonitorCondTemp   %d\n", MonitorCondTemp);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorCondTemp setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorCondTemp setting: %d\n", value);
+    	continue;
 	}
-#endif /* SBE_25 */
 
 	if ( (sscanf(linebuf, "MonitorLayeredControl  %d", &value))==1) {
 	    MonitorLayeredControl = value;
@@ -404,34 +389,29 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorWatchdog %d", &value))==1) {
-	    MonitorWatchdog = value;
-	    fprintf(stderr, "MonitorWatchdog %d\n", MonitorWatchdog);
-	    fprintf(syslog, "MonitorWatchdog %d\n", MonitorWatchdog);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorWatchdog setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorWatchdog setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorThruster %d", &value))==1) {
-	    MonitorThruster = value;
-	    fprintf(stderr, "MonitorThruster %d\n", MonitorThruster);
-	    fprintf(syslog, "MonitorThruster %d\n", MonitorThruster);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorThruster setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorThruster setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorElevator %d", &value))==1) {
-	    MonitorElevator = value;
-	    fprintf(stderr, "MonitorElevator %d\n", MonitorElevator);
-	    fprintf(syslog, "MonitorElevator %d\n", MonitorElevator);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorElevator setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorElevator setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorRudder %d", &value))==1) {
-	    MonitorRudder = value;
-	    fprintf(stderr, "MonitorRudder   %d\n", MonitorRudder);
-	    fprintf(syslog, "MonitorRudder   %d\n", MonitorRudder);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorRudder setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorRudder setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorParosci %d", &value))==1) {
-	    MonitorParosci = value;
-	    fprintf(stderr, "MonitorParosci  %d\n", MonitorParosci);
-	    fprintf(syslog, "MonitorParosci  %d\n", MonitorParosci);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorParosci setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorParosci setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "Countdown %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete Countdown setting: %d\n", value);
@@ -592,17 +572,15 @@ int read_flags( FILE *fptr )
 #if defined WHOI_LATCH
 	if ( sscanf(linebuf, "UseLatchMotor %d", &value) == 1 )
 	{
-	    UseLatchMotor = value;
-	    sprintf( msg_buf, "UseLatchMotor   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseLatchMotor setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseLatchMotor setting: %d\n", value);
+    	continue;
 	}
 	if ( sscanf(linebuf, "MonitorLatchMotor %d", &value) == 1 )
 	{
-	    MonitorLatchMotor = value;
-	    sprintf( msg_buf, "MonitorLatchMotor   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete MonitorLatchMotor setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete MonitorLatchMotor setting: %d\n", value);
+    	continue;
 	}
 #endif /* WHOI_LATCH */
 
@@ -613,8 +591,6 @@ int read_flags( FILE *fptr )
 	    exit_gracefully( -1 );
 	}
     }
-    if ( UseThruster || UseWatchdog || UseElevator || UseRudder )
-	UseSail1 = 1;
     return 0;
 }
 
