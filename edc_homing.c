@@ -28,33 +28,5 @@
 
 int edc_homing( struct behavior *b, int priority, int level )
 {
-#ifdef _EDC
-    const int ElevGain = 0, AzimGain = 1, RangeCutout = 2, Speed = 3;
-
-                                /* Don't run this behavior if no lock */
-                                /* obtained */
-    if ( sensor(E_EDC_AXIAL_RANGE) > 10 )
-        return 0;
-                                /* If complete, shut vehicle down by */
-                                /* commanding zero speed */
-    if ( sensor(E_EDC_AXIAL_RANGE) < b->arg[RangeCutout].x)
-    {
-        vvp->c[priority].speed[0] = 0.0;
-        sprintf( msg_buf, "t=%.2f s: EDC_HOMING complete with axial "
-                "range value %.2f m\n", 0.001*millisec(),
-                sensor(E_EDC_AXIAL_RANGE) );
-        write_message( TERM | SLOG );
-        return 1;
-    }
-                                /* Load the output commands... */
-    vvp->c[priority].heading_mode = 1;
-    vvp->c[priority].depth_mode = 2;
-    vvp->c[priority].speed_mode = 1;
-  
-    vvp->c[priority].heading[0] = sensor(E_EDC_B_BEARING);
-    vvp->c[priority].depth[0] = sensor(E_EDC_B_INCLINATION);
-    vvp->c[priority].speed[0] = b->arg[Speed].x;
-
-#endif
     return 0;
 }

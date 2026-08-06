@@ -82,10 +82,6 @@ int dock( struct behavior *b, int priority, int level )
     else
 	cmd->speed[0] = 0.;
 
-#ifdef EDC_COUPLE		/* read the dummy load, if available */
-    if ( !ErrorLoad )
-	StatusLoad = read_dummy_load();
-#endif
     return 0;
 }
 

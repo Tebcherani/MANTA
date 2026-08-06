@@ -61,40 +61,8 @@ extern int UseSim, MonitorSim;
 EXTERN int MonitorDataLogging;
 EXTERN int MonitorLayeredControl;
 
-EXTERN int DebugMode; 
-EXTERN int CommsDebugMode; 
-EXTERN int TimingDebugMode;	/* send chars to a serial port for timing
-				   check */
-
-EXTERN int Countdown;		/* prior to start, in seconds */
-EXTERN int WatchdogTimeoutMinutes;
-EXTERN int WatchdogTimeoutHours;
-
-EXTERN double CommandedSpeed;
-EXTERN double CommandedDepth;
-EXTERN double CommandedHeading;
-EXTERN double CommandedHeadingDegrees;
-EXTERN int CommandedTime;
-
-EXTERN int UseKalmanFilter;
-
-#if defined _NRAD
-extern int ErrorNRaD, StatusNRaD, UseNRaD, MonitorNRaD;
-#elif defined _EDC		/* bamoran 08/22/95 */
-extern int ErrorEDC, StatusEDC, UseEDC, MonitorEDC;
-#endif
-
 #ifdef WHOI_LATCH
 extern int ErrorLatchMotor, StatusLatchMotor, UseLatchMotor, MonitorLatchMotor;
-#endif
-
-#ifdef AEL_BATCON		/* Al Bradley's battery controller */
-extern int ErrorBatCon, StatusBatCon, UseBatCon, MonitorBatCon;
-#endif
-
-
-#ifdef EDC_COUPLE		/* dummy load as of 10/30/96 */
-extern int ErrorLoad, StatusLoad, UseLoad, MonitorLoad;
 #endif
 
 #ifdef EDGEPS8000
@@ -115,26 +83,13 @@ EXTERN int AltimeterFrequency;	/* 500 vs 200 kHz (applies to new only) */
 extern int UseCondTemp, MonitorCondTemp, StatusCondTemp, ErrorCondTemp;
 #endif
 
-#ifdef SONTEK_ADV		/* SonTek ADV Ocean */
-extern int UseADV, MonitorADV, StatusADV, ErrorADV;
-#endif
-
 #ifdef PSA_916			/* Datasonics PSA_916 Altimeter */
 EXTERN int UsePSA, MonitorPSA, StatusPSA, ErrorPSA;
-#endif
-
-#ifdef ODY_CAMERA
-extern int Camera, CameraOnTime, CameraOffTime;
-extern int UseCamera, MonitorCamera, StatusCamera, ErrorCamera;
 #endif
 
 				/* whoi_usbl */
 #ifdef WHOI_USBL
 EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;
-#endif
-
-#ifdef ODY_SIDESCAN		/* IOS Doppler Sidescan Sonar */
-extern int UseSideScan, MonitorSideScan, StatusSideScan, ErrorSideScan;
 #endif
 
 #ifdef RDI_WH			/* RDI Workhorse ADCP */

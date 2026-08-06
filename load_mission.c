@@ -387,38 +387,20 @@ int read_flags( FILE *fptr )
 	}
 #endif /* SBE_25 */
 
-#if defined ODY_CAMERA
-	if ( (sscanf(linebuf, "UseCamera %d", &value))==1) {
-	    UseCamera = value;
-	    fprintf(stderr, "UseCamera   %d\n", UseCamera);
-	    fprintf(syslog, "UseCamera   %d\n", UseCamera);
-	    continue;
-	}
-	if ( (sscanf(linebuf, "MonitorCamera %d", &value))==1) {
-	    MonitorCamera = value;
-	    fprintf(stderr, "MonitorCamera   %d\n", MonitorCamera);
-	    fprintf(syslog, "MonitorCamera   %d\n", MonitorCamera);
-	    continue;
-	}
-	if ( (sscanf(linebuf, "CameraOnTime %d", &value))==1) {
-	    CameraOnTime = value;
-	    fprintf(stderr, "CameraOnTime   %d\n", CameraOnTime);
-	    fprintf(syslog, "CameraOnTime   %d\n", CameraOnTime);
-	    continue;
-	}
-	if ( (sscanf(linebuf, "CameraOffTime %d", &value))==1) {
-	    CameraOffTime = value;
-	    fprintf(stderr, "CameraOffTime   %d\n", CameraOffTime);
-	    fprintf(syslog, "CameraOffTime   %d\n", CameraOffTime);
-	    continue;
-	}
-#endif /* ODY_CAMERA */
 	if ( (sscanf(linebuf, "MonitorLayeredControl  %d", &value))==1) {
 	    MonitorLayeredControl = value;
 	    fprintf(stderr, "MonitorLayeredControl    %d\n", 
 		    MonitorLayeredControl);
 	    fprintf(syslog, "MonitorLayeredControl    %d\n", 
 		    MonitorLayeredControl);
+	    continue;
+	}
+	if ( (sscanf(linebuf, "MonitorDataLogging  %d", &value))==1) {
+	    MonitorDataLogging = value;
+	    fprintf(stderr, "MonitorDataLogging    %d\n", 
+		    MonitorDataLogging);
+	    fprintf(syslog, "MonitorDataLogging    %d\n", 
+		    MonitorDataLogging);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorWatchdog %d", &value))==1) {
@@ -452,75 +434,59 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 	if ( (sscanf(linebuf, "Countdown %d", &value))==1) {
-	    Countdown = value;
-	    fprintf(stderr, "Countdown   %d\n", Countdown);
-	    fprintf(syslog, "Countdown   %d\n", Countdown);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete Countdown setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete Countdown setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedTime %d", &value))==1) {
-	    CommandedTime = value;
-	    fprintf(stderr, "CommandedTime  %d\n", CommandedTime);
-	    fprintf(syslog, "CommandedTime  %d\n", CommandedTime);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete CommandedTime setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete CommandedTime setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedSpeed %lf", &dvalue))==1) {
-	    CommandedSpeed = dvalue;
-	    sprintf( msg_buf, "CommandedSpeed   %lf\n", dvalue );
-	    write_message( TERM | SLOG );
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete CommandedSpeed setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete CommandedSpeed setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedHeading %lf", &dvalue))==1) {
-	    CommandedHeading = dvalue;
-	    fprintf(stderr, "CommandedHeading  %lf\n", CommandedHeading);
-	    fprintf(syslog, "CommandedHeading  %lf\n", CommandedHeading);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete CommandedHeading setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete CommandedHeading setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedHeadingDegrees %lf", &dvalue))==1) {
-	    CommandedHeadingDegrees = dvalue;
-	    fprintf(stderr, "CommandedHeadingDegrees  %lf\n", 
-		    CommandedHeadingDegrees);
-	    fprintf(syslog, "CommandedHeadingDegrees  %lf\n", 
-		    CommandedHeadingDegrees);
-	    CommandedHeading = D2R(CommandedHeadingDegrees);
-	    fprintf(stderr, "CommandedHeading %lf\n", CommandedHeading);
-	    fprintf(syslog, "CommandedHeading %lf\n", CommandedHeading);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete CommandedHeadingDegrees setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete CommandedHeadingDegrees setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedDepth %lf", &dvalue))==1) {
-	    CommandedDepth = dvalue;
-	    fprintf(stderr, "CommandedDepth  %lf\n", CommandedDepth);
-	    fprintf(syslog, "CommandedDepth  %lf\n", CommandedDepth);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete CommandedDepth setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete CommandedDepth setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "DebugMode %d", &value))==1) {
-	    DebugMode = value;
-	    fprintf(stderr, "DebugMode  %d\n", DebugMode);
-	    fprintf(syslog, "DebugMode  %d\n", DebugMode);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete DebugMode setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete DebugMode setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "CommsDebugMode %d", &value))==1) {
-	    CommsDebugMode = value;
-	    fprintf(stderr, "CommsDebugMode  %d\n", CommsDebugMode);
-	    fprintf(syslog, "CommsDebugMode  %d\n", CommsDebugMode);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete CommsDebugMode setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete CommsDebugMode setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "TimingDebugMode %d", &value))==1) {
-	    TimingDebugMode = value;
-	    fprintf(stderr, "TimingDebugMode  %d\n", TimingDebugMode);
-	    fprintf(syslog, "TimingDebugMode  %d\n", TimingDebugMode);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete TimingDebugMode setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete TimingDebugMode setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "WatchdogTimeoutMinutes %d", &value))==1) {
-	    WatchdogTimeoutMinutes = value;
-	    fprintf(stderr, "WatchdogTimeoutMinutes %d\n", WatchdogTimeoutMinutes);
-	    fprintf(syslog, "WatchdogTimeoutMinutes %d\n", WatchdogTimeoutMinutes);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete WatchdogTimeoutMinutes setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete WatchdogTimeoutMinutes setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "WatchdogTimeoutHours %d", &value))==1) {
-	    WatchdogTimeoutHours = value;
-	    fprintf(stderr, "WatchdogTimeoutHours %d\n", WatchdogTimeoutHours);
-	    fprintf(syslog, "WatchdogTimeoutHours %d\n", WatchdogTimeoutHours);
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete WatchdogTimeoutHours setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete WatchdogTimeoutHours setting: %d\n", value);
+    	continue;
 	}
 	if (sscanf(linebuf, "InitDataFileSize %d", &value) == 1) {
     	fprintf(stderr, "Ignoring obsolete InitDataFileSize setting: %d\n", value);
@@ -528,26 +494,10 @@ int read_flags( FILE *fptr )
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseKalmanFilter %d", &value))==1) {
-	    UseKalmanFilter = value;
-	    fprintf(stderr, "UseKalmanFilter  %d\n", UseKalmanFilter );
-	    fprintf(syslog, "UseKalmanFilter  %d\n", UseKalmanFilter );
-	    continue;
+	    fprintf(stderr, "Ignoring obsolete UseKalmanFilter setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete UseKalmanFilter setting: %d\n", value);
+    	continue;
 	}
-#ifdef _EDC
-	if ( (tmp = sscanf(linebuf, "UseEDC %d",
-			   &value)) == 1 ) {
-	    UseEDC= value;
-	    fprintf(stderr, "UseEDC  %d\n", UseEDC );
-	    fprintf(syslog, "UseEDC  %d\n", UseEDC );
-	    continue;
-	}
-	if ( (sscanf(linebuf, "MonitorEDC %d", &value))==1) {
-	    MonitorEDC = value;
-	    fprintf(stderr, "MonitorEDC  %d\n", MonitorEDC );
-	    fprintf(syslog, "MonitorEDC  %d\n", MonitorEDC );
-	    continue;
-	}
-#endif
 	if ( (sscanf(linebuf, "MonitorSim %d", &value))==1)
 	{
 	    MonitorSim = value;
@@ -639,23 +589,6 @@ int read_flags( FILE *fptr )
 	}
 #endif
 
-#ifdef ODY_SIDESCAN
-	if ( sscanf(linebuf, "UseSideScan %d", &value) == 1 )
-	{
-	    UseSideScan = value;
-	    sprintf( msg_buf, "UseSideScan   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-	if ( sscanf(linebuf, "MonitorSideScan %d", &value) == 1 )
-	{
-	    MonitorSideScan = value;
-	    sprintf( msg_buf, "MonitorSideScan   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif
-
 #ifdef PSA_916
 	if ( sscanf(linebuf, "UsePSA %d", &value) == 1 )
 	{
@@ -689,57 +622,6 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 #endif /* RDI_WH */
-
-#ifdef SONTEK_ADV
-	if ( sscanf(linebuf, "UseADV %d", &value) == 1 )
-	{
-	    UseADV = value;
-	    sprintf( msg_buf, "UseADV   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-	if ( sscanf(linebuf, "MonitorADV %d", &value) == 1 )
-	{
-	    MonitorADV = value;
-	    sprintf( msg_buf, "MonitorADV %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif /* SONTEK_ADV */
-
-#ifdef AEL_BATCON
-	if ( sscanf(linebuf, "UseBatCon %d", &value) == 1 )
-	{
-	    UseBatCon = value;
-	    sprintf( msg_buf, "UseBatCon %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-	if ( sscanf(linebuf, "MonitorBatCon %d", &value) == 1 )
-	{
-	    MonitorBatCon = value;
-	    sprintf( msg_buf, "MonitorBatCon %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif /* AEL_BATCON */
-
-#ifdef EDC_COUPLE
-	if ( sscanf(linebuf, "UseLoad %d", &value) == 1 )
-	{
-	    UseSail1 = UseLoad = value;
-	    sprintf( msg_buf, "UseLoad   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-	if ( sscanf(linebuf, "MonitorLoad %d", &value) == 1 )
-	{
-	    MonitorLoad = value;
-	    sprintf( msg_buf, "MonitorLoad   %d\n", value );
-	    write_message( TERM | SLOG );
-	    continue;
-	}
-#endif /* EDC_COUPLE */
 
 #if defined WHOI_LATCH
 	if ( sscanf(linebuf, "UseLatchMotor %d", &value) == 1 )
