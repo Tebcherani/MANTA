@@ -9,6 +9,8 @@
 #include "diagnostic.h"
 #include "vehicle.h"
 
+#include "world_sim.h"
+
 #include "command_line.h"
 #include "odyssey_config.h"
 #include "odyssey_log.h"
@@ -18,7 +20,6 @@
 #include "sim_exit.h"
 #include "sim_log.h"
 #include "sim_state.h"
-#include "world_state.h"
 
 command_line_options_t options;
 
@@ -33,8 +34,8 @@ char DataFileName[ODY_PATH_MAX];
 int main(int argc, char *argv[]) {
     sim_config_t sim_config;
     sim_state_t sim_state;
-    world_state_t world_state;
     odyssey_state_t odyssey_state;
+    world_sim_t world_sim;
     world_step_request_t world_request;
     world_step_result_t world_result;
 
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     if (open_sim_log() != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_sim_config(&sim_config) != 0) exit_sim(EXIT_FAILURE, mission_started);
-    if (init_world_state(&world_state) != 0) exit_sim(EXIT_FAILURE, mission_started);
+    if (init_world_sim(&world_sim) != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (open_odyssey_log() != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_odyssey_config() != 0) exit_sim(EXIT_FAILURE, mission_started);
     init_data_structure();
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]) {
 
         // Update world state
         world_request.timestep = sim_config.timestep;
-        world_result = update_world_state(&world_state, &world_request);
+        world_result = step_world_sim(&world_sim, &world_request);
         if (world_result.status != 0) exit_sim(EXIT_FAILURE, mission_started);
         
         if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
