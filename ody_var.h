@@ -36,9 +36,6 @@ EXTERN char MissionFileName[60];
  | we could get in more trouble by simply turning the system off instead
  | of hoping the problem was a temporary glitch
  *---------------------------------------------------------------------*/
-				/* kvh inclinometer */
-extern int UseKVH_DGI, MonitorKVH_DGI;
-
 				/* serial ascii instrumentation loop */
 EXTERN int ErrorSail1, StatusSail1, UseSail1, MonitorSail1;
 

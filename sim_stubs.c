@@ -14,9 +14,6 @@
 #include "vehicle.h"
 #include "time.h"
 
-/*--- KVH DGI inclinometer (kvh.c deleted) ---*/
-int UseKVH_DGI    = 0, MonitorKVH_DGI = 0;
-
 /*----------------------------------------------------------------------*
  * heading_reference: simplified version for simulator use.
  *
