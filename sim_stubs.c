@@ -90,9 +90,8 @@ int remote_delay( struct behavior *b, int priority, int level )
  * which is guarded by "if (!UseLBL) return;" at entry.  They are
  * never reached in simulator mode but must exist for the linker.
  *======================================================================*/
-#include "ody_serio.h"
 
-/* timing stubs */
+ /* timing stubs */
 int hirestime( double *hires )
 {
     struct timespec ts;

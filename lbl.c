@@ -11,16 +11,11 @@
 #include <string.h>
 
 #include "diagnostic.h"
-#include "ody_serio.h"
 #include "vehicle.h"
 
 #if defined EDGEPS8000		/* EdgeTech PS8000 Transceiver */
 
 int ErrorLBL = STATUS_NOT_SELECTED, MonitorLBL, UseLBL;
 int LBLTransponderMode;
-
-				/* globals for serial i/o */
-static ody_dev_t dev = { "EdgeTech PS8000" };
-static serio_t serio = { EDGEPS8000, -1, B9600, N81, '\xa' };
 
 #endif /* EDGEPS8000, MITSG_LBL */

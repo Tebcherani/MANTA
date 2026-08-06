@@ -168,8 +168,6 @@ from which the simulator is launched.
 | File | Purpose |
 |---|---|
 | `Sim.cfg` | Simulator vehicle configuration for `edit_struct` |
-| `ody_serial.h` | Serial port types — retained because some headers include it; safe to ignore |
-| `ody_serio.h` | Serial I/O types — same as above |
 
 ---
 
