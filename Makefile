@@ -55,7 +55,6 @@ SRCS = \
     vehicle.c           \
     update.c            \
     diagnostic.c        \
-    fileman.c           \
     lbl.c               \
     lbl_nav.c           \
     waypoint.c          \

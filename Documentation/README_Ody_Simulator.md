@@ -112,7 +112,6 @@ from which the simulator is launched.
 | File | Purpose |
 |---|---|
 | `log_data.c` | Binary data file writer (`log_data()`, `init_data_logging()`) |
-| `fileman.h` | `fileman.c` prototypes |
 | `parse.c` | **Separate post-processing utility** — reads and converts data files for analysis |
 
 ### Navigation

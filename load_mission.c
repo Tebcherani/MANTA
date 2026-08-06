@@ -10,7 +10,6 @@
 #include <stdio.h>
 
 #include "diagnostic.h"
-#include "fileman.h"
 #include "odyssey_config.h"
 #include "paths.h"
 #include "vehicle.h"
@@ -523,11 +522,10 @@ int read_flags( FILE *fptr )
 	    fprintf(syslog, "WatchdogTimeoutHours %d\n", WatchdogTimeoutHours);
 	    continue;
 	}
-	if ( (sscanf(linebuf, "InitDataFileSize %d", &value))==1) {
-	    InitDataFileSize = value;
-	    fprintf(stderr, "InitDataFileSize  %u\n", InitDataFileSize);
-	    fprintf(syslog, "InitDataFileSize  %u\n", InitDataFileSize);
-	    continue;
+	if (sscanf(linebuf, "InitDataFileSize %d", &value) == 1) {
+    	fprintf(stderr, "Ignoring obsolete InitDataFileSize setting: %d\n", value);
+		fprintf(syslog, "Ignoring obsolete InitDataFileSize setting: %d\n", value);
+    	continue;
 	}
 	if ( (sscanf(linebuf, "UseKalmanFilter %d", &value))==1) {
 	    UseKalmanFilter = value;
