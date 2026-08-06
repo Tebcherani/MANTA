@@ -34,7 +34,6 @@ void exit_gracefully( int exit_status )
     write_message( TERM | SLOG );
 
 #ifdef ODY_MODEM
-    load_modem( msg_buf );   /* jleonard 6/28/96 */
     write_modem(); 
 #endif
 				/* 01/10/94 adding an "auto_parse" option */

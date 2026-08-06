@@ -10,11 +10,7 @@
 
 #include <stdio.h>
                                 /* main.c */
-void sighand( int );
 void exit_gracefully( int );
-int io();
-int init_io();
-void direct_control( void );
 void simple_dead_reckoning( void );
                                 /* update.c */
 void update( int, double );
@@ -30,43 +26,11 @@ double sgn( double value );
 void layered_control( void );
 void resolve( int priority );
 int shut_down( int );
-int load_modem( char *);
-int display_com( int, char *);
 int manage_time( struct behavior *b, double duration );
 double modPi( double );
 
 				/* load_mission.c */
-int load_state( char * );
 int match_sensor(const char *name);
-
-				/* thruster.c */
-int init_thruster( int );
-int control_thruster();
-
-				/* fins.c */
-int init_fin( int );
-int init_rudder( void );
-int init_elevator( void );
-int fin_command( int, double, char * );
-int rudder_command( double, char * );
-int elevator_command( double, char * );
-int control_fin( int,  double );
-int query_fin( int );
-int query_rudder();
-int query_elevator();
-int get_fin_location(int, int, int *);
-int reset_fin_glitch( int );
-int check_for_fin_glitch( int );
-int check_for_rudder_glitch();
-int check_for_elev_glitch();
-int query_fin_HE( int, int* );
-int get_fin_reply( int, int );
-
-				/* parosci.c */
-int init_parosci();
-double pres_depth( double, double );
-int read_parosci();
-void dump_parosci_buffer();
 
 				/* log_data.c */
 int log_data( FILE *datafile );
@@ -87,13 +51,11 @@ void motion( double *e, double *p, double Amps, double Del13,
 	     double Del24, double dt );
 void hydro( double *, double *, double, double, double, double );
 void fins( double *, double, double );
-void init_simulation();
 double thruster_torque( double real_amps, double w_speed );
 double thruster_force( double real_amps, double w_speed );
 double act_model( double des_angle, double angle, double dt );
 int    matinv( double a[][7], double ainv[][7], int n, double adum[][7] );
 double hysteresis( double, double, double, double, double );
-int get_hydro( );
 
 				/* sensor_load.c */
 void simSensors( void );
@@ -106,35 +68,5 @@ void load_water_speed( void );
 void load_sonar( void );
 void load_water_param( void );
 void simLBL4EKF();
-
-				/* function prototypes from nrad.c */
-int init_nrad_sensor();    
-int nrad_detect_mode();
-int nrad_track_mode();
-int read_nrad( int *x, int *y, int *v, int *d );
-
-				/* kvh.c */
-int init_kvh_dgc( );
-int init_kvh_dgi( );
-int convert_kvh_string( );
-int shut_down_kvh( );
-int read_kvh_dgc( void );
-int read_kvh_dgi( void );
-
-				/* network.c */
-int communicate();
-
-				/* sontek.c */
-#ifdef SONTEK_ADV
-int initialize_adv( void );
-int read_adv_ascii( void );
-int terminate_adv( void );
-#endif /* SONTEK */
-
-#ifdef PSA_916			/* Datasonics PSA-916 Altimeter */
-int init_psa916( void );
-int start_psa916( void );
-int read_psa916( void );
-#endif /* PSA_916 */
 
 #endif /* ODY_FUNC_H */
