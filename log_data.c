@@ -251,9 +251,6 @@ FILE *init_data_logging( char *DataFileName )
     sprintf( msg_buf, "\tdatafile: %s\n", DataFileName );
     write_message( TERM | SLOG );
 
-				/* preallocate file for efficiency */
-    set_filesize( datafile, InitDataFileSize );
-
 				/* version number */
     fprintf( datafile, "MIT_SG_AUV_LAB_v%d %s\xa", loggerVersion,
 	     VEHICLE_NAME );

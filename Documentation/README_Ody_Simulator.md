@@ -112,7 +112,6 @@ from which the simulator is launched.
 | File | Purpose |
 |---|---|
 | `log_data.c` | Binary data file writer (`log_data()`, `init_data_logging()`) |
-| `fileman.c` | Data file management (`set_filesize()`) |
 | `fileman.h` | `fileman.c` prototypes |
 | `parse.c` | **Separate post-processing utility** — reads and converts data files for analysis |
 
@@ -226,11 +225,6 @@ errors ("undefined reference") if any code in the simulator path actually
 references them. In practice they are guarded by `#ifdef` blocks and are
 unreachable in simulator mode, but verify by checking linker output carefully
 on first build.
-
-**3. `fileman.c` has an OS-9-only `set_filesize()` implementation.**
-The `#ifdef _OSK` block around `set_filesize()` means the function compiles to a
-no-op on Linux. Data files will grow unbounded rather than being pre-allocated.
-This is fine for development but worth noting for long missions.
 
 **4. `hirestime()` in `sim_main.c`.**
 This function is called once to record mission start time. Check whether it is

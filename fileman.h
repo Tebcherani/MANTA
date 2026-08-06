@@ -8,10 +8,6 @@
 #ifndef FILEMAN_H
 #define FILEMAN_H
 
-#include <stdio.h>
-
-int set_filesize( FILE *fp, unsigned sizeMB );
-
 extern unsigned InitDataFileSize; /* in MBytes */
 
 #endif /* FILEMAN_H */
