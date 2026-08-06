@@ -90,7 +90,8 @@ int main(int argc, char *argv[]) {
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
             simSensors();
-            sensor_processing();
+            simple_dead_reckoning();
+            LBL_position();
 	        apply_faults();
             layered_control();
             dynamic_control();

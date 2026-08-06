@@ -907,52 +907,6 @@ int i,j;
 }
 #endif
 
-
-/* jleonard 01/09/96 adding calc_rotation, because it is called 
-   by main in sensor_processing, even though 1) not sure why it is 
-   still used, and 2) sensor_load should contain only stuff need 
-   for the simulator, but this gets called all the time. */
-
-void calc_rotation_matrix( void )
-{
-    double psi, theta, phi;
-    double ct, cps, cph, st, sps, sph;
-				/* yaw, pitch and roll, respectively */
-    psi = sensor(M_YAW);
-    theta = sensor(M_PITCH);
-    phi = sensor(M_ROLL);
-
-/* To find the body frame representation of a vector in the
-   earth frame do:
-
-       xb[i] = vvp->rotation[i][0]*xe[0] + vvp->rotation[i][1]*xe[1] + 
-       vvp->rotation[i][2]*xe[2]
- */
-
-/* To find the earth frame representation of a vector in the
-   body frame do:
-
-       xe[i] = vvp->rotation[0][i]*xb[0] + vvp->rotation[1][i]*xb[1] +
-       vvp->rotation[2][i]*xb[2]
-*/
-
-                /* precalculate for efficiency */
-    ct = cos(theta);     cps = cos(psi);     cph = cos(phi);
-    st = sin(theta);     sps = sin(psi);     sph = sin(phi);
-
-    vvp->rotation[0][0] = cps*ct;
-    vvp->rotation[0][1] = ct*sps;
-    vvp->rotation[0][2] = -st;
-  
-    vvp->rotation[1][0] = -cph*sps + cps*sph*st;
-    vvp->rotation[1][1] = cph*cps + sph*sps*st;
-    vvp->rotation[1][2] = ct*sph; 
-    
-    vvp->rotation[2][0] = sph*sps + cph*cps*st;
-    vvp->rotation[2][1] = -cps*sph + cph*sps*st;
-    vvp->rotation[2][2] = cph*ct;
-}
-
 /* Added 05-20-96 by JSWillcox */
 #ifdef USE_CURRENT_SIM
 void load_currents()
@@ -960,17 +914,6 @@ void load_currents()
     sim_current();
 }
 #endif
-
-
-/*-------------------------------------------------------------------------
-  sensor_processing
-  -----------------------------------------------------------------------*/
-
-void sensor_processing( void )
-{
-    simple_dead_reckoning();
-    LBL_position();
-}
 
 
 /*-----------------------------------------------------------------------*

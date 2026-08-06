@@ -105,9 +105,7 @@ void load_depth( void );
 void load_water_speed( void );
 void load_sonar( void );
 void load_water_param( void );
-void calc_rotation_matrix( void );
 void simLBL4EKF();
-void sensor_processing( void );
 
 				/* function prototypes from nrad.c */
 int init_nrad_sensor();    
