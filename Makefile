@@ -37,7 +37,6 @@ SRCS = \
     src/Odyssey/odyssey_nav.c               \
     src/Odyssey/odyssey_sensors.c           \
     src/Odyssey/odyssey_sim.c               \
-    src/Odyssey/odyssey_state.c             \
     src/Simulation/sim_behavior_logger.c    \
     src/Simulation/sim_config.c             \
     src/Simulation/sim_exit.c               \

@@ -16,7 +16,6 @@
 #include "odyssey_mission.h"
 #include "odyssey_model.h"
 #include "odyssey_sim.h"
-#include "odyssey_state.h"
 #include "sim_behavior_logger.h"
 #include "sim_config.h"
 #include "sim_exit.h"
@@ -36,7 +35,6 @@ char DataFileName[ODY_PATH_MAX];
 int main(int argc, char *argv[]) {
     sim_config_t sim_config;
     sim_state_t sim_state;
-    odyssey_state_t odyssey_state;
 
     int mission_started = 0;
 
@@ -62,7 +60,7 @@ int main(int argc, char *argv[]) {
     write_to_sim_log("Mission loaded: %d states, current state %d\n", vvp->nstates, vvp->cstate);
 
     if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) exit_sim(EXIT_FAILURE, mission_started);
-    if (init_odyssey_state(&odyssey_state) != 0) exit_sim(EXIT_FAILURE, mission_started);
+    if (init_odyssey_sim() != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) exit_sim(EXIT_FAILURE, mission_started);
     lhs();  // Initialize Odyssey dynamics
 
@@ -79,7 +77,7 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS, mission_started);
         }
 
-        if (update_odyssey_state(&odyssey_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
+        if (update_odyssey_state(sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
             if (update_odyssey_cycle() != 0) {
