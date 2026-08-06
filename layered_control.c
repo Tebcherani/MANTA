@@ -1320,7 +1320,7 @@ int stack_busy( struct command *cmd )
 |                                                      
 |   J. G. Bellingham, 3/10/94                                                
   -------------------------------------------------------------------------- */
-int shut_down( int priority )
+void shut_down( int priority )
 {
     vvp->c[priority].heading_mode = -1;
     vvp->c[priority].depth_mode = -1;

@@ -40,4 +40,6 @@ int simulate_usbl( void )
 	update(M_USBL_ELEVATION, elev);
     }
 #endif /* WHOI_USBL */
+
+    return 0;
 }

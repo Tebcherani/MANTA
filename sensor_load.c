@@ -558,10 +558,8 @@ void simLBL4EKF()
 /* ============================================================ */
 /* Display & clear modem send string.                           */
 
-int handle_modem()
+int handle_modem(void)
 {
-    static int init=0;
-    int status;
     int monitor_high_level_control = 0;
 
     if( strlen(vvp->modem_send) > 0 )
@@ -571,6 +569,8 @@ int handle_modem()
 	write_message( monitor_high_level_control );
 	strcpy( vvp->modem_send, "" ); 
     }
+
+    return 0;
 }
 
 #ifdef USE_KVH

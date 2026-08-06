@@ -9,6 +9,8 @@
 #define ODY_FUNC_H
 
 #include <stdio.h>
+
+struct behavior;
                                 /* main.c */
 void exit_gracefully( int );
 void simple_dead_reckoning( void );
@@ -25,7 +27,7 @@ double sgn( double value );
                                 /* layered_control.c */
 void layered_control( void );
 void resolve( int priority );
-int shut_down( int );
+void shut_down( int );
 int manage_time( struct behavior *b, double duration );
 double modPi( double );
 

@@ -102,6 +102,8 @@ int log_data( FILE *datafile )
 
     last_elapsed_time = (float) (millisec() - my_start_time);
     last_log_time = sensor_time(M_PRESENT_TIME);
+
+    return 0;
 }
 
 
