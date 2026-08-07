@@ -317,35 +317,6 @@ void sim_bottom(void)
 
     if ( once ) {
         once = 0;
-        if (Bottom_Type == TRENCH_BOTTOM) {
-            sprintf(msg_buf, "SIM_BOTTOM: Using MATH_BOTTOM - TRENCH\n");
-            write_message( TERM | SLOG );
-        }
-        else if (Bottom_Type == CHIRP_BOTTOM) {
-            sprintf(msg_buf, "SIM_BOTTOM: Using MATH_BOTTOM - CHIRP\n");
-            write_message( TERM | SLOG );
-        }
-        else if (Bottom_Type == SINE_BOTTOM) {
-            sprintf(msg_buf, "SIM_BOTTOM: Using MATH_BOTTOM - "
-                    "SINE WAVE\n");
-            write_message( TERM | SLOG );
-        }
-        else if (Bottom_Type == MATH_FILEBOTTOM) {
-            sprintf(msg_buf, "SIM_BOTTOM: Using MATH_FILEBOTTOM\n");
-            write_message( TERM | SLOG );
-        }
-        else if (Bottom_Type == FILE_BOTTOM) {
-            sprintf(msg_buf, "SIM_BOTTOM: Using FILE_BOTTOM\n");
-            write_message( TERM | SLOG );
-        }
-        else if (Bottom_Type == HISTORICAL_BOTTOM) {
-            sprintf(msg_buf, "SIM_BOTTOM: Using HISTORICAL_BOTTOM\n");
-            write_message( TERM | SLOG );
-        }
-        else {
-            sprintf(msg_buf, "SIM_BOTTOM: Unknown Bottom Type\n");
-            write_message( TERM | SLOG );
-        }
     }
 /*
  * Altimeter location in local and global coords.  Needed to determine ray
@@ -393,9 +364,6 @@ void sim_bottom(void)
             else if ( contact == -1 )  /* We overshot and need to back up. */
                 AltTip.Z = AltTip.Z - resolution;
             else {                     /* Something went wrong. */
-                sprintf(msg_buf, "SIM_BOTTOM: Sonar Range Error."
-                        "contact = %d\n", contact);
-                write_message( TERM | SLOG );
                 exit_gracefully( -1 );
             }
         }
@@ -504,9 +472,6 @@ static int math_bottom(void)
             OnceFlag = 0;
                 MathFile = getenv("MATHFILE");
                 if(MathFile == NULL) {
-                  sprintf(msg_buf, "SIM_BOTTOM (math_bottom): No Bottom File "
-                                  "Specified.  Using built in trench coordinates.\n");
-                  write_message( TERM | SLOG );
                   Trench = (struct trench_struct *) calloc( 1, 
                                                                                   sizeof(struct trench_struct) );
                   dd = (double *) calloc( 1, sizeof(double));
@@ -550,17 +515,9 @@ static int math_bottom(void)
                                         Trench[0].X2, Trench[0].Y2, slope[0], intercept[0]);
                   }
                   if( fabs(intercept[0] - dummy) >= 0.01) {
-                        sprintf(msg_buf, "SIM_BOTTOM: *** Error in slope "
-                                        "calculation! ***\nA1 intercept = %.2lf, A2 intercept"
-                                        " = %.2lf, diff = %.4lf\n", intercept[0], dummy, 
-                                        (intercept[0] - dummy));
-                        write_message( TERM | SLOG );
                         exit(0);
                   }
                 } else {
-                  sprintf(msg_buf, "SIM_BOTTOM (math_bottom): The bottom file"
-                                  " is %s\n", MathFile);
-                  write_message( TERM | SLOG );
                   trenchfile = fopen( MathFile, "r" );
                   if( !trenchfile ) {
                         perror( MathFile );
@@ -612,9 +569,6 @@ static int math_bottom(void)
                         intercept[i] = Trench[i].X1 - slope[i]*Trench[i].Y1;
                         dummy = Trench[i].X2 - slope[i]*Trench[i].Y2;
                         if( fabs(intercept[i] - dummy) >= 0.01) {
-                          sprintf(msg_buf, "SIM_BOTTOM (math multi-trench): ***"
-                                          " Error in slope calculation! ***\n");
-                          write_message( TERM | SLOG );
                           exit(0);
                         }
                   }
@@ -743,17 +697,10 @@ static int math_bottom(void)
             Alt_Return = MAX_RANGE;
             if ( coll_flag ) {
                 coll_flag = 0;
-                sprintf(msg_buf, "SIM_BOTTOM: *** Collision! "
-                        "(Mission time = %.2lf sec)\n", 
-                        read_sensor(M_PRESENT_TIME));
-                write_message( TERM | SLOG );
             }
         }
         else {
             if ( coll_flag == 0 ) {
-                sprintf(msg_buf, "SIM_BOTTOM: Off of bottom. (Mission "
-                        "time = %.2lf sec)\n", read_sensor(M_PRESENT_TIME));
-                write_message( TERM | SLOG );
                 coll_flag = 1;
             }
             Alt_Return = ray_mag( &TempVect );
@@ -803,10 +750,6 @@ static int file_bottom( void )
          Alt_Return = RealWaterColumn - RealPos.Z;
         }
         if( (debug != 0) && (counter == 100) ) {
-            sprintf(msg_buf, "SIM_BOTTOM: t = %.2lf, Depth = %.2lf at"
-                    " North = %.2lf, East = %.2lf.\n", read_sensor(M_PRESENT_TIME),
-                    RealWaterColumn, RealPos.X, RealPos.Y);
-            write_message( TERM );
             counter = 0;
         } else counter++;
     }
@@ -866,15 +809,6 @@ static int file_bottom( void )
                                         DETECT_THRESH ) {
                                   if (beam_pattern(&Facet_Ray[k]) >= 
                                           DETECT_THRESH ) {
-                                        if(RealPos.pitch >= (10.0 * PI/180.0)) {
-                                          sprintf(msg_buf, "Pitch = %.2lf,"
-                                                          " Incident angle = %.2lf, "
-                                                          "Intensity = %.2lf\n", 
-                                                          (RealPos.pitch*180/PI), 
-                                                          (minray.phi_t*180/PI), 
-                                                          minray.intensity);
-                                          write_message( TERM | SLOG );
-                                        }
                                         continue;
                                   } else Facet_Ray[k].mag = -1.0;
                                 } else Facet_Ray[k].mag = -1.0;
@@ -938,12 +872,6 @@ static int file_bottom( void )
           } else {
                 Alt_Return = -1.0;
           }
-
-
-/* if(RealPos.pitch >= (10.0 * PI/180.0))
-   sprintf(msg_buf, "Pitch = %.2lf, Incident angle = %.2lf, "
-   "Intensity = %.2lf\n", RealPos.pitch, minray.phi_t, minray.intensity);
-   write_message( TERM | SLOG ); */
         } /* end of if(mode == DETAILED) section */
     return(0);
 } /* END OF FILE_BOTTOM */
@@ -1127,9 +1055,6 @@ int get_plane(struct triangle_struct *Tri, int k)
     Zn = (P2->X - P1->X) * (P3->Y - P1->Y) - (P2->Y - P1->Y) * (P3->X - P1->X);
     ray_len = sqrt(Xn * Xn + Yn * Yn + Zn * Zn);
     if(ray_len == 0.0) {
-        sprintf(msg_buf, "SIM_BOTTOM: *** ERROR *** \nSIM_BOTTOM: Invalid"
-                " facet loaded into get_plane. normal = 0\n");
-        write_message( TERM | SLOG );
         exit_gracefully(-1);
     }
 
@@ -1241,11 +1166,6 @@ double get_range(struct triangle_struct *Tri, struct ray_struct *xducer, struct 
     if (debug == RAYCOMP) {
         fooX = fabs(RealPos.X - Tri->Xc);
         fooY = fabs(RealPos.Y - Tri->Yc);
-        if( (fooX <= delta ) && (fooY <= delta ) ) {
-            sprintf(msg_buf, "k = %d within %.2lf meters of vehicle "
-                    "position.\n", k, delta);
-            write_message( TERM | SLOG );
-        }
     }
 
     return(ray_d);
@@ -1349,10 +1269,6 @@ double beam_pattern( struct ray_struct *fac_ray )
         temp2 = (2.0 * bessj1(temp1 * sin(fac_ray->phi_t))) / 
             ( temp1 * sin(fac_ray->phi_t) );
         loss =  10.0 * log10( (temp2 * temp2) );
-/*      sprintf(msg_buf, "SIM_BOTTOM: Time = %.2lf, Loss = %.2lf\n ", 
-        read_sensor(M_PRESENT_TIME), loss);
-        write_message( TERM | SLOG );
-*/
     }
     fac_ray->intensity = fac_ray->intensity + loss;
     return(fac_ray->intensity);
@@ -1513,14 +1429,8 @@ int load_data( void )
         
     Seabed = getenv("BOTTOMFILE");
     if(Seabed == NULL) {
-          sprintf(msg_buf, "SIM_BOTTOM: No Bottom File Specified."
-                          "Using env/bottomfile.\n");
-          write_message( TERM | SLOG );
           Seabed = "env/bottomfile";
-    } else {
-          sprintf(msg_buf, "SIM_BOTTOM: The bottom file is %s\n", Seabed);
-          write_message( TERM | SLOG );
-    }
+    } 
     bottomfile = fopen( Seabed, "r" );
     if( !bottomfile ) { 
           perror( Seabed );
@@ -1528,14 +1438,8 @@ int load_data( void )
     }
     conv = fscanf(bottomfile, ":%s ", filetype );
     if (strncmp(filetype,"Implicit", 8) == 0) {
-          sprintf(msg_buf,  "SIM_BOTTOM: Reading in an Implicit Array"
-                          "Bottom File.\n");
-          write_message( TERM | SLOG );
           conv = fscanf(bottomfile, "%d %d %d:", &bytecount,  &nrows,  &ncols );
           if ( conv != 3 ) {
-            sprintf(msg_buf,  "%s: Implicit file format error\n",  
-                                Seabed );
-            write_message( TERM | SLOG );
             exit( -1 );
           }
 /*
@@ -1556,50 +1460,13 @@ int load_data( void )
                   tempinput[k][2] = GlobalBottom[k].Y;
                   k++;
             }
-/*
-            tempinput[0][0] = 0.0;
-            tempinput[0][1] = 0.0;
-            tempinput[1][0] = 2.0;
-            tempinput[1][1] = 0.0;
-            tempinput[2][0] = 2.0;
-            tempinput[2][1] = 2.0;
-            tempinput[3][0] = 0.0;
-            tempinput[3][1] = 2.0;
-
-            sprintf(msg_buf, "SIM_BOTTOM: Creating Delaunay Triangulation"
-                                 " Bottom File.\n");
-            write_message( TERM | SLOG );
-            n_input = 4;
-            delaunay_triangulate(&tempinput, &n_input, &tempoutput, &n_output);
- 
-            printf("n_output = %d\n", n_output);
-            for (i = 0; i < n_output; i++) {
-                printf("triple: [%d %d %d]\n", 
-                       tempoutput[i][0], 
-                       tempoutput[i][1],
-                       tempoutput[i][2]);
-            }
-*/
           }
     } else if(strncmp(filetype,"XYZ", 3) == 0) {
-          if(debug == LOADDATA) {
-            sprintf(msg_buf, "SIM_BOTTOM: XYZ strncmp returns %d\n", 
-                                strncmp(filetype,"XYZ", 3));
-            write_message( TERM | SLOG );
-          }
-          sprintf(msg_buf,  "SIM_BOTTOM: Reading in an XYZ Array Bottom"
-                          " File.\n");
-          write_message( TERM | SLOG );
           conv = fscanf(bottomfile, "%d:", &nrows );
           if ( conv != 1 ) {
-            sprintf(msg_buf,  "%s: XYZ file format error\n",  Seabed );
-            write_message( TERM | SLOG );
             return(-1);
           }
           if(nrows > MAXROWS) {
-            sprintf(msg_buf, 
-                                "SIM_BOTTOM: Input File is Too Large.  Resize Limits\n");
-            write_message( TERM | SLOG );
             return(-1);
           }
 /*
@@ -1611,35 +1478,16 @@ int load_data( void )
             fscanf(bottomfile,"%lf%lf%lf", 
                            GlobalBottom[i].X, GlobalBottom[i].Y, GlobalBottom[i].Z);
     } else if(strncmp(filetype,"TRIANG", 6) == 0) {
-          if(debug == LOADDATA) {
-            sprintf(msg_buf, "SIM_BOTTOM: TRIANG strncmp returns %d\n",
-                                strncmp(filetype,"TRIANG", 6));
-            write_message( TERM | SLOG );
-          }
-          sprintf(msg_buf,  
-                          "SIM_BOTTOM: Reading in a pre-triangulated array bottom "
-                          "file.\n");
-          write_message( TERM | SLOG );
           TriangFlag = TRUE;
 /*
  * Read number of nodes.
  */
           conv = fscanf(bottomfile, "%d:", &nrows );
           if ( conv != 1 ) {
-            sprintf(msg_buf,  "%s: TRIANG file format error (nrows)\n",
-                                Seabed );
-            write_message( TERM | SLOG );
             return(-1);
           }
           if (nrows > MAXROWS) {
-            sprintf(msg_buf, 
-                                "SIM_BOTTOM: Input File is Too Large.  Resize Limits\n");
-            write_message( TERM | SLOG );
             return(-1);
-          } else {
-            sprintf(msg_buf, "SIM_BOTTOM: nrows (data points) = %d\n", 
-                                nrows );
-            write_message( TERM | SLOG );
           }
 /*
  * Create the bottom array to hold the data points.
@@ -1683,11 +1531,6 @@ int load_data( void )
           for(i = 1; i <= nrows; i++)
             for( j = 1; j <= Order[i].adjs; j++) {
                   conv = fscanf(bottomfile, " %d", &(Order[i].node[j]));
-                  if (conv != 1) {
-                        sprintf(msg_buf, "SIM_BOTTOM: error reading input"
-                                        " node [%d][%d]. fscanf returns %d\n", i, j, conv );
-                        write_message( TERM | SLOG );
-                  }
             }
 /*
  *   Run through the triangles, just to be sure we're getting them correctly.
@@ -1708,38 +1551,13 @@ int load_data( void )
                   if ( j == (Order[i].adjs-1) ) {
                     if (Order[i].node[j+1] != 0) {
                           num_triangles++;
-                          if(debug == LOADDATA) {
-                            sprintf(msg_buf, "Triangle[%d] = %d %d %d\n", 
-                                                num_triangles, i, Order[i].node[j], 
-                                                Order[i].node[j+1] );
-                            write_message( TERM | SLOG );
-                          }
                           num_triangles++;
-                          if(debug == LOADDATA) {
-                            sprintf(msg_buf, "Triangle[%d] = %d %d %d\n", 
-                                                num_triangles, i, Order[i].node[j+1], 
-                                                Order[i].node[1] );
-                            write_message( TERM | SLOG );
-                          }
-                    } else
-                          if(debug == LOADDATA) {
-                            sprintf(msg_buf, "node[%d] is EDGE\n", i);
-                            write_message( TERM | SLOG );
-                          }
+                    } 
                   } else {
                     num_triangles++;
-                    if(debug == LOADDATA) {
-                          sprintf(msg_buf, "Triangle[%d] = %d %d %d\n",
-                                          num_triangles, i, Order[i].node[j], 
-                                          Order[i].node[j+1]);
-                          write_message( TERM | SLOG );
-                    }
                   }
             }
           }
-          sprintf(msg_buf, "SIM_BOTTOM: %d triangles created.\n", 
-                          num_triangles);
-          write_message( TERM | SLOG );
           Triangle = (struct triangle_struct *) calloc( num_triangles+1, 
                                                         sizeof(struct triangle_struct) );
 /*
@@ -1769,9 +1587,6 @@ int load_data( void )
             }
           }
     } else {
-          sprintf(msg_buf,"SIM_BOTTOM: *** Unrecognized File Type.  "
-                          "Aborting. ***\n");
-          write_message( TERM | SLOG );
           return(-1);
     }
     if( debug == EXTRAFILE ){
@@ -1788,9 +1603,6 @@ int load_data( void )
                                 GlobalBottom[Triangle[i].P3].Y,
                                 GlobalBottom[Triangle[i].P3].Z);
           }
-          sprintf(msg_buf, "SIM_BOTTOM: Triangle File Written as"
-                          " Tri_Charles.dat\n");
-          write_message( TERM | SLOG );
           i = fclose( trifile );
     }
     return(0);
@@ -1839,32 +1651,18 @@ double triangle_search(struct state_vect *RealPos)
             if( temp1 >= 0.0 ) {
                 if( Order[i].node[j] != 0 ) j++;
                 else { 
-                    sprintf(msg_buf, "SIM_BOTTOM1: Vehicle is outside"
-                            " of Data Field.  T = %.2lf\nSIM_BOTTOM:"
-                            " RealPos.X = %.2lf, RealPos.Y = %.2lf\n", time,
-                            RealPos->X, RealPos->Y);
-                    write_message( TERM | SLOG );
                     exit_gracefully(-1);
                 }
             }
             else if( temp2 >= 0.0 ) {
                 if( Order[i].node[j+1] != 0 ) j++;
                 else { 
-                    sprintf(msg_buf, "SIM_BOTTOM2: Vehicle is outside"
-                            " of Data Field.  T = %.2lf\nSIM_BOTTOM (triangle_search):"
-                            " RealPos.X = %.2lf, RealPos.Y = %.2lf\n", time,
-                            RealPos->X, RealPos->Y);
-                    write_message( TERM | SLOG );
                     exit_gracefully(-1);
                 }
             }
             else if( temp3 >= 0.0 ) {
                 if( Order[i].node[j+1] != 0 ) j++;
                 else { 
-
-                    sprintf(msg_buf, "SIM_BOTTOM3: Vehicle is outside"
-                            " of Data Field.  T = %.2lf\n", time);
-                    write_message( TERM | SLOG );
                     exit_gracefully(-1);
                 }
             }
@@ -1955,9 +1753,6 @@ double bottom_collision(struct state_vect *RealPos)
     minnode.dist = MAX_RANGE;
     time = read_sensor(M_PRESENT_TIME);
 
-    sprintf(msg_buf, "SIM_BOTTOM(collison): T = %.2lf\n", time);
-    write_message( TERM | SLOG );
-
     if( Near_Node == -1 ) start = 1;
     else start = Near_Node;
     start = 1;
@@ -1987,11 +1782,6 @@ double bottom_collision(struct state_vect *RealPos)
                     if( Order[i].node[j] != 0 )
                         j++;
                     else { 
-                        sprintf(msg_buf, "SIM_BOTTOM(collison): Vehicle"
-                                " is outside of Data Field.  T = %.2lf\n"
-                                "SIM_BOTTOM: RealPos.X = %.2lf, RealPos.Y"
-                                " = %.2lf\n", time, RealPos->X, RealPos->Y);
-                        write_message( TERM | SLOG );
                         exit_gracefully(-1);
                     }
                 }
@@ -1999,11 +1789,6 @@ double bottom_collision(struct state_vect *RealPos)
                     if( Order[i].node[j+1] != 0 ) 
                         j++;
                     else { 
-                        sprintf(msg_buf, "SIM_BOTTOM(collison): Vehicle"
-                                " is outside of Data Field.  T = %.2lf\n",
-                                "SIM_BOTTOM: RealPos.X = %.2lf, RealPos.Y"
-                                " = %.2lf\n", time, RealPos->X, RealPos->Y);
-                        write_message( TERM | SLOG );
                         exit_gracefully(-1);
                     }
                 }
@@ -2011,11 +1796,6 @@ double bottom_collision(struct state_vect *RealPos)
                     if( Order[i].node[j+1] != 0 ) 
                         j++;
                     else { 
-                        sprintf(msg_buf, "SIM_BOTTOM(collison): Vehicle"
-                                " is outside of Data Field.  T = %.2lf\n",
-                                "SIM_BOTTOM: RealPos.X = %.2lf, RealPos.Y"
-                                " = %.2lf\n", time, RealPos->X, RealPos->Y);
-                        write_message( TERM | SLOG );
                         exit_gracefully(-1);
                     }
                 }
@@ -2043,10 +1823,6 @@ double bottom_collision(struct state_vect *RealPos)
         update_sensor( CONTACT_NODE_DIST, minnode.dist );
         update_sensor( CONTACT_NODE_COMP, minnode.compliance );
 */
-    }
-    if( minnode.dist <= 0.0 ) {
-        sprintf(msg_buf, "SIM_BOTTOM: *** COLLISION WITH BOTTOM ***\n");
-        write_message( TERM | SLOG );
     }
     return( minnode.dist );
 }
