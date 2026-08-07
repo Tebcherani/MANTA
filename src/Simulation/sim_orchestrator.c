@@ -11,7 +11,7 @@
 
 #include "command_line.h"
 #include "odyssey_config.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "odyssey_data_logger.h"
 #include "odyssey_log.h"
 #include "odyssey_mission.h"

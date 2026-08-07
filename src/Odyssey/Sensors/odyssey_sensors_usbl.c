@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "angle_utils.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "vehicle.h"
 
 int update_usbl_sensor(void) {

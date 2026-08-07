@@ -1,5 +1,5 @@
 #include "ody_defs.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "odyssey_sensors.h"
 #include "vehicle.h"
 

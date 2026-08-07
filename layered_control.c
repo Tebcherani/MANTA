@@ -23,7 +23,7 @@
 #include "common_defs.h"
 #include "diagnostic.h"		/* MITSG */
 #include "vehicle.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "odyssey_log.h"
 #include "angle_utils.h"
 

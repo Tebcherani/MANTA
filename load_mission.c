@@ -12,7 +12,7 @@
 
 #include "diagnostic.h"
 #include "odyssey_config.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "paths.h"
 #include "vehicle.h"
 #include "odyssey_log.h"

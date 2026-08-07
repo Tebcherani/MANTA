@@ -4,7 +4,7 @@
 
 #include "common_defs.h"
 #include "diagnostic.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "vehicle.h"
 
 int assign_behavior_fcn_ptr(const char *name, struct behavior *b);

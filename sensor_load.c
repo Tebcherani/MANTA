@@ -13,7 +13,7 @@
 
 #include "common_defs.h"
 #include "diagnostic.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "vehicle.h"
 
 static int MonitorLBLSim = 2;	/* output to logfile */

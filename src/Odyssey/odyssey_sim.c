@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "odyssey_control.h"
-#include "odyssey_data.h"
+#include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "odyssey_nav.h"
 #include "odyssey_sensors.h"

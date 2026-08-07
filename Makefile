@@ -35,8 +35,8 @@ SRCS = \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c    \
     src/Odyssey/odyssey_config.c                        \
     src/Odyssey/odyssey_control.c                       \
-    src/Odyssey/odyssey_data.c                          \
     src/Odyssey/odyssey_data_logger.c                   \
+    src/Odyssey/odyssey_data_struct.c                   \
     src/Odyssey/odyssey_log.c                           \
     src/Odyssey/odyssey_mission.c                       \
     src/Odyssey/odyssey_model.c                         \

@@ -1,8 +1,8 @@
-#ifndef ODYSSEY_DATA_H
-#define ODYSSEY_DATA_H
+#ifndef ODYSSEY_DATA_STRUCT_H
+#define ODYSSEY_DATA_STRUCT_H
 
 int init_data_structure(void);
 void update(int index, double value);
 void update_add(int index, double value);
 
-#endif /* ODYSSEY_DATA_H */
+#endif /* ODYSSEY_DATA_STRUCT_H */
