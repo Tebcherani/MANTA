@@ -20,12 +20,7 @@
 #define drand48() ((double)rand()/RAND_MAX)
 #endif
 
-#define USE_KVH 1 /* comment out to use sensor_AHRS.c + modify makefile */
 /* #define KALMAN_LBL 1 /* comment out to have all tofs output together */
-
-#define G        (double) 9.81
-
-/* all these globals should be replaced with entries in vvv in future */
 
 /* Earths magnetic field orientation... bx,by,bz are northerly easterly,
    and downward components in gauss intensity = 0.55 Gauss, inclination =
@@ -51,11 +46,9 @@ void load_magnetic();
 void load_water_param();
 double gasdev();
 
-#ifdef USE_KVH
-  void load_compass();
-  void load_inclinometers(double,double); 
-  void low_pass_filter(double[2],double[2]);
-#endif
+void load_compass();
+void load_inclinometers(double,double); 
+void low_pass_filter(double[2],double[2]);
 
 double mr[4][4];
 
@@ -105,10 +98,7 @@ void init_rotation(void)
 ** (JV 6/13/95) changed computation of acceleration to avoid using
 ** the rotation matrix twice (used the direct expression of accel)
 */
-
-#ifdef USE_KVH
 double aax,aay; /* JV 5/30 to simulate flux gate compass measurements */
-#endif
 
 void load_accel(void)
 {
@@ -131,33 +121,19 @@ void load_accel(void)
     ay = vdot + r*u-p*w + rdot*dx-pdot*dz - (p*p+r*r)*dy + p*q*dx + q*r*dz;
     az = wdot + p*v-q*u + pdot*dy-qdot*dx - (p*p+q*q)*dz + q*r*dy + p*r*dx;
 
-#ifdef USE_KVH
 				/* compute non gravitational acc in local
                                    horizontal plane for compass */
     theta = sensor(REAL_THETA);
     phi = sensor(REAL_PHI);
     aax = cos(theta)*ax + sin(phi)*sin(theta)*ay + cos(phi)*sin(theta)*az;
     aay = cos(phi)*ay - sin(phi)*az;
-#endif
+
 				/* add gravity */
-    ax = ax + sin(theta)*G;
-    ay = ay - cos(theta)*sin(phi)*G;
-    az = az - cos(theta)*cos(phi)*G;
+    ax = ax + sin(theta)*GRAVITY;
+    ay = ay - cos(theta)*sin(phi)*GRAVITY;
+    az = az - cos(theta)*cos(phi)*GRAVITY;
 
-#ifdef USE_KVH
     load_inclinometers( ax, ay );
-#else
-				/* update data structure */
-    noise = gasdev()*sensor(REAL_ACC_NOISE);
-    update(M_ACCEL_X, ax + noise);
-
-    noise = gasdev()*sensor(REAL_ACC_NOISE);
-    update(M_ACCEL_Y, ay + noise);
-
-    noise = gasdev()*sensor(REAL_ACC_NOISE);
-    update(M_ACCEL_Z, az + noise);
-#endif
-
 }
 
 /* ------------------------------------------------------------ */
@@ -166,19 +142,7 @@ void load_accel(void)
 
 void load_magnetic(void)
 {        
-#ifdef USE_KVH
     load_compass();
-#else
-    double mx,my,mz;
-				/* Rotate to vehicle frame */
-    mx = mr[1][1]*earth_bx + mr[1][2]*earth_by + mr[1][3]*earth_bz;
-    my = mr[2][1]*earth_bx + mr[2][2]*earth_by + mr[2][3]*earth_bz;
-    mz = mr[3][1]*earth_bx + mr[3][2]*earth_by + mr[3][3]*earth_bz;
-  
-    update(M_MAG_X, mx);
-    update(M_MAG_Y, my);
-    update(M_MAG_Z, mz);
-#endif
 }
 
 /* ------------------------------------------------------------ */
@@ -575,7 +539,7 @@ int handle_modem(void)
     return 0;
 }
 
-#ifdef USE_KVH
+
 /*-------------------------------------------------------------------------*/
 
 void load_inclinometers( double ax, double ay )
@@ -583,8 +547,8 @@ void load_inclinometers( double ax, double ay )
 double inclino_noise=0.001745; /* 0.1 degree */
 double raw_pitch_roll[2],filtered_pitch_roll[2];
 
-    raw_pitch_roll[0]=asin(ax/G);
-    raw_pitch_roll[1]=-asin(ay/(G*cos(raw_pitch_roll[0])));
+    raw_pitch_roll[0]=asin(ax/GRAVITY);
+    raw_pitch_roll[1]=-asin(ay/(GRAVITY*cos(raw_pitch_roll[0])));
     low_pass_filter(raw_pitch_roll,filtered_pitch_roll);
 
     filtered_pitch_roll[0]+=inclino_noise*gasdev();
@@ -724,7 +688,6 @@ int i,j;
  if(count<=2) count++;
 
 }
-#endif
 
 /*-----------------------------------------------------------------------*
   getXSDataByte: set appropriate bits of databyte that is to be sent

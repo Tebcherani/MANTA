@@ -65,12 +65,11 @@ struct vehicle {
     char mission_date[MAX_CHARS];
     char data_file_name[MAX_FILE_NAME];
     char fault_file_name[MAX_FILE_NAME];  /* bare filename of loaded *.fd, or "" */
-    int last_s, last_b, last_c;
+    int last_s;
     int abort_mission;
     double mission_start_time;
     double rotation[3][3];
-    char modem_send[500], modem_rec[500];
-    char latch_send[ 80], latch_rec[ 80];
+    char modem_send[500];
     struct sensor s[MAX_SENSOR];
     struct behavior b[MAX_BEHAVIOR];
     struct command c[MAX_COMMAND];

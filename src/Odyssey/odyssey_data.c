@@ -79,7 +79,6 @@ int init_data_structure() {
     for (i = 0; i < num_behaviors; i++) assign_behavior_fcn_ptr(bTemplate[i].name, &(vvv.b[i]));
 
     vvv.last_s = num_sensors - 1;
-    vvv.last_b = num_behaviors - 1;
     vvv.abort_mission = 0;
     vvv.rotation[0][0] = 1;     
     vvv.rotation[1][1] = 1;     
