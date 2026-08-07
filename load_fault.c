@@ -123,8 +123,6 @@ int load_faults( const char *fname )
     vvp->fault_file_name[0] = '\0';
 
     if ( fname == NULL || fname[0] == '\0' ) {
-        sprintf( msg_buf, "load_faults: no fault file specified\n" );
-        write_message( TERM | SLOG );
         return 0;
     }
 
@@ -139,12 +137,8 @@ int load_faults( const char *fname )
     strncpy( loaded_path, fullpath, sizeof(loaded_path) - 1 );
 
     if ( (fp = fopen(fullpath, "r")) == NULL ) {
-        sprintf( msg_buf, "load_faults: no fault file %s\n", fullpath );
-        write_message( TERM | SLOG );
         return 0;   /* optional -- not an error */
     }
-    sprintf( msg_buf, "fault file: %s ...\n", fullpath );
-    write_message( TERM | SLOG );
 
     while ( fgets(linebuf, sizeof(linebuf), fp) ) {
         lineno++;
@@ -152,15 +146,9 @@ int load_faults( const char *fname )
         if ( linebuf[0] == '#' || linebuf[0] == '\0' ) continue;
 
         if ( strncmp(linebuf, "fault:", 6) != 0 ) {
-            sprintf( msg_buf,
-                "load_faults line %d: expected 'fault:'\n", lineno );
-            write_message( TERM | SLOG );
             fclose(fp); return -1;
         }
         if ( n_rules >= MAX_FAULT_RULES ) {
-            sprintf( msg_buf, "load_faults: too many rules (max %d)\n",
-                     MAX_FAULT_RULES );
-            write_message( TERM | SLOG );
             fclose(fp); return -1;
         }
 
@@ -169,9 +157,6 @@ int load_faults( const char *fname )
 
         arrow = strstr( cond_str, "->" );
         if ( !arrow ) {
-            sprintf( msg_buf,
-                "load_faults line %d: missing '->'\n", lineno );
-            write_message( TERM | SLOG );
             fclose(fp); return -1;
         }
 
@@ -189,30 +174,17 @@ int load_faults( const char *fname )
             memset( r, 0, sizeof(FaultRule) );
 
             if ( parse_condition(cond_str, &r->cond) != 0 ) {
-                sprintf( msg_buf,
-                    "load_faults line %d: bad condition: %s\n",
-                    lineno, cond_str );
-                write_message( TERM | SLOG );
                 fclose(fp); return -1;
             }
             if ( parse_actions(act_str, MAX_ACT_TERMS,
                                r->action, &r->n_actions) != 0 ) {
-                sprintf( msg_buf,
-                    "load_faults line %d: bad action: %s\n",
-                    lineno, act_str );
-                write_message( TERM | SLOG );
                 fclose(fp); return -1;
             }
 
-            sprintf( msg_buf, "  fault rule %d loaded\n", n_rules + 1 );
-            write_message( TERM | SLOG );
             n_rules++;
         }
     }
 
-    sprintf( msg_buf, "load_faults: %d rule(s) from %s\n",
-             n_rules, fname );
-    write_message( TERM | SLOG );
     fclose(fp);
     return 0;
 }
@@ -257,8 +229,6 @@ static int parse_operand( const char *tok, Operand *op )
     {
         int idx = match_sensor( tok );
         if ( idx < 0 ) {
-            sprintf( msg_buf, "parse_operand: unknown sensor '%s'\n", tok );
-            write_message( TERM | SLOG );
             return -1;
         }
         op->kind  = OP_SENSOR;
@@ -359,9 +329,6 @@ static int parse_actions( const char *s, int max_act,
 
             idx = match_sensor( lhs_name );
             if ( idx < 0 ) {
-                sprintf( msg_buf,
-                    "parse_actions: unknown target '%s'\n", lhs_name );
-                write_message( TERM | SLOG );
                 return -1;
             }
             a->target_index = idx;
