@@ -55,10 +55,6 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	{
 	    bArg(HDG) = PI + wrap_angle( atan2(bArg(EAST) - read_sensor(M_POS_E),
 				    bArg(NRTH) - read_sensor(M_POS_N)) - PI );
-	    sprintf( msg_buf, "% 8.2f: %s sets hdg to (%.1f, %.1f) "
-		     "as %.1f (deg T)\n", read_sensor(M_PRESENT_TIME), b->name,
-		     bArg(NRTH), bArg(EAST), R2D(bArg(HDG)) );
-	    write_message( MonitorLayeredControl | SLOG );
 	}
 
 	b->state = B_ACTIVE;
@@ -70,8 +66,6 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	    if ( bArg(ABORT) > 0 )
 	    {
 		update_sensor( C_ABORT_MISSION, 1 );
-		strcpy( msg_buf, "\tABORT!\n" );
-		write_message( MonitorLayeredControl | SLOG );
 	    }
 	    b->state = B_COMPLETE;
 	    return 0;
@@ -111,11 +105,6 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	{
 	    b->state = B_COMPLETE;
 	    cmd->depth_mode = cmd->heading_mode = cmd->speed_mode = -1;
-
-	    sprintf( msg_buf, "% 8.2f: %s (%.1lf, %.1lf) complete with "
-		     "dtw %.1lf <= %.1lf m\n", read_sensor(M_PRESENT_TIME),
-		     b->name, n_est, e_est, dtw, goal );
-	    write_message( MonitorLayeredControl | SLOG );
 	}
 	else
 	{
@@ -134,11 +123,6 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 		cmd->heading[0] = atan2( -de, -dn );
 	}
 
-	break;
-    default:			/* shouldn't ever happen, print error */
-	sprintf( msg_buf, "% 8.2f: %s inappropriate state %d\n",
-		 read_sensor(M_PRESENT_TIME), b->name, b->state );
-	write_message( MonitorLayeredControl | SLOG );
 	break;
     }
 }
