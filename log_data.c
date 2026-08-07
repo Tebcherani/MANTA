@@ -326,6 +326,7 @@ int write_tab( void )
     FILE *ftab;
     char *run;
     int error = -1;
+    char msg_buf[256];
 
     snprintf( msg_buf, 256, "%s/%s.tab", DATA_DIR, VEHICLE_NAME );
 

@@ -64,7 +64,6 @@ SRCS = \
     load_mission.c          \
     paths.c                 \
     vehicle.c               \
-    diagnostic.c            \
     lbl.c                   \
     lbl_nav.c               \
     waypoint.c              \

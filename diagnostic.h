@@ -20,6 +20,4 @@ enum ody_dev_status {
     STATUS_UNKNOWN
 };
 
-extern char msg_buf[];		/* buffer for storing diagnostics */
-
 #endif /* DIAGNOSTIC_H */
