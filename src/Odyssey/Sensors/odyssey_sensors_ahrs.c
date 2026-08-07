@@ -136,7 +136,7 @@ static void update_compass_yaw() {
     static double beta, omega0, omega1;
     double dt=0.02, mass=0.1, kx=100.0, bxp=0.5, length=0.015;
     double psi, theta, phi;
-    double mx, my, mz;
+    double mx, my;
     double mg_yaw;
     double cst1, cst2, cc, ss;
     double Mmg[4][4];
@@ -178,7 +178,6 @@ static void update_compass_yaw() {
 
     mx = Mmg[1][1]*EARTH_MAGNETIC_NORTH + Mmg[1][2]*EARTH_MAGNETIC_EAST + Mmg[1][3]*EARTH_MAGNETIC_DOWN;
     my = Mmg[2][1]*EARTH_MAGNETIC_NORTH + Mmg[2][2]*EARTH_MAGNETIC_EAST + Mmg[2][3]*EARTH_MAGNETIC_DOWN;
-    mz = Mmg[3][1]*EARTH_MAGNETIC_NORTH + Mmg[3][2]*EARTH_MAGNETIC_EAST + Mmg[3][3]*EARTH_MAGNETIC_DOWN;
 
     // Compute heading from readings 
     if ((mx>0.0) && (my<=0.0)) mg_yaw = -atan(my/mx);
