@@ -45,8 +45,7 @@ static void copy_name(char *dest, size_t dest_size, const char *src) {
 }
 
 int init_data_structure() {
-    int i, j, loud = 0;
-    char *tmp;
+    int i, j = 0;
 
     vvp = &vvv;
 
@@ -72,27 +71,21 @@ int init_data_structure() {
     for (i = 0; i < MAX_COMMAND; i++) vvv.c[i].behavior = -1;
 
     for (j = 0; j < MAX_STATES; j++)
-        for (i=0;i<MAX_COMMAND;i++) vvp->sta[j].c[i].behavior = -1;
+        for (i = 0; i<MAX_COMMAND; i++) vvp->sta[j].c[i].behavior = -1;
 
     // Initialize sindex and bindex arrays
     for (i = 0; i < num_sensors; i++) *(sindex[i]) = i;
 
-    for (i = 0; i < num_behaviors; i++) assign_behavior_fcn_ptr( bTemplate[i].name, &(vvv.b[i]) );
+    for (i = 0; i < num_behaviors; i++) assign_behavior_fcn_ptr(bTemplate[i].name, &(vvv.b[i]));
 
     vvv.last_s = num_sensors - 1;
     vvv.last_b = num_behaviors - 1;
-    vvv.comm_synchro = 1;	/* Sync flag for COMM process  */
-    vvv.abort_mission = 0;	/* added jleonard 11/13/95 */
-    vvv.control_cycle_time = 0.2; /* Cycle time for control loop */
-    vvv.comm_cycle_time = 1.0;	/* Cycle time for comm */
+    vvv.abort_mission = 0;
     vvv.rotation[0][0] = 1;     
     vvv.rotation[1][1] = 1;     
     vvv.rotation[2][2] = 1;     
 
-    tmp = strcpy(vvv.creation_date, creation_date);
-
-	// Grab start time for init, will be grabbed again prior to actual launch
-    if ( hirestime(&vvp->mission_start_time) == -1 ) exit (-1);
+    strcpy(vvv.creation_date, creation_date);
 
     return 1;
 }

@@ -66,10 +66,7 @@ struct vehicle {
     char data_file_name[MAX_FILE_NAME];
     char fault_file_name[MAX_FILE_NAME];  /* bare filename of loaded *.fd, or "" */
     int last_s, last_b, last_c;
-    int comm_synchro;
     int abort_mission;
-    double control_cycle_time;
-    double comm_cycle_time;
     double mission_start_time;
     double rotation[3][3];
     char modem_send[500], modem_rec[500];
