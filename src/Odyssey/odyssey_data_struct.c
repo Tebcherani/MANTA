@@ -19,7 +19,6 @@ int init_data_structure() {
 
     vvp = &vvv;
 
-
     // Initialize vvv.s[] from sss
     for (i = 0; i < num_sensors; i++) {
         copy_name(vvv.s[i].name, sizeof(vvv.s[i].name), sss[i].name);
