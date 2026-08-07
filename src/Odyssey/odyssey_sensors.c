@@ -9,6 +9,13 @@
 #include "random_utils.h"
 #include "vehicle.h"
 
+static void inclinometer_low_pass_filter(double s[2], double sf[2]);
+static void update_acceleration(void);
+static void update_angular_rate(void);
+static void update_compass_yaw(void);
+static void update_heading(void);
+static void update_inclinometers(double ax, double ay);
+
 double aax, aay;
 
 int update_odyssey_sensors(void) {
@@ -30,10 +37,57 @@ int update_odyssey_sensors(void) {
     return 0;
 }
 
-void update_acceleration(void) {
+/*-------------------------------------------------------------------------
+Low-pass filter for inclinometers simulation
+cut-off frequency=1Hz, for a sampling frequency of 50Hz
+J. Vaganay - 5/12/95
+-------------------------------------------------------------------------*/
+static void inclinometer_low_pass_filter( double s[2], double sf[2] ) {
+    static int count=1;
+    static double sp[2][3];  /* previous non filtered signals */
+    static double sfp[2][3]; /* previous filtered signals */
+    static double a[3],b[3]; /* filter coefficients */
+    int i,j;
+
+    for (i=0;i<=1;i++) {
+        if(count==1) {
+            sp[i][1]=s[i];
+            sfp[i][1]=s[i];
+            sf[i]=s[i];
+            a[1]=-1.82269492519631; 
+            a[2]=0.83718165127602;
+            b[0]=0.00362168151493;  
+            b[1]=0.00724336302986;
+            b[2]=0.00362168151493;
+        }
+      
+        if(count==2) {
+            sp[i][2]=sp[i][1];
+            sfp[i][2]=sfp[i][1];
+            sp[i][1]=s[i];
+            sfp[i][1]=s[i];
+            sf[i]=s[i];
+        }
+        
+        if(count>2) {
+            sf[i]=b[0]*s[i];
+            for(j=1;j<=2;j++)
+                sf[i]+=b[j]*sp[i][j]-a[j]*sfp[i][j];
+            for(j=2;j>1;j--) {
+                sp[i][j]=sp[i][j-1];
+                sfp[i][j]=sfp[i][j-1];
+            }
+            sp[i][1]=s[i];
+            sfp[i][1]=sf[i];
+        }
+    }
+    if(count<=2) count++;
+
+}
+
+static void update_acceleration(void) {
     static double dx=1.390,dy=0.108,dz=0.076;
     double ax,ay,az;
-    double aax,aay;
     double p,q,r,pdot,qdot,rdot;
     double u,v,w,udot,vdot,wdot;
     double noise;
@@ -61,10 +115,10 @@ void update_acceleration(void) {
     ay = ay - cos(theta)*sin(phi)*GRAVITY;
     az = az - cos(theta)*cos(phi)*GRAVITY;
 
-    load_inclinometers(ax, ay);
+    update_inclinometers(ax, ay);
 }
 
-void update_angular_rate(void) {
+static void update_angular_rate(void) {
     double real_yaw_rate, real_roll_rate, real_pitch_rate;
     double meas_yaw_rate, meas_roll_rate, meas_pitch_rate;
     double yaw_rate_bias = -8.7266e-4, pitch_rate_bias = 8.7266e-4, roll_rate_bias = 4.3663e-4;
@@ -96,7 +150,7 @@ Simulation of the magnetic heading measured by the KVH DGC
     oscillator is first determined and the x-y displcaements converted
     into angles.
 *-------------------------------------------------------------------------*/
-void update_compass_yaw() {
+static void update_compass_yaw() {
     static int first=1;
     static double compass_noise=0.001745; /* 0.1 deg */
     static double dx=0.0, dy=0.0, dxp=0.0, dyp=0.0;
@@ -161,7 +215,7 @@ void update_compass_yaw() {
     update(M_COMPASS_YAW,mg_yaw);
 }
 
-void update_heading(void) {
+static void update_heading(void) {
     double meas_yaw, meas_pitch, meas_roll;
     double meas_magnetic_variation, corrected_yaw;
 
@@ -175,4 +229,19 @@ void update_heading(void) {
     
     meas_roll = sensor(M_INCLINO_ROLL);
     update(M_ROLL, meas_roll);
+}
+
+static void update_inclinometers( double ax, double ay ) {
+    double inclino_noise=0.001745; /* 0.1 degree */
+    double raw_pitch_roll[2],filtered_pitch_roll[2];
+
+    raw_pitch_roll[0]=asin(ax/GRAVITY);
+    raw_pitch_roll[1]=-asin(ay/(GRAVITY*cos(raw_pitch_roll[0])));
+    inclinometer_low_pass_filter(raw_pitch_roll,filtered_pitch_roll);
+
+    filtered_pitch_roll[0]+=inclino_noise*std_normal_random_num();
+    filtered_pitch_roll[1]+=inclino_noise*std_normal_random_num();
+
+    update(M_INCLINO_PITCH,filtered_pitch_roll[0]);
+    update(M_INCLINO_ROLL,filtered_pitch_roll[1]);
 }

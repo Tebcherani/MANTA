@@ -32,9 +32,6 @@ void load_depth();
 void load_water_speed( void );
 void load_water_param();
 
-void load_inclinometers(double,double); 
-void low_pass_filter(double[2],double[2]);
-
 void simLBL()
 {
 #ifdef KALMAN_LBL
@@ -396,73 +393,6 @@ int handle_modem(void)
     }
 
     return 0;
-}
-
-
-/*-------------------------------------------------------------------------*/
-
-void load_inclinometers( double ax, double ay )
-{
-double inclino_noise=0.001745; /* 0.1 degree */
-double raw_pitch_roll[2],filtered_pitch_roll[2];
-
-    raw_pitch_roll[0]=asin(ax/GRAVITY);
-    raw_pitch_roll[1]=-asin(ay/(GRAVITY*cos(raw_pitch_roll[0])));
-    low_pass_filter(raw_pitch_roll,filtered_pitch_roll);
-
-    filtered_pitch_roll[0]+=inclino_noise*std_normal_random_num();
-    filtered_pitch_roll[1]+=inclino_noise*std_normal_random_num();
-
-    update(M_INCLINO_PITCH,filtered_pitch_roll[0]);
-    update(M_INCLINO_ROLL,filtered_pitch_roll[1]);
-}
-
-/*-------------------------------------------------------------------------
-Low-pass filter for inclinometers simulation
-cut-off frequency=1Hz, for a sampling frequency of 50Hz
-J. Vaganay - 5/12/95
--------------------------------------------------------------------------*/
-
-void low_pass_filter( double s[2], double sf[2] )
-{
-static int count=1;
-static double sp[2][3];  /* previous non filtered signals */
-static double sfp[2][3]; /* previous filtered signals */
-static double a[3],b[3]; /* filter coefficients */
-int i,j;
-
- for (i=0;i<=1;i++) {
-     if(count==1) {
-         sp[i][1]=s[i];
-         sfp[i][1]=s[i];
-         sf[i]=s[i];
-         a[1]=-1.82269492519631; a[2]=0.83718165127602;
-         b[0]=0.00362168151493;  b[1]=0.00724336302986;
-         b[2]=0.00362168151493;
-     }
-      
-     if(count==2) {
-         sp[i][2]=sp[i][1];
-         sfp[i][2]=sfp[i][1];
-         sp[i][1]=s[i];
-         sfp[i][1]=s[i];
-         sf[i]=s[i];
-     }
-      
-     if(count>2) {
-         sf[i]=b[0]*s[i];
-         for(j=1;j<=2;j++)
-             sf[i]+=b[j]*sp[i][j]-a[j]*sfp[i][j];
-         for(j=2;j>1;j--) {
-             sp[i][j]=sp[i][j-1];
-             sfp[i][j]=sfp[i][j-1];
-         }
-         sp[i][1]=s[i];
-         sfp[i][1]=sf[i];
-     }
- }
- if(count<=2) count++;
-
 }
 
 /*-----------------------------------------------------------------------*
