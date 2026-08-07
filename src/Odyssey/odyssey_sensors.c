@@ -13,6 +13,7 @@ static void inclinometer_low_pass_filter(double s[2], double sf[2]);
 static void update_acceleration(void);
 static void update_angular_rate(void);
 static void update_compass_yaw(void);
+static void update_depth(void);
 static void update_heading(void);
 static void update_inclinometers(double ax, double ay);
 
@@ -22,7 +23,7 @@ int update_odyssey_sensors(void) {
     update_angular_rate();
     update_acceleration();
     update_compass_yaw();
-    load_depth();
+    update_depth();
     load_water_speed();
     load_water_param();
 
@@ -213,6 +214,11 @@ static void update_compass_yaw() {
     mg_yaw -= sensor(UO_MAGNETIC_VARIATION);
 
     update(M_COMPASS_YAW,mg_yaw);
+}
+
+static void update_depth(void) {
+    double noise = std_normal_random_num()*sensor(REAL_DEPTH_NOISE);
+    update( M_DEPTH, sensor(REAL_Z) + noise );
 }
 
 static void update_heading(void) {

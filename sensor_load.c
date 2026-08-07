@@ -28,7 +28,6 @@ double usbl_rf[USBL_BEACONS] = {21.0, 25.0, 0.0, 0.0};
 /*--- if=beacons interogate freq (19kHz),rf=reply frequency (21 or 25kHz) */
 
 
-void load_depth();
 void load_water_speed( void );
 void load_water_param();
 
@@ -41,18 +40,6 @@ void simLBL()
     void simEdgeTechLBL();
     simEdgeTechLBL();
 #endif
-}
-
-/* ------------------------------------------------------------ */
-/* Calculate depth sensor readings...
-*/
-
-void load_depth(void)
-{
-    double noise;
-
-    noise = std_normal_random_num()*sensor(REAL_DEPTH_NOISE);
-    update( M_DEPTH, sensor(REAL_Z) + noise );
 }
 
 /*
