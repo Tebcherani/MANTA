@@ -832,6 +832,7 @@ main( int argc, char **argv )
 				   the C-file */
     fputs( "#include <float.h>\n"
 	   "#include <stdio.h>\n"
+     "#include <string.h>\n"
 	   "#include \"diagnostic.h\"\n"
 	   "#include \"ody_defs.h\"\n"
 	   "#include \"ody_types.h\"\n", cfile );
