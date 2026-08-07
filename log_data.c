@@ -216,9 +216,6 @@ FILE *init_data_logging( char *DataFileName )
 
     time_t t;  
     struct tm *tp; 
-  
-    sprintf( msg_buf, "Data Logger (binary file v%d)\n", loggerVersion );
-    write_message( TERM | SLOG );
 
 /* Generate unique file name for binary data by concatenation of
    appropriate prefix char, year (00-99), day (001-366), run number
@@ -241,14 +238,10 @@ FILE *init_data_logging( char *DataFileName )
 
     if ( (datafile = fopen(DataFileName, "wb")) == NULL )
     {
-	sprintf( msg_buf, "%s: %s\n", DataFileName, strerror(errno) );
-	write_message( TERM | SLOG );
 	exit_gracefully( 1 );
     }
 				/* record name */
     strcpy( vvp->data_file_name, DataFileName );
-    sprintf( msg_buf, "\tdatafile: %s\n", DataFileName );
-    write_message( TERM | SLOG );
 
 				/* version number */
     fprintf( datafile, "MIT_SG_AUV_LAB_v%d %s\xa", loggerVersion,
@@ -287,9 +280,6 @@ FILE *init_data_logging( char *DataFileName )
 	if (beh_id!=-1) {
 	    offset = vvp->last_s + 1 + (B_ARG_SIZE * (i-1));
 	    fprintf(datafile, "%d %-30s \t%-d\n", offset, vvp->c[i].b.name, i);
-	    sprintf( msg_buf, "%d %-30s \t%-d\n", offset,
-		     vvp->c[i].b.name, i );
-	    write_message( MonitorDataLogging );
 
 				/* now write the argument values for this
                                    behavior */
@@ -299,19 +289,11 @@ FILE *init_data_logging( char *DataFileName )
 		    fprintf(datafile, "%d %s_%-30s \t%-g\xa", offset + 1 + j,
 			    vvp->c[i].b.name, vvp->c[i].b.arg[j].name, 
 			    vvp->c[i].b.arg[j].x);
-                  
-		    sprintf( msg_buf, "%d %s_%-30s \t%-g\n",
-			     offset + 1 + j, vvp->c[i].b.name,
-			     vvp->c[i].b.arg[j].name,
-			     vvp->c[i].b.arg[j].x );
-		    write_message( MonitorDataLogging );
 		}
 	    }
 	}
     }
     fflush( datafile );
-    sprintf( msg_buf, "wrote datafile ascii portion\n");
-    write_message( MonitorDataLogging );
     return datafile;
 }
 
@@ -363,18 +345,8 @@ int write_tab( void )
 		     vvp->mission_start_time, read_sensor(M_PRESENT_TIME), north0,
 		     east0, max_depth );
 	    fclose( ftab );
-				/* generate affirmative diagnostic */
-	    sprintf( msg_buf, "tabular entry appended to %s/%s.tab\n",
-		     DATA_DIR, VEHICLE_NAME );
-	    write_message( TERM | SLOG );
 	}
 	error = 0;
-    }
-    else
-    {
-				/* negative diagnostic */
-	sprintf( msg_buf + strlen(msg_buf), ": %s\n", strerror(errno) );
-	write_message( TERM | SLOG );
     }
 
     return error;
