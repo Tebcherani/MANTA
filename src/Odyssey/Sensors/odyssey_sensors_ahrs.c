@@ -8,12 +8,10 @@
 #include "random_utils.h"
 #include "vehicle.h"
 
-double aax, aay;
-
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
-static void update_acceleration(void);
+static void update_acceleration(double *aax, double *aay);
 static void update_angular_rate(void);
-static void update_compass_yaw(void);
+static void update_compass_yaw(double aax, double aay);
 static void update_inclinometers(double ax, double ay);
 static void update_heading(void);
 
@@ -65,7 +63,7 @@ static void inclinometer_low_pass_filter( double s[2], double sf[2] ) {
 
 }
 
-static void update_acceleration(void) {
+static void update_acceleration(double *aax, double *aay) {
     static double dx=1.390,dy=0.108,dz=0.076;
     double ax,ay,az;
     double p,q,r,pdot,qdot,rdot;
@@ -86,8 +84,8 @@ static void update_acceleration(void) {
 	// Compute non-gravitational acc in local horizontal plane for compass
     theta = sensor(REAL_THETA);
     phi = sensor(REAL_PHI);
-    aax = cos(theta)*ax + sin(phi)*sin(theta)*ay + cos(phi)*sin(theta)*az;
-    aay = cos(phi)*ay - sin(phi)*az;
+    *aax = cos(theta)*ax + sin(phi)*sin(theta)*ay + cos(phi)*sin(theta)*az;
+    *aay = cos(phi)*ay - sin(phi)*az;
 
 	// Add gravity
     ax = ax + sin(theta)*GRAVITY;
@@ -129,7 +127,7 @@ Simulation of the magnetic heading measured by the KVH DGC
     oscillator is first determined and the x-y displcaements converted
     into angles.
 *-------------------------------------------------------------------------*/
-static void update_compass_yaw() {
+static void update_compass_yaw(double aax, double aay) {
     static int first=1;
     static double compass_noise=0.001745; /* 0.1 deg */
     static double dx=0.0, dy=0.0, dxp=0.0, dyp=0.0;
@@ -226,8 +224,10 @@ static void update_inclinometers( double ax, double ay ) {
 }
 
 void update_ahrs_sensors(void) {
+    double aax, aay;
+
     update_angular_rate();
-    update_acceleration();
-    update_compass_yaw();
+    update_acceleration(&aax, &aay);
+    update_compass_yaw(aax, aay);
     update_heading();
 }
