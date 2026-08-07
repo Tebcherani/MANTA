@@ -15,8 +15,6 @@
 #include "whoi_traj.h"
 #include "angle_utils.h"
 
-void monitor_msg( int sensor_id, int monitor );
-
 #define FIN_LIMIT D2R(30)	/* maximum fin deflection */
 #define P_INT_LIM D2R(10)	/* limit on pitch integrator */
 #define H_INT_LIM D2R( 5)	/* limit on hdg */
@@ -151,8 +149,6 @@ void dynamic_control( void )
         des_depth = do_traj( read_sensor(C_DEPTH), read_sensor(UO_MAX_DR), &d_traj );
 	update_sensor( T_DEPTH, des_depth );
 	err_depth = read_sensor(M_DEPTH) - des_depth;
-
-	monitor_msg( T_DEPTH, MonitorTraj );
 
 	/* FSH & DRY integrator prevents adjustments when desired depth
 	   rate is high.  (Also clips at +-5 deg, BAM 10-Jan-1998) */

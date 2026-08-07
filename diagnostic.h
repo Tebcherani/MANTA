@@ -22,7 +22,4 @@ enum ody_dev_status {
 
 extern char msg_buf[];		/* buffer for storing diagnostics */
 
-                                /* prototypes */
-void write_message(int monitor);
-
 #endif /* DIAGNOSTIC_H */
