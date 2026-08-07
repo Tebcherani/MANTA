@@ -9,7 +9,7 @@
 #include "vehicle.h"
 
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
-static void update_acceleration(double *aax, double *aay);
+static void update_acceleration(double *ax, double *ay, double *aax, double *aay);
 static void update_angular_rate(void);
 static void update_compass_yaw(double aax, double aay);
 static void update_inclinometers(double ax, double ay);
@@ -63,9 +63,9 @@ static void inclinometer_low_pass_filter( double s[2], double sf[2] ) {
 
 }
 
-static void update_acceleration(double *aax, double *aay) {
+static void update_acceleration(double *ax, double *ay, double *aax, double *aay) {
     static double dx=1.390,dy=0.108,dz=0.076;
-    double ax,ay,az;
+    double az;
     double p,q,r,pdot,qdot,rdot;
     double u,v,w,udot,vdot,wdot;
     double theta,phi;
@@ -77,22 +77,20 @@ static void update_acceleration(double *aax, double *aay) {
     pdot = sensor(REAL_PD); qdot = sensor(REAL_QD); rdot = sensor(REAL_RD);
 
 	// Non-gravitational acceleration at location of AHRS in vehicle frame
-    ax = udot + q*w-r*v + qdot*dz-rdot*dy - (q*q+r*r)*dx + p*q*dy + p*r*dz;
-    ay = vdot + r*u-p*w + rdot*dx-pdot*dz - (p*p+r*r)*dy + p*q*dx + q*r*dz;
+    *ax = udot + q*w-r*v + qdot*dz-rdot*dy - (q*q+r*r)*dx + p*q*dy + p*r*dz;
+    *ay = vdot + r*u-p*w + rdot*dx-pdot*dz - (p*p+r*r)*dy + p*q*dx + q*r*dz;
     az = wdot + p*v-q*u + pdot*dy-qdot*dx - (p*p+q*q)*dz + q*r*dy + p*r*dx;
 
 	// Compute non-gravitational acc in local horizontal plane for compass
     theta = sensor(REAL_THETA);
     phi = sensor(REAL_PHI);
-    *aax = cos(theta)*ax + sin(phi)*sin(theta)*ay + cos(phi)*sin(theta)*az;
-    *aay = cos(phi)*ay - sin(phi)*az;
+    *aax = cos(theta) * (*ax) + sin(phi)*sin(theta) * (*ay) + cos(phi)*sin(theta)*az;
+    *aay = cos(phi) * (*ay) - sin(phi)*az;
 
 	// Add gravity
-    ax = ax + sin(theta)*GRAVITY;
-    ay = ay - cos(theta)*sin(phi)*GRAVITY;
-    az = az - cos(theta)*cos(phi)*GRAVITY;
-
-    update_inclinometers(ax, ay);
+    *ax += sin(theta)*GRAVITY;
+    *ay -= cos(theta)*sin(phi)*GRAVITY;
+    az -= cos(theta)*cos(phi)*GRAVITY;
 }
 
 static void update_angular_rate(void) {
@@ -224,10 +222,12 @@ static void update_inclinometers( double ax, double ay ) {
 }
 
 void update_ahrs_sensors(void) {
+    double ax, ay;
     double aax, aay;
 
     update_angular_rate();
-    update_acceleration(&aax, &aay);
+    update_acceleration(&ax, &ay, &aax, &aay);
+    update_inclinometers(ax, ay);
     update_compass_yaw(aax, aay);
     update_heading();
 }
