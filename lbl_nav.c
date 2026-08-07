@@ -128,10 +128,6 @@ void ABE_LBL()
 	lblenv.xhat.x = read_sensor( M_POS_N );
 	lblenv.xhat.y = read_sensor( M_POS_E );
 
-	sprintf( msg_buf, "% 8.2f: LBL inputs\n"
-		 "\t(N%7.1f E%7.1f D %6.1f)\n", read_sensor(M_PRESENT_TIME),
-		 read_sensor(M_POS_N), read_sensor(M_POS_E), read_sensor(M_DEPTH) );
-
 	compute_lbl_fix( slant, &lblenv, read_sensor(M_PRESENT_TIME), &fix, 1 );
 
 				/* log the fix and its status */
@@ -155,9 +151,6 @@ void ABE_LBL()
 
 	update_sensor( M_LBL_NUM_USED, numGood );
 
-	sprintf( msg_buf+strlen(msg_buf), "\tstat %d, good %d\n",
-		 fix.fix_status, numGood );
-
 	if ( fix.fix_status == NAV_GOOD )
 	{
 	    update_sensor( M_LBL_NORTHFIX, fix.position.x );
@@ -167,12 +160,7 @@ void ABE_LBL()
 				       read_sensor(M_POS_N));
 	    dy += read_sensor(LBL_FIXGAIN)*(read_sensor(M_LBL_EASTFIX) - 
 				       read_sensor(M_POS_E));
-
-	    sprintf( msg_buf+strlen(msg_buf)-1,
-		     ", err %.1f (N%7.1f E%7.1f)\n", 
-		     lblenv.error, fix.position.x, fix.position.y );
 	}
-	write_message( MonitorLBL );
     }
     add_to_sensor( M_POS_N, dx );
     add_to_sensor( M_POS_E, dy );
