@@ -9,6 +9,7 @@ CPPFLAGS = -I.              \
     -Isrc/Common            \
     -Isrc/Odyssey           \
     -Isrc/Odyssey/Behaviors \
+    -Isrc/Odyssey/Sensors   \
     -Isrc/Simulation        \
     -Isrc/World
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
@@ -40,8 +41,9 @@ SRCS = \
     src/Odyssey/odyssey_mission.c                       \
     src/Odyssey/odyssey_model.c                         \
     src/Odyssey/odyssey_nav.c                           \
-    src/Odyssey/odyssey_sensors.c                       \
     src/Odyssey/odyssey_sim.c                           \
+    src/Odyssey/Sensors/odyssey_sensors.c               \
+    src/Odyssey/Sensors/odyssey_sensors_water.c         \
     src/Simulation/sim_behavior_logger.c                \
     src/Simulation/sim_config.c                         \
     src/Simulation/sim_exit.c                           \

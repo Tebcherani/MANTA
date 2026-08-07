@@ -16,8 +16,6 @@ static void update_compass_yaw(void);
 static void update_depth(void);
 static void update_heading(void);
 static void update_inclinometers(double ax, double ay);
-static void update_water_speed(void);
-static void update_water_temp(void);
 
 double aax, aay;
 
@@ -26,8 +24,7 @@ int update_odyssey_sensors(void) {
     update_acceleration();
     update_compass_yaw();
     update_depth();
-    update_water_speed();
-    update_water_temp();
+    update_water_sensors();
     simulate_usbl();
     handle_modem();
     update_heading();
@@ -248,14 +245,4 @@ static void update_inclinometers( double ax, double ay ) {
 
     update(M_INCLINO_PITCH,filtered_pitch_roll[0]);
     update(M_INCLINO_ROLL,filtered_pitch_roll[1]);
-}
-
-static void update_water_speed(void) {
-    double std_normal_random_num();
-    update(M_WATER_SPEED, sensor(REAL_U) + 0.02*std_normal_random_num());
-}
-
-void update_water_temp(void) {
-    update(WATER_TEMP, 10 * exp(-pow(sensor(REAL_Z)/30,2)));
-    update_water_conductivity();
 }
