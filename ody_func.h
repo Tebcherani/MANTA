@@ -58,7 +58,4 @@ double act_model( double des_angle, double angle, double dt );
 int    matinv( double a[][7], double ainv[][7], int n, double adum[][7] );
 double hysteresis( double, double, double, double, double );
 
-				/* sensor_load.c */
-void simLBL4EKF();
-
 #endif /* ODY_FUNC_H */

@@ -45,6 +45,7 @@ SRCS = \
     src/Odyssey/Sensors/odyssey_sensors.c               \
     src/Odyssey/Sensors/odyssey_sensors_ahrs.c          \
     src/Odyssey/Sensors/odyssey_sensors_depth.c         \
+    src/Odyssey/Sensors/odyssey_sensors_lbl.c           \
     src/Odyssey/Sensors/odyssey_sensors_usbl.c          \
     src/Odyssey/Sensors/odyssey_sensors_water.c         \
     src/Simulation/sim_behavior_logger.c                \

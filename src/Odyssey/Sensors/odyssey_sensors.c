@@ -9,7 +9,7 @@ int update_odyssey_sensors(void) {
     update_water_sensors();
     update_usbl_sensor();
     handle_modem();
-    simLBL();
+    update_lbl_sensor();
 
     return 0;
 }
