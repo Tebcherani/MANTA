@@ -50,9 +50,6 @@ int dock( struct behavior *b, int priority, int level )
 	if ( read_sensor(M_POLE_PRESENT) == 0 )
 	{
 	    b->state = B_COMPLETE;
-	    sprintf( msg_buf, "% 8.2f: %s done with pole absent\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
-	    write_message( MonitorLayeredControl | SLOG );
 	    return 1;
 	}
 				/* stop pinging LBL */
@@ -116,10 +113,6 @@ int undock( struct behavior *b, int priority, int level )
 	if ( read_sensor(M_POLE_PRESENT) == 0 )
 	{
 	    b->state = B_COMPLETE;
-				/* diagnostics */
-	    sprintf( msg_buf, "% 8.2f: %s done with pole absent\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
-	    write_message( MonitorLayeredControl | SLOG );
 	    return 0;
 	}
 				/* borrow elapsed to calc total duration */
@@ -159,9 +152,6 @@ int undock( struct behavior *b, int priority, int level )
 				/* release request for i/o & logging */
 	    add_to_sensor( LATCH_CHECK, -1 );
 	    b->state = B_COMPLETE;
-	    sprintf( msg_buf, "% 8.2f: %s done with pole absent\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
-	    write_message( MonitorLayeredControl | SLOG );
 	    return 1;
 	}
 				/* pole present, recycle after cycletime
@@ -173,9 +163,6 @@ int undock( struct behavior *b, int priority, int level )
 				/* release request here, will resubmit upon
 				   reinitialization of behavior */
 	    add_to_sensor( LATCH_CHECK, -1 );
-	    sprintf( msg_buf, "% 8.2f: %s recycling\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
-	    write_message( MonitorLayeredControl | SLOG );
 	}
 	return 0;
     }
