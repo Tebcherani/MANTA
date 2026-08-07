@@ -18,6 +18,10 @@
 #include "odyssey_log.h"
 #include "common_defs.h"
 
+static int match_behavior(const char *name);
+static int match_behavior_arg(const char *name, int b_index);
+static int skip_comments(FILE *file);
+
 
 				/* prototypes */
 int convert_units( const char *, const char *, const double,
@@ -742,7 +746,7 @@ int match_sensor( const char *name )
    |(JGB, 1/30/94)
    -----------------------------------------------------------------------*/
 
-int match_behavior( const char *name )
+static int match_behavior( const char *name )
 {
     int i = 0;
 
@@ -753,7 +757,7 @@ int match_behavior( const char *name )
     return -1;
 }
 
-int match_behavior_arg( const char *name, int b_index )
+static int match_behavior_arg( const char *name, int b_index )
 {
     int i;
     char *loc;
@@ -816,7 +820,7 @@ int convert_units( const char *expected, const char *given,
   returns EOF if encountered, else returns 0; 
  *--------------------------------------------------------------------*/
 
-int skip_comments( FILE *file )
+static int skip_comments( FILE *file )
 {
     char line[MAX_LINE];
     int c;
