@@ -27,9 +27,6 @@ int handle_modem(void)
 
     if( strlen(vvp->modem_send) > 0 )
     {
-	sprintf( msg_buf, "\nModem t=%.2lf %s\n", 
-		 read_sensor(M_PRESENT_TIME), vvp->modem_send ); 
-	write_message( monitor_high_level_control );
 	strcpy( vvp->modem_send, "" ); 
     }
 
