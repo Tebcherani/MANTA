@@ -578,7 +578,7 @@ int read_state( FILE *fptr )
     while ( fgets(linebuf, sizeof(linebuf), fptr) != NULL )
     {
         count++;
-        if (sscanf(linebuf, " state: %s\n", &name) == 1)
+        if (sscanf(linebuf, " state: %s\n", name) == 1)
 	{
             strncpy( vvp->sta[vvp->nstates].name, name, MAX_STATE_NAME );
             vvp->nstates++;
@@ -602,7 +602,7 @@ int read_state( FILE *fptr )
                                    command array */
         }
 				/* If sensor value, load it... */
-        else if ( sscanf(linebuf, "  sensor: %s %lg", &name, &value) == 2 )
+        else if ( sscanf(linebuf, "  sensor: %s %lg", name, &value) == 2 )
 	{
             if ( (index = match_sensor(name)) >= 0 )
 	    {
@@ -631,7 +631,7 @@ int read_state( FILE *fptr )
         }
 				/* If a behavior name, get priority */
 
-        else if (sscanf(linebuf, " behavior: %s", &name) == 1 )
+        else if (sscanf(linebuf, " behavior: %s", name) == 1 )
 	{
 	    priority++;
             if ( priority >= MAX_COMMAND )
@@ -669,7 +669,7 @@ int read_state( FILE *fptr )
 				/* If line is a behavior argument, then
                                    load it */
         }
-	else if (sscanf(linebuf, "  b_arg: %s %lg", &name, &value) == 2 )
+	else if (sscanf(linebuf, "  b_arg: %s %lg", name, &value) == 2 )
 	{
             if ( b_index >= 0 )
                 if ( (index = match_behavior_arg(name, b_index)) >= 0 )
