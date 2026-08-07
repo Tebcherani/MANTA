@@ -37,7 +37,6 @@ double usbl_rf[USBL_BEACONS] = {21.0, 25.0, 0.0, 0.0};
 /*--- if=beacons interogate freq (19kHz),rf=reply frequency (21 or 25kHz) */
 
 
-void init_rotation();
 void load_accel();
 void load_angular_rate();
 void load_depth();
@@ -50,8 +49,6 @@ void load_compass();
 void load_inclinometers(double,double); 
 void low_pass_filter(double[2],double[2]);
 
-double mr[4][4];
-
 void simLBL()
 {
 #ifdef KALMAN_LBL
@@ -63,36 +60,6 @@ void simLBL()
 #endif
 }
 
-/* ------------------------------------------------------------ */
-/* Initialize rotation matrices */
-
-void init_rotation(void)
-{
-  double psi, theta, phi; /* yaw, pitch and roll angles, respectively */
-  
-  psi = sensor(REAL_PSI);
-  theta = sensor(REAL_THETA);
-  phi = sensor(REAL_PHI);
-  
-  /* To find the body frame representation of a vector in the earth frame do:*/
-  /* xb[i] = mr[i][1]*xe[1] + mr[i][2]*xe[2] + mr[i][3]*xe[3] */
-  /*                                                                        */
-  /* To find the earth frame representation of a vector in the body frame do:*/
-  /* xe[i] = mr[1][i]*xb[1] + mr[2][i]*xb[2] + mr[3][i]*xb[3]         */
-  /*                                                                        */
-  
-  mr[1][1] = cos(psi)*cos(theta);
-  mr[1][2] = cos(theta)*sin(psi);
-  mr[1][3] = -sin(theta);
-  
-  mr[2][1] = -(cos(phi)*sin(psi)) + cos(psi)*sin(phi)*sin(theta);
-  mr[2][2] = cos(phi)*cos(psi) + sin(phi)*sin(psi)*sin(theta);
-  mr[2][3] = cos(theta)*sin(phi); 
-  
-  mr[3][1] = sin(phi)*sin(psi) + cos(phi)*cos(psi)*sin(theta);
-  mr[3][2] = -(cos(psi)*sin(phi)) + cos(phi)*sin(psi)*sin(theta);
-  mr[3][3] = cos(phi)*cos(theta);
-}
 /* ------------------------------------------------------------ */
 /* Calculate sensed acceleration of vehicle...
 ** (JV 6/13/95) changed computation of acceleration to avoid using

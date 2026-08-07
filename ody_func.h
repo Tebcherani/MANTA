@@ -61,7 +61,6 @@ double hysteresis( double, double, double, double, double );
 
 				/* sensor_load.c */
 void simSensors( void );
-void init_rotation( void );
 void load_accel( void );
 void load_magnetic( void );
 void load_angular_rate( void );
