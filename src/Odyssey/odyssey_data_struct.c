@@ -12,12 +12,6 @@ int hirestime(double *hires);
 extern char *creation_date;
 extern int *sindex[];
 
-/* ============================================================ */
-/* UTILITY ROUTINE FOR LOADING VEHICLE STRUCTURE.               */
-
-/* Feb6 94 JL: porting to o+r OS-9 system.  We shouldn't use rtime,
-   use vvp->[M_PRESENT_TIME].x instead */
-
 void update(int index, double val) {
     vvp->s[index].x = val; 
     vvp->s[index].time = vvp->s[M_PRESENT_TIME].time;
