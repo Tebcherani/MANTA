@@ -75,22 +75,14 @@ int load_mission( const char *fname )
     loaded_mission_path[sizeof(loaded_mission_path) - 1] = '\0';
     if ( (fptr = fopen(fullpath, "r")) == NULL )
     {
-	sprintf( msg_buf, "%s: %s\n", fullpath, strerror(errno) );
-	write_message( TERM | SLOG );
 	return error;
     }
-    sprintf( msg_buf, "mission file: %s ...\n", fullpath );
-    write_message( TERM | SLOG );
 
 				/* read flags then state (flags error
 				   prevents reading state) */
     if ( !read_flags(fptr) && !read_state(fptr) )
 	error = 0;
-    else
-    {
-	sprintf( msg_buf, "%s: file error ...\n", fname );
-	write_message( TERM | SLOG );
-    }
+
 				/* close file, return error value */
     fclose( fptr );
     return error;
@@ -131,12 +123,8 @@ int load_vehicle_def( const char *fname )
     else
 	ody_join_path( fullpath, sizeof(fullpath), VEHICLE_DIR, fname );
     if ( (fptr = fopen(fullpath, "r")) == NULL ) {
-        sprintf( msg_buf, "%s: %s\n", fullpath, strerror(errno) );
-        write_message( TERM | SLOG );
         return -1;
     }
-    sprintf( msg_buf, "vehicle definition: %s ...\n", fullpath );
-    write_message( TERM | SLOG );
 
     while ( fgets(line, sizeof(line), fptr) != NULL ) {
         lineno++;
@@ -148,16 +136,10 @@ int load_vehicle_def( const char *fname )
 				/* first real line must be the vehicle header */
         if ( !header_seen ) {
             if ( sscanf(line, " vehicle: %s", header) != 1 ) {
-                sprintf( msg_buf, "%s: missing 'vehicle:' header at "
-                         "line %d\n", fname, lineno );
-                write_message( TERM | SLOG );
                 fclose(fptr);
                 return -1;
             }
             if ( strcmp(header, VEHICLE_NAME) != 0 ) {
-                sprintf( msg_buf, "%s: definition is for '%s', this "
-                         "build is '%s'\n", fname, header, VEHICLE_NAME );
-                write_message( TERM | SLOG );
                 fclose(fptr);
                 return -1;
             }
@@ -167,27 +149,18 @@ int load_vehicle_def( const char *fname )
 
 				/* parse "<name> <value>" */
         if ( sscanf(line, " %s %lg", name, &value) != 2 ) {
-            sprintf( msg_buf, "%s line %d: cannot parse: %s",
-                     fname, lineno, line );
-            write_message( TERM | SLOG );
             fclose(fptr);
             return -1;
         }
 
 				/* only vs_* fields allowed */
         if ( strncmp(name, "vs_", 3) != 0 ) {
-            sprintf( msg_buf, "%s line %d: '%s' is not a vs_* parameter\n",
-                     fname, lineno, name );
-            write_message( TERM | SLOG );
             fclose(fptr);
             return -1;
         }
 
 				/* look up by name */
         if ( (index = match_sensor(name)) < 0 ) {
-            sprintf( msg_buf, "%s line %d: unknown parameter '%s'\n",
-                     fname, lineno, name );
-            write_message( TERM | SLOG );
             fclose(fptr);
             return -1;
         }
@@ -197,9 +170,6 @@ int load_vehicle_def( const char *fname )
         actual = strchr( name, '(' );
         if ( expect && actual &&
              convert_units( expect, actual, value, &value ) ) {
-            sprintf( msg_buf, "%s line %d: unknown units in '%s'\n",
-                     fname, lineno, name );
-            write_message( TERM | SLOG );
             fclose(fptr);
             return -1;
         }
@@ -211,12 +181,8 @@ int load_vehicle_def( const char *fname )
     fclose( fptr );
 
     if ( !header_seen ) {
-        sprintf( msg_buf, "%s: empty vehicle definition file\n", fname );
-        write_message( TERM | SLOG );
         return -1;
     }
-    sprintf( msg_buf, "vehicle definition: %d parameters set\n", n_set );
-    write_message( TERM | SLOG );
     return 0;
 }
 
@@ -250,97 +216,79 @@ int read_flags( FILE *fptr )
 	if ( sscanf(linebuf, "UseSim %d", &value) == 1 )
 	{
 	    fprintf(stderr, "Ignoring obsolete UseSim setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseSim setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseAltimeter %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseAltimeter setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseAltimeter setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseSail1 %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseSail1 setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseSail1 setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseWatchdog %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseWatchdog setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseWatchdog setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseThruster %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseThruster setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseThruster setting: %d\n", value);
     	continue;
 	}
 	if ( sscanf(linebuf, "FinHECalibrate %d", &value) == 1 )
 	{
 	    fprintf(stderr, "Ignoring obsolete FinHECalibrate setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete FinHECalibrate setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "HallEffectIndex %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete HallEffectIndex setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete HallEffectIndex setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseElevator %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseElevator setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseElevator setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseRudder %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseRudder setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseRudder setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseParosci %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseParosci setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseParosci setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseKVH_DGC %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseKVH_DGC setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseKVH_DGC setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseKVH_DGI %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseKVH_DGI setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseKVH_DGI setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorKVH_DGC %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorKVH_DGC setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorKVH_DGC setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorKVH_DGI %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorKVH_DGI setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorKVH_DGI setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorAltimeter %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorAltimeter setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorAltimeter setting: %d\n", value);
     	continue;
 	}
 #ifdef EDGEPS8000
 	if ( (sscanf(linebuf, "UseLBL %d", &value))==1) {
 	    UseLBL = value;
 	    fprintf(stderr, "UseLBL   %d\n", UseLBL);
-	    fprintf(syslog, "UseLBL   %d\n", UseLBL);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorLBL %d", &value))==1) {
 	    MonitorLBL = value;
 	    fprintf(stderr, "MonitorLBL   %d\n", MonitorLBL);
-	    fprintf(syslog, "MonitorLBL   %d\n", MonitorLBL);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "LBLTransponderMode %d", &value))==1) {
 	    LBLTransponderMode = value;
 	    fprintf(stderr, "LBLTransponderMode %d\n", LBLTransponderMode);
-	    fprintf(syslog, "LBLTransponderMode %d\n", LBLTransponderMode);
 	    continue;
 	}
 #endif
@@ -348,12 +296,10 @@ int read_flags( FILE *fptr )
 	if ( (sscanf(linebuf, "UseCondTemp %d", &value))==1)
 	{
 	    fprintf(stderr, "Ignoring obsolete UseCondTemp setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseCondTemp setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorCondTemp %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorCondTemp setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorCondTemp setting: %d\n", value);
     	continue;
 	}
 
@@ -361,125 +307,100 @@ int read_flags( FILE *fptr )
 	    MonitorLayeredControl = value;
 	    fprintf(stderr, "MonitorLayeredControl    %d\n", 
 		    MonitorLayeredControl);
-	    fprintf(syslog, "MonitorLayeredControl    %d\n", 
-		    MonitorLayeredControl);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorDataLogging  %d", &value))==1) {
 	    MonitorDataLogging = value;
 	    fprintf(stderr, "MonitorDataLogging    %d\n", 
 		    MonitorDataLogging);
-	    fprintf(syslog, "MonitorDataLogging    %d\n", 
-		    MonitorDataLogging);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorWatchdog %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorWatchdog setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorWatchdog setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorThruster %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorThruster setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorThruster setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorElevator %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorElevator setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorElevator setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorRudder %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorRudder setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorRudder setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorParosci %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete MonitorParosci setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorParosci setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "Countdown %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete Countdown setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete Countdown setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedTime %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete CommandedTime setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete CommandedTime setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedSpeed %lf", &dvalue))==1) {
 	    fprintf(stderr, "Ignoring obsolete CommandedSpeed setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete CommandedSpeed setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedHeading %lf", &dvalue))==1) {
 	    fprintf(stderr, "Ignoring obsolete CommandedHeading setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete CommandedHeading setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedHeadingDegrees %lf", &dvalue))==1) {
 	    fprintf(stderr, "Ignoring obsolete CommandedHeadingDegrees setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete CommandedHeadingDegrees setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "CommandedDepth %lf", &dvalue))==1) {
 	    fprintf(stderr, "Ignoring obsolete CommandedDepth setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete CommandedDepth setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "DebugMode %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete DebugMode setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete DebugMode setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "CommsDebugMode %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete CommsDebugMode setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete CommsDebugMode setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "TimingDebugMode %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete TimingDebugMode setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete TimingDebugMode setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "WatchdogTimeoutMinutes %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete WatchdogTimeoutMinutes setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete WatchdogTimeoutMinutes setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "WatchdogTimeoutHours %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete WatchdogTimeoutHours setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete WatchdogTimeoutHours setting: %d\n", value);
     	continue;
 	}
 	if (sscanf(linebuf, "InitDataFileSize %d", &value) == 1) {
     	fprintf(stderr, "Ignoring obsolete InitDataFileSize setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete InitDataFileSize setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseKalmanFilter %d", &value))==1) {
 	    fprintf(stderr, "Ignoring obsolete UseKalmanFilter setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseKalmanFilter setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "MonitorSim %d", &value))==1)
 	{
 	    MonitorSim = value;
 	    fprintf(stderr, "MonitorSim  %d\n", MonitorSim);
-	    fprintf(syslog, "MonitorSim  %d\n", MonitorSim);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "AltimeterFrequency %d", &value))==1)
 	{
 	    fprintf(stderr, "Ignoring obsolete AltimeterFrequency setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete AltimeterFrequency setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseOld200 %d", &value))==1)
 	{
 	    fprintf(stderr, "Ignoring obsolete UseOld200 setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseOld200 setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "DeadManSwitchEnabled %d", 
@@ -487,8 +408,6 @@ int read_flags( FILE *fptr )
 	{
 	    DeadManSwitchEnabled = value;
 	    fprintf(stderr, "DeadManSwitchEnabled  %d\n", 
-		    DeadManSwitchEnabled);
-	    fprintf(syslog, "DeadManSwitchEnabled  %d\n", 
 		    DeadManSwitchEnabled);
 	    continue;
 	}
@@ -498,41 +417,34 @@ int read_flags( FILE *fptr )
 	    NewMissionFileEnabled = value;
 	    fprintf(stderr, "NewMissionFileEnabled  %d\n", 
 		    NewMissionFileEnabled);
-	    fprintf(syslog, "NewMissionFileEnabled  %d\n", 
-		    NewMissionFileEnabled);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "AltimeterPortNumber %d", &value))==1)
 	{
 	    fprintf(stderr, "Ignoring obsolete AltimeterPortNumber setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete AltimeterPortNumber setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UsePort %d", &value))==1)
 	{
 	    fprintf(stderr, "Ignoring obsolete UsePort setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UsePort setting: %d\n", value);
     	continue;
 	}
 	if ( (sscanf(linebuf, "UseStarboard %d", &value))==1)
 	{
 	    fprintf(stderr, "Ignoring obsolete UseStarboard setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseStarboard setting: %d\n", value);
     	continue;
 	}
 
 	if ( sscanf(linebuf, "UseModem %d", &value) == 1 )
 	{
 	    UseModem = value;
-	    sprintf( msg_buf, "UseModem %d\n", value );
-	    write_message( TERM | SLOG );
+	    fprintf(stderr, "UseModem setting: %d\n", value);
 	    continue;
 	}
 	if ( sscanf(linebuf, "MonitorModem %d", &value) == 1 )
 	{
 	    MonitorModem = value;
-	    sprintf( msg_buf, "MonitorModem   %d\n", value );
-	    write_message( TERM | SLOG );
+	    fprintf(stderr, "MonitorModem setting: %d\n", value);
 	    continue;
 	}
 
@@ -540,13 +452,11 @@ int read_flags( FILE *fptr )
 	if ( sscanf(linebuf, "UseLatchMotor %d", &value) == 1 )
 	{
 	    fprintf(stderr, "Ignoring obsolete UseLatchMotor setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete UseLatchMotor setting: %d\n", value);
     	continue;
 	}
 	if ( sscanf(linebuf, "MonitorLatchMotor %d", &value) == 1 )
 	{
 	    fprintf(stderr, "Ignoring obsolete MonitorLatchMotor setting: %d\n", value);
-		fprintf(syslog, "Ignoring obsolete MonitorLatchMotor setting: %d\n", value);
     	continue;
 	}
 #endif /* WHOI_LATCH */
@@ -584,8 +494,6 @@ int read_state(FILE *fptr) {
             strncpy( vvp->sta[vvp->nstates].name, name, MAX_STATE_NAME );
             vvp->nstates++;
             if ( vvp->nstates >= MAX_STATES ) {
-                sprintf( msg_buf, "*** max number of states exceeded\n");
-                write_message( TERM | SLOG );
                 exit_gracefully( -1 );
             }
             if (vvp->nstates==1)
@@ -593,9 +501,6 @@ int read_state(FILE *fptr) {
             else
 				vvp->cstate++;
 
-            sprintf( msg_buf, "\n *** state %d ***\n%s\n", vvp->nstates, 
-		     linebuf );
-            write_message( TERM | SLOG );
 				/* For SCLC, when you see the word state,
                                    increment the state_counter and write
                                    subsequent behaviors into the next
@@ -608,19 +513,11 @@ int read_state(FILE *fptr) {
 				expect = strchr( vvp->s[index].name, '(' );
 				actual = strchr( name, '(');
 				if ( expect && actual && convert_units( expect, actual, value, &value ) ) {
-		    		sprintf( msg_buf, "load_mission %s: unknown "
-			     		"units, exiting ...\n", name );
-		    		write_message( TERM | SLOG );
 		    		exit_gracefully( -1 );
 				}
                 update_sensor( index, value );
 		
-                sprintf( msg_buf, "  sensor: %29s %lg\n", vvp->s[index].name, vvp->s[index].x );
-                write_message( TERM | SLOG );
             } else {
-                sprintf( msg_buf, 
-                        "failed to match sensor %s, exiting\n", name );
-                write_message( TERM | SLOG );
                 exit_gracefully(-1);
             }
         }
@@ -628,18 +525,11 @@ int read_state(FILE *fptr) {
         else if (sscanf(linebuf, " behavior: %s", name) == 1 ) {
 	    	priority++;
             if ( priority >= MAX_COMMAND ) {
-                sprintf( msg_buf, "load_mission: priority %d >= "
-			 		"MAX_COMMAND (%d), exiting ...\n", priority,
-			 		MAX_COMMAND );
-                write_message( TERM | SLOG );
                 exit_gracefully( -1 );
             }
 
             if ( (b_index = match_behavior(name)) >= 0 ) {
                 vvp->sta[vvp->cstate].c[priority].behavior = b_index;
-
-                sprintf( msg_buf, " behavior: %s %d \n", vvp->b[b_index].name, priority );
-                write_message( TERM | SLOG );
 
 				/* copy default arguments from bTemplate
 				   into current state (BAM, 2/29/96) */
@@ -650,9 +540,6 @@ int read_state(FILE *fptr) {
                 assign_behavior_fcn_ptr( name, &(vvp->sta[vvp->cstate].c[priority].b) );
 
             } else {
-                sprintf( msg_buf, "failed to match behavior %s, "
-			 		"exiting ...\n", name );
-                write_message( TERM | SLOG );
                 exit_gracefully(-1);
             }
 				/* If line is a behavior argument, then
@@ -660,9 +547,6 @@ int read_state(FILE *fptr) {
         }
 		else if (sscanf(linebuf, "  b_arg: %s %lg", name, &value) == 2 ) {
             if (b_index < 0) {
-				sprintf(msg_buf,
-						"load_mission: behavior argument found before valid behavior\n");
-				write_message(TERM | SLOG);
 				exit_gracefully(-1);
 			}
 			
@@ -672,10 +556,6 @@ int read_state(FILE *fptr) {
                     actual = strchr( name, '(' );
 
                     if ( expect && actual && convert_units( expect, actual, value, &value ) ) {
-                        sprintf( msg_buf, 
-				 			"load_mission: error in b_arg units "
-				 			"%s, exiting ...\n", name );
-						write_message( TERM | SLOG );
                         exit_gracefully( -1 );
                     }
                     vvp->b[b_index].arg[index].x =
@@ -684,16 +564,9 @@ int read_state(FILE *fptr) {
                     strcpy( vvp->sta[vvp->cstate].c[priority].b.arg[index].name, 
                            vvp->b[b_index].arg[index].name );
                 } else {
-                    sprintf( msg_buf, 
-			     		"can't match behavior argument %s\n", linebuf );
-                    write_message( TERM | SLOG );
                     exit_gracefully( -1 );
                 }
 			}
-            sprintf( msg_buf, "  b_arg: %30s %lg\n",
-		     	vvp->b[b_index].arg[index].name,
-		     	vvp->b[b_index].arg[index].x);
-            write_message( TERM | SLOG );
         }
     }
 				/* good place to set position estimators to
