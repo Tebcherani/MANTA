@@ -3,6 +3,7 @@
 #include "ody_defs.h"
 #include "odyssey_sensors.h"
 #include "vehicle.h"
+#include "odyssey_data.h"
 
 // Direct-copy path: simulated inclinometer -> roll/pitch, simulated compass -> yaw
  void update_heading(void) {

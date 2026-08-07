@@ -11,6 +11,7 @@
 
 #include "common_defs.h"
 #include "diagnostic.h"
+#include "odyssey_data.h"
 #include "vehicle.h"
 
 int stack_busy( struct command *cmd );

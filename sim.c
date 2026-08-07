@@ -37,6 +37,7 @@
 #include "common_defs.h"
 #include "diagnostic.h"
 #include "vehicle.h"
+#include "odyssey_data.h"
 #include "odyssey_log.h"
 
 

@@ -23,6 +23,7 @@
 #include "common_defs.h"
 #include "diagnostic.h"		/* MITSG */
 #include "vehicle.h"
+#include "odyssey_data.h"
 #include "odyssey_log.h"
 
 int stack_busy( struct command *cmd );

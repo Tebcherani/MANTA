@@ -18,6 +18,7 @@
 
 #include "diagnostic.h"
 #include "odyssey_config.h"
+#include "odyssey_data.h"
 #include "paths.h"
 #include "vehicle.h"
 

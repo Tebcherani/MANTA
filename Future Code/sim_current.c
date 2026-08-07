@@ -19,6 +19,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
+#include "odyssey_data.h"
 
 /* forward declaration for function defined in load_mission.c */
 void skip_comments( FILE *f );

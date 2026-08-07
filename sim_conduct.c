@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "odyssey_data.h"
 #include "vehicle.h"
 
 #define DECIBAR_TO_PA 10000.0

@@ -30,6 +30,7 @@ SRCS = \
     src/Application/command_line.c          \
     src/Odyssey/odyssey_config.c            \
     src/Odyssey/odyssey_control.c           \
+    src/Odyssey/odyssey_data.c              \
     src/Odyssey/odyssey_data_logger.c       \
     src/Odyssey/odyssey_log.c               \
     src/Odyssey/odyssey_mission.c           \
@@ -54,7 +55,6 @@ SRCS = \
     load_mission.c      \
     paths.c             \
     vehicle.c           \
-    update.c            \
     diagnostic.c        \
     lbl.c               \
     lbl_nav.c           \

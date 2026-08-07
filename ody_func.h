@@ -19,11 +19,6 @@ struct behavior;
                                 /* main.c */
 void exit_gracefully( int );
 void simple_dead_reckoning( void );
-                                /* update.c */
-void update( int, double );
-void update_add( int, double );
-int init_data_structure( );
-
                                 /* dynamic_control.c */
 void dynamic_control( void );
 double limit( double, double, double );

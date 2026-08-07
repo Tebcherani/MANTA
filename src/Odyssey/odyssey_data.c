@@ -1,19 +1,13 @@
-/*----------------------------------------------------------------------*
-   Copyright (C) 1994-1997, Massachusetts Institute of Technology.
-	 Sea Grant Autonomous Underwater Vehicles Laboratory.
-			 All rights reserved.
-  $Id: update.c,v 2.21 1998/01/20 00:31:51 bamoran Exp $
- *----------------------------------------------------------------------*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "diagnostic.h"		/* MITSG */
+#include "diagnostic.h"
+#include "odyssey_data.h"
 #include "vehicle.h"
 
-int assign_behavior_fcn_ptr( const char *name, struct behavior *b );
-int hirestime( double *hires );
+int assign_behavior_fcn_ptr(const char *name, struct behavior *b);
+int hirestime(double *hires);
 
 /* ============================================================ */
 /* UTILITY ROUTINE FOR LOADING VEHICLE STRUCTURE.               */

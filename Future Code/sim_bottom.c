@@ -53,6 +53,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
+#include "odyssey_data.h"
 
 #ifndef drand48
 #define drand48() ((double)rand()/RAND_MAX)

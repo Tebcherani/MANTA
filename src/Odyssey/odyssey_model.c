@@ -8,7 +8,6 @@
 #include "ody_var.h"
 #include "sim_log.h"
 
-void update(int index, double val);
 int convert_units(const char *expected, const char *given, const double inval, double *outval);
 int match_sensor(const char *name);
 int load_vehicle_def(const char *fname);

@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "odyssey_data.h"
 #include "vehicle.h"
 
 int simulate_usbl( void )

@@ -13,6 +13,7 @@
 
 #include "common_defs.h"
 #include "diagnostic.h"
+#include "odyssey_data.h"
 #include "vehicle.h"
 
 #ifndef drand48
