@@ -182,9 +182,10 @@ static void update_compass_yaw() {
 
     // Compute heading from readings 
     if ((mx>0.0) && (my<=0.0)) mg_yaw = -atan(my/mx);
-    if ((mx<=0.0) && (my<0.0)) mg_yaw = atan(mx/my)+PI/2.0;
-    if ((mx<0.0) && (my>=0.0)) mg_yaw = -atan(my/mx)+PI;
-    if ((mx>=0.0) && (my>0.0)) mg_yaw = atan(mx/my)+3.0*PI/2.0;
+    else if ((mx<=0.0) && (my<0.0)) mg_yaw = atan(mx/my)+PI/2.0;
+    else if ((mx<0.0) && (my>=0.0)) mg_yaw = -atan(my/mx)+PI;
+    else if ((mx>=0.0) && (my>0.0)) mg_yaw = atan(mx/my)+3.0*PI/2.0;
+    else mg_yaw = 0.0;
 
     // Add noise and write to the structure
     mg_yaw += compass_noise*std_normal_random_num();
