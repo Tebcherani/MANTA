@@ -19,6 +19,7 @@
 #include "odyssey_config.h"
 #include "paths.h"
 #include "odyssey_log.h"
+#include "odyssey_data_struct.h"
 
 
 static int loggerVersion = 2;	/* file format version number */
@@ -59,7 +60,7 @@ int log_data( FILE *datafile )
 	init_tab();
     }
 				/* keep track of max depth */
-    update_tab( sensor(M_DEPTH) );
+    update_tab( read_sensor(M_DEPTH) );
 
 				/* first write the flag (use 10001) */
     dummy = fwrite( (void *) &flag, 2, 1, datafile);
@@ -86,7 +87,7 @@ int log_data( FILE *datafile )
 		fprintf(syslog, "cycle %d fwrite ind %d ret "
 			"%d in log_data\n", CycleCount, i, dummy);
 
-	    temp_float = (float) sensor(i); 
+	    temp_float = (float) read_sensor(i); 
 	    fwrite((void *) &temp_float, 4, 1, datafile); 
 
 	    if (dummy<1) 
@@ -272,7 +273,7 @@ FILE *init_data_logging( char *DataFileName )
 				   vehicle.c by edit_struct if initial
 				   value unspecified */
 	if ( sensor_time(i) >= 0L )
-	    fprintf( datafile, " %.8g\xa", sensor(i) );
+	    fprintf( datafile, " %.8g\xa", read_sensor(i) );
 	else
 	    fputc( '\xa', datafile );
     }
@@ -328,8 +329,8 @@ static float north0, east0, max_depth;
 
 void init_tab( void )
 {
-    north0 = sensor(M_POS_N);
-    east0  = sensor(M_POS_E);
+    north0 = read_sensor(M_POS_N);
+    east0  = read_sensor(M_POS_E);
 }
 
 void update_tab( float depth )
@@ -359,7 +360,7 @@ int write_tab( void )
 	{
 				/* write entry to file and close */
 	    fprintf( ftab, "%s %.2f\t% 8.2f % 7.1f % 7.1f %6.1f\n", run,
-		     vvp->mission_start_time, sensor(M_PRESENT_TIME), north0,
+		     vvp->mission_start_time, read_sensor(M_PRESENT_TIME), north0,
 		     east0, max_depth );
 	    fclose( ftab );
 				/* generate affirmative diagnostic */

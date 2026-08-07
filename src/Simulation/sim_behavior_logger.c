@@ -4,6 +4,7 @@
 #include "sim_behavior_logger.h"
 #include "sim_log.h"
 #include "vehicle.h"
+#include "odyssey_data_struct.h"
 
 #define BEHAVIOR_LOG_SIZE 100000
 
@@ -31,7 +32,7 @@ void capture_behavior_activity(void) {
 
     entry = &behavior_log[behavior_log_count];
 
-    entry->time = sensor(M_PRESENT_TIME);
+    entry->time = read_sensor(M_PRESENT_TIME);
     entry->state = vvp->cstate;
 
     entry->heading_mode = vvp->c[0].heading_mode;

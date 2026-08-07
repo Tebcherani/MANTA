@@ -28,7 +28,7 @@ int handle_modem(void)
     if( strlen(vvp->modem_send) > 0 )
     {
 	sprintf( msg_buf, "\nModem t=%.2lf %s\n", 
-		 sensor(M_PRESENT_TIME), vvp->modem_send ); 
+		 read_sensor(M_PRESENT_TIME), vvp->modem_send ); 
 	write_message( monitor_high_level_control );
 	strcpy( vvp->modem_send, "" ); 
     }
@@ -47,13 +47,13 @@ int getXSDataByte( void )
 
 #ifdef WHOI_LATCH
 				/* LSB is presence of pole */
-    databyte |= sensor(M_POLE_PRESENT) > 0;
+    databyte |= read_sensor(M_POLE_PRESENT) > 0;
 				/* bits 1-2 are range from dock */
-    if ( sensor(M_USBL_RANGE) > 1000 )
+    if ( read_sensor(M_USBL_RANGE) > 1000 )
 	databyte |= 6;
-    else if ( sensor(M_USBL_RANGE) > 500 )
+    else if ( read_sensor(M_USBL_RANGE) > 500 )
 	databyte |= 4;
-    else if ( sensor(M_USBL_RANGE) > 50 )
+    else if ( read_sensor(M_USBL_RANGE) > 50 )
 	databyte |= 2;
 				/* bit 3 always high during missions */
     databyte |= 8;

@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
         if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
 
         // Update clock for next control cycle
-        update(M_DT, sim_config.control_period * sim_config.timestep);
+        update_sensor(M_DT, sim_config.control_period * sim_config.timestep);
     }
 
     exit_sim(EXIT_FAILURE, mission_started);

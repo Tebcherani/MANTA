@@ -44,7 +44,7 @@ Kph = sensor( UO_CONTROL_KPH );
 
 However, to write to a variable, one uses a function call update.� The reason that using this function call is important is that update also modifies the time stamp on the variable, thus signaling to other software elements (e.g. critically the logging routine) that there is a new value written to the variable.� So to modify �uo_control_kph� to take on the value of �new_kph�, one would simply write:
 
-Update(UO_CONTROL_KPH, new_kph);
+update_sensor(UO_CONTROL_KPH, new_kph);
 
 Adding a new behavior:� Missions are configured by loading a behavior stack with behaviors and configuring the arguments of the behaviors.� To add a new behavior, one adds it as a function call in the layered_control.com file.� To be able to use the behavior, one must add it to the vehicle data structure by adding the behavior name and argument list to edit_struct.c and then follow the procedure above of a) compiling and running edit_struct, b) recompiling the vehicle code.� Here is an example of a behavior definition:
 

@@ -31,11 +31,11 @@ void LBL_position( void )
 {
     void ABE_LBL( void );
 
-    if ( sensor(U_LBL_BEACON_NUMBER) < 2 )
+    if ( read_sensor(U_LBL_BEACON_NUMBER) < 2 )
     {
 					/* best guess of vehicle position */
-	update_add( M_POS_N, sensor(M_DR_DN) );
-	update_add( M_POS_E, sensor(M_DR_DE) );
+	update_add( M_POS_N, read_sensor(M_DR_DN) );
+	update_add( M_POS_E, read_sensor(M_DR_DE) );
 
 	return;
     }
@@ -73,22 +73,22 @@ void ABE_LBL()
     if ( uninitialized )
     {
 				/* store lbl environment */
-	lblenv.range_tol = sensor(LBL_RANGE_TOL);
-	lblenv.fix_tol = sensor(LBL_FIX_ERR);
+	lblenv.range_tol = read_sensor(LBL_RANGE_TOL);
+	lblenv.fix_tol = read_sensor(LBL_FIX_ERR);
 	lblenv.timeout = 99999;
-	lblenv.min_angle = sensor(LBL_MIN_ANGLE);
+	lblenv.min_angle = read_sensor(LBL_MIN_ANGLE);
 	lblenv.alpha = 0.5;
 	lblenv.num_steps_pinv = 10;
 	lblenv.max_iter = 40;
 				/* store beacon count as static int */
-	numXP = (int) sensor(U_LBL_BEACON_NUMBER);
+	numXP = (int) read_sensor(U_LBL_BEACON_NUMBER);
 				/* xponder data for fix calcs */
 	for ( ii = 0, offset = 0; ii < numXP; ii++ )
 	{
-	    lblenv.xp[ii].x = sensor(U_LBL_1NORTH + offset);
-	    lblenv.xp[ii].y = sensor(U_LBL_1EAST  + offset);
-	    lblenv.xp[ii].z = sensor(U_LBL_1DEPTH + offset);
-	    lblenv.tat[ii]  = sensor(U_LBL_1TAT   + offset);
+	    lblenv.xp[ii].x = read_sensor(U_LBL_1NORTH + offset);
+	    lblenv.xp[ii].y = read_sensor(U_LBL_1EAST  + offset);
+	    lblenv.xp[ii].z = read_sensor(U_LBL_1DEPTH + offset);
+	    lblenv.tat[ii]  = read_sensor(U_LBL_1TAT   + offset);
 	    lblenv.max_range[ii] = 4000;
 	    offset += U_LBL_2NORTH - U_LBL_1NORTH;
 	    fprintf( syslog, "\tX%d: N %.1f E %.1f D %.1f T %.3g\n",
@@ -108,38 +108,38 @@ void ABE_LBL()
     }
 				/* calculate DR updates, will be used
 				   in presence or absence of LBL hit */
-    dx = sensor( M_DR_DN );
-    dy = sensor( M_DR_DE );
+    dx = read_sensor( M_DR_DN );
+    dy = read_sensor( M_DR_DE );
 
-    if ( sensor(LBL_NEWDATA) > 0 )
+    if ( read_sensor(LBL_NEWDATA) > 0 )
     {
 	for ( ii = 0; ii < numXP; ii++ )
 	{
-	    if ( sensor(M_LBL_1T + ii) > 0 )
+	    if ( read_sensor(M_LBL_1T + ii) > 0 )
 	    {
-		slant[ii] = 0.5*(sensor(M_LBL_1T + ii) - lblenv.tat[ii]);
-		slant[ii] *= sensor(U_SPEED_OF_SOUND);
+		slant[ii] = 0.5*(read_sensor(M_LBL_1T + ii) - lblenv.tat[ii]);
+		slant[ii] *= read_sensor(U_SPEED_OF_SOUND);
 	    }
 	    else
 		slant[ii] = 0.;
 	}
 
-	lblenv.depth  = sensor( M_DEPTH );
-	lblenv.xhat.x = sensor( M_POS_N );
-	lblenv.xhat.y = sensor( M_POS_E );
+	lblenv.depth  = read_sensor( M_DEPTH );
+	lblenv.xhat.x = read_sensor( M_POS_N );
+	lblenv.xhat.y = read_sensor( M_POS_E );
 
 	sprintf( msg_buf, "% 8.2f: LBL inputs\n"
-		 "\t(N%7.1f E%7.1f D %6.1f)\n", sensor(M_PRESENT_TIME),
-		 sensor(M_POS_N), sensor(M_POS_E), sensor(M_DEPTH) );
+		 "\t(N%7.1f E%7.1f D %6.1f)\n", read_sensor(M_PRESENT_TIME),
+		 read_sensor(M_POS_N), read_sensor(M_POS_E), read_sensor(M_DEPTH) );
 
-	compute_lbl_fix( slant, &lblenv, sensor(M_PRESENT_TIME), &fix, 1 );
+	compute_lbl_fix( slant, &lblenv, read_sensor(M_PRESENT_TIME), &fix, 1 );
 
 				/* log the fix and its status */
-	update( LBL_FIX_ERR, lblenv.error );
-	update( LBL_FIXSTAT, fix.fix_status );
+	update_sensor( LBL_FIX_ERR, lblenv.error );
+	update_sensor( LBL_FIXSTAT, fix.fix_status );
 
 				/* indicate we've used the data */
-	update( LBL_NEWDATA, 0 );
+	update_sensor( LBL_NEWDATA, 0 );
 
 				/* count and log good hits */
 	for ( ii = 0, numGood = 0; ii < numXP; ii++ )
@@ -147,26 +147,26 @@ void ABE_LBL()
 	    if ( lblenv.good[ii] == RANGE_GOOD )
 	    {
 		numGood++;
-		update( M_LBL_VALID1 + ii, 1 );
+		update_sensor( M_LBL_VALID1 + ii, 1 );
 	    }
 	    else
-		update( M_LBL_VALID1 + ii, 0 );
+		update_sensor( M_LBL_VALID1 + ii, 0 );
 	}
 
-	update( M_LBL_NUM_USED, numGood );
+	update_sensor( M_LBL_NUM_USED, numGood );
 
 	sprintf( msg_buf+strlen(msg_buf), "\tstat %d, good %d\n",
 		 fix.fix_status, numGood );
 
 	if ( fix.fix_status == NAV_GOOD )
 	{
-	    update( M_LBL_NORTHFIX, fix.position.x );
-	    update( M_LBL_EASTFIX,  fix.position.y );
+	    update_sensor( M_LBL_NORTHFIX, fix.position.x );
+	    update_sensor( M_LBL_EASTFIX,  fix.position.y );
 
-	    dx += sensor(LBL_FIXGAIN)*(sensor(M_LBL_NORTHFIX) - 
-				       sensor(M_POS_N));
-	    dy += sensor(LBL_FIXGAIN)*(sensor(M_LBL_EASTFIX) - 
-				       sensor(M_POS_E));
+	    dx += read_sensor(LBL_FIXGAIN)*(read_sensor(M_LBL_NORTHFIX) - 
+				       read_sensor(M_POS_N));
+	    dy += read_sensor(LBL_FIXGAIN)*(read_sensor(M_LBL_EASTFIX) - 
+				       read_sensor(M_POS_E));
 
 	    sprintf( msg_buf+strlen(msg_buf)-1,
 		     ", err %.1f (N%7.1f E%7.1f)\n", 

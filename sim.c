@@ -115,47 +115,47 @@ void lhs()			/* calculates left-hand-side of the eqn */
 
 				/* fsh checked inertia matrix 3/22/94 */
 
-    a[1][1] =  sensor(VS_MASS) - sensor(VS_XUDOT);	/* surge force */
+    a[1][1] =  read_sensor(VS_MASS) - read_sensor(VS_XUDOT);	/* surge force */
     a[1][2] = 0.;
     a[1][3] = 0.;
     a[1][4] = 0.;
-    a[1][5] = sensor(VS_MASS) * sensor(VS_ZG);
-    a[1][6] = -sensor(VS_MASS) * sensor(VS_YG);
+    a[1][5] = read_sensor(VS_MASS) * read_sensor(VS_ZG);
+    a[1][6] = -read_sensor(VS_MASS) * read_sensor(VS_YG);
 
     a[2][1] = 0.;		/* sway force */
-    a[2][2] =  sensor(VS_MASS) - sensor(VS_YVDOT) ;
+    a[2][2] =  read_sensor(VS_MASS) - read_sensor(VS_YVDOT) ;
     a[2][3] = 0.;
-    a[2][4] = -sensor(VS_MASS) * sensor(VS_ZG) - sensor(VS_YPDOT);
+    a[2][4] = -read_sensor(VS_MASS) * read_sensor(VS_ZG) - read_sensor(VS_YPDOT);
     a[2][5] = 0.;
-    a[2][6] =  sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_YRDOT);
+    a[2][6] =  read_sensor(VS_MASS) * read_sensor(VS_XG) - read_sensor(VS_YRDOT);
 
     a[3][1] = 0.;		/* heave force */
     a[3][2] = 0.;
-    a[3][3] =  sensor(VS_MASS) - sensor(VS_ZWDOT);
-    a[3][4] =  sensor(VS_MASS) * sensor(VS_YG);
-    a[3][5] = -sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_ZQDOT);
+    a[3][3] =  read_sensor(VS_MASS) - read_sensor(VS_ZWDOT);
+    a[3][4] =  read_sensor(VS_MASS) * read_sensor(VS_YG);
+    a[3][5] = -read_sensor(VS_MASS) * read_sensor(VS_XG) - read_sensor(VS_ZQDOT);
     a[3][6] = 0.;
   
     a[4][1] = 0.;		/* roll moment */
-    a[4][2] = -sensor(VS_MASS) * sensor(VS_ZG) - sensor(VS_KVDOT);
-    a[4][3] =  sensor(VS_MASS) * sensor(VS_YG);
-    a[4][4] =  sensor(VS_IXX) - sensor(VS_KPDOT);
-    a[4][5] = -sensor(VS_IXY);
-    a[4][6] = -sensor(VS_IZX);
+    a[4][2] = -read_sensor(VS_MASS) * read_sensor(VS_ZG) - read_sensor(VS_KVDOT);
+    a[4][3] =  read_sensor(VS_MASS) * read_sensor(VS_YG);
+    a[4][4] =  read_sensor(VS_IXX) - read_sensor(VS_KPDOT);
+    a[4][5] = -read_sensor(VS_IXY);
+    a[4][6] = -read_sensor(VS_IZX);
   
-    a[5][1] =  sensor(VS_MASS) * sensor(VS_ZG);	/* pitch moment */
+    a[5][1] =  read_sensor(VS_MASS) * read_sensor(VS_ZG);	/* pitch moment */
     a[5][2] = 0.;
-    a[5][3] = -sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_MWDOT);
-    a[5][4] = -sensor(VS_IXY);
-    a[5][5] =  sensor(VS_IYY) - sensor(VS_MQDOT);
-    a[5][6] = -sensor(VS_IYZ);
+    a[5][3] = -read_sensor(VS_MASS) * read_sensor(VS_XG) - read_sensor(VS_MWDOT);
+    a[5][4] = -read_sensor(VS_IXY);
+    a[5][5] =  read_sensor(VS_IYY) - read_sensor(VS_MQDOT);
+    a[5][6] = -read_sensor(VS_IYZ);
 
-    a[6][1] = -sensor(VS_MASS) * sensor(VS_YG);	/* yaw moment */
-    a[6][2] =  sensor(VS_MASS) * sensor(VS_XG) - sensor(VS_NVDOT);
+    a[6][1] = -read_sensor(VS_MASS) * read_sensor(VS_YG);	/* yaw moment */
+    a[6][2] =  read_sensor(VS_MASS) * read_sensor(VS_XG) - read_sensor(VS_NVDOT);
     a[6][3] = 0.;
-    a[6][4] = -sensor(VS_IZX);
-    a[6][5] = -sensor(VS_IYZ);
-    a[6][6] =  sensor(VS_IZZ) - sensor(VS_NRDOT);
+    a[6][4] = -read_sensor(VS_IZX);
+    a[6][5] = -read_sensor(VS_IYZ);
+    a[6][6] =  read_sensor(VS_IZZ) - read_sensor(VS_NRDOT);
   
     if(debug)
     {
@@ -289,29 +289,29 @@ void motion( double e[], double p[], double Amps, double Del13,
     }
 
 				/* add in effects of steady current... */ 
-    p[2] = p[2] + sensor(REAL_CURRENT_EAST) * dt;
-    p[1] = p[1] + sensor(REAL_CURRENT_NORTH) * dt;
+    p[2] = p[2] + read_sensor(REAL_CURRENT_EAST) * dt;
+    p[1] = p[1] + read_sensor(REAL_CURRENT_NORTH) * dt;
 				/* update parameters for noisy sensor cases */
-    update(REAL_U, e[1]);
-    update(REAL_V, e[2]);
-    update(REAL_W, e[3]);
-    update(REAL_P, e[4]);
-    update(REAL_Q, e[5]);
-    update(REAL_R, e[6]);
+    update_sensor(REAL_U, e[1]);
+    update_sensor(REAL_V, e[2]);
+    update_sensor(REAL_W, e[3]);
+    update_sensor(REAL_P, e[4]);
+    update_sensor(REAL_Q, e[5]);
+    update_sensor(REAL_R, e[6]);
   
-    update(REAL_UD, (e[1] - eo[1]) / dt);
-    update(REAL_VD, (e[2] - eo[2]) / dt);
-    update(REAL_WD, (e[3] - eo[3]) / dt);
-    update(REAL_PD, (e[4] - eo[4]) / dt);
-    update(REAL_QD, (e[5] - eo[5]) / dt);
-    update(REAL_RD, (e[6] - eo[6]) / dt);
+    update_sensor(REAL_UD, (e[1] - eo[1]) / dt);
+    update_sensor(REAL_VD, (e[2] - eo[2]) / dt);
+    update_sensor(REAL_WD, (e[3] - eo[3]) / dt);
+    update_sensor(REAL_PD, (e[4] - eo[4]) / dt);
+    update_sensor(REAL_QD, (e[5] - eo[5]) / dt);
+    update_sensor(REAL_RD, (e[6] - eo[6]) / dt);
   
-    update(REAL_X, p[1]);
-    update(REAL_Y, p[2]);
-    update(REAL_Z, p[3]);
-    update(REAL_PSI, p[6]);
-    update(REAL_THETA, p[5]);
-    update(REAL_PHI, p[4]);
+    update_sensor(REAL_X, p[1]);
+    update_sensor(REAL_Y, p[2]);
+    update_sensor(REAL_Z, p[3]);
+    update_sensor(REAL_PSI, p[6]);
+    update_sensor(REAL_THETA, p[5]);
+    update_sensor(REAL_PHI, p[4]);
 }
 
 /*-------------------------------------------------------------------------
@@ -341,29 +341,29 @@ void hydro( double *e, double *p, double Amps, double Del13, double
   const int debug=0;
   
 				/* if weight dropped, then vehicle feels 0 */
-  if (sensor(C_WEIGHT1_DROP)==0.0) 
-      Wdw1 = sensor(REAL_WDW1);
+  if (read_sensor(C_WEIGHT1_DROP)==0.0) 
+      Wdw1 = read_sensor(REAL_WDW1);
   else 
       Wdw1 = 0.0;
         
-  if (sensor(C_WEIGHT2_DROP)==0.0) 
-      Wdw2 = sensor(REAL_WDW2);
+  if (read_sensor(C_WEIGHT2_DROP)==0.0) 
+      Wdw2 = read_sensor(REAL_WDW2);
   else 
       Wdw2 = 0.0;
         
-  W = sensor(REAL_VEH_W);
-  B = sensor(REAL_VEH_B);
+  W = read_sensor(REAL_VEH_W);
+  B = read_sensor(REAL_VEH_B);
 				/* get weight and buoyancy of vehicle */
   Wp = W + Wdw1 + Wdw2;
-  Bp = B + sensor(VS_BDW1) + sensor(VS_BDW2);
-  Xgp = (sensor(VS_XG)*W + sensor(VS_XDW1)*Wdw1 + sensor(VS_XDW2)*Wdw2) / Wp;
-  Ygp = (sensor(VS_YG)*W + sensor(VS_YDW1)*Wdw1 + sensor(VS_YDW2)*Wdw2) / Wp;
-  Zgp = (sensor(VS_ZG)*W + sensor(VS_ZDW1)*Wdw1 + sensor(VS_ZDW2)*Wdw2) / Wp;
-  Xbp = (sensor(VS_XB)*W + sensor(VS_XDW1)*sensor(VS_BDW1) + sensor(VS_XDW2)*sensor(VS_BDW2)) / Bp;
-  Ybp = (sensor(VS_YB)*W + sensor(VS_YDW1)*sensor(VS_BDW1) + sensor(VS_YDW2)*sensor(VS_BDW2)) / Bp;
-  Zbp = (sensor(VS_ZB)*W + sensor(VS_ZDW1)*sensor(VS_BDW1) + sensor(VS_ZDW2)*sensor(VS_BDW2)) / Bp;
+  Bp = B + read_sensor(VS_BDW1) + read_sensor(VS_BDW2);
+  Xgp = (read_sensor(VS_XG)*W + read_sensor(VS_XDW1)*Wdw1 + read_sensor(VS_XDW2)*Wdw2) / Wp;
+  Ygp = (read_sensor(VS_YG)*W + read_sensor(VS_YDW1)*Wdw1 + read_sensor(VS_YDW2)*Wdw2) / Wp;
+  Zgp = (read_sensor(VS_ZG)*W + read_sensor(VS_ZDW1)*Wdw1 + read_sensor(VS_ZDW2)*Wdw2) / Wp;
+  Xbp = (read_sensor(VS_XB)*W + read_sensor(VS_XDW1)*read_sensor(VS_BDW1) + read_sensor(VS_XDW2)*read_sensor(VS_BDW2)) / Bp;
+  Ybp = (read_sensor(VS_YB)*W + read_sensor(VS_YDW1)*read_sensor(VS_BDW1) + read_sensor(VS_YDW2)*read_sensor(VS_BDW2)) / Bp;
+  Zbp = (read_sensor(VS_ZB)*W + read_sensor(VS_ZDW1)*read_sensor(VS_BDW1) + read_sensor(VS_ZDW2)*read_sensor(VS_BDW2)) / Bp;
 
-  update(REAL_EXCESS_BUOYANCY, Bp-Wp);
+  update_sensor(REAL_EXCESS_BUOYANCY, Bp-Wp);
 
   vv = e[2] * e[2];
   ww = e[3] * e[3];
@@ -392,19 +392,19 @@ void hydro( double *e, double *p, double Amps, double Del13, double
   sp4 = sin(p[4]);
   sp5 = sin(p[5]);       
 
-  vt = e[2] + sensor(VS_FIN1_X)*e[6] ;
-  wt = e[3] - sensor(VS_FIN1_X)*e[5] ;
+  vt = e[2] + read_sensor(VS_FIN1_X)*e[6] ;
+  wt = e[3] - read_sensor(VS_FIN1_X)*e[5] ;
 
-  if (sensor(M_PRESENT_TIME) <= .2) {
-    old_rud_ang = -sensor(VS_RUD_HYST_CENTER) ;
-    old_elev_ang = -sensor(VS_ELEV_HYST_CENTER) ;
+  if (read_sensor(M_PRESENT_TIME) <= .2) {
+    old_rud_ang = -read_sensor(VS_RUD_HYST_CENTER) ;
+    old_elev_ang = -read_sensor(VS_ELEV_HYST_CENTER) ;
   }
 
   if (jjj == 1)          /* if first step of the runge-kutta integration,...  */
   {
 
                          /* two big time steps delay */
-    int act_delay = (int)sensor(VS_ACT_DELAY);
+    int act_delay = (int)read_sensor(VS_ACT_DELAY);
     for(i=act_delay-1;i>=0;i--){
       rud_ang_com_delay[i+1]  = rud_ang_com_delay[i] ;
       elev_ang_com_delay[i+1] = elev_ang_com_delay[i] ;
@@ -419,15 +419,15 @@ void hydro( double *e, double *p, double Amps, double Del13, double
 				/* put through a hysteresis loop to get
                                    actual rudder */
     rud_ang = hysteresis( rud_ang_shaft, old_rud_ang_shaft,  
-			  old_rud_ang, sensor(VS_RUD_HYST_WIDTH), sensor(VS_RUD_HYST_CENTER) ) ;
+			  old_rud_ang, read_sensor(VS_RUD_HYST_WIDTH), read_sensor(VS_RUD_HYST_CENTER) ) ;
 
     elev_ang_shaft = act_model( elev_ang_com_delay[act_delay],
 				 old_elev_ang_shaft, dt );
     elev_ang = hysteresis( elev_ang_shaft, old_elev_ang_shaft,
-			   old_elev_ang, sensor(VS_ELEV_HYST_WIDTH), sensor(VS_ELEV_HYST_CENTER)) ;
+			   old_elev_ang, read_sensor(VS_ELEV_HYST_WIDTH), read_sensor(VS_ELEV_HYST_CENTER)) ;
 
-    update(M_ELEVATOR_ANGLE,elev_ang) ;
-    update(M_RUDDER_ANGLE,rud_ang) ;
+    update_sensor(M_ELEVATOR_ANGLE,elev_ang) ;
+    update_sensor(M_RUDDER_ANGLE,rud_ang) ;
 
     real_amps = Amps  ;
 
@@ -458,94 +458,94 @@ void hydro( double *e, double *p, double Amps, double Del13, double
   
   rhs[1] = TForce                   /* AXIAL FORCES */
          - (Wp-Bp)*sp5 
-         + sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr) 
+         + read_sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr) 
          + F1[1] + F2[1] + F3[1] + F4[1]
-         + sensor(VS_XVV)*vv + sensor(VS_XWW)*ww + sensor(VS_XVR)*vr + sensor(VS_XWQ)*wq + sensor(VS_XRR)*rr + sensor(VS_XQQ)*qq;
+         + read_sensor(VS_XVV)*vv + read_sensor(VS_XWW)*ww + read_sensor(VS_XVR)*vr + read_sensor(VS_XWQ)*wq + read_sensor(VS_XRR)*rr + read_sensor(VS_XQQ)*qq;
 
                           /* apply correction in operating speed range, fsh */
   if (e[1] > 0.7)
-         rhs[1] += sensor(VS_XUABU)*uabu*(2.455-2.175*e[1]+.75*e[1]*e[1]) ;
+         rhs[1] += read_sensor(VS_XUABU)*uabu*(2.455-2.175*e[1]+.75*e[1]*e[1]) ;
   else
-         rhs[1] += sensor(VS_XUABU)*uabu*(2.455-2.175*.7+.75*.7*.7) ;
+         rhs[1] += read_sensor(VS_XUABU)*uabu*(2.455-2.175*.7+.75*.7*.7) ;
 
   if ((debug)&&(jjj == 1)) {
       printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e ",
-             sensor(M_PRESENT_TIME),rud_ang,
+             read_sensor(M_PRESENT_TIME),rud_ang,
              TForce,
-             sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr),
+             read_sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr),
              F1[1] + F2[1] + F3[1] + F4[1],
-             sensor(VS_XVV)*vv , sensor(VS_XWW)*ww , sensor(VS_XVR)*vr ,sensor(VS_XWQ)*wq , sensor(VS_XRR)*rr , sensor(VS_XQQ)*qq,
-             sensor(VS_XUABU)*uabu*(2.455-2.175*e[1]+.75*e[1]*e[1])) ;
+             read_sensor(VS_XVV)*vv , read_sensor(VS_XWW)*ww , read_sensor(VS_XVR)*vr ,read_sensor(VS_XWQ)*wq , read_sensor(VS_XRR)*rr , read_sensor(VS_XQQ)*qq,
+             read_sensor(VS_XUABU)*uabu*(2.455-2.175*e[1]+.75*e[1]*e[1])) ;
   }
   
   rhs[2] = (Wp-Bp)*cp5*sp4         /* LATERAL FORCES */
-         + sensor(VS_YVABV)*vabv
-         + sensor(VS_YUV)*uv + sensor(VS_YUR)*ur + sensor(VS_YRABR)*rabr + sensor(VS_YWP)*wp 
-         + sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq) 
+         + read_sensor(VS_YVABV)*vabv
+         + read_sensor(VS_YUV)*uv + read_sensor(VS_YUR)*ur + read_sensor(VS_YRABR)*rabr + read_sensor(VS_YWP)*wp 
+         + read_sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq) 
          + F1[2] + F2[2] + F3[2] + F4[2];
 
   if ((debug)&&(jjj == 1)) {
           printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e ",
-                 sensor(VS_YVABV)*vabv,
-                 sensor(VS_YUV)*uv , sensor(VS_YUR)*ur , sensor(VS_YRABR)*rabr , sensor(VS_YWP)*wp, 
-                 sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq),
+                 read_sensor(VS_YVABV)*vabv,
+                 read_sensor(VS_YUV)*uv , read_sensor(VS_YUR)*ur , read_sensor(VS_YRABR)*rabr , read_sensor(VS_YWP)*wp, 
+                 read_sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq),
                  F1[2] + F2[2] + F3[2] + F4[2]);
   }
   
   rhs[3] = (Wp-Bp)*cp5*cp4   /* NORMAL FORCES */
-         + sensor(VS_ZWABW)*wabw
-         + sensor(VS_ZUQ)*uq + sensor(VS_ZUW)*uw + sensor(VS_ZQABQ)*qabq + sensor(VS_ZVP)*vp
-           + sensor(VS_MASS)*(uq - vp + Zgp*(pp + qq) - Xgp*pr - Ygp*qr)
+         + read_sensor(VS_ZWABW)*wabw
+         + read_sensor(VS_ZUQ)*uq + read_sensor(VS_ZUW)*uw + read_sensor(VS_ZQABQ)*qabq + read_sensor(VS_ZVP)*vp
+           + read_sensor(VS_MASS)*(uq - vp + Zgp*(pp + qq) - Xgp*pr - Ygp*qr)
          + F1[3] + F2[3] + F3[3] + F4[3];
   
   rhs[4] = -(Zgp*Wp - Zbp*Bp)*cp5*sp4    /* ROLL MOMENTS */
            + (Ygp*Wp - Ybp*Bp)*cp5*cp4   
-         + sensor(VS_KPABP)*pabp 
-         - (sensor(VS_IZZ) - sensor(VS_IYY))*qr 
-         + sensor(VS_IZX)*pq - sensor(VS_IXY)*pr + sensor(VS_IYZ)*qq -sensor(VS_IYZ)*rr 
-         - sensor(VS_MASS)*(Ygp*(vp-uq) + Zgp*(wp-ur))
+         + read_sensor(VS_KPABP)*pabp 
+         - (read_sensor(VS_IZZ) - read_sensor(VS_IYY))*qr 
+         + read_sensor(VS_IZX)*pq - read_sensor(VS_IXY)*pr + read_sensor(VS_IYZ)*qq -read_sensor(VS_IYZ)*rr 
+         - read_sensor(VS_MASS)*(Ygp*(vp-uq) + Zgp*(wp-ur))
          + M1[1] + M2[1] + M3[1] + M4[1] 
-         + TTorque + sensor(VS_KVT2)*4.*vt*wt*(wt*wt-vt*vt)/(vt*vt + wt*wt + .0001) ;
+         + TTorque + read_sensor(VS_KVT2)*4.*vt*wt*(wt*wt-vt*vt)/(vt*vt + wt*wt + .0001) ;
   
   rhs[5] = -(Zgp*Wp - Zbp*Bp)*sp5        /* PITCH MOMENTS */
            - (Xgp*Wp - Xbp*Bp)*cp5*cp4
-         + sensor(VS_MWABW)*wabw
-         + sensor(VS_MQABQ)*qabq
-         + sensor(VS_MUW)*uw  
-         + sensor(VS_MUQ)*uq + sensor(VS_MPR)*pr
-           + (sensor(VS_IZZ) - sensor(VS_IXX))*pr
-         - sensor(VS_IZX)*pp - sensor(VS_IYZ)*pq +sensor(VS_IXY)*qr + sensor(VS_IZX)*rr
-         - sensor(VS_MASS)*(Zgp*(wq - vr) + Xgp*(uq - vp))                     
+         + read_sensor(VS_MWABW)*wabw
+         + read_sensor(VS_MQABQ)*qabq
+         + read_sensor(VS_MUW)*uw  
+         + read_sensor(VS_MUQ)*uq + read_sensor(VS_MPR)*pr
+           + (read_sensor(VS_IZZ) - read_sensor(VS_IXX))*pr
+         - read_sensor(VS_IZX)*pp - read_sensor(VS_IYZ)*pq +read_sensor(VS_IXY)*qr + read_sensor(VS_IZX)*rr
+         - read_sensor(VS_MASS)*(Zgp*(wq - vr) + Xgp*(uq - vp))                     
          + M1[2] + M2[2] + M3[2] + M4[2];
 
   rhs[6] = (Ygp*Wp - Ybp*Bp)*sp5          /* YAW MOMENTS */ 
            + (Xgp*Wp - Xbp*Bp)*cp5*sp4   
-         + sensor(VS_NUV)*uv + sensor(VS_NRABR)*rabr 
-         + sensor(VS_NUR)*ur + sensor(VS_NVABV)*vabv 
-         + sensor(VS_NPQ)*pq
-         + (sensor(VS_IXX) - sensor(VS_IYY))*pq
-         + sensor(VS_IXY)*pp + sensor(VS_IYZ)*pr - sensor(VS_IXY)*qq - sensor(VS_IZX)*qr 
-         - sensor(VS_MASS)*Xgp*(ur-wp) + sensor(VS_MASS)*Ygp*(wq - vr)
+         + read_sensor(VS_NUV)*uv + read_sensor(VS_NRABR)*rabr 
+         + read_sensor(VS_NUR)*ur + read_sensor(VS_NVABV)*vabv 
+         + read_sensor(VS_NPQ)*pq
+         + (read_sensor(VS_IXX) - read_sensor(VS_IYY))*pq
+         + read_sensor(VS_IXY)*pp + read_sensor(VS_IYZ)*pr - read_sensor(VS_IXY)*qq - read_sensor(VS_IZX)*qr 
+         - read_sensor(VS_MASS)*Xgp*(ur-wp) + read_sensor(VS_MASS)*Ygp*(wq - vr)
                + M1[3] + M2[3] + M3[3] + M4[3];
 
   if ((debug)&&(jjj == 1)) {
           printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e\n",
-                 sensor(VS_NUV)*uv,
-                 sensor(VS_NRABR)*rabr, 
-                 sensor(VS_NUR)*ur,
-                 sensor(VS_NVABV)*vabv,
-                 sensor(VS_NPQ)*pq,
-                 (sensor(VS_IXX) - sensor(VS_IYY))*pq + sensor(VS_IXY)*pp + sensor(VS_IYZ)*pr - sensor(VS_IXY)*qq - sensor(VS_IZX)*qr 
-                 - sensor(VS_MASS)*Xgp*(ur-wp) + sensor(VS_MASS)*Ygp*(wq - vr),  
+                 read_sensor(VS_NUV)*uv,
+                 read_sensor(VS_NRABR)*rabr, 
+                 read_sensor(VS_NUR)*ur,
+                 read_sensor(VS_NVABV)*vabv,
+                 read_sensor(VS_NPQ)*pq,
+                 (read_sensor(VS_IXX) - read_sensor(VS_IYY))*pq + read_sensor(VS_IXY)*pp + read_sensor(VS_IYZ)*pr - read_sensor(VS_IXY)*qq - read_sensor(VS_IZX)*qr 
+                 - read_sensor(VS_MASS)*Xgp*(ur-wp) + read_sensor(VS_MASS)*Ygp*(wq - vr),  
                  M1[3] + M2[3] + M3[3] + M4[3]);
   }
   
-  update(REAL_FX, rhs[1]);
-  update(REAL_FY, rhs[2]);
-  update(REAL_FZ, rhs[3]);
-  update(REAL_FK, rhs[4]);
-  update(REAL_FM, rhs[5]);
-  update(REAL_FN, rhs[6]);
+  update_sensor(REAL_FX, rhs[1]);
+  update_sensor(REAL_FY, rhs[2]);
+  update_sensor(REAL_FZ, rhs[3]);
+  update_sensor(REAL_FK, rhs[4]);
+  update_sensor(REAL_FM, rhs[5]);
+  update_sensor(REAL_FN, rhs[6]);
 
 }
 
@@ -555,10 +555,10 @@ void hydro( double *e, double *p, double Amps, double Del13, double
 
 void fins( double *e, double rud_ang, double elev_ang )
 {
-  double r1[4] = {0., sensor(VS_FIN1_X), sensor(VS_FIN1_Y), sensor(VS_FIN1_Z)};
-  double r2[4] = {0., sensor(VS_FIN2_X), sensor(VS_FIN2_Y), sensor(VS_FIN2_Z)};
-  double r3[4] = {0., sensor(VS_FIN3_X), sensor(VS_FIN3_Y), sensor(VS_FIN3_Z)};
-  double r4[4] = {0., sensor(VS_FIN4_X), sensor(VS_FIN4_Y), sensor(VS_FIN4_Z)};
+  double r1[4] = {0., read_sensor(VS_FIN1_X), read_sensor(VS_FIN1_Y), read_sensor(VS_FIN1_Z)};
+  double r2[4] = {0., read_sensor(VS_FIN2_X), read_sensor(VS_FIN2_Y), read_sensor(VS_FIN2_Z)};
+  double r3[4] = {0., read_sensor(VS_FIN3_X), read_sensor(VS_FIN3_Y), read_sensor(VS_FIN3_Z)};
+  double r4[4] = {0., read_sensor(VS_FIN4_X), read_sensor(VS_FIN4_Y), read_sensor(VS_FIN4_Z)};
   static double norm_v1, norm_v2, norm_v3, norm_v4;
   static double alpha1,alpha2,alpha3,alpha4;
   static double CL1,CL2,CL3,CL4,CD1,CD2,CD3,CD4;
@@ -615,31 +615,31 @@ void fins( double *e, double rud_ang, double elev_ang )
     alpha4 = atan2(v4[3],v4[1]) + elev_ang;
   
                                   /* lift and drag coefficients */
-  CDC = sensor(VS_FIN_CD_CROSS)/sensor(VS_FIN_ASPECT_RATIO);
+  CDC = read_sensor(VS_FIN_CD_CROSS)/read_sensor(VS_FIN_ASPECT_RATIO);
 
                                   /* note that if stall angle is exceeded: NO LIFT */
-  if (fabs(alpha1) < sensor(VS_FIN_STALL_ANGLE))
-    CL1 = sensor(VS_FIN_DCL)*alpha1 + CDC*alpha1*fabs(alpha1);
+  if (fabs(alpha1) < read_sensor(VS_FIN_STALL_ANGLE))
+    CL1 = read_sensor(VS_FIN_DCL)*alpha1 + CDC*alpha1*fabs(alpha1);
   else CL1 = 0. ;
-  if (fabs(alpha2) < sensor(VS_FIN_STALL_ANGLE))
-    CL2 = sensor(VS_FIN_DCL)*alpha2 + CDC*alpha2*fabs(alpha2);
+  if (fabs(alpha2) < read_sensor(VS_FIN_STALL_ANGLE))
+    CL2 = read_sensor(VS_FIN_DCL)*alpha2 + CDC*alpha2*fabs(alpha2);
   else CL2 = 0. ;
-  if (fabs(alpha3) < sensor(VS_FIN_STALL_ANGLE))
-    CL3 = sensor(VS_FIN_DCL)*alpha3 + CDC*alpha3*fabs(alpha3);
+  if (fabs(alpha3) < read_sensor(VS_FIN_STALL_ANGLE))
+    CL3 = read_sensor(VS_FIN_DCL)*alpha3 + CDC*alpha3*fabs(alpha3);
   else CL3 = 0. ;
-  if (fabs(alpha4) < sensor(VS_FIN_STALL_ANGLE))
-    CL4 = sensor(VS_FIN_DCL)*alpha4 + CDC*alpha4*fabs(alpha4);
+  if (fabs(alpha4) < read_sensor(VS_FIN_STALL_ANGLE))
+    CL4 = read_sensor(VS_FIN_DCL)*alpha4 + CDC*alpha4*fabs(alpha4);
   else CL4 = 0. ;
 
-  aa = 1.0/(PI*sensor(VS_FIN_ASPECT_RATIO)*sensor(VS_FIN_OSWALD));
+  aa = 1.0/(PI*read_sensor(VS_FIN_ASPECT_RATIO)*read_sensor(VS_FIN_OSWALD));
   
-  CD1 = sensor(VS_FIN_CDO) + aa*CL1*CL1;
-  CD2 = sensor(VS_FIN_CDO) + aa*CL2*CL2;
-  CD3 = sensor(VS_FIN_CDO) + aa*CL3*CL3;
-  CD4 = sensor(VS_FIN_CDO) + aa*CL4*CL4;
+  CD1 = read_sensor(VS_FIN_CDO) + aa*CL1*CL1;
+  CD2 = read_sensor(VS_FIN_CDO) + aa*CL2*CL2;
+  CD3 = read_sensor(VS_FIN_CDO) + aa*CL3*CL3;
+  CD4 = read_sensor(VS_FIN_CDO) + aa*CL4*CL4;
 
                                         /* lift and drag forces, in flow coords... */  
-  cons = (rho*sensor(VS_FIN_AREA))/2.0;
+  cons = (rho*read_sensor(VS_FIN_AREA))/2.0;
   
   LW1 = cons*norm_v1*norm_v1*CL1;      /* positive when the lift vector is close to normal vector */
   LW2 = cons*norm_v2*norm_v2*CL2;
@@ -708,7 +708,7 @@ double act_model(double des_angle, double angle, double dt)
   double can_move_in_dt ;
   const int debug=0;      
 
-  can_move_in_dt = sensor(VS_FIN_SPEED)*dt;        
+  can_move_in_dt = read_sensor(VS_FIN_SPEED)*dt;        
                                  /* how far fin can go in dt seconds */
 
   if (fabs(angle-des_angle) <= can_move_in_dt) {
@@ -821,19 +821,19 @@ static void compute_thruster_state( double real_amps, double w_speed,
     double gear_ratio, motor_ke, motor_r, motor_kt, gear_eff, seal_friction;
     double kt_scale, kq_scale, eta_scale, area_scale, wake_fraction;
 
-    current_limit = sensor(VS_THRUSTER_CURRENT_LIMIT);
-    voltage_limit = sensor(VS_THRUSTER_VOLTAGE_LIMIT);
+    current_limit = read_sensor(VS_THRUSTER_CURRENT_LIMIT);
+    voltage_limit = read_sensor(VS_THRUSTER_VOLTAGE_LIMIT);
 
     amps = clip_abs(real_amps, current_limit);
 
-    wake_fraction = sensor(VS_THRUSTER_WAKE_FRACTION);
+    wake_fraction = read_sensor(VS_THRUSTER_WAKE_FRACTION);
     if (wake_fraction <= 0.0) wake_fraction = 1.0;
     inflow = wake_fraction * w_speed;
 
-    kt_scale = sensor(VS_THRUSTER_KT_SCALE);
-    kq_scale = sensor(VS_THRUSTER_KQ_SCALE);
-    eta_scale = sensor(VS_THRUSTER_ETA_SCALE);
-    area_scale = sensor(VS_THRUSTER_AREA_SCALE);
+    kt_scale = read_sensor(VS_THRUSTER_KT_SCALE);
+    kq_scale = read_sensor(VS_THRUSTER_KQ_SCALE);
+    eta_scale = read_sensor(VS_THRUSTER_ETA_SCALE);
+    area_scale = read_sensor(VS_THRUSTER_AREA_SCALE);
 
     if (kt_scale < 0.0) kt_scale = 0.0;
     if (kq_scale < 0.0) kq_scale = 0.0;
@@ -846,10 +846,10 @@ static void compute_thruster_state( double real_amps, double w_speed,
        propeller diameter is stored separately as vs_thruster_prop_diameter
        for later Kt(J)/Kq(J) mapping and documentation.
     */
-    kt_fit = sensor(VS_THRUSTER_KT) * kt_scale;
-    eta = sensor(VS_THRUSTER_ETA) * eta_scale;
-    pitch = sensor(VS_THRUSTER_PITCH);
-    area = sensor(VS_THRUSTER_DUCT_AREA) * area_scale;
+    kt_fit = read_sensor(VS_THRUSTER_KT) * kt_scale;
+    eta = read_sensor(VS_THRUSTER_ETA) * eta_scale;
+    pitch = read_sensor(VS_THRUSTER_PITCH);
+    area = read_sensor(VS_THRUSTER_DUCT_AREA) * area_scale;
 
     numerator = kt_fit*amps + .5*area*eta*pitch*rho*inflow*inflow;
     denominator = .5*area*eta*eta*eta*pitch*pitch*pitch*rho;
@@ -862,14 +862,14 @@ static void compute_thruster_state( double real_amps, double w_speed,
     ts->thrust = rho * area *
         (pow(eta*pitch*ts->prop_omega,2) - inflow*eta*pitch*ts->prop_omega);
 
-    ts->vehicle_torque = sensor(VS_THRUSTER_KT) * amps * kq_scale;
+    ts->vehicle_torque = read_sensor(VS_THRUSTER_KT) * amps * kq_scale;
 
-    gear_ratio = sensor(VS_THRUSTER_GEAR_RATIO);
-    motor_ke = sensor(VS_THRUSTER_MOTOR_KE);
-    motor_r = sensor(VS_THRUSTER_MOTOR_R);
-    motor_kt = sensor(VS_THRUSTER_MOTOR_KT);
-    gear_eff = sensor(VS_THRUSTER_GEAR_EFF);
-    seal_friction = sensor(VS_THRUSTER_SEAL_FRICTION);
+    gear_ratio = read_sensor(VS_THRUSTER_GEAR_RATIO);
+    motor_ke = read_sensor(VS_THRUSTER_MOTOR_KE);
+    motor_r = read_sensor(VS_THRUSTER_MOTOR_R);
+    motor_kt = read_sensor(VS_THRUSTER_MOTOR_KT);
+    gear_eff = read_sensor(VS_THRUSTER_GEAR_EFF);
+    seal_friction = read_sensor(VS_THRUSTER_SEAL_FRICTION);
 
     if (gear_ratio <= 0.0) gear_ratio = 1.0;
     if (gear_eff <= 0.0) gear_eff = 1.0;
@@ -888,7 +888,7 @@ static void compute_thruster_state( double real_amps, double w_speed,
             ts->prop_omega = 0.0;
         ts->thrust = rho * area *
             (pow(eta*pitch*ts->prop_omega,2) - inflow*eta*pitch*ts->prop_omega);
-        ts->vehicle_torque = sensor(VS_THRUSTER_KT) * amps * kq_scale;
+        ts->vehicle_torque = read_sensor(VS_THRUSTER_KT) * amps * kq_scale;
         ts->motor_omega = gear_ratio * ts->prop_omega;
         ts->motor_voltage = motor_r*amps + motor_ke*ts->motor_omega;
     }
@@ -1028,26 +1028,26 @@ static void update_battery_load( struct thruster_state *ts )
     double bms_vtrip, bms_itrip, bms_ttrip, max_current, min_voltage;
     int chem;
 
-    hotel_load = sensor(VS_HOTEL_LOAD);
+    hotel_load = read_sensor(VS_HOTEL_LOAD);
     if (hotel_load < 0.0) hotel_load = 0.0;
 
-    battery_voltage = sensor(VS_BATTERY_NOMINAL_VOLTAGE);
+    battery_voltage = read_sensor(VS_BATTERY_NOMINAL_VOLTAGE);
     if (battery_voltage <= 0.0) battery_voltage = 48.0;
 
     if (!battery_initialized) {
-        chem = (int) (sensor(VS_BATT_CHEM) + 0.5);
+        chem = (int) (read_sensor(VS_BATT_CHEM) + 0.5);
         if (chem != 2) chem = 1;
 
-        cap_scale = sensor(VS_BATT_CAP_SCALE);
+        cap_scale = read_sensor(VS_BATT_CAP_SCALE);
         if (cap_scale < 0.0) cap_scale = 0.0;
 
-        battery_temp = sensor(WATER_TEMP) + 273.15;
+        battery_temp = read_sensor(WATER_TEMP) + 273.15;
         temp_scale = battery_capacity_temp_scale(chem, battery_temp);
-        battery_charge_capacity = sensor(VS_BATT_CAPACITY) *
+        battery_charge_capacity = read_sensor(VS_BATT_CAPACITY) *
             cap_scale * temp_scale;
-        battery_energy_capacity = sensor(VS_BATT_ENERGY_CAP) *
+        battery_energy_capacity = read_sensor(VS_BATT_ENERGY_CAP) *
             cap_scale * temp_scale;
-        battery_initial_soc = sensor(VS_BATT_INITIAL_SOC);
+        battery_initial_soc = read_sensor(VS_BATT_INITIAL_SOC);
 
         if (battery_initial_soc < 0.0) battery_initial_soc = 0.0;
         if (battery_initial_soc > 1.0) battery_initial_soc = 1.0;
@@ -1070,10 +1070,10 @@ static void update_battery_load( struct thruster_state *ts )
         battery_current = battery_power / battery_terminal_voltage;
     else
         battery_current = battery_power / battery_voltage;
-    battery_current += sensor(VS_BATT_PARASITIC);
+    battery_current += read_sensor(VS_BATT_PARASITIC);
     if (battery_current < 0.0) battery_current = 0.0;
 
-    present_time = sensor(M_PRESENT_TIME);
+    present_time = read_sensor(M_PRESENT_TIME);
     if (last_battery_time >= 0.0 && present_time >= last_battery_time)
         dt = present_time - last_battery_time;
     else
@@ -1091,31 +1091,31 @@ static void update_battery_load( struct thruster_state *ts )
     else
         soc = 0.0;
 
-    chem = (int) (sensor(VS_BATT_CHEM) + 0.5);
+    chem = (int) (read_sensor(VS_BATT_CHEM) + 0.5);
     if (chem != 2) chem = 1;
 
-    series_cells = sensor(VS_BATT_SERIES_CELLS);
-    parallel_strings = sensor(VS_BATT_PARALLEL_STRS);
+    series_cells = read_sensor(VS_BATT_SERIES_CELLS);
+    parallel_strings = read_sensor(VS_BATT_PARALLEL_STRS);
     if (series_cells <= 0.0) series_cells = 1.0;
     if (parallel_strings <= 0.0) parallel_strings = 1.0;
 
-    age = sensor(VS_BATT_AGE);
+    age = read_sensor(VS_BATT_AGE);
     if (age < 0.0) age = 0.0;
 
-    r0_cell = sensor(VS_BATT_R0_CELL);
-    r_scale = sensor(VS_BATT_R_SCALE);
+    r0_cell = read_sensor(VS_BATT_R0_CELL);
+    r_scale = read_sensor(VS_BATT_R_SCALE);
     if (r_scale <= 0.0) r_scale = 1.0;
 
     resistance = r0_cell * series_cells / parallel_strings *
         battery_soc_res_scale(chem, soc) *
         battery_temp_res_scale(chem, battery_temp) *
         (1.0 + age) * r_scale;
-    resistance += sensor(VS_BATT_R_WIRING) + sensor(VS_BATT_R_CONN);
-    resistance += fabs(sensor(VS_BATT_IMBALANCE)) * r0_cell * series_cells;
+    resistance += read_sensor(VS_BATT_R_WIRING) + read_sensor(VS_BATT_R_CONN);
+    resistance += fabs(read_sensor(VS_BATT_IMBALANCE)) * r0_cell * series_cells;
     if (resistance < 0.0) resistance = 0.0;
 
-    r1 = sensor(VS_BATT_R1) * r_scale;
-    c1 = sensor(VS_BATT_C1);
+    r1 = read_sensor(VS_BATT_R1) * r_scale;
+    c1 = read_sensor(VS_BATT_C1);
     if (r1 < 0.0) r1 = 0.0;
     if (c1 < 0.0) c1 = 0.0;
     if (r1 > 0.0 && c1 > 0.0 && dt > 0.0) {
@@ -1129,8 +1129,8 @@ static void update_battery_load( struct thruster_state *ts )
     else if (r1 <= 0.0)
         battery_v_rc = 0.0;
 
-    weak_v = sensor(VS_BATT_WEAK_CELL_V);
-    weak_v += fabs(sensor(VS_BATT_IMBALANCE)) *
+    weak_v = read_sensor(VS_BATT_WEAK_CELL_V);
+    weak_v += fabs(read_sensor(VS_BATT_IMBALANCE)) *
         battery_cell_ocv(chem, soc, battery_temp, age);
 
     ocv = series_cells * battery_cell_ocv(chem, soc, battery_temp, age)
@@ -1138,18 +1138,18 @@ static void update_battery_load( struct thruster_state *ts )
     if (ocv < 0.0) ocv = 0.0;
 
     battery_terminal_voltage = ocv - battery_current*resistance - battery_v_rc;
-    min_voltage = sensor(VS_BATT_MIN_VOLTAGE);
+    min_voltage = read_sensor(VS_BATT_MIN_VOLTAGE);
     if (soc <= 0.0 || battery_terminal_voltage < 0.0)
         battery_terminal_voltage = 0.0;
 
-    max_current = sensor(VS_BATT_MAX_CURRENT);
+    max_current = read_sensor(VS_BATT_MAX_CURRENT);
     if (max_current > 0.0 && battery_current > max_current)
         battery_current = max_current;
 
-    bms_vtrip = sensor(VS_BATT_BMS_VTRIP);
-    bms_itrip = sensor(VS_BATT_BMS_ITRIP);
-    bms_ttrip = sensor(VS_BATT_BMS_TTRIP);
-    if (sensor(VS_BATT_BMS_ENABLE) > 0.5) {
+    bms_vtrip = read_sensor(VS_BATT_BMS_VTRIP);
+    bms_itrip = read_sensor(VS_BATT_BMS_ITRIP);
+    bms_ttrip = read_sensor(VS_BATT_BMS_TTRIP);
+    if (read_sensor(VS_BATT_BMS_ENABLE) > 0.5) {
         if ((bms_vtrip > 0.0 && battery_terminal_voltage < bms_vtrip) ||
             (bms_itrip > 0.0 && battery_current > bms_itrip) ||
             (bms_ttrip > 0.0 && battery_temp > bms_ttrip))
@@ -1165,12 +1165,12 @@ static void update_battery_load( struct thruster_state *ts )
     }
 
     heat = battery_current*battery_current*(resistance + r1);
-    if (battery_temp > sensor(VS_BATT_RUNAWAY_TEMP))
-        heat += sensor(VS_BATT_RUNAWAY_HEAT);
+    if (battery_temp > read_sensor(VS_BATT_RUNAWAY_TEMP))
+        heat += read_sensor(VS_BATT_RUNAWAY_HEAT);
 
-    therm_mass = sensor(VS_BATT_THERM_MASS);
-    therm_res = sensor(VS_BATT_THERM_RES);
-    seawater_k = sensor(WATER_TEMP) + 273.15;
+    therm_mass = read_sensor(VS_BATT_THERM_MASS);
+    therm_res = read_sensor(VS_BATT_THERM_RES);
+    seawater_k = read_sensor(WATER_TEMP) + 273.15;
     if (therm_mass > 0.0 && therm_res > 0.0 && dt > 0.0)
         battery_temp += dt * (heat - (battery_temp - seawater_k)/therm_res)
             / therm_mass;
@@ -1192,58 +1192,58 @@ static void update_battery_load( struct thruster_state *ts )
     else
         soc = 0.0;
 
-    measured_current = battery_current + sensor(VS_BATT_CURR_BIAS);
-    measured_voltage = battery_terminal_voltage + sensor(VS_BATT_VOLT_BIAS);
+    measured_current = battery_current + read_sensor(VS_BATT_CURR_BIAS);
+    measured_voltage = battery_terminal_voltage + read_sensor(VS_BATT_VOLT_BIAS);
 
-    est_cap = sensor(VS_BATT_EST_CAP);
+    est_cap = read_sensor(VS_BATT_EST_CAP);
     if (est_cap <= 0.0) est_cap = battery_charge_capacity;
-    est_soc = sensor(VS_BATT_EST_INIT_SOC) - battery_charge_used / est_cap;
+    est_soc = read_sensor(VS_BATT_EST_INIT_SOC) - battery_charge_used / est_cap;
     if (est_soc < 0.0) est_soc = 0.0;
     if (est_soc > 1.0) est_soc = 1.0;
 
-    update( REAL_BATTERY_POWER, battery_power );
-    update( REAL_BATTERY_CURRENT, battery_current );
-    update( REAL_BATTERY_VOLTAGE, battery_terminal_voltage );
-    update( REAL_BATTERY_SOC, soc );
-    update( REAL_BATTERY_OCV, ocv );
-    update( REAL_BATT_RESISTANCE, resistance );
-    update( REAL_BATT_V_RC, battery_v_rc );
-    update( REAL_BATT_TEMP, battery_temp );
-    update( REAL_BATT_FAULT_HEAT, heat );
-    update( REAL_BATT_CAPACITY, battery_charge_capacity );
-    update( REAL_BATT_ENERGY_CAP, battery_energy_capacity );
-    update( REAL_BATT_CHARGE_REM, charge_remaining );
-    update( REAL_BATT_ENERGY_REM, energy_remaining );
-    update( REAL_BATTERY_ENERGY_USED, battery_energy_used );
-    update( REAL_BATT_CHARGE_USED, battery_charge_used );
+    update_sensor( REAL_BATTERY_POWER, battery_power );
+    update_sensor( REAL_BATTERY_CURRENT, battery_current );
+    update_sensor( REAL_BATTERY_VOLTAGE, battery_terminal_voltage );
+    update_sensor( REAL_BATTERY_SOC, soc );
+    update_sensor( REAL_BATTERY_OCV, ocv );
+    update_sensor( REAL_BATT_RESISTANCE, resistance );
+    update_sensor( REAL_BATT_V_RC, battery_v_rc );
+    update_sensor( REAL_BATT_TEMP, battery_temp );
+    update_sensor( REAL_BATT_FAULT_HEAT, heat );
+    update_sensor( REAL_BATT_CAPACITY, battery_charge_capacity );
+    update_sensor( REAL_BATT_ENERGY_CAP, battery_energy_capacity );
+    update_sensor( REAL_BATT_CHARGE_REM, charge_remaining );
+    update_sensor( REAL_BATT_ENERGY_REM, energy_remaining );
+    update_sensor( REAL_BATTERY_ENERGY_USED, battery_energy_used );
+    update_sensor( REAL_BATT_CHARGE_USED, battery_charge_used );
 
-    update( M_LOAD_CHARGE, battery_charge_used );
-    update( M_LOAD_VOLTAGE, measured_voltage );
-    update( M_BATTERY_VOLTAGE, measured_voltage );
-    update( M_BATTERY_CURRENT, measured_current );
-    update( M_BATTERY_TEMP, battery_temp );
-    update( M_BATT_SOC_EST, est_soc );
+    update_sensor( M_LOAD_CHARGE, battery_charge_used );
+    update_sensor( M_LOAD_VOLTAGE, measured_voltage );
+    update_sensor( M_BATTERY_VOLTAGE, measured_voltage );
+    update_sensor( M_BATTERY_CURRENT, measured_current );
+    update_sensor( M_BATTERY_TEMP, battery_temp );
+    update_sensor( M_BATT_SOC_EST, est_soc );
 }
 
 static void update_thruster_diagnostics( struct thruster_state *ts )
 {
     /* m_propeller_speed is existing telemetry; keep it for compatibility
        while also logging simulator truth in real_thruster_* channels. */
-    update( M_PROPELLER_SPEED, 2*PI*60/5.54*ts->prop_omega );
-    update( REAL_THR_PROP_SPEED, ts->prop_omega );
-    update( REAL_THR_MOTOR_SPEED, ts->motor_omega );
-    update( REAL_THRUSTER_VOLTAGE, ts->motor_voltage );
-    update( REAL_THRUSTER_POWER, ts->elec_power );
-    update( REAL_THRUSTER_TORQUE, ts->vehicle_torque );
-    update( REAL_THRUSTER_THRUST, ts->thrust );
-    update( REAL_THR_INFLOW_SPEED, ts->inflow );
-    update( REAL_THR_DRIVE_TORQUE, ts->drivetrain_torque );
-    update( REAL_THRUSTER_CURRENT, ts->amps );
+    update_sensor( M_PROPELLER_SPEED, 2*PI*60/5.54*ts->prop_omega );
+    update_sensor( REAL_THR_PROP_SPEED, ts->prop_omega );
+    update_sensor( REAL_THR_MOTOR_SPEED, ts->motor_omega );
+    update_sensor( REAL_THRUSTER_VOLTAGE, ts->motor_voltage );
+    update_sensor( REAL_THRUSTER_POWER, ts->elec_power );
+    update_sensor( REAL_THRUSTER_TORQUE, ts->vehicle_torque );
+    update_sensor( REAL_THRUSTER_THRUST, ts->thrust );
+    update_sensor( REAL_THR_INFLOW_SPEED, ts->inflow );
+    update_sensor( REAL_THR_DRIVE_TORQUE, ts->drivetrain_torque );
+    update_sensor( REAL_THRUSTER_CURRENT, ts->amps );
 
     /* In simulator mode these measured channels are ideal telemetry from the
        truth model. Sensor faults should corrupt m_* rather than real_* values. */
-    update( M_COPLEY_VOLTAGE, ts->motor_voltage );
-    update( M_COPLEY_CURRENT, ts->amps );
+    update_sensor( M_COPLEY_VOLTAGE, ts->motor_voltage );
+    update_sensor( M_COPLEY_CURRENT, ts->amps );
 
     update_battery_load(ts);
 }
@@ -1266,7 +1266,7 @@ double thruster_torque( double real_amps, double w_speed )
 {
     if (!last_thruster_state_valid ||
         last_thruster_state.amps != real_amps ||
-        last_thruster_state.inflow != sensor(VS_THRUSTER_WAKE_FRACTION)*w_speed)
+        last_thruster_state.inflow != read_sensor(VS_THRUSTER_WAKE_FRACTION)*w_speed)
         compute_thruster_state(real_amps, w_speed, &last_thruster_state);
 
     return last_thruster_state.vehicle_torque;

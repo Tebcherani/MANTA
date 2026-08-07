@@ -49,48 +49,48 @@ void update_lbl_sensor() {
     double noise, bias;
 
     if (uninitialized) {
-        lbl_cycle = sensor(U_LBL_CYCLE);
-        sound_speed = sensor(U_SPEED_OF_SOUND);
-        num_beacons = (int) sensor(U_LBL_BEACON_NUMBER);
-        timeout = sensor(U_LBL_TIMEOUT);
-        percent_bias = sensor(REAL_LBL_FRAC_BIAS);
-        percent_dropout = sensor(REAL_LBL_FRAC_DROPOUT);
-        bias_amplitude = sensor(REAL_LBL_BIAS_AMPLITUDE);   // mSec
-        noise_amplitude = sensor(REAL_LBL_TIMING_NOISE);    // mSec
+        lbl_cycle = read_sensor(U_LBL_CYCLE);
+        sound_speed = read_sensor(U_SPEED_OF_SOUND);
+        num_beacons = (int) read_sensor(U_LBL_BEACON_NUMBER);
+        timeout = read_sensor(U_LBL_TIMEOUT);
+        percent_bias = read_sensor(REAL_LBL_FRAC_BIAS);
+        percent_dropout = read_sensor(REAL_LBL_FRAC_DROPOUT);
+        bias_amplitude = read_sensor(REAL_LBL_BIAS_AMPLITUDE);   // mSec
+        noise_amplitude = read_sensor(REAL_LBL_TIMING_NOISE);    // mSec
         last_cycle_time = 0.0;
 
         for (i = 1, offset = 0; i <= num_beacons; i++) {
             gotReply[i] = 0;
 			
             // Store beacon coordinates
-            north[i] = sensor(U_LBL_1NORTH + offset);
-            east[i]  = sensor(U_LBL_1EAST  + offset);
-            depth[i] = sensor(U_LBL_1DEPTH + offset);
-	        tat[i]   = sensor( U_LBL_1TAT   + offset );
+            north[i] = read_sensor(U_LBL_1NORTH + offset);
+            east[i]  = read_sensor(U_LBL_1EAST  + offset);
+            depth[i] = read_sensor(U_LBL_1DEPTH + offset);
+	        tat[i]   = read_sensor( U_LBL_1TAT   + offset );
             offset += U_LBL_2NORTH - U_LBL_1NORTH;       
         }
         uninitialized = 0;
     }
 	
     // PING! (only if c_lbl_control is on, but update next_ping regardless)
-    present_time = sensor(M_PRESENT_TIME);
+    present_time = read_sensor(M_PRESENT_TIME);
     if (present_time >= next_ping) {
-	    next_ping += sensor(U_LBL_CYCLE);
-        if (sensor(C_LBL_CONTROL) > 0) {
-            update(M_LBL_PING_TIME, present_time);
-            for (i = 0; i <= num_beacons; i++) update(M_LBL_0T+i, -1.0);
+	    next_ping += read_sensor(U_LBL_CYCLE);
+        if (read_sensor(C_LBL_CONTROL) > 0) {
+            update_sensor(M_LBL_PING_TIME, present_time);
+            for (i = 0; i <= num_beacons; i++) update_sensor(M_LBL_0T+i, -1.0);
 
             cycle_number++;
             update_times = 1;
-            north_ping = sensor(REAL_X);
-            east_ping = sensor(REAL_Y);
-            depth_ping = sensor(REAL_Z);
+            north_ping = read_sensor(REAL_X);
+            east_ping = read_sensor(REAL_Y);
+            depth_ping = read_sensor(REAL_Z);
             memset(gotReply, 0, sizeof(gotReply));
         }
     }
 	
     // Compute time of ping and time elapsed since ping
-    cycle_time = sensor(M_LBL_PING_TIME);
+    cycle_time = read_sensor(M_LBL_PING_TIME);
     since_cycle = present_time - cycle_time;
 
 	// If between ping time and before LBL timeout
@@ -104,9 +104,9 @@ void update_lbl_sensor() {
                 dist1  = sqrt(dist1);
 
 				// Add distance from beacon to current position
-                dist2  = (sensor(REAL_X)-north[i])*(sensor(REAL_X)-north[i]);
-                dist2 += (sensor(REAL_Y)-east[i])*(sensor(REAL_Y)-east[i]);
-                dist2 += (sensor(REAL_Z)-depth[i])*(sensor(REAL_Z)-depth[i]);
+                dist2  = (read_sensor(REAL_X)-north[i])*(read_sensor(REAL_X)-north[i]);
+                dist2 += (read_sensor(REAL_Y)-east[i])*(read_sensor(REAL_Y)-east[i]);
+                dist2 += (read_sensor(REAL_Z)-depth[i])*(read_sensor(REAL_Z)-depth[i]);
                 dist2  = sqrt(dist2);
 				
                 // Time required to travel distance1 + distance2 + tat
@@ -133,8 +133,8 @@ void update_lbl_sensor() {
 	
     // If LBL has timed out: update structure
     if (update_times && (since_cycle > timeout)) {
-        for (i = 1; i <= num_beacons; i++) update(M_LBL_0T+i, memo1[i]);
-        update(LBL_NEWDATA, 1);
+        for (i = 1; i <= num_beacons; i++) update_sensor(M_LBL_0T+i, memo1[i]);
+        update_sensor(LBL_NEWDATA, 1);
         update_times = 0;
     }
 }

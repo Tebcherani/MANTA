@@ -47,16 +47,16 @@ int dock( struct behavior *b, int priority, int level )
 	if ( stack_busy(cmd) )
 	    return -1;
 
-	if ( sensor(M_POLE_PRESENT) == 0 )
+	if ( read_sensor(M_POLE_PRESENT) == 0 )
 	{
 	    b->state = B_COMPLETE;
 	    sprintf( msg_buf, "% 8.2f: %s done with pole absent\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	    write_message( MonitorLayeredControl | SLOG );
 	    return 1;
 	}
 				/* stop pinging LBL */
-	update( C_LBL_CONTROL, 0 );
+	update_sensor( C_LBL_CONTROL, 0 );
 				/* request MIO for latch */
 	update_add( LATCH_CHECK, 1 );
     }
@@ -64,7 +64,7 @@ int dock( struct behavior *b, int priority, int level )
     if ( manage_time(b, bArg(IDLETIME)) == 1 )
     {
 				/* restart LBL */
-	update( C_LBL_CONTROL, 1 );
+	update_sensor( C_LBL_CONTROL, 1 );
 				/* release MIO latch request */
 	update_add( LATCH_CHECK, -1 );
 	b->state = B_COMPLETE;
@@ -76,7 +76,7 @@ int dock( struct behavior *b, int priority, int level )
 				/* mode for speed */
     cmd->speed_mode = 1;
 				/* apply thrust during beginning */
-    if ( sensor(M_PRESENT_TIME) - b->start_time < bArg(FWD_TIME) )
+    if ( read_sensor(M_PRESENT_TIME) - b->start_time < bArg(FWD_TIME) )
 	cmd->speed[0] = bArg(SPEED);
     else
 	cmd->speed[0] = 0.;
@@ -113,12 +113,12 @@ int undock( struct behavior *b, int priority, int level )
 	if ( stack_busy(cmd) )
 	    return 1;
 
-	if ( sensor(M_POLE_PRESENT) == 0 )
+	if ( read_sensor(M_POLE_PRESENT) == 0 )
 	{
 	    b->state = B_COMPLETE;
 				/* diagnostics */
 	    sprintf( msg_buf, "% 8.2f: %s done with pole absent\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	    write_message( MonitorLayeredControl | SLOG );
 	    return 0;
 	}
@@ -130,16 +130,16 @@ int undock( struct behavior *b, int priority, int level )
 				/* initialize start & end times */
 	manage_time( b, elapsed );
 				/* tell latch motor to start cycle */
-	update( LATCH_START, 1 );
+	update_sensor( LATCH_START, 1 );
 				/* submit request for i/o & logging */
 	update_add( LATCH_CHECK, 1 );
 				/* restart lbl pinging */
-	update( C_LBL_CONTROL, 1 ) ;
+	update_sensor( C_LBL_CONTROL, 1 ) ;
 
 	b->state = B_ACTIVE;
     }
 				/* proper use of elapsed */
-    elapsed = sensor(M_PRESENT_TIME) - b->start_time;
+    elapsed = read_sensor(M_PRESENT_TIME) - b->start_time;
 
     cmd->heading_mode = 0;
     cmd->heading[0] = bArg(RUDDER);
@@ -154,13 +154,13 @@ int undock( struct behavior *b, int priority, int level )
 
 				/* done if pole absent, otherwise recycle
                                    behavior */
-	if ( sensor(M_POLE_PRESENT) == 0 )
+	if ( read_sensor(M_POLE_PRESENT) == 0 )
 	{
 				/* release request for i/o & logging */
 	    update_add( LATCH_CHECK, -1 );
 	    b->state = B_COMPLETE;
 	    sprintf( msg_buf, "% 8.2f: %s done with pole absent\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	    write_message( MonitorLayeredControl | SLOG );
 	    return 1;
 	}
@@ -174,7 +174,7 @@ int undock( struct behavior *b, int priority, int level )
 				   reinitialization of behavior */
 	    update_add( LATCH_CHECK, -1 );
 	    sprintf( msg_buf, "% 8.2f: %s recycling\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	    write_message( MonitorLayeredControl | SLOG );
 	}
 	return 0;

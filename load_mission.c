@@ -204,7 +204,7 @@ int load_vehicle_def( const char *fname )
             return -1;
         }
 
-        update( index, value );
+        update_sensor( index, value );
         n_set++;
     }
 
@@ -613,7 +613,7 @@ int read_state(FILE *fptr) {
 		    		write_message( TERM | SLOG );
 		    		exit_gracefully( -1 );
 				}
-                update( index, value );
+                update_sensor( index, value );
 		
                 sprintf( msg_buf, "  sensor: %29s %lg\n", vvp->s[index].name, vvp->s[index].x );
                 write_message( TERM | SLOG );
@@ -698,8 +698,8 @@ int read_state(FILE *fptr) {
     }
 				/* good place to set position estimators to
 				   agree with the master vehicle position */
-    update( M_DR_NORTH, sensor(M_POS_N) );
-    update( M_DR_EAST,  sensor(M_POS_E) );
+    update_sensor( M_DR_NORTH, read_sensor(M_POS_N) );
+    update_sensor( M_DR_EAST,  read_sensor(M_POS_E) );
 
     return 0;
 }

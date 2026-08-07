@@ -233,11 +233,11 @@ void apply_faults( void )
             fired++;
             for ( j = 0; j < r->n_actions; j++ ) {
                 double val = eval_operand( &r->action[j].value );
-                update( r->action[j].target_index, val );
+                update_sensor( r->action[j].target_index, val );
             }
         }
     }
-    update( M_FAULT_ACTIVE, (double)fired );
+    update_sensor( M_FAULT_ACTIVE, (double)fired );
 }
 
 
@@ -382,7 +382,7 @@ static int parse_actions( const char *s, int max_act,
 static double eval_operand( const Operand *op )
 {
     if ( op->kind == OP_SENSOR )
-        return sensor( op->index );
+        return read_sensor( op->index );
     return op->literal;
 }
 
@@ -406,7 +406,7 @@ static int eval_condition( const Condition *cond )
     int group, result, i;
 
     if ( cond->is_prob )
-        return ( drand48() < cond->prob_rate * sensor(M_DT) );
+        return ( drand48() < cond->prob_rate * read_sensor(M_DT) );
 
     if ( cond->n_terms == 0 ) return 0;
 

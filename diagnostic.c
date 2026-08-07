@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "diagnostic.h"
+#include "odyssey_data_struct.h"
 #include "odyssey_log.h"
 #include "vehicle.h"
 
@@ -23,7 +24,7 @@ void write_message(int monitor)
 
 void monitor_msg( int sensor_id, int Monitor )
 {
-    sprintf( msg_buf, "% 8.2f: %29s % .3g\n", sensor(M_PRESENT_TIME),
-	     sensor_name(sensor_id), sensor(sensor_id) );
+    sprintf( msg_buf, "% 8.2f: %29s % .3g\n", read_sensor(M_PRESENT_TIME),
+	     sensor_name(sensor_id), read_sensor(sensor_id) );
     write_message( Monitor );
 }

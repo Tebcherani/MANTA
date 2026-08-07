@@ -298,22 +298,22 @@ void sim_bottom(void)
     static double outlier_threshold;
     int contact = 1;         /* 1 = stretch, -1 = shrink, 0 = good value */
 
-    outlier_threshold = 1.0 - sensor(REAL_SONAR_FRAC_DROPOUT);
+    outlier_threshold = 1.0 - read_sensor(REAL_SONAR_FRAC_DROPOUT);
 /*
  *  NOTE: REAL_X is NORTH and REAL_Y is EAST!!
  */
-    RealPos.X = sensor(REAL_X);
-    RealPos.Y = sensor(REAL_Y);
-    RealPos.Z = sensor(REAL_Z);
-    RealPos.roll = sensor(REAL_PHI);
-    RealPos.pitch = sensor(REAL_THETA);
-    RealPos.yaw = sensor(REAL_PSI);
-    PerceivedPos.Z = sensor(M_DEPTH);
-    PerceivedPos.roll = sensor(M_ROLL);
-    PerceivedPos.pitch = sensor(M_PITCH);
-    PerceivedPos.yaw = sensor(M_YAW);
-    Noise_Ampl = sensor(U_BOTTOM_NOISE);
-    Bottom_Type = sensor(U_BOTTOM_TYPE);
+    RealPos.X = read_sensor(REAL_X);
+    RealPos.Y = read_sensor(REAL_Y);
+    RealPos.Z = read_sensor(REAL_Z);
+    RealPos.roll = read_sensor(REAL_PHI);
+    RealPos.pitch = read_sensor(REAL_THETA);
+    RealPos.yaw = read_sensor(REAL_PSI);
+    PerceivedPos.Z = read_sensor(M_DEPTH);
+    PerceivedPos.roll = read_sensor(M_ROLL);
+    PerceivedPos.pitch = read_sensor(M_PITCH);
+    PerceivedPos.yaw = read_sensor(M_YAW);
+    Noise_Ampl = read_sensor(U_BOTTOM_NOISE);
+    Bottom_Type = read_sensor(U_BOTTOM_TYPE);
 
     if ( once ) {
         once = 0;
@@ -463,7 +463,7 @@ void sim_bottom(void)
                 2.0 * (drand48()-0.5);
     }
 
-    update(M_ALTITUDE, Alt_Return);
+    update_sensor(M_ALTITUDE, Alt_Return);
 
 } /* END OF SIM_BOTTOM */
 
@@ -633,7 +633,7 @@ static int math_bottom(void)
 /* NEW SECTION - points P and Q are now trench end coordinates as defined
  * by the input file or by the source code.
  */
-          time = sensor(M_PRESENT_TIME);
+          time = read_sensor(M_PRESENT_TIME);
           for( i = 0;i<num_trench;i++) {
                 VP[i].X = Trench[i].X1 - RealPos.X;
                 VP[i].Y = Trench[i].Y1 - RealPos.Y;
@@ -745,14 +745,14 @@ static int math_bottom(void)
                 coll_flag = 0;
                 sprintf(msg_buf, "SIM_BOTTOM: *** Collision! "
                         "(Mission time = %.2lf sec)\n", 
-                        sensor(M_PRESENT_TIME));
+                        read_sensor(M_PRESENT_TIME));
                 write_message( TERM | SLOG );
             }
         }
         else {
             if ( coll_flag == 0 ) {
                 sprintf(msg_buf, "SIM_BOTTOM: Off of bottom. (Mission "
-                        "time = %.2lf sec)\n", sensor(M_PRESENT_TIME));
+                        "time = %.2lf sec)\n", read_sensor(M_PRESENT_TIME));
                 write_message( TERM | SLOG );
                 coll_flag = 1;
             }
@@ -798,13 +798,13 @@ static int file_bottom( void )
     if(TriangFlag == TRUE) {
 /*        coll_dist =  bottom_collision( &RealPos ); */
         RealWaterColumn = triangle_search( &RealPos );
-        update(REAL_ALT, (RealWaterColumn - RealPos.Z) );
+        update_sensor(REAL_ALT, (RealWaterColumn - RealPos.Z) );
         if( sonar_mode == FAST ) {
          Alt_Return = RealWaterColumn - RealPos.Z;
         }
         if( (debug != 0) && (counter == 100) ) {
             sprintf(msg_buf, "SIM_BOTTOM: t = %.2lf, Depth = %.2lf at"
-                    " North = %.2lf, East = %.2lf.\n", sensor(M_PRESENT_TIME),
+                    " North = %.2lf, East = %.2lf.\n", read_sensor(M_PRESENT_TIME),
                     RealWaterColumn, RealPos.X, RealPos.Y);
             write_message( TERM );
             counter = 0;
@@ -889,7 +889,7 @@ static int file_bottom( void )
  *
  * For range-bin systems, return a pointer to all of the valid rays.
  */
-          if( sensor(M_PRESENT_TIME) >= 24.0)
+          if( read_sensor(M_PRESENT_TIME) >= 24.0)
                 minray.mag = 0.0;
           
           minray.mag = 0.0;
@@ -917,22 +917,22 @@ static int file_bottom( void )
 
 /* jleonard 12/18/95 - logging more information for min return */
                 if( log_mode == FULL ) {
-                  update(SIM_SONAR_PHI_T, minray.phi_t);
-                  update(SIM_SONAR_PHI_B, minray.phi_b);
-                  update(SIM_SONAR_INTENSITY, minray.intensity);
-                  update(SIM_TRIANGLE_X1, GlobalBottom[minray.P1].X);
-                  update(SIM_TRIANGLE_Y1, GlobalBottom[minray.P1].Y);
-                  update(SIM_TRIANGLE_Z1, GlobalBottom[minray.P1].Z);
-                  update(SIM_TRIANGLE_X2, GlobalBottom[minray.P2].X);
-                  update(SIM_TRIANGLE_Y2, GlobalBottom[minray.P2].Y);
-                  update(SIM_TRIANGLE_Z2, GlobalBottom[minray.P2].Z);
-                  update(SIM_TRIANGLE_X3, GlobalBottom[minray.P3].X);
-                  update(SIM_TRIANGLE_Y3, GlobalBottom[minray.P3].Y);
-                  update(SIM_TRIANGLE_Z3, GlobalBottom[minray.P3].Z);
+                  update_sensor(SIM_SONAR_PHI_T, minray.phi_t);
+                  update_sensor(SIM_SONAR_PHI_B, minray.phi_b);
+                  update_sensor(SIM_SONAR_INTENSITY, minray.intensity);
+                  update_sensor(SIM_TRIANGLE_X1, GlobalBottom[minray.P1].X);
+                  update_sensor(SIM_TRIANGLE_Y1, GlobalBottom[minray.P1].Y);
+                  update_sensor(SIM_TRIANGLE_Z1, GlobalBottom[minray.P1].Z);
+                  update_sensor(SIM_TRIANGLE_X2, GlobalBottom[minray.P2].X);
+                  update_sensor(SIM_TRIANGLE_Y2, GlobalBottom[minray.P2].Y);
+                  update_sensor(SIM_TRIANGLE_Z2, GlobalBottom[minray.P2].Z);
+                  update_sensor(SIM_TRIANGLE_X3, GlobalBottom[minray.P3].X);
+                  update_sensor(SIM_TRIANGLE_Y3, GlobalBottom[minray.P3].Y);
+                  update_sensor(SIM_TRIANGLE_Z3, GlobalBottom[minray.P3].Z);
                 
-                  update(SIM_CONTACT_X, minray.X);
-                  update(SIM_CONTACT_Y, minray.Y);
-                  update(SIM_CONTACT_Z, minray.Z); 
+                  update_sensor(SIM_CONTACT_X, minray.X);
+                  update_sensor(SIM_CONTACT_Y, minray.Y);
+                  update_sensor(SIM_CONTACT_Z, minray.Z); 
                 }
                 
           } else {
@@ -958,7 +958,7 @@ static int historical_bottom( void )
         Alt_Return = 1.5;
         OA1_Return = 2.0;
         OA2_Return = 2.5;
-        update(M_ALTITUDE, Alt_Return);
+        update_sensor(M_ALTITUDE, Alt_Return);
 
         return(0);
       }
@@ -1350,7 +1350,7 @@ double beam_pattern( struct ray_struct *fac_ray )
             ( temp1 * sin(fac_ray->phi_t) );
         loss =  10.0 * log10( (temp2 * temp2) );
 /*      sprintf(msg_buf, "SIM_BOTTOM: Time = %.2lf, Loss = %.2lf\n ", 
-        sensor(M_PRESENT_TIME), loss);
+        read_sensor(M_PRESENT_TIME), loss);
         write_message( TERM | SLOG );
 */
     }
@@ -1813,7 +1813,7 @@ double triangle_search(struct state_vect *RealPos)
  *
  * "right of" means outside the triangle.
  */
-    time = sensor(M_PRESENT_TIME);
+    time = read_sensor(M_PRESENT_TIME);
     if( Near_Node == -1 ) start = 1;
     else start = Near_Node;
     start = 1;
@@ -1880,19 +1880,19 @@ double triangle_search(struct state_vect *RealPos)
                 Near_Node = i;
 
                 if( log_mode == FULL ) {
-                  update(REAL_TRIANGLE_X1, P1->X);
-                  update(REAL_TRIANGLE_Y1, P1->Y);
-                  update(REAL_TRIANGLE_Z1, P1->Z);
-                  update(REAL_TRIANGLE_X2, P2->X);
-                  update(REAL_TRIANGLE_Y2, P2->Y);
-                  update(REAL_TRIANGLE_Z2, P2->Z);
-                  update(REAL_TRIANGLE_X3, P3->X);
-                  update(REAL_TRIANGLE_Y3, P3->Y);
-                  update(REAL_TRIANGLE_Z3, P3->Z);
+                  update_sensor(REAL_TRIANGLE_X1, P1->X);
+                  update_sensor(REAL_TRIANGLE_Y1, P1->Y);
+                  update_sensor(REAL_TRIANGLE_Z1, P1->Z);
+                  update_sensor(REAL_TRIANGLE_X2, P2->X);
+                  update_sensor(REAL_TRIANGLE_Y2, P2->Y);
+                  update_sensor(REAL_TRIANGLE_Z2, P2->Z);
+                  update_sensor(REAL_TRIANGLE_X3, P3->X);
+                  update_sensor(REAL_TRIANGLE_Y3, P3->Y);
+                  update_sensor(REAL_TRIANGLE_Z3, P3->Z);
                   
-                  update(REAL_CONTACT_X, RealPos->X);
-                  update(REAL_CONTACT_Y, RealPos->Y);
-                  update(REAL_CONTACT_Z, Depth); 
+                  update_sensor(REAL_CONTACT_X, RealPos->X);
+                  update_sensor(REAL_CONTACT_Y, RealPos->Y);
+                  update_sensor(REAL_CONTACT_Z, Depth); 
                 }
                 if( reflect_model == COMBINED ) {
                     diffray.mag = Depth;
@@ -1953,7 +1953,7 @@ double bottom_collision(struct state_vect *RealPos)
  * "right of" means outside the triangle.
  */
     minnode.dist = MAX_RANGE;
-    time = sensor(M_PRESENT_TIME);
+    time = read_sensor(M_PRESENT_TIME);
 
     sprintf(msg_buf, "SIM_BOTTOM(collison): T = %.2lf\n", time);
     write_message( TERM | SLOG );
@@ -2037,11 +2037,11 @@ double bottom_collision(struct state_vect *RealPos)
 /* Need to update with the needed information for sim to model the collison.
  * e.g. compliance, node coordinates and/or position relative to C.G.
  *
-        update( CONTACT_NODE_Xo, minnode.Xo );
-        update( CONTACT_NODE_Yo, minnode.Yo );
-        update( CONTACT_NODE_Zo, minnode.Zo );
-        update( CONTACT_NODE_DIST, minnode.dist );
-        update( CONTACT_NODE_COMP, minnode.compliance );
+        update_sensor( CONTACT_NODE_Xo, minnode.Xo );
+        update_sensor( CONTACT_NODE_Yo, minnode.Yo );
+        update_sensor( CONTACT_NODE_Zo, minnode.Zo );
+        update_sensor( CONTACT_NODE_DIST, minnode.dist );
+        update_sensor( CONTACT_NODE_COMP, minnode.compliance );
 */
     }
     if( minnode.dist <= 0.0 ) {

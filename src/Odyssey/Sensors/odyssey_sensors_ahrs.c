@@ -70,10 +70,10 @@ static void update_acceleration(double *ax, double *ay, double *aax, double *aay
     double theta,phi;
 		
     // Load real velocities and acceleration (linear and angular)
-    u    = sensor(REAL_U);     v = sensor(REAL_V);     w = sensor(REAL_W);
-    udot = sensor(REAL_UD); vdot = sensor(REAL_VD); wdot = sensor(REAL_WD);
-    p    = sensor(REAL_P);     q = sensor(REAL_Q);     r = sensor(REAL_R);
-    pdot = sensor(REAL_PD); qdot = sensor(REAL_QD); rdot = sensor(REAL_RD);
+    u    = read_sensor(REAL_U);     v = read_sensor(REAL_V);     w = read_sensor(REAL_W);
+    udot = read_sensor(REAL_UD); vdot = read_sensor(REAL_VD); wdot = read_sensor(REAL_WD);
+    p    = read_sensor(REAL_P);     q = read_sensor(REAL_Q);     r = read_sensor(REAL_R);
+    pdot = read_sensor(REAL_PD); qdot = read_sensor(REAL_QD); rdot = read_sensor(REAL_RD);
 
 	// Non-gravitational acceleration at location of AHRS in vehicle frame
     *ax = udot + q*w-r*v + qdot*dz-rdot*dy - (q*q+r*r)*dx + p*q*dy + p*r*dz;
@@ -81,8 +81,8 @@ static void update_acceleration(double *ax, double *ay, double *aax, double *aay
     az = wdot + p*v-q*u + pdot*dy-qdot*dx - (p*p+q*q)*dz + q*r*dy + p*r*dx;
 
 	// Compute non-gravitational acc in local horizontal plane for compass
-    theta = sensor(REAL_THETA);
-    phi = sensor(REAL_PHI);
+    theta = read_sensor(REAL_THETA);
+    phi = read_sensor(REAL_PHI);
     *aax = cos(theta) * (*ax) + sin(phi)*sin(theta) * (*ay) + cos(phi)*sin(theta)*az;
     *aay = cos(phi) * (*ay) - sin(phi)*az;
 
@@ -98,20 +98,20 @@ static void update_angular_rate(void) {
     double yaw_rate_bias = -8.7266e-4, pitch_rate_bias = 8.7266e-4, roll_rate_bias = 4.3663e-4;
     double sensor_noise, sensor_noise_level = 0.00001745;
 
-    real_roll_rate = sensor(REAL_P);
+    real_roll_rate = read_sensor(REAL_P);
     sensor_noise = sensor_noise_level * std_normal_random_num(); 
     meas_roll_rate = real_roll_rate + sensor_noise + roll_rate_bias;
-    update(M_ROLL_RATE, meas_roll_rate);
+    update_sensor(M_ROLL_RATE, meas_roll_rate);
 
-    real_pitch_rate = sensor(REAL_Q);
+    real_pitch_rate = read_sensor(REAL_Q);
     sensor_noise = sensor_noise_level * std_normal_random_num(); 
     meas_pitch_rate = real_pitch_rate + sensor_noise + pitch_rate_bias;
-    update(M_PITCH_RATE, meas_pitch_rate);
+    update_sensor(M_PITCH_RATE, meas_pitch_rate);
 
-    real_yaw_rate = sensor(REAL_R);
+    real_yaw_rate = read_sensor(REAL_R);
     sensor_noise = sensor_noise_level * std_normal_random_num(); 
     meas_yaw_rate = real_yaw_rate + sensor_noise + yaw_rate_bias;
-    update(M_YAW_RATE, meas_yaw_rate);
+    update_sensor(M_YAW_RATE, meas_yaw_rate);
 }
 
 /*-------------------------------------------------------------------------*
@@ -160,7 +160,7 @@ static void update_compass_yaw(double aax, double aay) {
     theta = dx/length; phi = -dy/length;
 
     // Compute the magnetic readings given the orientation of mg sensor 
-    psi=sensor(REAL_PSI);
+    psi=read_sensor(REAL_PSI);
     Mmg[1][1] = cos(psi)*cos(theta);
     Mmg[1][2] = cos(theta)*sin(psi);
     Mmg[1][3] = -sin(theta);
@@ -184,25 +184,25 @@ static void update_compass_yaw(double aax, double aay) {
     // Add noise and write to the structure
     mg_yaw += compass_noise*std_normal_random_num();
 
-    mg_yaw -= sensor(UO_MAGNETIC_VARIATION);
+    mg_yaw -= read_sensor(UO_MAGNETIC_VARIATION);
 
-    update(M_COMPASS_YAW,mg_yaw);
+    update_sensor(M_COMPASS_YAW,mg_yaw);
 }
 
 static void update_heading(void) {
     double meas_yaw, meas_pitch, meas_roll;
     double meas_magnetic_variation, corrected_yaw;
 
-    meas_yaw = sensor(M_COMPASS_YAW);
-    meas_magnetic_variation = sensor(UO_MAGNETIC_VARIATION);
+    meas_yaw = read_sensor(M_COMPASS_YAW);
+    meas_magnetic_variation = read_sensor(UO_MAGNETIC_VARIATION);
     corrected_yaw = PI + wrap_angle(meas_yaw + meas_magnetic_variation - PI);
-    update(M_YAW, corrected_yaw);
+    update_sensor(M_YAW, corrected_yaw);
 
-    meas_pitch = sensor(M_INCLINO_PITCH);
-    update(M_PITCH, meas_pitch);
+    meas_pitch = read_sensor(M_INCLINO_PITCH);
+    update_sensor(M_PITCH, meas_pitch);
     
-    meas_roll = sensor(M_INCLINO_ROLL);
-    update(M_ROLL, meas_roll);
+    meas_roll = read_sensor(M_INCLINO_ROLL);
+    update_sensor(M_ROLL, meas_roll);
 }
 
 static void update_inclinometers( double ax, double ay ) {
@@ -216,8 +216,8 @@ static void update_inclinometers( double ax, double ay ) {
     filtered_pitch_roll[0]+=inclino_noise*std_normal_random_num();
     filtered_pitch_roll[1]+=inclino_noise*std_normal_random_num();
 
-    update(M_INCLINO_PITCH,filtered_pitch_roll[0]);
-    update(M_INCLINO_ROLL,filtered_pitch_roll[1]);
+    update_sensor(M_INCLINO_PITCH,filtered_pitch_roll[0]);
+    update_sensor(M_INCLINO_ROLL,filtered_pitch_roll[1]);
 }
 
 void update_ahrs_sensors(void) {

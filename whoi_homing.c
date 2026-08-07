@@ -83,9 +83,9 @@ int whoi_homing( struct behavior *b, int priority, int level )
 
 				/* initialize the backup values */
 	LAST_HDG[idreg] = bArg(HEADING);
-	T_START[idreg] = sensor(M_PRESENT_TIME) ;
-	LAST_TM[idreg] = sensor(M_USBL_TIME) ;
-	T_LAST_TM[idreg] = sensor(M_PRESENT_TIME) ;
+	T_START[idreg] = read_sensor(M_PRESENT_TIME) ;
+	LAST_TM[idreg] = read_sensor(M_USBL_TIME) ;
+	T_LAST_TM[idreg] = read_sensor(M_PRESENT_TIME) ;
 
 				/* state is now active */
 	b->state = B_ACTIVE;
@@ -93,12 +93,12 @@ int whoi_homing( struct behavior *b, int priority, int level )
 				/* check to see if time has elapsed or MIO
 				   switches indicate pole is in jaws and
 				   stable for desired transient time */
-    pole_secure = (sensor(M_POLE_PRESENT) > 0) &&
+    pole_secure = (read_sensor(M_POLE_PRESENT) > 0) &&
 	(0.001*sensor_time(M_POLE_PRESENT) + bArg(TRNSNT) <=
-	 sensor(M_PRESENT_TIME));
+	 read_sensor(M_PRESENT_TIME));
 
-    rBucky = 0.5*sensor(U_SPEED_OF_SOUND)*(sensor(M_BUCKY_RAW) -
-					   sensor(U_BUCKY_TAT));
+    rBucky = 0.5*read_sensor(U_SPEED_OF_SOUND)*(read_sensor(M_BUCKY_RAW) -
+					   read_sensor(U_BUCKY_TAT));
     bailout = ( rBucky > 0 && rBucky <= bArg(BAIL) );
 
     if ( manage_time(b, bArg(TIME)) == 1 || pole_secure || bailout )
@@ -108,14 +108,14 @@ int whoi_homing( struct behavior *b, int priority, int level )
 	update_add( LATCH_CHECK, -1 );
 				/* compose start of exit message, remainder
 				   to be determined by exit condition */
-	sprintf( msg_buf, "% 8.2f: %s ", sensor(M_PRESENT_TIME),
+	sprintf( msg_buf, "% 8.2f: %s ", read_sensor(M_PRESENT_TIME),
 		 b->name );
 
 	if ( pole_secure )
 	{
 #ifdef EDGEPS8000
 				/* send "I'm home" to dock */
-	    update( EDGE_XS_DATABYTE, getXSDataByte() );
+	    update_sensor( EDGE_XS_DATABYTE, getXSDataByte() );
 #endif
 	    strcat( msg_buf, "done with pole secure\n" );
 	}
@@ -137,25 +137,25 @@ int whoi_homing( struct behavior *b, int priority, int level )
     cmd->heading[0] = bArg(HEADING);
 
 				/* look for new usbl data and nonzero az */
-    new_data = sensor(M_USBL_TIME) > LAST_TM[idreg];
-    if ( new_data && fabs(sensor(M_USBL_AZIMUTH)) > D2R(0.01) )
+    new_data = read_sensor(M_USBL_TIME) > LAST_TM[idreg];
+    if ( new_data && fabs(read_sensor(M_USBL_AZIMUTH)) > D2R(0.01) )
 
-	T_LAST_TM[idreg] = sensor(M_PRESENT_TIME);
+	T_LAST_TM[idreg] = read_sensor(M_PRESENT_TIME);
 
 				/* got a new hit --> home_in */
-    if ( new_data && sensor(M_PRESENT_TIME) - T_START[idreg]
-	 > 2*sensor(UO_USBL_UPDATE) )
+    if ( new_data && read_sensor(M_PRESENT_TIME) - T_START[idreg]
+	 > 2*read_sensor(UO_USBL_UPDATE) )
 
 	home_in( b, priority, level );
 
 				/* didn't get a new hit; if it's a while
 				   since the last hit, go straight, then
 				   circle --> search */
-    else if ( (sensor(M_PRESENT_TIME) - T_LAST_TM[idreg] > 
-	       10*sensor(UO_USBL_UPDATE))
+    else if ( (read_sensor(M_PRESENT_TIME) - T_LAST_TM[idreg] > 
+	       10*read_sensor(UO_USBL_UPDATE))
 	      &&
-	      (sensor(M_PRESENT_TIME) - T_START[idreg] >
-	       2*sensor(UO_USBL_UPDATE)) )
+	      (read_sensor(M_PRESENT_TIME) - T_START[idreg] >
+	       2*read_sensor(UO_USBL_UPDATE)) )
 
 	search( b, priority, level );
 				/* didn't get a hit, but got one not too
@@ -167,7 +167,7 @@ int whoi_homing( struct behavior *b, int priority, int level )
 
 				/* update the backup values */
     LAST_HDG[idreg] = cmd->heading[0];
-    LAST_TM[idreg] = sensor( M_USBL_TIME );
+    LAST_TM[idreg] = read_sensor( M_USBL_TIME );
 
     return 0;
 }
@@ -185,44 +185,44 @@ void home_in( struct behavior *b, int priority, int level )
     int use_cnav;
 
 				/* validate data & use if OK */
-    if ( (fabs(sensor(M_INERTIAL_AZ)) > D2R(0.01)) &&
-	 (fabs(sensor(M_INERTIAL_AZ)) < D2R(89.0)) )
+    if ( (fabs(read_sensor(M_INERTIAL_AZ)) > D2R(0.01)) &&
+	 (fabs(read_sensor(M_INERTIAL_AZ)) < D2R(89.0)) )
 
-	az = sensor(M_INERTIAL_AZ);
+	az = read_sensor(M_INERTIAL_AZ);
 
     else			/* otherwise use old values */
 	az = AZ_LAST[idreg];
 
 				/* validate data & use if OK */
-    if ( (fabs(sensor(M_INERTIAL_EL)) > D2R(0.01)) &&
-	 (fabs(sensor(M_INERTIAL_EL)) < D2R(89.0)) )
+    if ( (fabs(read_sensor(M_INERTIAL_EL)) > D2R(0.01)) &&
+	 (fabs(read_sensor(M_INERTIAL_EL)) < D2R(89.0)) )
 
-	el = sensor(M_INERTIAL_EL);
+	el = read_sensor(M_INERTIAL_EL);
 
     else			/* otherwise use old values */
 	el = EL_LAST[idreg];
 
 				/* if range rate > 0.5 but were closing,
 				   note time, store recip hdg, and set flag */
-    if ( sensor(M_USBL_RDOT_MEAN) > 0.5 && WAS_CLOSING[idreg] )
+    if ( read_sensor(M_USBL_RDOT_MEAN) > 0.5 && WAS_CLOSING[idreg] )
     {
-	T_LOCK[idreg] = sensor(M_PRESENT_TIME);
-	REALIGN[idreg] = wrap_angle( sensor(M_YAW) - PI );
+	T_LOCK[idreg] = read_sensor(M_PRESENT_TIME);
+	REALIGN[idreg] = wrap_angle( read_sensor(M_YAW) - PI );
 	WAS_CLOSING[idreg] = 0;
 
 	sprintf( msg_buf, "% 8.2f: %s missed, turn 180 (%03d -> %03d T)\n",
-		 sensor(M_PRESENT_TIME), b->name, (int) R2D(sensor(M_YAW)),
+		 read_sensor(M_PRESENT_TIME), b->name, (int) R2D(read_sensor(M_YAW)),
 		 (int) R2D(REALIGN[idreg]) );
 	write_message( MonitorLayeredControl | SLOG );
     }
 				/* go straight for specified time */
-    if ( sensor(M_PRESENT_TIME) < T_LOCK[idreg] + sensor(UO_T_STRAIGHT) )  
+    if ( read_sensor(M_PRESENT_TIME) < T_LOCK[idreg] + read_sensor(UO_T_STRAIGHT) )  
 
 	cmd->heading[0] = REALIGN[idreg];
 
 				/* then turn around for 15 seconds */
-    else if ( sensor(M_PRESENT_TIME) < T_LOCK[idreg] +
-	      sensor(UO_T_STRAIGHT) + 15 )
+    else if ( read_sensor(M_PRESENT_TIME) < T_LOCK[idreg] +
+	      read_sensor(UO_T_STRAIGHT) + 15 )
 
 	cmd->heading[0] = wrap_angle( REALIGN[idreg] + PI );
 
@@ -236,34 +236,34 @@ void home_in( struct behavior *b, int priority, int level )
 	    GOT_FIRST_GOOD[idreg] = 1;
 
 	    sprintf( msg_buf, "% 8.2f: %s 1st good\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	    write_message( MonitorLayeredControl | SLOG );
 	}
 				/* negative range rate implies closing,
 				   make note here to prevent confusion
 				   during the realign maneuver above */
-	if ( sensor(M_USBL_RDOT_MEAN) < -0.5 )
+	if ( read_sensor(M_USBL_RDOT_MEAN) < -0.5 )
 	    WAS_CLOSING[idreg] = 1;
 
 				/* command heading to beacon (BAM, JGB
 				   offset to address USBL calibration
 				   issues) */
-	cmd->heading[0] = wrap_angle( az + sensor(M_YAW) + bArg(HDG_OFF) );
+	cmd->heading[0] = wrap_angle( az + read_sensor(M_YAW) + bArg(HDG_OFF) );
 
-	rBucky = 0.5*sensor(U_SPEED_OF_SOUND)*(sensor(M_BUCKY_RAW) -
-					       sensor(U_BUCKY_TAT));
+	rBucky = 0.5*read_sensor(U_SPEED_OF_SOUND)*(read_sensor(M_BUCKY_RAW) -
+					       read_sensor(U_BUCKY_TAT));
 
-	goal_dpt = sensor(M_DEPTH) - sensor(M_CNAV_AXIAL) +
-	    sensor(U_DOCK_ZOFF);
-	update( M_DOCK_D, goal_dpt );
+	goal_dpt = read_sensor(M_DEPTH) - read_sensor(M_CNAV_AXIAL) +
+	    read_sensor(U_DOCK_ZOFF);
+	update_sensor( M_DOCK_D, goal_dpt );
 
 	use_cnav = ( rBucky > 0 && rBucky < bArg(CNAV) );
 
-	if ( use_cnav && sensor(M_CNAV_STATUS) != 0 )
+	if ( use_cnav && read_sensor(M_CNAV_STATUS) != 0 )
 	{
 				/* command the goal here */
 	    cmd->depth_mode = D_PITCH;
-	    cmd->depth[0] = sensor(M_PITCH) + el;
+	    cmd->depth[0] = read_sensor(M_PITCH) + el;
 	}
     }
 
@@ -286,18 +286,18 @@ void search(  struct behavior *b, int priority, int level )
 	GOT_FIRST_GOOD[idreg] = 0;
 	GOT_FIRST_BAD[idreg] = 1; 
 
-	T_SRCH[idreg] = sensor(M_PRESENT_TIME);
-	SRCH_HDG[idreg] = sensor(M_YAW);
+	T_SRCH[idreg] = read_sensor(M_PRESENT_TIME);
+	SRCH_HDG[idreg] = read_sensor(M_YAW);
 
 	sprintf( msg_buf, "% 8.2f: %s 1st bad hit, go straight (%03d T)\n",
-		 sensor(M_PRESENT_TIME), b->name, (int) R2D(SRCH_HDG[idreg]) );
+		 read_sensor(M_PRESENT_TIME), b->name, (int) R2D(SRCH_HDG[idreg]) );
 	write_message( MonitorLayeredControl | SLOG );
     }
 				/* increment desired heading if straight
 				   time has elapsed */
-    if ( sensor(M_PRESENT_TIME) >= T_SRCH[idreg] + sensor(UO_T_STRAIGHT) )
+    if ( read_sensor(M_PRESENT_TIME) >= T_SRCH[idreg] + read_sensor(UO_T_STRAIGHT) )
 	
-	SRCH_HDG[idreg] += sensor(UO_SEARCH_HR)*2;
+	SRCH_HDG[idreg] += read_sensor(UO_SEARCH_HR)*2;
 
     cmd->heading[0] = SRCH_HDG[idreg];
 

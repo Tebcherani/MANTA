@@ -192,7 +192,7 @@ repo. After regenerating, commit both files.
 
 ```c
 double v = sensor( MY_VAR );   // READ  — use the macro, not vvp->s[i].x
-update( MY_VAR, new_val );     // WRITE — sets timestamp; enables logging
+update_sensor( MY_VAR, new_val );     // WRITE — sets timestamp; enables logging
 ```
 
 Writing directly to `vvp->s[i].x` bypasses the timestamp and the value will

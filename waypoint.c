@@ -53,10 +53,10 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 				/* compute "direct to" trackline */
 	if ( bArg(HDG) < 0 )
 	{
-	    bArg(HDG) = PI + wrap_angle( atan2(bArg(EAST) - sensor(M_POS_E),
-				    bArg(NRTH) - sensor(M_POS_N)) - PI );
+	    bArg(HDG) = PI + wrap_angle( atan2(bArg(EAST) - read_sensor(M_POS_E),
+				    bArg(NRTH) - read_sensor(M_POS_N)) - PI );
 	    sprintf( msg_buf, "% 8.2f: %s sets hdg to (%.1f, %.1f) "
-		     "as %.1f (deg T)\n", sensor(M_PRESENT_TIME), b->name,
+		     "as %.1f (deg T)\n", read_sensor(M_PRESENT_TIME), b->name,
 		     bArg(NRTH), bArg(EAST), R2D(bArg(HDG)) );
 	    write_message( MonitorLayeredControl | SLOG );
 	}
@@ -69,7 +69,7 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	{
 	    if ( bArg(ABORT) > 0 )
 	    {
-		update( C_ABORT_MISSION, 1 );
+		update_sensor( C_ABORT_MISSION, 1 );
 		strcpy( msg_buf, "\tABORT!\n" );
 		write_message( MonitorLayeredControl | SLOG );
 	    }
@@ -85,8 +85,8 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	    cpsi = cos( psi_t );
 	}
 				/* distance to waypoint in N, E coords */
-	n_est = sensor(M_POS_N);
-	e_est = sensor(M_POS_E);
+	n_est = read_sensor(M_POS_N);
+	e_est = read_sensor(M_POS_E);
 	dn = n_est - bArg(NRTH);
 	de = e_est - bArg(EAST);
 
@@ -103,8 +103,8 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	}
 	xte = -de*cpsi + dn*spsi;
 				/* update values in data structure */
-	update( WP_XTE, xte );
-	update( WP_DTW, dtw );
+	update_sensor( WP_XTE, xte );
+	update_sensor( WP_DTW, dtw );
 	
 				/* load outputs */
 	if ( dtw <= goal )
@@ -113,7 +113,7 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	    cmd->depth_mode = cmd->heading_mode = cmd->speed_mode = -1;
 
 	    sprintf( msg_buf, "% 8.2f: %s (%.1lf, %.1lf) complete with "
-		     "dtw %.1lf <= %.1lf m\n", sensor(M_PRESENT_TIME),
+		     "dtw %.1lf <= %.1lf m\n", read_sensor(M_PRESENT_TIME),
 		     b->name, n_est, e_est, dtw, goal );
 	    write_message( MonitorLayeredControl | SLOG );
 	}
@@ -137,7 +137,7 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	break;
     default:			/* shouldn't ever happen, print error */
 	sprintf( msg_buf, "% 8.2f: %s inappropriate state %d\n",
-		 sensor(M_PRESENT_TIME), b->name, b->state );
+		 read_sensor(M_PRESENT_TIME), b->name, b->state );
 	write_message( MonitorLayeredControl | SLOG );
 	break;
     }
@@ -148,12 +148,12 @@ void simple_dead_reckoning( void )
 {
     double ds, dn, de;
 
-    ds = sensor(M_DT)*sensor(M_WATER_SPEED)*cos(sensor(M_PITCH));
-    dn = ds*cos(sensor(M_YAW));
-    de = ds*sin(sensor(M_YAW));
+    ds = read_sensor(M_DT)*read_sensor(M_WATER_SPEED)*cos(read_sensor(M_PITCH));
+    dn = ds*cos(read_sensor(M_YAW));
+    de = ds*sin(read_sensor(M_YAW));
 				/* store DR deltas for all to use */
-    update( M_DR_DN, dn );
-    update( M_DR_DE, de );
+    update_sensor( M_DR_DN, dn );
+    update_sensor( M_DR_DE, de );
 				/* update DR position */
     update_add( M_DR_NORTH, dn );
     update_add( M_DR_EAST,  de );

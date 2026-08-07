@@ -125,7 +125,7 @@ void layered_control( void )
 		else
 		{
 		    sprintf( msg_buf, "% 8.2f: layered_control has NULL "
-			     "function ptr\n", sensor(M_PRESENT_TIME) );
+			     "function ptr\n", read_sensor(M_PRESENT_TIME) );
 		    write_message( TERM | SLOG );
 		}
 	    }
@@ -135,15 +135,15 @@ void layered_control( void )
     resolve( 0 );
 				/* Store generated commands in sensor
 				   structure for replay */
-    update( CC_HEADING_MODE, vvp->c[0].heading_mode );
-    update( CC_DEPTH_MODE, vvp->c[0].depth_mode );
-    update( CC_SPEED_MODE, vvp->c[0].speed_mode );
-    update( C_DEPTH_BEHAVIOR, depth_behavior );
-    update( C_DEPTH_PRIORITY, depth_priority );
-    update( C_HEADING_BEHAVIOR, heading_behavior );
-    update( C_HEADING_PRIORITY, heading_priority );
-    update( C_SPEED_BEHAVIOR, speed_behavior );
-    update( C_SPEED_PRIORITY, speed_priority );
+    update_sensor( CC_HEADING_MODE, vvp->c[0].heading_mode );
+    update_sensor( CC_DEPTH_MODE, vvp->c[0].depth_mode );
+    update_sensor( CC_SPEED_MODE, vvp->c[0].speed_mode );
+    update_sensor( C_DEPTH_BEHAVIOR, depth_behavior );
+    update_sensor( C_DEPTH_PRIORITY, depth_priority );
+    update_sensor( C_HEADING_BEHAVIOR, heading_behavior );
+    update_sensor( C_HEADING_PRIORITY, heading_priority );
+    update_sensor( C_SPEED_BEHAVIOR, speed_behavior );
+    update_sensor( C_SPEED_PRIORITY, speed_priority );
 }
 
 /*----------------------------------------------------------------------*
@@ -258,20 +258,20 @@ int descend(struct behavior *b, int priority, int level)
 				/* If end conditions occur, drop drop
                                    weights, set end_depth to < 0 */
     if ( (manage_time(b, bArg(MAX_TIME)) == 1) || 
-	 (sensor(M_DEPTH) > bArg(DEPTH)) ||
-	 ((sensor(M_ALTITUDE) > 0.0) && (sensor(M_ALTITUDE) < bArg(MIN_ALT))) )
+	 (read_sensor(M_DEPTH) > bArg(DEPTH)) ||
+	 ((read_sensor(M_ALTITUDE) > 0.0) && (read_sensor(M_ALTITUDE) < bArg(MIN_ALT))) )
     {
 	if (bArg(DROPD) > 0)
 	{
-	    update( C_WEIGHT1_DROP, 1.0 );
+	    update_sensor( C_WEIGHT1_DROP, 1.0 );
 	    fprintf( syslog, "% 8.2f: %s dropping descent weight\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	}
     	if (bArg(DROPA) > 0)
 	{
-	    update( C_WEIGHT2_DROP, 1.0 );
+	    update_sensor( C_WEIGHT2_DROP, 1.0 );
 	    fprintf( syslog, "% 8.2f: %s dropping ascent weight\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	}
 	b->state = B_COMPLETE;
 	return 0;
@@ -326,7 +326,7 @@ int ascend( struct behavior *b, int priority, int level )
     enum { HEADING, RUDDER, PITCH, SPEED, DEPTH, DROPD, DROPA, ABORT };
     int commandedAbort;
 				/* decide if abort was issued */
-    commandedAbort = (bArg(ABORT) > 0) && (sensor(C_ABORT_MISSION) > 0);
+    commandedAbort = (bArg(ABORT) > 0) && (read_sensor(C_ABORT_MISSION) > 0);
 
     if ( b->state == B_UNINITIALIZED )
     {
@@ -339,23 +339,23 @@ int ascend( struct behavior *b, int priority, int level )
 				/* drop descent weight? */
         if ( bArg(DROPD) > 0 )
 	{
-            update( C_WEIGHT1_DROP, 1 );
+            update_sensor( C_WEIGHT1_DROP, 1 );
             fprintf( syslog, "% 8.2f: %s dropping descent weight\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
         }
 				/* drop ascent weight? */
         if ( bArg(DROPA) > 0 )
 	{
-            update( C_WEIGHT2_DROP, 1 );
+            update_sensor( C_WEIGHT2_DROP, 1 );
             fprintf( syslog, "% 8.2f: %s dropping ascent weight\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
         }
 				/* abort? replace given arguments with 30
 				   deg pitch spiral up */
 	if ( commandedAbort )
 	{
 	    sprintf( msg_buf, "% 8.2f: %s activated by remote abort\n",
-		     sensor(M_PRESENT_TIME), b->name );
+		     read_sensor(M_PRESENT_TIME), b->name );
 	    write_message( MonitorLayeredControl | SLOG );
 	    if ( fabs(bArg(RUDDER)) < 1e-6 )
 		 bArg(RUDDER) = D2R(10);
@@ -366,11 +366,11 @@ int ascend( struct behavior *b, int priority, int level )
     {
 				/* done if measured depth less than
 				   end_depth */
-	if ( sensor(M_DEPTH) < bArg(DEPTH) )
+	if ( read_sensor(M_DEPTH) < bArg(DEPTH) )
 	{
 	    b->state = B_COMPLETE;
 	    sprintf( msg_buf, "% 8.2f: %s done (dpth %.2g < goal %.2g)\n", 
-		     sensor(M_PRESENT_TIME), b->name, sensor(M_DEPTH),
+		     read_sensor(M_PRESENT_TIME), b->name, read_sensor(M_DEPTH),
 		     bArg(DEPTH) );
 	    write_message( MonitorLayeredControl | SLOG );
 	    return 1;
@@ -426,7 +426,7 @@ int broadcast( struct behavior *b, int priority, int level )
 				   greater than start time */
     case B_UNINITIALIZED:
 
-	if ( bArg(START) > sensor(M_PRESENT_TIME) )
+	if ( bArg(START) > read_sensor(M_PRESENT_TIME) )
 	    return -1;
 				/* rereference delay args from nominal
 				   start of behavior */
@@ -443,16 +443,16 @@ int broadcast( struct behavior *b, int priority, int level )
 	}
 				/* use XS_DELAY argument as timer for
                                    EdgeTech data */
-	if ( sensor(M_PRESENT_TIME) >= bArg(XS_DELAY) )
+	if ( read_sensor(M_PRESENT_TIME) >= bArg(XS_DELAY) )
 	{
 				/* compose the databyte based on presence
 				   of pole in latch */
 #ifdef EDGEPS8000
-	    update( EDGE_XS_DATABYTE, getXSDataByte() );
+	    update_sensor( EDGE_XS_DATABYTE, getXSDataByte() );
 
 	    sprintf( msg_buf, "% 8.2f: %s to PS8000 XS (0x%02x)\n",
-		     sensor(M_PRESENT_TIME), b->name,
-		     (int) sensor(EDGE_XS_DATABYTE) );
+		     read_sensor(M_PRESENT_TIME), b->name,
+		     (int) read_sensor(EDGE_XS_DATABYTE) );
 	    write_message( MonitorLayeredControl );
 #endif
 				/* advance timer */
@@ -460,17 +460,17 @@ int broadcast( struct behavior *b, int priority, int level )
 	}
 				/* use UAM_DELAY argument as timer for UAM
 				   data, advances similarly to above */
-	if ( sensor(M_PRESENT_TIME) >= bArg(UAM_DELAY) )
+	if ( read_sensor(M_PRESENT_TIME) >= bArg(UAM_DELAY) )
 	{
 				/* compose simple message */
 	    sprintf( vvp->modem_send, "%05d%04d%04d%03d\xd",
-		     (int) sensor(M_PRESENT_TIME),
-		     (int) limit(sensor(M_POS_N), 9999, 0),
-		     (int) limit(sensor(M_POS_E), 9999, 0),
-		     (int) limit(sensor(M_DEPTH),  999, 0) );
+		     (int) read_sensor(M_PRESENT_TIME),
+		     (int) limit(read_sensor(M_POS_N), 9999, 0),
+		     (int) limit(read_sensor(M_POS_E), 9999, 0),
+		     (int) limit(read_sensor(M_DEPTH),  999, 0) );
 
 	    sprintf( msg_buf, "% 8.2f: %s to UAM (%.*s)\n",
-		     sensor(M_PRESENT_TIME), b->name,
+		     read_sensor(M_PRESENT_TIME), b->name,
 		     strlen(vvp->modem_send) - 1, vvp->modem_send );
 	    write_message( MonitorLayeredControl );
 				/* advance timer */
@@ -524,7 +524,7 @@ int yo_yo( struct behavior *b, int priority, int level )
 	shut_down( priority );
 	b->state = B_COMPLETE;
 	sprintf( msg_buf, "% 8.2f: %s done (no companion priority)\n",
-		 sensor(M_PRESENT_TIME), b->name );
+		 read_sensor(M_PRESENT_TIME), b->name );
 	write_message( MonitorLayeredControl | SLOG );
 	return 1;
     }
@@ -556,7 +556,7 @@ int yo_yo( struct behavior *b, int priority, int level )
 	shut_down( priority );
 	b->state = B_COMPLETE;
 	sprintf( msg_buf, "% 8.2f: %s done (companion lost heading/speed)\n",
-		 sensor(M_PRESENT_TIME), b->name );
+		 read_sensor(M_PRESENT_TIME), b->name );
 	write_message( MonitorLayeredControl | SLOG );
 	return 1;
     }
@@ -576,30 +576,30 @@ int yo_yo( struct behavior *b, int priority, int level )
 	vvp->c[priority].speed_mode = -1;
 	vvp->c[priority].heading_mode = -1;
 	sprintf( msg_buf, "% 8.2f: %s shuts down on cycle count\n",
-		 sensor(M_PRESENT_TIME), b->name );
+		 read_sensor(M_PRESENT_TIME), b->name );
 	write_message( MonitorLayeredControl | SLOG );
 
 	return 1;
     }
 				/* Check to see if finished with an up leg
                                    of yo-yo */
-    if ((sensor(M_DEPTH) < b->arg[1].x) && (b->arg[0].x > 0.0))
+    if ((read_sensor(M_DEPTH) < b->arg[1].x) && (b->arg[0].x > 0.0))
     {
 	b->arg[0].x = -b->arg[0].x;
 	b->arg[4].x = b->arg[4].x - 0.5;
         sprintf( msg_buf, "% 8.2f: %s up-leg ends at %.2f m\n",
-		 sensor(M_PRESENT_TIME), b->name, sensor(M_DEPTH) );
+		 read_sensor(M_PRESENT_TIME), b->name, read_sensor(M_DEPTH) );
         write_message( MonitorLayeredControl | SLOG );
     }
           
 				/* Check to see if finished with a down leg
                                    of yo-yo */
-    if ((sensor(M_DEPTH) > b->arg[2].x) && (b->arg[0].x < 0.0))
+    if ((read_sensor(M_DEPTH) > b->arg[2].x) && (b->arg[0].x < 0.0))
     {
 	b->arg[0].x = -b->arg[0].x;
 	b->arg[4].x = b->arg[4].x - 0.5;
         sprintf( msg_buf, "% 8.2f: %s down-leg ends at dpth %.2f m\n",
-		 sensor(M_PRESENT_TIME), b->name, sensor(M_DEPTH) );
+		 read_sensor(M_PRESENT_TIME), b->name, read_sensor(M_DEPTH) );
         write_message( MonitorLayeredControl | SLOG );
     }
 				/* Check for near bottom termination of
@@ -610,15 +610,15 @@ int yo_yo( struct behavior *b, int priority, int level )
      zero if a) the sonar was never interrogated (0.0 is inital value
      in the data structure) or b) the sonar is in air.  */
 
-    if ((sensor(M_ALTITUDE) > 0.0) && (sensor(M_ALTITUDE) < b->arg[3].x) && 
+    if ((read_sensor(M_ALTITUDE) > 0.0) && (read_sensor(M_ALTITUDE) < b->arg[3].x) && 
 	(b->arg[0].x < 0.0))
     {
 	b->arg[0].x = -b->arg[0].x;
 	b->arg[4].x = b->arg[4].x - 0.5;
         sprintf( msg_buf, "% 8.2f: %s down-leg ends at alt %.2f m, "
                 "(dpth = %.2f m)\n", 
-                sensor(M_PRESENT_TIME), b->name, sensor(M_ALTITUDE),
-		 sensor(M_DEPTH) );
+                read_sensor(M_PRESENT_TIME), b->name, read_sensor(M_ALTITUDE),
+		 read_sensor(M_DEPTH) );
         write_message( MonitorLayeredControl | SLOG );
     }  
   
@@ -680,7 +680,7 @@ int survey_dead_reckon( struct behavior *b, int priority, int level )
 	}
 				/* here on out, elapsed is how much time
 				   has elapsed since end of transit portion */
-	elapsed = sensor(M_PRESENT_TIME) - b->start_time - bArg(T_TIME);
+	elapsed = read_sensor(M_PRESENT_TIME) - b->start_time - bArg(T_TIME);
 
 				/* load output vector */
 	cmd->depth_mode = cmd->heading_mode = cmd->speed_mode = 1;
@@ -773,7 +773,7 @@ int acquire_heading(struct behavior *b, int priority, int level)
     return(1);
 
   /*--- If behavior succeeds, return 1 without generating any commands */
-  if (fabs(wrap_angle(heading-sensor(M_YAW)))<heading_err)
+  if (fabs(wrap_angle(heading-read_sensor(M_YAW)))<heading_err)
     {
 
     b->arg[2].x = 0.0;
@@ -1054,17 +1054,17 @@ int set_elevator(struct behavior *b, int priority, int level)
     }
 
     /* check if depth is within limits */
-    if (sensor(M_DEPTH) < b->arg[Min_depth].x) {
+    if (read_sensor(M_DEPTH) < b->arg[Min_depth].x) {
 
         b->arg[Finished].x = 1.0;
         return(1);
     }
-    if (sensor(M_DEPTH) > b->arg[Max_depth].x) {
+    if (read_sensor(M_DEPTH) > b->arg[Max_depth].x) {
         b->arg[Finished].x = 1.0;
         return(1);
     }
     /* check if pitch is within limits */
-    if (fabs(sensor(M_PITCH)) > b->arg[Max_pitch].x) {
+    if (fabs(read_sensor(M_PITCH)) > b->arg[Max_pitch].x) {
 
         b->arg[Finished].x = 1.0;
         return(1);
@@ -1117,10 +1117,10 @@ int depth_envelope( struct behavior *b, int priority, int level )
 
 				/* if depth cutoff active and max depth
                                    reached, shut vehicle down */
-    if ( cut_active && (sensor(M_DEPTH) > bArg(CUT_MAX)) )
+    if ( cut_active && (read_sensor(M_DEPTH) > bArg(CUT_MAX)) )
     {
         sprintf( msg_buf, "% 8.2f: %s cutoff at %.1f m, exiting\n",
-		 sensor(M_PRESENT_TIME), b->name, sensor(M_DEPTH) );
+		 read_sensor(M_PRESENT_TIME), b->name, read_sensor(M_DEPTH) );
 	write_message( MonitorLayeredControl | SLOG );
 
 	exit_gracefully( 0 );
@@ -1128,8 +1128,8 @@ int depth_envelope( struct behavior *b, int priority, int level )
         return 1;
     }
 				/* check minimum altitude */
-    dummy = sensor( M_DEPTH ) + ( sensor(M_ALTITUDE) - bArg(A_MIN) );
-    if ( alt_active && (sensor(M_ALTITUDE) > 0.0) && (dummy < bArg(D_MAX)) )
+    dummy = read_sensor( M_DEPTH ) + ( read_sensor(M_ALTITUDE) - bArg(A_MIN) );
+    if ( alt_active && (read_sensor(M_ALTITUDE) > 0.0) && (dummy < bArg(D_MAX)) )
 	max_depth = dummy;
 
 				/* if already in depth mode, give new max
@@ -1140,7 +1140,7 @@ int depth_envelope( struct behavior *b, int priority, int level )
 	cmd->depth[0] = max_depth;
 
 				/* if max depth has been exceeded, then  */
-    if ( sensor(M_DEPTH) > max_depth )
+    if ( read_sensor(M_DEPTH) > max_depth )
     {
         if ( cmd->depth_mode == 1 )
         {
@@ -1191,7 +1191,7 @@ int launch( struct behavior *b, int priority, int level )
 				/* "break" intentionally omitted */
     case B_ACTIVE:
 
-	if ( (sensor(M_DEPTH) > bArg(DEPTH)) || manage_time(b, bArg(TIME)) )
+	if ( (read_sensor(M_DEPTH) > bArg(DEPTH)) || manage_time(b, bArg(TIME)) )
 	{
 	    b->state = B_COMPLETE;
 	    return 1;
@@ -1233,16 +1233,16 @@ int chirp_fin( struct behavior *b, int priority, int level )
 	Freq_0 = 4, Freq_1 = 5, Duration = 6;
     double freq, desired_angle, time;
 
-    if ( sensor(M_PRESENT_TIME) < b->arg[Delay].x )
+    if ( read_sensor(M_PRESENT_TIME) < b->arg[Delay].x )
     {
-         if ( b->arg[Depth].x > 0 && sensor( M_DEPTH )
+         if ( b->arg[Depth].x > 0 && read_sensor( M_DEPTH )
              >= b->arg[Depth].x )
-              b->arg[Delay].x = sensor( M_PRESENT_TIME );
+              b->arg[Delay].x = read_sensor( M_PRESENT_TIME );
          else
               return 1;
     }
 
-    time = sensor( M_PRESENT_TIME ) - b->arg[Delay].x;
+    time = read_sensor( M_PRESENT_TIME ) - b->arg[Delay].x;
 
     if ( time > b->arg[Duration].x )
                                 /* done if elapsed > duration */
@@ -1291,17 +1291,17 @@ int manage_time( struct behavior *b, double duration )
                                    start_time and end_time */
     if ( b->start_time < 0.0 )
     {
-	b->start_time = sensor( M_PRESENT_TIME );
-	b->end_time = sensor(M_PRESENT_TIME) + duration;
+	b->start_time = read_sensor( M_PRESENT_TIME );
+	b->end_time = read_sensor(M_PRESENT_TIME) + duration;
 	sprintf( msg_buf, "% 8.2f: %s starts (end time %.2f)\n",
-		 sensor(M_PRESENT_TIME), b->name, b->end_time );
+		 read_sensor(M_PRESENT_TIME), b->name, b->end_time );
 	write_message( MonitorLayeredControl | SLOG );
     }
 
-    if ( sensor(M_PRESENT_TIME) > b->end_time )
+    if ( read_sensor(M_PRESENT_TIME) > b->end_time )
     {
 	sprintf( msg_buf, "% 8.2f: %s managed time expired\n",
-		 sensor(M_PRESENT_TIME), b->name );
+		 read_sensor(M_PRESENT_TIME), b->name );
 	write_message( MonitorLayeredControl | SLOG );
 	return 1;
     }

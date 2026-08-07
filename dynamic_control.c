@@ -54,20 +54,20 @@ void dynamic_control( void )
 				   the controller is radian based.  Later
 				   in limit check compares a radian value
 				   to "30" */
-    pitch_limit = D2R( sensor(UO_CONTROL_PITCH_LIM) );
-    kph = sensor( UO_CONTROL_KPH );
-    kdh = sensor( UO_CONTROL_KDH );
-    kih = sensor( UO_CONTROL_KIH );
-    kpp = sensor( UO_CONTROL_KPP );
-    kdp = sensor( UO_CONTROL_KDP );
-    kip = sensor( UO_CONTROL_KIP );
+    pitch_limit = D2R( read_sensor(UO_CONTROL_PITCH_LIM) );
+    kph = read_sensor( UO_CONTROL_KPH );
+    kdh = read_sensor( UO_CONTROL_KDH );
+    kih = read_sensor( UO_CONTROL_KIH );
+    kpp = read_sensor( UO_CONTROL_KPP );
+    kdp = read_sensor( UO_CONTROL_KDP );
+    kip = read_sensor( UO_CONTROL_KIP );
 
-    dt = limit( sensor(M_DT), .3, 0 );
+    dt = limit( read_sensor(M_DT), .3, 0 );
 
 				/* load present vehicle state */
-    heading_rate = sensor(M_YAW_RATE);
-    pitch = sensor(M_PITCH);
-    pitch_rate = sensor(M_PITCH_RATE);
+    heading_rate = read_sensor(M_YAW_RATE);
+    pitch = read_sensor(M_PITCH);
+    pitch_rate = read_sensor(M_PITCH_RATE);
 
 /*-------------------------------------------------------------------
   OPEN LOOP FOR THE SPEED CONTROL
@@ -92,23 +92,23 @@ void dynamic_control( void )
     case S_CURRENT:
 
 	thruster_current = vvp->c[0].speed[0];
-	update( C_THRUSTER_CURRENT, vvp->c[0].speed[0] );
+	update_sensor( C_THRUSTER_CURRENT, vvp->c[0].speed[0] );
         break;
 
     case S_SPEED:
 
         des_speed = vvp->c[0].speed[0];
-	update( C_SPEED, vvp->c[0].speed[0] );
+	update_sensor( C_SPEED, vvp->c[0].speed[0] );
 
-        LHS = -sensor(VS_XUABU)*pow(des_speed,2.)*( 2.455 - 2.175*des_speed + 
+        LHS = -read_sensor(VS_XUABU)*pow(des_speed,2.)*( 2.455 - 2.175*des_speed + 
 					 0.75*pow(des_speed,2.) ) ;
-        des_omega = ( sensor(VS_THRUSTER_DUCT_AREA)*rho*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*des_speed + 
-		      sqrt( pow(sensor(VS_THRUSTER_DUCT_AREA)*rho*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*des_speed,2.) +
-			    4.*LHS*sensor(VS_THRUSTER_DUCT_AREA)*rho*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*sensor(VS_THRUSTER_PITCH) ) ) /
-	    (2.*sensor(VS_THRUSTER_DUCT_AREA)*rho*pow(sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH),2.));
+        des_omega = ( read_sensor(VS_THRUSTER_DUCT_AREA)*rho*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*des_speed + 
+		      sqrt( pow(read_sensor(VS_THRUSTER_DUCT_AREA)*rho*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*des_speed,2.) +
+			    4.*LHS*read_sensor(VS_THRUSTER_DUCT_AREA)*rho*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*read_sensor(VS_THRUSTER_PITCH) ) ) /
+	    (2.*read_sensor(VS_THRUSTER_DUCT_AREA)*rho*pow(read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH),2.));
 
-        thruster_current = (.5*rho*sensor(VS_THRUSTER_DUCT_AREA)*pow(sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH),3.)*des_omega*des_omega -
-                            .5*sensor(VS_THRUSTER_DUCT_AREA)*rho*sensor(VS_THRUSTER_ETA)*sensor(VS_THRUSTER_PITCH)*pow(des_speed,2.))/sensor(VS_THRUSTER_KT);
+        thruster_current = (.5*rho*read_sensor(VS_THRUSTER_DUCT_AREA)*pow(read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH),3.)*des_omega*des_omega -
+                            .5*read_sensor(VS_THRUSTER_DUCT_AREA)*rho*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*pow(des_speed,2.))/read_sensor(VS_THRUSTER_KT);
 				/* make sign same as desired speed */
 	thruster_current *= sgn(des_speed);
 
@@ -116,7 +116,7 @@ void dynamic_control( void )
     }
 				/* limit to +- 5 amps, update */
     thruster_current = limit( thruster_current, 5.0, -5.0 );
-    update( C_THRUSTER_CURRENT, thruster_current );    
+    update_sensor( C_THRUSTER_CURRENT, thruster_current );    
 
 
 /*-------------------------------------------------------------------
@@ -133,7 +133,7 @@ void dynamic_control( void )
   -------------------------------------------------------------------*/
 
     if ( !d_traj.init )
-	init_traj( &d_traj, sensor(M_DEPTH), sensor(UO_TAU), 0.2 );
+	init_traj( &d_traj, read_sensor(M_DEPTH), read_sensor(UO_TAU), 0.2 );
 
     switch ( vvp->c[0].depth_mode )
     {
@@ -146,11 +146,11 @@ void dynamic_control( void )
 
     case D_DEPTH:		/* map desired depth to pitch cmd */
 
-	update( C_DEPTH, vvp->c[0].depth[0] );
+	update_sensor( C_DEPTH, vvp->c[0].depth[0] );
 
-        des_depth = do_traj( sensor(C_DEPTH), sensor(UO_MAX_DR), &d_traj );
-	update( T_DEPTH, des_depth );
-	err_depth = sensor(M_DEPTH) - des_depth;
+        des_depth = do_traj( read_sensor(C_DEPTH), read_sensor(UO_MAX_DR), &d_traj );
+	update_sensor( T_DEPTH, des_depth );
+	err_depth = read_sensor(M_DEPTH) - des_depth;
 
 	monitor_msg( T_DEPTH, MonitorTraj );
 
@@ -159,13 +159,13 @@ void dynamic_control( void )
 
 	if ( fabs(d_traj.xdot) < .01 )
 	{
-	    update_add( D_INTEGRAL, sensor(UO_DEPTH_INT_K)*err_depth*dt );
-	    update( D_INTEGRAL, limit(sensor(D_INTEGRAL), D2R(5), -D2R(5)) );
+	    update_add( D_INTEGRAL, read_sensor(UO_DEPTH_INT_K)*err_depth*dt );
+	    update_sensor( D_INTEGRAL, limit(read_sensor(D_INTEGRAL), D2R(5), -D2R(5)) );
 	}
 
-	des_pitch = sensor(UO_DEPTH_MAP_K)*err_depth + sensor(D_INTEGRAL);
+	des_pitch = read_sensor(UO_DEPTH_MAP_K)*err_depth + read_sensor(D_INTEGRAL);
 	des_pitch = limit( des_pitch, pitch_limit, -pitch_limit );	
-	update( C_PITCH, des_pitch );
+	update_sensor( C_PITCH, des_pitch );
 
 	Del24 = pitch_control( pitch, des_pitch, pitch_rate, kpp, kdp,
 			       kip, dt );
@@ -176,7 +176,7 @@ void dynamic_control( void )
     case D_PITCH:		/* dynamic control of pitch */
 
         des_pitch = limit( vvp->c[0].depth[0], pitch_limit, -pitch_limit );
-        update( C_PITCH, des_pitch );
+        update_sensor( C_PITCH, des_pitch );
 
         Del24 = pitch_control( pitch, des_pitch, pitch_rate, kpp, kdp,
 			       kip, dt );        
@@ -185,7 +185,7 @@ void dynamic_control( void )
 	d_traj.init = FALSE;
         break;
     }
-    update( C_ELEVATOR_ANGLE, Del24 );
+    update_sensor( C_ELEVATOR_ANGLE, Del24 );
 
 /* -------------------------------------------------------------------
    |   PID HEADING CONTROL LAW ALGORITHM
@@ -203,32 +203,32 @@ void dynamic_control( void )
    -------------------------------------------------------------------*/
 
     if ( !h_traj.init )
-	init_traj( &h_traj, sensor(M_YAW), sensor(UO_TAU), 0.2 );
+	init_traj( &h_traj, read_sensor(M_YAW), read_sensor(UO_TAU), 0.2 );
 
     switch ( vvp->c[0].heading_mode )
     {
     case H_RUDDER:
 
         Del13 = limit( vvp->c[0].heading[0], FIN_LIMIT, -FIN_LIMIT );
-        update( C_RUDDER_ANGLE, Del13 );
+        update_sensor( C_RUDDER_ANGLE, Del13 );
 
 	h_traj.init = FALSE;
         break;
         
     case 1:			/* heading control mode */
 
-	update( C_HEADING, vvp->c[0].heading[0] );
-	des_head = do_hdg_traj( sensor(C_HEADING), sensor(UO_MAX_HR),
+	update_sensor( C_HEADING, vvp->c[0].heading[0] );
+	des_head = do_hdg_traj( read_sensor(C_HEADING), read_sensor(UO_MAX_HR),
 				&h_traj );
 
-	update( T_HDG, des_head );
-	update( T_HDG_RATE, h_traj.xdot );
+	update_sensor( T_HDG, des_head );
+	update_sensor( T_HDG_RATE, h_traj.xdot );
 
-	hdg_err = wrap_angle( sensor(M_YAW) - des_head );
+	hdg_err = wrap_angle( read_sensor(M_YAW) - des_head );
 	proportional = kph * hdg_err;
         derivative = kdh * (heading_rate - h_traj.xdot);
 
-        rudder = sensor(C_RUDDER_ANGLE);
+        rudder = read_sensor(C_RUDDER_ANGLE);
 
 	if ( fabs(h_traj.xdot) < D2R(1) )
 	{
@@ -236,21 +236,21 @@ void dynamic_control( void )
 	    if ( (fabs(rudder) < FIN_LIMIT) || (fabs(kih) <= 1e-6) )
 		update_add( H_INTEGRAL, kih*dt*hdg_err );
 	    else
-		update( H_INTEGRAL, sgn(rudder)*FIN_LIMIT - 
+		update_sensor( H_INTEGRAL, sgn(rudder)*FIN_LIMIT - 
 		    proportional - derivative );
 
 #ifdef H_INT_LIM
 				/* clip the integral term to prevent its
 				   influence from growing out of bounds */
-	    update( H_INTEGRAL, limit(sensor(H_INTEGRAL),
+	    update_sensor( H_INTEGRAL, limit(read_sensor(H_INTEGRAL),
 				      H_INT_LIM, -H_INT_LIM) );
 #endif
 	}
 
-	Del13 = proportional + derivative + sensor(H_INTEGRAL);
+	Del13 = proportional + derivative + read_sensor(H_INTEGRAL);
 	Del13 = limit( Del13, FIN_LIMIT, -FIN_LIMIT );
 
-	update( C_RUDDER_ANGLE, Del13 );
+	update_sensor( C_RUDDER_ANGLE, Del13 );
 	break;
     }
 }
@@ -275,19 +275,19 @@ static double pitch_control( double pitch_now, double pitch_des, double
     x1 = kpp * (pitch_now - pitch_des);
     x2 = kdp * pitch_rate;
 
-    elevator = sensor(C_ELEVATOR_ANGLE) ;
+    elevator = read_sensor(C_ELEVATOR_ANGLE) ;
 
     if ((fabs(elevator) < FIN_LIMIT) || (fabs(kip) < 1.e-6))
 	update_add( P_INTEGRAL, kip*dt*(pitch_now - pitch_des) );
     else
-	update( P_INTEGRAL, sgn(elevator)*FIN_LIMIT - x1 - x2 );
+	update_sensor( P_INTEGRAL, sgn(elevator)*FIN_LIMIT - x1 - x2 );
 
 #ifdef P_INT_LIM
 				/* limit the integrator to prevent windup */
-    update( P_INTEGRAL, limit(sensor(P_INTEGRAL), P_INT_LIM, -P_INT_LIM) );
+    update_sensor( P_INTEGRAL, limit(read_sensor(P_INTEGRAL), P_INT_LIM, -P_INT_LIM) );
 #endif
 
-    return x1 + x2 + sensor(P_INTEGRAL);
+    return x1 + x2 + read_sensor(P_INTEGRAL);
 }
   
 /* ==================================================================

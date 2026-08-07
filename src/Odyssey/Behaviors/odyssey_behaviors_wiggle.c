@@ -1,6 +1,7 @@
 #include <math.h>
 
 #include "odyssey_behaviors.h"
+#include "odyssey_data_struct.h"
 #include "vehicle.h"
 
 int wiggle(struct behavior *b, int priority, int level) {
@@ -20,7 +21,7 @@ int wiggle(struct behavior *b, int priority, int level) {
     }
 
 	// Reduced time corresponds to fraction of this cycle elapsed (0 <= rt < 1)
-    reduced_time = fmod(sensor(M_PRESENT_TIME) - b->start_time, bArg(PERIOD)) / bArg(PERIOD);
+    reduced_time = fmod(read_sensor(M_PRESENT_TIME) - b->start_time, bArg(PERIOD)) / bArg(PERIOD);
 
     cmd->speed_mode = S_CURRENT;
     cmd->speed[0] = bArg(THRUST);

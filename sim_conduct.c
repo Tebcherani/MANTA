@@ -36,7 +36,7 @@ void update_water_conductivity(void)
  * A simple "layer cake" with no significance other than to insure
  * changing values.
  */
-    current_depth = sensor(REAL_Z);
+    current_depth = read_sensor(REAL_Z);
     if(current_depth <= transition1) {
         conduct = SalCond(23.1759, 40.0, 5.0 * current_depth, 1);
     } else if(current_depth <= transition2) {
@@ -45,7 +45,7 @@ void update_water_conductivity(void)
         conduct = SalCond(23.1759, 40.0, 2.0 * current_depth, 1);
     }
 
-    update( WATER_COND, conduct );
+    update_sensor( WATER_COND, conduct );
     return;
 }
 

@@ -34,12 +34,12 @@ Never write directly to:
 
 Always use:
 
-    update()
+    update_sensor()
 
 New tunable or logged quantities must:
 1. be added to edit_struct.c
 2. regenerate vehicle.h and vehicle.c
-3. use update()
+3. use update_sensor()
 4. remain visible to:
    - mission loading
    - fault injection

@@ -24,18 +24,18 @@ int init_odyssey_sim(void) {
     }
 
     // Use data structure initial values to set initial position
-    update(REAL_X, sensor(M_POS_N));
-    update(REAL_Y, sensor(M_POS_E));
-    update(REAL_Z, sensor(M_DEPTH));
+    update_sensor(REAL_X, read_sensor(M_POS_N));
+    update_sensor(REAL_Y, read_sensor(M_POS_E));
+    update_sensor(REAL_Z, read_sensor(M_DEPTH));
 
-    state.position_orientation[1] = sensor(REAL_X);
-    state.position_orientation[2] = sensor(REAL_Y);
-    state.position_orientation[3] = sensor(REAL_Z);
-    state.position_orientation[6] = sensor(REAL_PSI); 
+    state.position_orientation[1] = read_sensor(REAL_X);
+    state.position_orientation[2] = read_sensor(REAL_Y);
+    state.position_orientation[3] = read_sensor(REAL_Z);
+    state.position_orientation[6] = read_sensor(REAL_PSI); 
     
-    state.force_moment[1] = sensor(REAL_U);
-    state.force_moment[2] = sensor(REAL_V);
-    state.force_moment[3] = sensor(REAL_W);
+    state.force_moment[1] = read_sensor(REAL_U);
+    state.force_moment[2] = read_sensor(REAL_V);
+    state.force_moment[3] = read_sensor(REAL_W);
     
     return 0;
 }
@@ -52,9 +52,9 @@ int update_odyssey_state(double timestep) {
     double rudder_angle;
     double elevator_angle;
     
-    thruster_current = sensor(C_THRUSTER_CURRENT);
-    rudder_angle = sensor(C_RUDDER_ANGLE);
-    elevator_angle = sensor(C_ELEVATOR_ANGLE);
+    thruster_current = read_sensor(C_THRUSTER_CURRENT);
+    rudder_angle = read_sensor(C_RUDDER_ANGLE);
+    elevator_angle = read_sensor(C_ELEVATOR_ANGLE);
 
     motion(
         state.force_moment,

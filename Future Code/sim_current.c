@@ -44,20 +44,20 @@ void sim_current()
   float east, north;
   static int init=-1;
 
-  if (sensor(READ_CURRENT_FROM_FILE)==1) {
+  if (read_sensor(READ_CURRENT_FROM_FILE)==1) {
     if (init) {
       init_current_params();   /* fixed: was init_currents_params */
       init=0;
     }
     if (CUR_SIM_ENABLE) {
-      east  = sensor(REAL_Y);
-      north = sensor(REAL_X);
+      east  = read_sensor(REAL_Y);
+      north = read_sensor(REAL_X);
       index_x = limit_to_range(xstart,xstop,xstep,east);
       index_y = limit_to_range(ystart,ystop,ystep,north);
       y_max = (int) ((ystop-ystart)/ystep + 1);
       index = y_max*index_x + index_y;
-      update(REAL_CURRENT_EAST,  read_from_file(vxfile, index));
-      update(REAL_CURRENT_NORTH, read_from_file(vyfile, index));
+      update_sensor(REAL_CURRENT_EAST,  read_from_file(vxfile, index));
+      update_sensor(REAL_CURRENT_NORTH, read_from_file(vyfile, index));
     }
   }
 }

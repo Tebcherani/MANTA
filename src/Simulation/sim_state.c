@@ -3,6 +3,7 @@
 #include "sim_log.h"
 #include "sim_state.h"
 #include "vehicle.h"
+#include "odyssey_data_struct.h"
 
 int hirestime(double *time_value);
 
@@ -51,7 +52,7 @@ int init_sim_state(sim_state_t *state) {
         return -1;
     }
 
-    sensor(M_PRESENT_TIME) = state->sim_time;
+    update_sensor(M_PRESENT_TIME, state->sim_time);
     sensor_time(M_PRESENT_TIME) = (long)(1000.0 * state->sim_time);
 
     // Get time in UTC
@@ -87,7 +88,7 @@ int update_sim_state(sim_state_t *state, double time)
     state->current_cycle++;
     state->sim_time += time;
 
-    sensor(M_PRESENT_TIME) = state->sim_time;
+    update_sensor(M_PRESENT_TIME, state->sim_time);
     sensor_time(M_PRESENT_TIME) = (long)(1000.0 * state->sim_time);
 
     return 0;

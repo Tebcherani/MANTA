@@ -14,7 +14,6 @@
 #define MAX_STATE_NAME  128
 #define MAX_LINE        196
 
-#define sensor(i)       (vvp->s[(i)].x)
 #define sensor_time(i)  (vvp->s[(i)].time)
 #define sensor_name(i)  (vvp->s[(i)].name)
 #define sensor_min(i)   (vvp->s[(i)].min)
