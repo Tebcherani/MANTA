@@ -4,11 +4,12 @@
 # Run:   ./ody sim <mission_name> 
 
 CC       = gcc
-CPPFLAGS = -I.          \
-    -Isrc/Application   \
-    -Isrc/Common        \
-    -Isrc/Odyssey       \
-    -Isrc/Simulation    \
+CPPFLAGS = -I.              \
+    -Isrc/Application       \
+    -Isrc/Common            \
+    -Isrc/Odyssey           \
+    -Isrc/Odyssey/Behaviors \
+    -Isrc/Simulation        \
     -Isrc/World
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS  = -lm
@@ -27,26 +28,26 @@ SIM_EXE = ./$(TARGET)$(EXEEXT)
 MISSION ?= dive240.mi
 
 SRCS = \
-    src/Application/command_line.c          \
-    src/Common/angle_utils.c                \
-    src/Common/random_utils.c               \
-    src/Odyssey/odyssey_behaviors.c         \
-    src/Odyssey/odyssey_config.c            \
-    src/Odyssey/odyssey_control.c           \
-    src/Odyssey/odyssey_data.c              \
-    src/Odyssey/odyssey_data_logger.c       \
-    src/Odyssey/odyssey_log.c               \
-    src/Odyssey/odyssey_mission.c           \
-    src/Odyssey/odyssey_model.c             \
-    src/Odyssey/odyssey_nav.c               \
-    src/Odyssey/odyssey_sensors.c           \
-    src/Odyssey/odyssey_sim.c               \
-    src/Simulation/sim_behavior_logger.c    \
-    src/Simulation/sim_config.c             \
-    src/Simulation/sim_exit.c               \
-    src/Simulation/sim_log.c                \
-    src/Simulation/sim_orchestrator.c       \
-    src/Simulation/sim_state.c              \
+    src/Application/command_line.c                      \
+    src/Common/angle_utils.c                            \
+    src/Common/random_utils.c                           \
+    src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c    \
+    src/Odyssey/odyssey_config.c                        \
+    src/Odyssey/odyssey_control.c                       \
+    src/Odyssey/odyssey_data.c                          \
+    src/Odyssey/odyssey_data_logger.c                   \
+    src/Odyssey/odyssey_log.c                           \
+    src/Odyssey/odyssey_mission.c                       \
+    src/Odyssey/odyssey_model.c                         \
+    src/Odyssey/odyssey_nav.c                           \
+    src/Odyssey/odyssey_sensors.c                       \
+    src/Odyssey/odyssey_sim.c                           \
+    src/Simulation/sim_behavior_logger.c                \
+    src/Simulation/sim_config.c                         \
+    src/Simulation/sim_exit.c                           \
+    src/Simulation/sim_log.c                            \
+    src/Simulation/sim_orchestrator.c                   \
+    src/Simulation/sim_state.c                          \
     sim.c               \
     sim_conduct.c       \
     sim_usbl.c          \
