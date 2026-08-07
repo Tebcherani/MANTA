@@ -54,8 +54,8 @@ void layered_control( void )
     int depth_behavior = -1, heading_behavior = -1, speed_behavior = -1;
     int state_before, command_changed;
     int depth_mode_before, heading_mode_before, speed_mode_before;
-    double depth_before[MAX_C_ARG], heading_before[MAX_C_ARG];
-    double speed_before[MAX_C_ARG];
+    double depth_before[C_ARG_SIZE], heading_before[C_ARG_SIZE];
+    double speed_before[C_ARG_SIZE];
 
 /* Start with low priority behaviors and work to high priority,
    i.e., start at the high end of the structure and work down. */
@@ -79,7 +79,7 @@ void layered_control( void )
 		    depth_mode_before = cmd->depth_mode;
 		    heading_mode_before = cmd->heading_mode;
 		    speed_mode_before = cmd->speed_mode;
-		    for ( j = 0; j < MAX_C_ARG; j++ )
+		    for ( j = 0; j < C_ARG_SIZE; j++ )
 		    {
 			depth_before[j] = cmd->depth[j];
 			heading_before[j] = cmd->heading[j];
@@ -92,7 +92,7 @@ void layered_control( void )
 			(cmd->depth_mode != depth_mode_before) ||
 			(cmd->heading_mode != heading_mode_before) ||
 			(cmd->speed_mode != speed_mode_before);
-		    for ( j = 0; j < MAX_C_ARG; j++ )
+		    for ( j = 0; j < C_ARG_SIZE; j++ )
 		    {
 			if ( (cmd->depth[j] != depth_before[j]) ||
 			     (cmd->heading[j] != heading_before[j]) ||
@@ -192,7 +192,7 @@ void resolve( int pres )
    cmd->depth_mode = vvp->c[last].depth_mode;
    cmd->heading_mode = vvp->c[last].heading_mode;
    cmd->speed_mode = vvp->c[last].speed_mode;
-   for ( i = 0; i < MAX_C_ARG; i++ )
+   for ( i = 0; i < C_ARG_SIZE; i++ )
    {
        cmd->depth[i] = vvp->c[last].depth[i];
        cmd->heading[i] = vvp->c[last].heading[i];

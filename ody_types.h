@@ -8,51 +8,16 @@
 #define ODY_TYPES_H
 
 #include "ody_defs.h"
+#include "common_defs.h"
+#include "odyssey_control.h"
 
 struct sensor {
-    char name[MAX_CHARS];	/* name AND UNITS!! */
+    char name[NAME_SIZE];	/* name AND UNITS!! */
     double x;			/* present value */
     long time;			/* when updated last (ms) */
     unsigned long numHits;	/* counter for number of updates */
     double m1, m2;		/* 1st and 2nd moments for statistics */
     double min, max;		/* minimum and maximum values attained */
-};
-
-struct b_arg {
-    char name[MAX_CHARS];	/* name AND UNITS!! */
-    double x;			/* present value */
-};
-
-				/* the state of a behavior and its universe
-				   of allowed values */
-typedef enum {
-    B_ERROR=-1, B_UNINITIALIZED, B_ACTIVE, B_COMPLETE
-} b_state_t;
-
-typedef enum { D_ELEVATOR, D_DEPTH, D_PITCH } dpt_mode_t;
-typedef enum { H_RUDDER, H_HEADING } hdt_mode_t;
-typedef enum { S_CURRENT, S_SPEED } spd_mode_t;
-
-struct behavior {
-    char name[MAX_CHARS];
-    b_state_t state;		/* state it's in, see above enum typedef */
-    double start_time;		/* when it started */
-    double end_time;		/* when it will end */
-				/* the function that this behavior executes */
-    int (*fcn)(struct behavior *, int, int);
-				/* its vector of arguments */
-    struct b_arg arg[MAX_B_ARG];
-};
-
-struct command {
-    int behavior;
-    struct behavior b;
-    dpt_mode_t depth_mode;
-    double depth[MAX_C_ARG];
-    hdt_mode_t heading_mode;
-    double heading[MAX_C_ARG];
-    spd_mode_t speed_mode;
-    double speed[MAX_C_ARG];
 };
 
 struct state {			/* For SCLC */
@@ -61,8 +26,8 @@ struct state {			/* For SCLC */
 };
 
 struct vehicle {
-    char creation_date[MAX_CHARS];
-    char mission_date[MAX_CHARS];
+    char creation_date[NAME_SIZE];
+    char mission_date[NAME_SIZE];
     char data_file_name[MAX_FILE_NAME];
     char fault_file_name[MAX_FILE_NAME];  /* bare filename of loaded *.fd, or "" */
     int last_s;

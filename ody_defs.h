@@ -6,10 +6,6 @@
 #define D2R(d) (d*PI/180.0)
 #define R2D(r) (r*180.0/PI)
 
-#define MAX_CHARS     64	/* names include units, e.g. sensor(unit) */
-#define MAX_B_ARG     10
-#define MAX_C_ARG     3
-
 #define MAX_SENSOR      550
 #define MAX_BEHAVIOR    30
 #define MAX_COMMAND     30

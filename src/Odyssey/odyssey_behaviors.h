@@ -1,0 +1,28 @@
+#ifndef ODYSSEY_BEHAVIORS_H
+#define ODYSSEY_BEHAVIORS_H
+
+#include "common_defs.h"
+
+// The state of a behavior and its universe of allowed values
+typedef enum {
+    B_ERROR=-1, B_UNINITIALIZED, B_ACTIVE, B_COMPLETE
+} b_state_t;
+
+struct b_arg {
+    char name[NAME_SIZE];   // Name AND UNITS!!
+    double x;			    // Present value
+};
+
+struct behavior {
+    char name[NAME_SIZE];
+    b_state_t state;    // State it's in, see above enum typedef
+    double start_time;  // When it started
+    double end_time;    // When it will end
+	
+    int (*fcn)(struct behavior *, int, int);    // The function that this behavior executes
+    struct b_arg arg[B_ARG_SIZE];   // Its vector of arguments
+};
+
+int wiggle(struct behavior *b, int priority, int level);
+
+#endif /* ODYSSEY_BEHAVIORS_H */

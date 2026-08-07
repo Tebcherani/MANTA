@@ -16,6 +16,7 @@
 #include "paths.h"
 #include "vehicle.h"
 #include "odyssey_log.h"
+#include "common_defs.h"
 
 
 				/* prototypes */
@@ -116,7 +117,7 @@ int load_mission( const char *fname )
 int load_vehicle_def( const char *fname )
 {
     FILE *fptr;
-    char line[MAX_LINE], name[MAX_CHARS], header[MAX_CHARS];
+    char line[MAX_LINE], name[NAME_SIZE], header[NAME_SIZE];
     char *expect, *actual;
     double value;
     int index, lineno = 0, n_set = 0, header_seen = 0;
@@ -716,7 +717,7 @@ int read_state( FILE *fptr )
   (JGB, 1/30/94)
  *-----------------------------------------------------------------------*/
 
-static char vvvName[MAX_CHARS], thisName[MAX_CHARS];
+static char vvvName[NAME_SIZE], thisName[NAME_SIZE];
 
 int match_sensor( const char *name )
 {
@@ -761,7 +762,7 @@ int match_behavior_arg( const char *name, int b_index )
     if ( (loc = strchr(thisName, '(')) != NULL )
 	*loc = '\0';
 
-    for ( i = 0; i < MAX_B_ARG; i++ )
+    for ( i = 0; i < B_ARG_SIZE; i++ )
     {
 	strcpy( vvvName, vvp->b[b_index].arg[i].name );
 	if ( (loc = strchr(vvvName, '(')) != NULL )

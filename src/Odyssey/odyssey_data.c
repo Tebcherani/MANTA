@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common_defs.h"
 #include "diagnostic.h"
 #include "odyssey_data.h"
 #include "vehicle.h"
@@ -61,7 +62,7 @@ int init_data_structure() {
     for (i = 0 ; i < num_behaviors; i++) {
         copy_name(vvv.b[i].name, sizeof(vvv.b[i].name), bTemplate[i].name);
         
-        for (j = 0; j < MAX_B_ARG; j++) {
+        for (j = 0; j < B_ARG_SIZE; j++) {
             copy_name(vvv.b[i].arg[j].name, sizeof(vvv.b[i].arg[j].name), bTemplate[i].arg[j].name);
             vvv.b[i].arg[j].x = bTemplate[i].arg[j].x;
         }

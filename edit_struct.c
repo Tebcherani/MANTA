@@ -728,10 +728,11 @@ END
 
 #include "ody_defs.h"
 #include "ody_types.h"
+#include "common_defs.h"
 
                                 /* typedef from parse */
 struct sensor_name {
-    char name[MAX_CHARS];
+    char name[NAME_SIZE];
 } long_name_array[MAX_SENSOR], short_name_array[MAX_SENSOR], 
 	lower_b_array[MAX_BEHAVIOR], b_array[MAX_BEHAVIOR];
 
@@ -745,13 +746,13 @@ typedef enum {READING_SENSORS = 1, READING_BEHAVIORS} pass_t;
 #endif
 
 typedef struct {
-    char name[MAX_CHARS];
+    char name[NAME_SIZE];
     bool_t found;
 } config_t;
 
 typedef struct {
-    char name[MAX_CHARS];	/* vehicle name (group) */
-    char active[MAX_CHARS];	/* active config in defs section */
+    char name[NAME_SIZE];	/* vehicle name (group) */
+    char active[NAME_SIZE];	/* active config in defs section */
     bool_t output_disabled;
     config_t cfglist[MAX_CFG];
     unsigned count;
@@ -937,9 +938,9 @@ main( int argc, char **argv )
     fclose( sfile );
     sfile = fopen_fatal( sfile_name, "r" );
 
-                                /* need to add (MAX_B_ARG - n_b_args)
+                                /* need to add (B_ARG_SIZE - n_b_args)
                                    blank lines to bfile */
-    for ( i = 0; i < (MAX_B_ARG - num_b_args); i++ ) 
+    for ( i = 0; i < (B_ARG_SIZE - num_b_args); i++ ) 
         fprintf( bfile, ",\n        \"\", 0");
 
     fputs( "\n};\n\nconst int num_behaviors = "
@@ -1095,7 +1096,7 @@ FILE *fopen_fatal( const char *name, const char *type )
 int add_sensor( char *line, int *n, FILE *lfile, FILE *sfile, FILE *hfile )
 {
     int nconv, i, len1;
-    char name[MAX_CHARS], *tmp;
+    char name[NAME_SIZE], *tmp;
     double value;
 
     if ( ((*n) + 1) > MAX_SENSOR )
@@ -1149,7 +1150,7 @@ int add_behavior( char *line, int *numBeh, int n_b_args, FILE *lfile,
                   FILE *bfile, FILE *hfile )
 {
     int status, i;
-    char name[MAX_CHARS];
+    char name[NAME_SIZE];
 
     if ( ((*numBeh) + 1) > MAX_BEHAVIOR )
         fprintf( stderr, "add_behavior: max_number of behaviors=%d "
@@ -1179,9 +1180,9 @@ int add_behavior( char *line, int *numBeh, int n_b_args, FILE *lfile,
     {
 				/* concatenation starts with ",\n" */
 	fputs( ",\n", bfile );
-				/* also need to add (MAX_B_ARG - n_b_args)
+				/* also need to add (B_ARG_SIZE - n_b_args)
                                    lines with blank arguments */
-        for ( i = 0; i < (MAX_B_ARG - n_b_args); i++ ) 
+        for ( i = 0; i < (B_ARG_SIZE - n_b_args); i++ ) 
             fputs( "        \"\", 0,\n", bfile );
     } else
 				/* first behavior gets comment in h-file */
@@ -1204,13 +1205,13 @@ int add_behavior( char *line, int *numBeh, int n_b_args, FILE *lfile,
 int add_b_arg( char *line, int *n, FILE *lfile, FILE *bfile )
 {
     int status;
-    char name[MAX_CHARS];
+    char name[NAME_SIZE];
     double value;
 
-    if ( ((*n) + 1) > MAX_B_ARG )
+    if ( ((*n) + 1) > B_ARG_SIZE )
 
-        fprintf( stderr, "add_b_arg: n (%d) exceeds max_b_arg (%d)\n", *n,
-		 MAX_B_ARG );
+        fprintf( stderr, "add_b_arg: n (%d) exceeds B_ARG_SIZE (%d)\n", *n,
+		 B_ARG_SIZE );
 
     status = sscanf( line, " b_arg: %s %lf\n", &name, &value );
     if (status == 2)

@@ -288,7 +288,7 @@ FILE *init_data_logging( char *DataFileName )
 	beh_id = vvp->c[i].behavior;
       
 	if (beh_id!=-1) {
-	    offset = vvp->last_s + 1 + (MAX_B_ARG * (i-1));
+	    offset = vvp->last_s + 1 + (B_ARG_SIZE * (i-1));
 	    fprintf(datafile, "%d %-30s \t%-d\n", offset, vvp->c[i].b.name, i);
 	    sprintf( msg_buf, "%d %-30s \t%-d\n", offset,
 		     vvp->c[i].b.name, i );
@@ -296,7 +296,7 @@ FILE *init_data_logging( char *DataFileName )
 
 				/* now write the argument values for this
                                    behavior */
-	    for (j=0;j<MAX_B_ARG;j++) { 
+	    for (j=0;j<B_ARG_SIZE;j++) { 
 		if ((vvp->c[i].b.arg[j].name!=NULL)
 		    &&(strlen(vvp->c[i].b.arg[j].name))) {
 		    fprintf(datafile, "%d %s_%-30s \t%-g\xa", offset + 1 + j,
