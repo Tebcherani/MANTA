@@ -1,6 +1,9 @@
+#include <math.h>
+
 #include "ody_defs.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_sensors.h"
+#include "random_utils.h"
 #include "vehicle.h"
 
 static void update_water_speed(void);
