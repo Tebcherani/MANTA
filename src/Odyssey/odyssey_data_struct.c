@@ -10,6 +10,9 @@
 int assign_behavior_fcn_ptr(const char *name, struct behavior *b);
 int hirestime(double *hires);
 
+extern char *creation_date;
+extern int *sindex[];
+
 /* ============================================================ */
 /* UTILITY ROUTINE FOR LOADING VEHICLE STRUCTURE.               */
 
@@ -35,9 +38,6 @@ void update(int index, double val) {
 void update_add(int index, double value) {
     update(index, sensor(index) + value);
 }
-
-extern char *creation_date;
-extern int *sindex[];
 
 static void copy_name(char *dest, size_t dest_size, const char *src) {
     if (dest_size == 0) return;
