@@ -60,7 +60,6 @@ static void inclinometer_low_pass_filter( double s[2], double sf[2] ) {
         }
     }
     if(count<=2) count++;
-
 }
 
 static void update_acceleration(double *ax, double *ay, double *aax, double *aay) {
