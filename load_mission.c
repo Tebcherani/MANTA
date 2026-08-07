@@ -659,7 +659,14 @@ int read_state(FILE *fptr) {
                                    load it */
         }
 		else if (sscanf(linebuf, "  b_arg: %s %lg", name, &value) == 2 ) {
-            if ( b_index >= 0 ) {
+            if (b_index < 0) {
+				sprintf(msg_buf,
+						"load_mission: behavior argument found before valid behavior\n");
+				write_message(TERM | SLOG);
+				exit_gracefully(-1);
+			}
+			
+			if ( b_index >= 0 ) {
                 if ( (index = match_behavior_arg(name, b_index)) >= 0 ) {
                     expect = strchr( vvp->b[b_index].arg[index].name, '(' );
                     actual = strchr( name, '(' );
