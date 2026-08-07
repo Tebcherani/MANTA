@@ -7,10 +7,14 @@
 #include "vehicle.h"
 #include "odyssey_data.h"
 
+double aax, aay;
+
+double gasdev();
+
 int update_odyssey_sensors(void) {
     update_angular_rate();
-    load_accel();
-    load_magnetic();
+    update_acceleration();
+    update_compass_yaw();
     load_depth();
     load_water_speed();
     load_water_param();
@@ -26,7 +30,39 @@ int update_odyssey_sensors(void) {
     return 0;
 }
 
-double gasdev();
+void update_acceleration(void) {
+    static double dx=1.390,dy=0.108,dz=0.076;
+    double ax,ay,az;
+    double aax,aay;
+    double p,q,r,pdot,qdot,rdot;
+    double u,v,w,udot,vdot,wdot;
+    double noise;
+    double theta,phi;
+		
+    // Load real velocities and acceleration (linear and angular)
+    u    = sensor(REAL_U);     v = sensor(REAL_V);     w = sensor(REAL_W);
+    udot = sensor(REAL_UD); vdot = sensor(REAL_VD); wdot = sensor(REAL_WD);
+    p    = sensor(REAL_P);     q = sensor(REAL_Q);     r = sensor(REAL_R);
+    pdot = sensor(REAL_PD); qdot = sensor(REAL_QD); rdot = sensor(REAL_RD);
+
+	// Non-gravitational acceleration at location of AHRS in vehicle frame
+    ax = udot + q*w-r*v + qdot*dz-rdot*dy - (q*q+r*r)*dx + p*q*dy + p*r*dz;
+    ay = vdot + r*u-p*w + rdot*dx-pdot*dz - (p*p+r*r)*dy + p*q*dx + q*r*dz;
+    az = wdot + p*v-q*u + pdot*dy-qdot*dx - (p*p+q*q)*dz + q*r*dy + p*r*dx;
+
+	// Compute non-gravitational acc in local horizontal plane for compass
+    theta = sensor(REAL_THETA);
+    phi = sensor(REAL_PHI);
+    aax = cos(theta)*ax + sin(phi)*sin(theta)*ay + cos(phi)*sin(theta)*az;
+    aay = cos(phi)*ay - sin(phi)*az;
+
+	// Add gravity
+    ax = ax + sin(theta)*GRAVITY;
+    ay = ay - cos(theta)*sin(phi)*GRAVITY;
+    az = az - cos(theta)*cos(phi)*GRAVITY;
+
+    load_inclinometers(ax, ay);
+}
 
 void update_angular_rate(void) {
     double real_yaw_rate, real_roll_rate, real_pitch_rate;
@@ -48,6 +84,81 @@ void update_angular_rate(void) {
     sensor_noise = sensor_noise_level * gasdev(); 
     meas_yaw_rate = real_yaw_rate + sensor_noise + yaw_rate_bias;
     update(M_YAW_RATE, meas_yaw_rate);
+}
+
+/*-------------------------------------------------------------------------*
+(JV 5/31/95)
+Simulation of the magnetic heading measured by the KVH DGC
+  . a 3-axis magnetometer (s3am) suspended in the DGC housing is considered.
+  . the s3am pitches and rolls with respect to the horizontal because
+    of the vehicle accelerations (linear and angular)
+  . to compute the s3am pitch and roll, the motion of a 2D linear damped
+    oscillator is first determined and the x-y displcaements converted
+    into angles.
+*-------------------------------------------------------------------------*/
+void update_compass_yaw() {
+    static int first=1;
+    static double compass_noise=0.001745; /* 0.1 deg */
+    static double dx=0.0, dy=0.0, dxp=0.0, dyp=0.0;
+    static double beta, omega0, omega1;
+    double dt=0.02, mass=0.1, kx=100.0, bxp=0.5, length=0.015;
+    double psi, theta, phi;
+    double mx, my, mz;
+    double mg_yaw;
+    double cst1, cst2, cc, ss;
+    double Mmg[4][4];
+
+    if (first) {
+       first = 0;
+       beta = bxp/(2.0*mass); 
+       omega0=sqrt(kx/mass);
+       omega1 = sqrt(omega0*omega0-beta*beta);
+    }
+
+    // Compute pitch and roll of mg sensor given accelerations 
+    cc = cos(omega1*dt);
+    ss = sin(omega1*dt);
+
+    cst1 = aax/(omega0*omega0)+dx;
+    cst2 = (dxp+beta*(aax/(omega0*omega0)+dx))/omega1;
+    dx = exp(-beta*dt)*(cst1*cc+cst2*ss)-aax/(omega0*omega0);
+    dxp = -beta*exp(-beta*dt)*(cst1*cc+cst2*ss) + exp(-beta*dt)*(-cst1*omega1*ss+cst2*omega1*cc);
+
+    cst1 = aay/(omega0*omega0)+dy;
+    cst2 = (dyp+beta*(aay/(omega0*omega0)+dy))/omega1;
+    dy = exp(-beta*dt)*(cst1*cc+cst2*ss)-aay/(omega0*omega0);
+    dyp = -beta*exp(-beta*dt)*(cst1*cc+cst2*ss) + exp(-beta*dt)*(-cst1*omega1*ss+cst2*omega1*cc);
+
+    theta = dx/length; phi = -dy/length;
+
+    // Compute the magnetic readings given the orientation of mg sensor 
+    psi=sensor(REAL_PSI);
+    Mmg[1][1] = cos(psi)*cos(theta);
+    Mmg[1][2] = cos(theta)*sin(psi);
+    Mmg[1][3] = -sin(theta);
+    Mmg[2][1] = -(cos(phi)*sin(psi)) + cos(psi)*sin(phi)*sin(theta);
+    Mmg[2][2] = cos(phi)*cos(psi) + sin(phi)*sin(psi)*sin(theta);
+    Mmg[2][3] = cos(theta)*sin(phi); 
+    Mmg[3][1] = sin(phi)*sin(psi) + cos(phi)*cos(psi)*sin(theta);
+    Mmg[3][2] = -(cos(psi)*sin(phi)) + cos(phi)*sin(psi)*sin(theta);
+    Mmg[3][3] = cos(phi)*cos(theta);
+
+    mx = Mmg[1][1]*EARTH_MAGNETIC_NORTH + Mmg[1][2]*EARTH_MAGNETIC_EAST + Mmg[1][3]*EARTH_MAGNETIC_DOWN;
+    my = Mmg[2][1]*EARTH_MAGNETIC_NORTH + Mmg[2][2]*EARTH_MAGNETIC_EAST + Mmg[2][3]*EARTH_MAGNETIC_DOWN;
+    mz = Mmg[3][1]*EARTH_MAGNETIC_NORTH + Mmg[3][2]*EARTH_MAGNETIC_EAST + Mmg[3][3]*EARTH_MAGNETIC_DOWN;
+
+    // Compute heading from readings 
+    if ((mx>0.0) && (my<=0.0)) mg_yaw = -atan(my/mx);
+    if ((mx<=0.0) && (my<0.0)) mg_yaw = atan(mx/my)+PI/2.0;
+    if ((mx<0.0) && (my>=0.0)) mg_yaw = -atan(my/mx)+PI;
+    if ((mx>=0.0) && (my>0.0)) mg_yaw = atan(mx/my)+3.0*PI/2.0;
+
+    // Add noise and write to the structure
+    mg_yaw += compass_noise*gasdev();
+
+    mg_yaw -= sensor(UO_MAGNETIC_VARIATION);
+
+    update(M_COMPASS_YAW,mg_yaw);
 }
 
 void update_heading(void) {

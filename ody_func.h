@@ -60,7 +60,6 @@ int    matinv( double a[][7], double ainv[][7], int n, double adum[][7] );
 double hysteresis( double, double, double, double, double );
 
 				/* sensor_load.c */
-void load_accel( void );
 void load_magnetic( void );
 void load_depth( void );
 void load_water_speed( void );
