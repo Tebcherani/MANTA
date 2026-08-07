@@ -36,7 +36,7 @@ int CycleCount=0;
 int log_data( FILE *datafile )
 {
     short int flag=10001, i;
-    static int last_log_time = 0, first = 1;
+    static int first = 1;
     static float last_elapsed_time=0.0;   /* for debugging data logging */
     float temp_float;
     int dummy;
@@ -99,7 +99,6 @@ int log_data( FILE *datafile )
 	first = 0;
 
     last_elapsed_time = (float) (millisec() - my_start_time);
-    last_log_time = sensor_time(M_PRESENT_TIME);
 
     return 0;
 }
