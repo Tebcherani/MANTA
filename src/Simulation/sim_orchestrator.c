@@ -78,11 +78,14 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS, mission_started);
         }
 
-        if (update_odyssey_state(sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);
+        if (update_odyssey_state(sim_config.timestep) != 0) {
+            write_to_sim_log("Failed to update Odyssey state.\n");
+            exit_sim(EXIT_FAILURE, mission_started);
+        }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
             if (update_odyssey_cycle() != 0) {
-                write_to_sim_log("Failed to update Odyssey state.\n");
+                write_to_sim_log("Failed to update Odyssey cycle.\n");
                 exit_sim(EXIT_FAILURE, mission_started);
             }
 
