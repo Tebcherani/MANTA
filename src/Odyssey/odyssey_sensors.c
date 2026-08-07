@@ -26,11 +26,19 @@ int update_odyssey_sensors(void) {
 }
 
 void update_heading(void) {
-    // Direct-copy path: simulated inclinometer -> roll/pitch, simulated compass -> yaw
-    double flux_yaw = PI + modPi(sensor(M_COMPASS_YAW) + sensor(UO_MAGNETIC_VARIATION) - PI);
-    update(M_ROLL, sensor(M_INCLINO_ROLL));
-    update(M_PITCH, sensor(M_INCLINO_PITCH));
-    update(M_YAW, flux_yaw);
+    double meas_yaw, meas_pitch, meas_roll;
+    double meas_magnetic_variation, corrected_yaw;
+
+    meas_yaw = sensor(M_COMPASS_YAW);
+    meas_magnetic_variation = sensor(UO_MAGNETIC_VARIATION);
+    corrected_yaw = PI + modPi(meas_yaw + meas_magnetic_variation - PI);
+    update(M_YAW, corrected_yaw);
+
+    meas_pitch = sensor(M_INCLINO_PITCH);
+    update(M_PITCH, meas_pitch);
+    
+    meas_roll = sensor(M_INCLINO_ROLL);
+    update(M_ROLL, meas_roll);
 }
 
 void update_rotation_matrix(void) {
