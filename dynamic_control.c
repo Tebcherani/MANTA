@@ -13,6 +13,7 @@
 #include "odyssey_data.h"
 #include "vehicle.h"
 #include "whoi_traj.h"
+#include "angle_utils.h"
 
 void monitor_msg( int sensor_id, int monitor );
 
@@ -21,7 +22,6 @@ void monitor_msg( int sensor_id, int monitor );
 #define H_INT_LIM D2R( 5)	/* limit on hdg */
 
 				/* local function prototypes */
-static double mod_pi( double angle );
 static double pitch_control( double pitch_now, double pitch_des, double
 			     pitch_rate, double kpp, double kdp, double
 			     kip, double dt );
@@ -224,7 +224,7 @@ void dynamic_control( void )
 	update( T_HDG, des_head );
 	update( T_HDG_RATE, h_traj.xdot );
 
-	hdg_err = mod_pi( sensor(M_YAW) - des_head );
+	hdg_err = wrap_angle( sensor(M_YAW) - des_head );
 	proportional = kph * hdg_err;
         derivative = kdh * (heading_rate - h_traj.xdot);
 
@@ -314,13 +314,6 @@ double limit( double value, double max, double min )
 }
 
 /*===================================================================*/
-
-static double mod_pi( double angle )
-{
-    extern double modPi( double ); /* layered_control.c has it */
-
-    return modPi( angle );
-}
 
 double sgn( double x )
 {

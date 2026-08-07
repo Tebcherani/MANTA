@@ -25,6 +25,7 @@
 #include "vehicle.h"
 #include "odyssey_data.h"
 #include "odyssey_log.h"
+#include "angle_utils.h"
 
 int stack_busy( struct command *cmd );
 int getXSDataByte( void );
@@ -772,7 +773,7 @@ int acquire_heading(struct behavior *b, int priority, int level)
     return(1);
 
   /*--- If behavior succeeds, return 1 without generating any commands */
-  if (fabs(modPi(heading-sensor(M_YAW)))<heading_err)
+  if (fabs(wrap_angle(heading-sensor(M_YAW)))<heading_err)
     {
 
     b->arg[2].x = 0.0;
@@ -1326,25 +1327,4 @@ void shut_down( int priority )
     vvp->c[priority].heading_mode = -1;
     vvp->c[priority].depth_mode = -1;
     vvp->c[priority].speed_mode = -1;
-}
-
-/* -------------------------------------------------------------------------- 
-| modPi:              
-|   
-|   J. G. Bellingham, 3/1/94                                                
-  -------------------------------------------------------------------------- */
-
-double modPi( double angle )
-{
-    double ipart, result;
-
-    result = 2*PI*modf( angle/(2*PI), &ipart );
-
-    if ( result >= PI )
-        result -= 2*PI;
-  
-    if ( result < -PI )
-        result += 2*PI;
-
-    return result;
 }

@@ -10,6 +10,7 @@
 
 #include "odyssey_data.h"
 #include "vehicle.h"
+#include "angle_utils.h"
 
 int simulate_usbl( void )
 {
@@ -29,7 +30,7 @@ int simulate_usbl( void )
 
     range = sqrt(pow(dock_x - xpos,2.0) + pow(dock_y - ypos,2.0) +
 		 pow(dock_z - zpos,2));
-    azim = modPi( atan2(dock_y - ypos, dock_x - xpos) - sensor(M_YAW) );
+    azim = wrap_angle( atan2(dock_y - ypos, dock_x - xpos) - sensor(M_YAW) );
     elev = atan2( dock_z - zpos, sqrt(pow(dock_x - xpos,2.0) +
 				      pow(dock_y - ypos,2.0)) );
 

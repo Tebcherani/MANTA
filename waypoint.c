@@ -13,6 +13,7 @@
 #include "diagnostic.h"
 #include "odyssey_data.h"
 #include "vehicle.h"
+#include "angle_utils.h"
 
 int stack_busy( struct command *cmd );
 
@@ -52,7 +53,7 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 				/* compute "direct to" trackline */
 	if ( bArg(HDG) < 0 )
 	{
-	    bArg(HDG) = PI + modPi( atan2(bArg(EAST) - sensor(M_POS_E),
+	    bArg(HDG) = PI + wrap_angle( atan2(bArg(EAST) - sensor(M_POS_E),
 				    bArg(NRTH) - sensor(M_POS_N)) - PI );
 	    sprintf( msg_buf, "% 8.2f: %s sets hdg to (%.1f, %.1f) "
 		     "as %.1f (deg T)\n", sensor(M_PRESENT_TIME), b->name,
@@ -128,7 +129,7 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	    kxte   = bArg(GAIN) * xte ;
 
 	    if ( fabs(kxte) < D2R(90) )
-		cmd->heading[0] = modPi( psi_t + kxte );
+		cmd->heading[0] = wrap_angle( psi_t + kxte );
 	    else
 		cmd->heading[0] = atan2( -de, -dn );
 	}

@@ -28,6 +28,7 @@ MISSION ?= dive240.mi
 
 SRCS = \
     src/Application/command_line.c          \
+    src/Common/angle_utils.c                \
     src/Common/random_utils.c               \
     src/Odyssey/odyssey_config.c            \
     src/Odyssey/odyssey_control.c           \

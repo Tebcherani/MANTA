@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "angle_utils.h"
 #include "common_defs.h"
 #include "ody_func.h"
 #include "ody_defs.h"
@@ -166,7 +167,7 @@ void update_heading(void) {
 
     meas_yaw = sensor(M_COMPASS_YAW);
     meas_magnetic_variation = sensor(UO_MAGNETIC_VARIATION);
-    corrected_yaw = PI + modPi(meas_yaw + meas_magnetic_variation - PI);
+    corrected_yaw = PI + wrap_angle(meas_yaw + meas_magnetic_variation - PI);
     update(M_YAW, corrected_yaw);
 
     meas_pitch = sensor(M_INCLINO_PITCH);

@@ -29,7 +29,6 @@ void layered_control( void );
 void resolve( int priority );
 void shut_down( int );
 int manage_time( struct behavior *b, double duration );
-double modPi( double );
 
 				/* load_mission.c */
 int match_sensor(const char *name);

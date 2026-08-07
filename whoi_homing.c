@@ -12,6 +12,7 @@
 #include "diagnostic.h"
 #include "odyssey_data.h"
 #include "vehicle.h"
+#include "angle_utils.h"
 
 int stack_busy( struct command *cmd );
 int getXSDataByte( void );
@@ -207,7 +208,7 @@ void home_in( struct behavior *b, int priority, int level )
     if ( sensor(M_USBL_RDOT_MEAN) > 0.5 && WAS_CLOSING[idreg] )
     {
 	T_LOCK[idreg] = sensor(M_PRESENT_TIME);
-	REALIGN[idreg] = modPi( sensor(M_YAW) - PI );
+	REALIGN[idreg] = wrap_angle( sensor(M_YAW) - PI );
 	WAS_CLOSING[idreg] = 0;
 
 	sprintf( msg_buf, "% 8.2f: %s missed, turn 180 (%03d -> %03d T)\n",
@@ -224,7 +225,7 @@ void home_in( struct behavior *b, int priority, int level )
     else if ( sensor(M_PRESENT_TIME) < T_LOCK[idreg] +
 	      sensor(UO_T_STRAIGHT) + 15 )
 
-	cmd->heading[0] = modPi( REALIGN[idreg] + PI );
+	cmd->heading[0] = wrap_angle( REALIGN[idreg] + PI );
 
     else			/* otherwise, do regular homing */
     {
@@ -248,7 +249,7 @@ void home_in( struct behavior *b, int priority, int level )
 				/* command heading to beacon (BAM, JGB
 				   offset to address USBL calibration
 				   issues) */
-	cmd->heading[0] = modPi( az + sensor(M_YAW) + bArg(HDG_OFF) );
+	cmd->heading[0] = wrap_angle( az + sensor(M_YAW) + bArg(HDG_OFF) );
 
 	rBucky = 0.5*sensor(U_SPEED_OF_SOUND)*(sensor(M_BUCKY_RAW) -
 					       sensor(U_BUCKY_TAT));
