@@ -93,9 +93,6 @@
   sensor:             u_wp_x_track_gain 0
   sensor:                     wp_xte(m)
   sensor:                     wp_dtw(m)
-  sensor:             sbe_temp_freq(Hz)
-  sensor:             sbe_cond_freq(Hz)
-  sensor:                      m_obs(?)
   sensor:                     real_x(m) 0
   sensor:                     real_y(m) 0
   sensor:                     real_z(m) 0

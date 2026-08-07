@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/08/06 17:01:30 GMT";
+char *creation_date = "2026/08/07 00:19:23 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -108,9 +108,6 @@ const struct sensor sss[] = {
     "u_wp_x_track_gain", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_xte(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "wp_dtw(m)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "sbe_temp_freq(Hz)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "sbe_cond_freq(Hz)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_obs(?)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_x(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_y(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_z(m)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -812,9 +809,6 @@ int T_DEPTH = -1;
 int U_WP_X_TRACK_GAIN = -1;
 int WP_XTE = -1;
 int WP_DTW = -1;
-int SBE_TEMP_FREQ = -1;
-int SBE_COND_FREQ = -1;
-int M_OBS = -1;
 int REAL_X = -1;
 int REAL_Y = -1;
 int REAL_Z = -1;
@@ -1268,9 +1262,6 @@ int *sindex[] = {
     &U_WP_X_TRACK_GAIN,
     &WP_XTE,
     &WP_DTW,
-    &SBE_TEMP_FREQ,
-    &SBE_COND_FREQ,
-    &M_OBS,
     &REAL_X,
     &REAL_Y,
     &REAL_Z,

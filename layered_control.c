@@ -465,8 +465,7 @@ int broadcast( struct behavior *b, int priority, int level )
 		     (int) sensor(M_PRESENT_TIME),
 		     (int) limit(sensor(M_POS_N), 9999, 0),
 		     (int) limit(sensor(M_POS_E), 9999, 0),
-		     (int) limit(sensor(M_DEPTH),  999, 0),
-		     (int) limit(sensor(SBE_TEMP_FREQ), 9999, 0) );
+		     (int) limit(sensor(M_DEPTH),  999, 0) );
 
 	    sprintf( msg_buf, "% 8.2f: %s to UAM (%.*s)\n",
 		     sensor(M_PRESENT_TIME), b->name,
