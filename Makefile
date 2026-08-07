@@ -43,6 +43,7 @@ SRCS = \
     src/Odyssey/odyssey_nav.c                           \
     src/Odyssey/odyssey_sim.c                           \
     src/Odyssey/Sensors/odyssey_sensors.c               \
+    src/Odyssey/Sensors/odyssey_sensors_ahrs.c          \
     src/Odyssey/Sensors/odyssey_sensors_depth.c         \
     src/Odyssey/Sensors/odyssey_sensors_water.c         \
     src/Simulation/sim_behavior_logger.c                \
