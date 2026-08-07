@@ -297,7 +297,7 @@ FILE *init_data_logging( char *DataFileName )
 				/* now write the argument values for this
                                    behavior */
 	    for (j=0;j<B_ARG_SIZE;j++) { 
-		if ((vvp->c[i].b.arg[j].name!=NULL)
+		if ((vvp->c[i].b.arg[j].name[0] != '\0')
 		    &&(strlen(vvp->c[i].b.arg[j].name))) {
 		    fprintf(datafile, "%d %s_%-30s \t%-g\xa", offset + 1 + j,
 			    vvp->c[i].b.name, vvp->c[i].b.arg[j].name, 
