@@ -7,7 +7,7 @@ int update_odyssey_sensors(void) {
     update_ahrs_sensors();
     update_depth_sensor();
     update_water_sensors();
-    simulate_usbl();
+    update_usbl_sensor();
     handle_modem();
     simLBL();
 

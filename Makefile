@@ -45,6 +45,7 @@ SRCS = \
     src/Odyssey/Sensors/odyssey_sensors.c               \
     src/Odyssey/Sensors/odyssey_sensors_ahrs.c          \
     src/Odyssey/Sensors/odyssey_sensors_depth.c         \
+    src/Odyssey/Sensors/odyssey_sensors_usbl.c          \
     src/Odyssey/Sensors/odyssey_sensors_water.c         \
     src/Simulation/sim_behavior_logger.c                \
     src/Simulation/sim_config.c                         \
@@ -52,26 +53,25 @@ SRCS = \
     src/Simulation/sim_log.c                            \
     src/Simulation/sim_orchestrator.c                   \
     src/Simulation/sim_state.c                          \
-    sim.c               \
-    sim_conduct.c       \
-    sim_usbl.c          \
-    sensor_load.c       \
-    layered_control.c   \
-    dynamic_control.c   \
-    whoi_traj.c         \
-    log_data.c          \
-    load_mission.c      \
-    paths.c             \
-    vehicle.c           \
-    diagnostic.c        \
-    lbl.c               \
-    lbl_nav.c           \
-    waypoint.c          \
-    whoi_homing.c       \
-    edc_homing.c        \
-    docking.c           \
-    sim_stubs.c         \
-    load_fault.c        \
+    sim.c                   \
+    sim_conduct.c           \
+    sensor_load.c           \
+    layered_control.c       \
+    dynamic_control.c       \
+    whoi_traj.c             \
+    log_data.c              \
+    load_mission.c          \
+    paths.c                 \
+    vehicle.c               \
+    diagnostic.c            \
+    lbl.c                   \
+    lbl_nav.c               \
+    waypoint.c              \
+    whoi_homing.c           \
+    edc_homing.c            \
+    docking.c               \
+    sim_stubs.c             \
+    load_fault.c            \
     odyssey_legacy_exit.c 
 
 OBJS = $(SRCS:.c=.o)
