@@ -42,16 +42,6 @@ void simLBL()
 #endif
 }
 
-/*
- * Calculate water speed sensor readings...
- */
-
-void load_water_speed( void )
-{
-    double std_normal_random_num();
-    update( M_WATER_SPEED, sensor(REAL_U) + 0.02*std_normal_random_num() );
-}
-
 /* ------------------------------------------------------------ */
 /* Calculate sensed temperature and conductivity readings...
 */
