@@ -11,7 +11,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/08/07 14:39:24 GMT";
+char *creation_date = "2026/08/07 23:19:46 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -1648,9 +1648,6 @@ int assign_behavior_fcn_ptr( char *name, struct behavior *b)
 {
 #ifndef COMM_VEHICLE_C
     if ( b == NULL ) {
-        sprintf( msg_buf,
-                "*** NULL ptr in assign_behavior_fcn_ptr ***\n" );
-        write_message( TERM | SLOG );
         return -1;
     }
 
@@ -1678,8 +1675,6 @@ int assign_behavior_fcn_ptr( char *name, struct behavior *b)
     if ( strcmp("yo_yo", name) == 0 ) b->fcn = yo_yo;
     if ( b->fcn == NULL )
     {
-        sprintf( msg_buf, "*** no match for behavior %s ***\n", name );
-        write_message( TERM | SLOG );
         return -1;
     }
 #endif /* COMM_VEHICLE_C */

@@ -983,10 +983,6 @@ main( int argc, char **argv )
 	     "{\n"
 	     "#ifndef COMM_VEHICLE_C\n"
 	     "    if ( b == NULL ) {\n"
-	     "        sprintf( msg_buf,\n"
-	     "                \"*** NULL ptr in "
-	     "assign_behavior_fcn_ptr ***\\n\" );\n"
-	     "        write_message( TERM | SLOG );\n"
 	     "        return -1;\n"
 	     "    }\n\n", cfile );
 
@@ -996,9 +992,6 @@ main( int argc, char **argv )
 		 lower_b_array[i].name );
     
     fprintf( cfile, "    if ( b->fcn == NULL )\n    {\n"
-	     "        sprintf( msg_buf, \"*** no match for behavior "
-	     "%%s ***\\n\", name );\n"
-	     "        write_message( TERM | SLOG );\n"
 	     "        return -1;\n"
 	     "    }\n"
 	     "#endif /* COMM_VEHICLE_C */\n}\n");
