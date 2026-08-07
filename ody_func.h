@@ -63,7 +63,6 @@ double hysteresis( double, double, double, double, double );
 void simSensors( void );
 void load_accel( void );
 void load_magnetic( void );
-void load_angular_rate( void );
 void load_depth( void );
 void load_water_speed( void );
 void load_water_param( void );

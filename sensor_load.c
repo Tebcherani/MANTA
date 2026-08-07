@@ -38,7 +38,6 @@ double usbl_rf[USBL_BEACONS] = {21.0, 25.0, 0.0, 0.0};
 
 
 void load_accel();
-void load_angular_rate();
 void load_depth();
 void load_water_speed( void );
 void load_magnetic();
@@ -110,46 +109,6 @@ void load_accel(void)
 void load_magnetic(void)
 {        
     load_compass();
-}
-
-/* ------------------------------------------------------------ */
-/* Calculate angular rate readings...
-*/
-
-void load_angular_rate(void)
-{
-int constant_drift=1;
-double p,q,r;
-double noise, rate_noise_level=0.00001745;
-double T=50, dt=0.02, std=0.005; /* Gauss-Markov processes */
-static double bias1=0.0, bias2=0.0, bias3=0.0;
-
-
-  if (constant_drift==1) {
-      bias1=4.3663e-4;
-      bias2=8.7266e-4;
-      bias3=-8.7266e-4;
-  }
-  else {
-      bias1 = bias1 * (1-dt/T) + gasdev() * std * dt;
-      bias2 = bias2 * (1-dt/T) + gasdev() * std * dt;
-      bias3 = bias3 * (1-dt/T) + gasdev() * std * dt;
-  }
-
-  noise = rate_noise_level * gasdev(); 
-  p=sensor(REAL_P) + noise + bias1;
-
-  noise = rate_noise_level * gasdev();  
-  q=sensor(REAL_Q) + noise + bias2;
-
-  noise = rate_noise_level * gasdev();  
-  r=sensor(REAL_R) + noise + bias3;
-  
-  /*--- update data structure */
-  update(M_ROLL_RATE, p);
-  update(M_PITCH_RATE, q);
-  update(M_YAW_RATE, r);
-  
 }
 
 /* ------------------------------------------------------------ */
