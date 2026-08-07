@@ -9,7 +9,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "diagnostic.h"
 #include "vehicle.h"
 
 /* ----------------------------------------------------------------

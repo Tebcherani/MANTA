@@ -40,7 +40,7 @@ EXTERN int MonitorLayeredControl;
 
 #ifdef EDGEPS8000
 extern int LBLTransponderMode;  /* If mode = 0, then in pinger mode */
-extern int ErrorLBL, MonitorLBL, UseLBL;
+extern int MonitorLBL, UseLBL;
 #endif
 
 				/* whoi_usbl */

@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "diagnostic.h"
 #include "vehicle.h"
 
 #include "command_line.h"

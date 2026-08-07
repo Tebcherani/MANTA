@@ -47,7 +47,6 @@
 #include <string.h>
 
 #include "common_defs.h"
-#include "diagnostic.h"
 #include "vehicle.h"
 #include "ody_defs.h"
 #include "ody_types.h"

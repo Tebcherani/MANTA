@@ -10,12 +10,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "diagnostic.h"
 #include "vehicle.h"
 
 #if defined EDGEPS8000		/* EdgeTech PS8000 Transceiver */
 
-int ErrorLBL = STATUS_NOT_SELECTED, MonitorLBL, UseLBL;
+int MonitorLBL, UseLBL;
 int LBLTransponderMode;
 
 #endif /* EDGEPS8000, MITSG_LBL */

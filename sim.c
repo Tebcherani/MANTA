@@ -31,7 +31,6 @@
 #include <math.h>
 
 #include "common_defs.h"
-#include "diagnostic.h"
 #include "vehicle.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_log.h"

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "command_line.h"
-#include "diagnostic.h"
 #include "ody_func.h"
 #include "sim_behavior_logger.h"
 #include "vehicle.h"

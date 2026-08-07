@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "diagnostic.h"
 #include "vehicle.h"
 #include "ody_defs.h"
 #include "ody_types.h"

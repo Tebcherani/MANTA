@@ -13,7 +13,6 @@
 #include <unistd.h>
 
 #include "common_defs.h"
-#include "diagnostic.h"
 #include "paths.h"
 #include "vehicle.h"
 #include "odyssey_config.h"

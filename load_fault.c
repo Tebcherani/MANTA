@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "diagnostic.h"
 #include "odyssey_config.h"
 #include "odyssey_data_struct.h"
 #include "paths.h"

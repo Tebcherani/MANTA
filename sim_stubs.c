@@ -10,7 +10,6 @@
  *----------------------------------------------------------------------*/
 
 #include <stdio.h>
-#include "diagnostic.h"
 #include "vehicle.h"
 #include "time.h"
 

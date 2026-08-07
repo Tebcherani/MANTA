@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#include "diagnostic.h"
 #include "sim_behavior_logger.h"
 #include "sim_log.h"
 #include "vehicle.h"

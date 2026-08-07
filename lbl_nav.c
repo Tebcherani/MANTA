@@ -11,7 +11,6 @@
 #include <string.h>
 
 #include "ody_defs.h"
-#include "diagnostic.h"
 #include "nav_math.h"
 #include "lbl.h"
 #include "vehicle.h"

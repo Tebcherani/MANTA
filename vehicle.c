@@ -1,7 +1,6 @@
 #include <float.h>
 #include <stdio.h>
 #include <string.h>
-#include "diagnostic.h"
 #include "ody_defs.h"
 #include "ody_types.h"
 
