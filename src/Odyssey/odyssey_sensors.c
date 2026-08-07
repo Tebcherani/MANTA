@@ -47,15 +47,15 @@ void update_rotation_matrix(void) {
     /* xe[i] = rotation_matrix[1][i]*xb[1] + rotation_matrix[2][i]*xb[2] + rotation_matrix[3][i]*xb[3]  */
     /*                                                                                                  */
     
-    rotation_matrix[1][1] = cos(yaw_angle)*cos(pitch_angle);
-    rotation_matrix[1][2] = cos(pitch_angle)*sin(yaw_angle);
+    rotation_matrix[1][1] = cos(yaw_angle) * cos(pitch_angle);
+    rotation_matrix[1][2] = cos(pitch_angle) * sin(yaw_angle);
     rotation_matrix[1][3] = -sin(pitch_angle);
     
-    rotation_matrix[2][1] = -(cos(roll_angle)*sin(yaw_angle)) + cos(yaw_angle)*sin(roll_angle)*sin(pitch_angle);
-    rotation_matrix[2][2] = cos(roll_angle)*cos(yaw_angle) + sin(roll_angle)*sin(yaw_angle)*sin(pitch_angle);
-    rotation_matrix[2][3] = cos(pitch_angle)*sin(roll_angle); 
+    rotation_matrix[2][1] = -(cos(roll_angle) * sin(yaw_angle)) + cos(yaw_angle) * sin(roll_angle) * sin(pitch_angle);
+    rotation_matrix[2][2] = cos(roll_angle) * cos(yaw_angle) + sin(roll_angle) * sin(yaw_angle) * sin(pitch_angle);
+    rotation_matrix[2][3] = cos(pitch_angle) * sin(roll_angle); 
     
-    rotation_matrix[3][1] = sin(roll_angle)*sin(yaw_angle) + cos(roll_angle)*cos(yaw_angle)*sin(pitch_angle);
-    rotation_matrix[3][2] = -(cos(yaw_angle)*sin(roll_angle)) + cos(roll_angle)*sin(yaw_angle)*sin(pitch_angle);
-    rotation_matrix[3][3] = cos(roll_angle)*cos(pitch_angle);
+    rotation_matrix[3][1] = sin(roll_angle) * sin(yaw_angle) + cos(roll_angle) * cos(yaw_angle) * sin(pitch_angle);
+    rotation_matrix[3][2] = -(cos(yaw_angle) * sin(roll_angle)) + cos(roll_angle) * sin(yaw_angle) * sin(pitch_angle);
+    rotation_matrix[3][3] = cos(roll_angle) * cos(pitch_angle);
 }
