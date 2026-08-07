@@ -13,13 +13,14 @@
 
 #include <math.h>
 
+#include "common_defs.h"
 #include "whoi_traj.h"
 
 /* keeps heading between 0-2PI, only corrects once though */
 void wrap_heading(double *h)
 {
-    while(*h > TWOPI)*h -= TWOPI ;
-    while(*h < 0)*h += TWOPI ;
+    while(*h > 2*PI)*h -= 2*PI ;
+    while(*h < 0)*h += 2*PI ;
 
 }
 /* corrects the difference between 2 headings to keep the value between
@@ -29,8 +30,8 @@ double delta_heading(double dh)
 {
     double result ;
     result = dh ;
-    while(result > PI)result -= TWOPI ;
-    while(result < -PI)result += TWOPI ;
+    while(result > PI)result -= 2*PI ;
+    while(result < -PI)result += 2*PI ;
     return(result) ;
 }
 

@@ -15,28 +15,6 @@
 #include "time.h"
 
 /*----------------------------------------------------------------------*
- * heading_reference: simplified version for simulator use.
- *
- * The full KVH EKF filter (sensor_kvh.c) depends on a matrix library
- * not available in this build.  The filter is disabled in practice
- * (do_filtering=0), so we implement only the direct-copy path:
- * simulated inclinometer -> roll/pitch, simulated compass -> yaw.
- *----------------------------------------------------------------------*/
-void heading_reference( void )
-{
-    double flux_yaw;
-
-    flux_yaw = 3.14159265358979 +
-               modPi( sensor(M_COMPASS_YAW)
-                    + sensor(UO_MAGNETIC_VARIATION)
-                    - 3.14159265358979 );
-
-    update( M_ROLL,  sensor(M_INCLINO_ROLL)  );
-    update( M_PITCH, sensor(M_INCLINO_PITCH) );
-    update( M_YAW,   flux_yaw                );
-}
-
-/*----------------------------------------------------------------------*
  * remote_delay: stub behavior registered in vehicle.c but source file
  * not included in the simulator build.
  *----------------------------------------------------------------------*/

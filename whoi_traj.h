@@ -22,14 +22,6 @@ typedef struct
 
 } traj_t;
 
-#ifndef PI
-#define PI 3.14159
-#endif
-
-#ifndef TWOPI
-#define TWOPI (2*PI)
-#endif
-
 void init_traj( traj_t *traj, double x, double tau, double dt );
 double do_traj( double xf, double xdotmax, traj_t *traj );
 double do_hdg_traj( double xf, double xdotmax, traj_t *traj );

@@ -34,6 +34,7 @@
 #define drand48() ((double)rand()/RAND_MAX)
 #endif
 
+#include "common_defs.h"
 #include "diagnostic.h"
 #include "vehicle.h"
 #include "odyssey_log.h"
@@ -65,7 +66,6 @@ void fins(double *, double, double);
 #define FTOM   0.3048               /* from feet to meters */
 #define FTOM2  (0.3048 * 0.3048)
 #define FTOM3  (0.3048 * 0.3048 * 0.3048)
-#define TWOPI  (2*PI)
 
 const double rho = 1.025e3;	/* kg/m^3 density of seawater */
 

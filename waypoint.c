@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "common_defs.h"
 #include "diagnostic.h"
 #include "vehicle.h"
 

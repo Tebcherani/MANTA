@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common_defs.h"
 #include "diagnostic.h"
 #include "vehicle.h"
 #include "ody_defs.h"
@@ -209,9 +210,6 @@ static int i, j, k, result;
 /*
  * Sonar Variables
  */
-#ifndef PI
-  #define PI  3.14159265358979323846
-#endif
 #ifndef TRUE
   #define TRUE 1
   #define FALSE 0

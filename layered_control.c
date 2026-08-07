@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "common_defs.h"
 #include "diagnostic.h"		/* MITSG */
 #include "vehicle.h"
 #include "odyssey_log.h"

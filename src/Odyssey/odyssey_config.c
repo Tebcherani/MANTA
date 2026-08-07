@@ -8,9 +8,6 @@ const char *ody_sfault_dir;
 const char *ody_vehicle_dir;
 
 int init_odyssey_config(void) {
-    ody_vehicle_dir = getenv("ODYSSEY_VEHICLE_DIR");
-    if (ody_vehicle_dir == NULL || ody_vehicle_dir[0] == '\0') return -1;
-    
     ody_data_dir = getenv("ODYSSEY_DATA_DIR");
     if (ody_data_dir == NULL || ody_data_dir[0] == '\0') return -1;
 

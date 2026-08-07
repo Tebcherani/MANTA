@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "common_defs.h"
 #include "diagnostic.h"
 #include "vehicle.h"
 #include "whoi_traj.h"

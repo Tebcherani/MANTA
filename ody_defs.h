@@ -1,9 +1,7 @@
 #ifndef ODY_DEFS_H
 #define ODY_DEFS_H
 
-#ifndef PI
-#define PI     3.14159265358979323846
-#endif
+#include "common_defs.h"
 
 #define D2R(d) (d*PI/180.0)
 #define R2D(r) (r*180.0/PI)

@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "common_defs.h"
 #include "diagnostic.h"
 #include "vehicle.h"
 
