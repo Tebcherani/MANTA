@@ -1,6 +1,3 @@
-#include <math.h>
-
-#include "ody_func.h"
 #include "odyssey_sensors.h"
 
 int update_odyssey_sensors(void) {
