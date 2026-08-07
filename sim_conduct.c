@@ -30,7 +30,7 @@ double C(double);
 static double conduct = 0.0, current_depth;
 static double transition1 = 6.0, transition2 = 18.0, transition3 = 32.0;
 
-void sim_conduct(void)
+void update_water_conductivity(void)
 {
 /*
  * A simple "layer cake" with no significance other than to insure

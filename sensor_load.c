@@ -27,10 +27,6 @@ double usbl_if[USBL_BEACONS] = {19.0, 19.0, 0.0, 0.0};
 double usbl_rf[USBL_BEACONS] = {21.0, 25.0, 0.0, 0.0};
 /*--- if=beacons interogate freq (19kHz),rf=reply frequency (21 or 25kHz) */
 
-
-void load_water_speed( void );
-void load_water_param();
-
 void simLBL()
 {
 #ifdef KALMAN_LBL
@@ -40,16 +36,6 @@ void simLBL()
     void simEdgeTechLBL();
     simEdgeTechLBL();
 #endif
-}
-
-/* ------------------------------------------------------------ */
-/* Calculate sensed temperature and conductivity readings...
-*/
-
-void load_water_param(void)
-{
-    update( WATER_TEMP, 10 * exp(-pow(sensor(REAL_Z)/30,2)) );
-    sim_conduct();
 }
 
 /*--------------------------------------------------------------------------*

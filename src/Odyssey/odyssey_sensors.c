@@ -17,6 +17,7 @@ static void update_depth(void);
 static void update_heading(void);
 static void update_inclinometers(double ax, double ay);
 static void update_water_speed(void);
+static void update_water_temp(void);
 
 double aax, aay;
 
@@ -26,7 +27,7 @@ int update_odyssey_sensors(void) {
     update_compass_yaw();
     update_depth();
     update_water_speed();
-    load_water_param();
+    update_water_temp();
 
 #ifdef WHOI_USBL
     simulate_usbl();
@@ -256,4 +257,9 @@ static void update_inclinometers( double ax, double ay ) {
 static void update_water_speed(void) {
     double std_normal_random_num();
     update(M_WATER_SPEED, sensor(REAL_U) + 0.02*std_normal_random_num());
+}
+
+void update_water_temp(void) {
+    update(WATER_TEMP, 10 * exp(-pow(sensor(REAL_Z)/30,2)));
+    update_water_conductivity();
 }

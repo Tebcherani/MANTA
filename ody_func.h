@@ -12,7 +12,7 @@
 
 int  simulate_usbl(void);
 int  handle_modem(void);
-void sim_conduct(void);
+void update_water_conductivity(void);
 void LBL_position(void);
 
 struct behavior;
@@ -59,7 +59,6 @@ int    matinv( double a[][7], double ainv[][7], int n, double adum[][7] );
 double hysteresis( double, double, double, double, double );
 
 				/* sensor_load.c */
-void load_water_param( void );
 void simLBL4EKF();
 
 #endif /* ODY_FUNC_H */
