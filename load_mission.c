@@ -570,8 +570,7 @@ int read_flags( FILE *fptr )
 static int count;		/* needed for load_state to return line
 				   count because counting occurs here */
 
-int read_state( FILE *fptr )
-{
+int read_state(FILE *fptr) {
     char name[MAX_STATE_NAME], *expect, *actual;
     int priority = 0, index, b_index = -1;
     double value;
@@ -579,23 +578,20 @@ int read_state( FILE *fptr )
                                    in the command structure to -1 before
                                    reading in new behaviors */
 
-    while ( fgets(linebuf, sizeof(linebuf), fptr) != NULL )
-    {
+    while ( fgets(linebuf, sizeof(linebuf), fptr) != NULL ) {
         count++;
-        if (sscanf(linebuf, " state: %s\n", name) == 1)
-	{
+        if (sscanf(linebuf, " state: %s\n", name) == 1) {
             strncpy( vvp->sta[vvp->nstates].name, name, MAX_STATE_NAME );
             vvp->nstates++;
-            if ( vvp->nstates >= MAX_STATES )
-	    {
+            if ( vvp->nstates >= MAX_STATES ) {
                 sprintf( msg_buf, "*** max number of states exceeded\n");
                 write_message( TERM | SLOG );
                 exit_gracefully( -1 );
             }
             if (vvp->nstates==1)
-		vvp->cstate = 0;
+				vvp->cstate = 0;
             else
-		vvp->cstate++;
+				vvp->cstate++;
 
             sprintf( msg_buf, "\n *** state %d ***\n%s\n", vvp->nstates, 
 		     linebuf );
@@ -606,25 +602,20 @@ int read_state( FILE *fptr )
                                    command array */
         }
 				/* If sensor value, load it... */
-        else if ( sscanf(linebuf, "  sensor: %s %lg", name, &value) == 2 )
-	{
-            if ( (index = match_sensor(name)) >= 0 )
-	    {
+        else if ( sscanf(linebuf, "  sensor: %s %lg", name, &value) == 2 ) {
+            if ( (index = match_sensor(name)) >= 0 ) {
 				/* convert units if given */
-		expect = strchr( vvp->s[index].name, '(' );
-		actual = strchr( name, '(');
-		if ( expect && actual &&
-		     convert_units( expect, actual, value, &value ) )
-		{
-		    sprintf( msg_buf, "load_mission %s: unknown "
-			     "units, exiting ...\n", name );
-		    write_message( TERM | SLOG );
-		    exit_gracefully( -1 );
-		}
+				expect = strchr( vvp->s[index].name, '(' );
+				actual = strchr( name, '(');
+				if ( expect && actual && convert_units( expect, actual, value, &value ) ) {
+		    		sprintf( msg_buf, "load_mission %s: unknown "
+			     		"units, exiting ...\n", name );
+		    		write_message( TERM | SLOG );
+		    		exit_gracefully( -1 );
+				}
                 update( index, value );
 		
-                sprintf( msg_buf, "  sensor: %29s %lg\n", 
-			 vvp->s[index].name, vvp->s[index].x );
+                sprintf( msg_buf, "  sensor: %29s %lg\n", vvp->s[index].name, vvp->s[index].x );
                 write_message( TERM | SLOG );
             } else {
                 sprintf( msg_buf, 
@@ -634,25 +625,20 @@ int read_state( FILE *fptr )
             }
         }
 				/* If a behavior name, get priority */
-
-        else if (sscanf(linebuf, " behavior: %s", name) == 1 )
-	{
-	    priority++;
-            if ( priority >= MAX_COMMAND )
-	    {
+        else if (sscanf(linebuf, " behavior: %s", name) == 1 ) {
+	    	priority++;
+            if ( priority >= MAX_COMMAND ) {
                 sprintf( msg_buf, "load_mission: priority %d >= "
-			 "MAX_COMMAND (%d), exiting ...\n", priority,
-			 MAX_COMMAND );
+			 		"MAX_COMMAND (%d), exiting ...\n", priority,
+			 		MAX_COMMAND );
                 write_message( TERM | SLOG );
                 exit_gracefully( -1 );
             }
 
-            if ( (b_index = match_behavior(name)) >= 0 )
-	    {
+            if ( (b_index = match_behavior(name)) >= 0 ) {
                 vvp->sta[vvp->cstate].c[priority].behavior = b_index;
 
-                sprintf( msg_buf, " behavior: %s %d \n",
-			 vvp->b[b_index].name, priority );
+                sprintf( msg_buf, " behavior: %s %d \n", vvp->b[b_index].name, priority );
                 write_message( TERM | SLOG );
 
 				/* copy default arguments from bTemplate
@@ -661,33 +647,28 @@ int read_state( FILE *fptr )
                 memcpy( &vvp->sta[vvp->cstate].c[priority].b,
                         &bTemplate[b_index], sizeof(struct behavior) );
 
-                assign_behavior_fcn_ptr( name,
-		    &(vvp->sta[vvp->cstate].c[priority].b) );
+                assign_behavior_fcn_ptr( name, &(vvp->sta[vvp->cstate].c[priority].b) );
 
             } else {
                 sprintf( msg_buf, "failed to match behavior %s, "
-			 "exiting ...\n", name );
+			 		"exiting ...\n", name );
                 write_message( TERM | SLOG );
                 exit_gracefully(-1);
             }
 				/* If line is a behavior argument, then
                                    load it */
         }
-	else if (sscanf(linebuf, "  b_arg: %s %lg", name, &value) == 2 )
-	{
-            if ( b_index >= 0 )
-                if ( (index = match_behavior_arg(name, b_index)) >= 0 )
-		{
+		else if (sscanf(linebuf, "  b_arg: %s %lg", name, &value) == 2 ) {
+            if ( b_index >= 0 ) {
+                if ( (index = match_behavior_arg(name, b_index)) >= 0 ) {
                     expect = strchr( vvp->b[b_index].arg[index].name, '(' );
                     actual = strchr( name, '(' );
 
-                    if ( expect && actual &&
-			 convert_units( expect, actual, value, &value ) )
-                    {
+                    if ( expect && actual && convert_units( expect, actual, value, &value ) ) {
                         sprintf( msg_buf, 
-				 "load_mission: error in b_arg units "
-				 "%s, exiting ...\n", name );
-			write_message( TERM | SLOG );
+				 			"load_mission: error in b_arg units "
+				 			"%s, exiting ...\n", name );
+						write_message( TERM | SLOG );
                         exit_gracefully( -1 );
                     }
                     vvp->b[b_index].arg[index].x =
@@ -697,13 +678,14 @@ int read_state( FILE *fptr )
                            vvp->b[b_index].arg[index].name );
                 } else {
                     sprintf( msg_buf, 
-			     "can't match behavior argument %s\n", linebuf );
+			     		"can't match behavior argument %s\n", linebuf );
                     write_message( TERM | SLOG );
                     exit_gracefully( -1 );
                 }
+			}
             sprintf( msg_buf, "  b_arg: %30s %lg\n",
-		     vvp->b[b_index].arg[index].name,
-		     vvp->b[b_index].arg[index].x);
+		     	vvp->b[b_index].arg[index].name,
+		     	vvp->b[b_index].arg[index].x);
             write_message( TERM | SLOG );
         }
     }
