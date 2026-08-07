@@ -157,4 +157,6 @@ void simple_dead_reckoning( void )
 				/* update DR position */
     update_add( M_DR_NORTH, dn );
     update_add( M_DR_EAST,  de );
+
+	return 0;
 }
