@@ -34,8 +34,8 @@ void LBL_position( void )
     if ( read_sensor(U_LBL_BEACON_NUMBER) < 2 )
     {
 					/* best guess of vehicle position */
-	update_add( M_POS_N, read_sensor(M_DR_DN) );
-	update_add( M_POS_E, read_sensor(M_DR_DE) );
+	add_to_sensor( M_POS_N, read_sensor(M_DR_DN) );
+	add_to_sensor( M_POS_E, read_sensor(M_DR_DE) );
 
 	return;
     }
@@ -174,8 +174,8 @@ void ABE_LBL()
 	}
 	write_message( MonitorLBL );
     }
-    update_add( M_POS_N, dx );
-    update_add( M_POS_E, dy );
+    add_to_sensor( M_POS_N, dx );
+    add_to_sensor( M_POS_E, dy );
 
     return;
 }

@@ -159,7 +159,7 @@ void dynamic_control( void )
 
 	if ( fabs(d_traj.xdot) < .01 )
 	{
-	    update_add( D_INTEGRAL, read_sensor(UO_DEPTH_INT_K)*err_depth*dt );
+	    add_to_sensor( D_INTEGRAL, read_sensor(UO_DEPTH_INT_K)*err_depth*dt );
 	    update_sensor( D_INTEGRAL, limit(read_sensor(D_INTEGRAL), D2R(5), -D2R(5)) );
 	}
 
@@ -234,7 +234,7 @@ void dynamic_control( void )
 	{
 
 	    if ( (fabs(rudder) < FIN_LIMIT) || (fabs(kih) <= 1e-6) )
-		update_add( H_INTEGRAL, kih*dt*hdg_err );
+		add_to_sensor( H_INTEGRAL, kih*dt*hdg_err );
 	    else
 		update_sensor( H_INTEGRAL, sgn(rudder)*FIN_LIMIT - 
 		    proportional - derivative );
@@ -278,7 +278,7 @@ static double pitch_control( double pitch_now, double pitch_des, double
     elevator = read_sensor(C_ELEVATOR_ANGLE) ;
 
     if ((fabs(elevator) < FIN_LIMIT) || (fabs(kip) < 1.e-6))
-	update_add( P_INTEGRAL, kip*dt*(pitch_now - pitch_des) );
+	add_to_sensor( P_INTEGRAL, kip*dt*(pitch_now - pitch_des) );
     else
 	update_sensor( P_INTEGRAL, sgn(elevator)*FIN_LIMIT - x1 - x2 );
 

@@ -79,7 +79,7 @@ int whoi_homing( struct behavior *b, int priority, int level )
 	if ( stack_busy(cmd) )
 	    return 1;
 				/* submit request to check MIO switches */
-	update_add( LATCH_CHECK, 1 );
+	add_to_sensor( LATCH_CHECK, 1 );
 
 				/* initialize the backup values */
 	LAST_HDG[idreg] = bArg(HEADING);
@@ -105,7 +105,7 @@ int whoi_homing( struct behavior *b, int priority, int level )
     {
 	b->state = B_COMPLETE;
 				/* release request to check MIO switches */
-	update_add( LATCH_CHECK, -1 );
+	add_to_sensor( LATCH_CHECK, -1 );
 				/* compose start of exit message, remainder
 				   to be determined by exit condition */
 	sprintf( msg_buf, "% 8.2f: %s ", read_sensor(M_PRESENT_TIME),

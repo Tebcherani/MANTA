@@ -79,7 +79,7 @@ void update_sensor(int index, double val) {
     if ( val > vvp->s[index].max ) vvp->s[index].max = val;
 }
 
-void update_add(int index, double value) {
+void add_to_sensor(int index, double value) {
     update_sensor(index, read_sensor(index) + value);
 }
 
