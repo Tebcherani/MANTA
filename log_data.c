@@ -40,9 +40,8 @@ int log_data( FILE *datafile )
     static float last_elapsed_time=0.0;   /* for debugging data logging */
     float temp_float;
     int num_vars_written=0;
-    int dummy, beh_id, offset, j, index;
-    int my_start_time, my_end_time;
-    time_t ansi_time;
+    int dummy;
+    int my_start_time;
 
 #ifdef NO_DATA_LOGGING
     return 0;
