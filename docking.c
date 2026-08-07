@@ -19,8 +19,6 @@
 
 int stack_busy( struct command *cmd );
 
-#ifdef WHOI_USBL
-
 /*----------------------------------------------------------------------*
   DOCK:  B.A. Moran, F.S. Hover, and H. Singh,  9 May 1997
   Just an idle time ... to be followed with undock() behavior.
@@ -196,5 +194,3 @@ int undock( struct behavior *b, int priority, int level )
 
     return 0;
 }
-
-#endif /* WHOI_USBL */

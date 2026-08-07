@@ -14,7 +14,6 @@
 
 int simulate_usbl( void )
 {
-#ifdef WHOI_USBL
     double xpos, ypos, zpos;
     double range, azim, elev;
     double dock_x, dock_y, dock_z;
@@ -41,7 +40,6 @@ int simulate_usbl( void )
 	update(M_USBL_AZIMUTH, azim);
 	update(M_USBL_ELEVATION, elev);
     }
-#endif /* WHOI_USBL */
 
     return 0;
 }

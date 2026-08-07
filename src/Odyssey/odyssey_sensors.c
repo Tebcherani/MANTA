@@ -28,11 +28,7 @@ int update_odyssey_sensors(void) {
     update_depth();
     update_water_speed();
     update_water_temp();
-
-#ifdef WHOI_USBL
     simulate_usbl();
-#endif
-
     handle_modem();
     update_heading();
     simLBL();

@@ -44,8 +44,6 @@ extern int ErrorLBL, MonitorLBL, UseLBL;
 #endif
 
 				/* whoi_usbl */
-#ifdef WHOI_USBL
 EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;
-#endif
 
 #endif /* ODY_VAR_H */

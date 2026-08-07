@@ -516,7 +516,6 @@ int read_flags( FILE *fptr )
     	continue;
 	}
 
-#ifdef WHOI_USBL
 	if ( sscanf(linebuf, "UseModem %d", &value) == 1 )
 	{
 	    UseModem = value;
@@ -531,7 +530,6 @@ int read_flags( FILE *fptr )
 	    write_message( TERM | SLOG );
 	    continue;
 	}
-#endif
 
 #if defined WHOI_LATCH
 	if ( sscanf(linebuf, "UseLatchMotor %d", &value) == 1 )

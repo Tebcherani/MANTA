@@ -34,7 +34,6 @@
 #define PREFIX_CHAR  'S'
 
 #define EDGEPS8000     "/t82"	/* EdgeTech PS-8000 transceiver */
-#define WHOI_USBL      "/t84"	/* WHOI USBL homing system */
 #define WHOI_LATCH		/* latch motor and switches */
 
 #endif

@@ -17,7 +17,6 @@
 int stack_busy( struct command *cmd );
 int getXSDataByte( void );
 
-#ifdef WHOI_USBL
 				/* prototypes */
 void home_in( struct behavior *b, int priority, int level );
 void search( struct behavior *b, int priority, int level );
@@ -304,5 +303,3 @@ void search(  struct behavior *b, int priority, int level )
 
     return;
 }
-
-#endif /* WHOI_USBL */
