@@ -3,7 +3,6 @@
 #include "odyssey_behaviors.h"
 #include "vehicle.h"
 
-
 int wiggle(struct behavior *b, int priority, int level) {
     register struct command *cmd = &vvp->c[priority];
     enum {TIME, PERIOD, R_AMP, E_AMP, THRUST};
