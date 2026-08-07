@@ -39,7 +39,6 @@ int log_data( FILE *datafile )
     static int last_log_time = 0, first = 1;
     static float last_elapsed_time=0.0;   /* for debugging data logging */
     float temp_float;
-    int num_vars_written=0;
     int dummy;
     int my_start_time;
 
@@ -81,7 +80,6 @@ int log_data( FILE *datafile )
     {
 	if ( sensor_time(i) >= sensor_time(M_PRESENT_TIME) )
 	{
-	    num_vars_written++;
 	    dummy = fwrite( (void *) &i, 2, 1, datafile );
 
 	    if (dummy<1)
