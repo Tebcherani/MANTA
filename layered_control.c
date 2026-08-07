@@ -463,7 +463,7 @@ int broadcast( struct behavior *b, int priority, int level )
 	if ( sensor(M_PRESENT_TIME) >= bArg(UAM_DELAY) )
 	{
 				/* compose simple message */
-	    sprintf( vvp->modem_send, "%05d%04d%04d%03d%04d\xd",
+	    sprintf( vvp->modem_send, "%05d%04d%04d%03d\xd",
 		     (int) sensor(M_PRESENT_TIME),
 		     (int) limit(sensor(M_POS_N), 9999, 0),
 		     (int) limit(sensor(M_POS_E), 9999, 0),
