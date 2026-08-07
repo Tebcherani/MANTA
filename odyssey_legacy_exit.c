@@ -28,10 +28,6 @@ void exit_gracefully( int exit_status )
         dump_behavior_log_json(options.behavior_dump_file);
     }
 
-    sprintf( msg_buf, "Mission finished -- data file: %s\n", 
-	     vvp->data_file_name); 
-    write_message( TERM | SLOG );
-
 				/* 01/10/94 adding an "auto_parse" option */
     tmp1 = getenv("ODY_AUTO_PARSE");
     tmp2 = getenv("ODY_PARSE_OPTION");
