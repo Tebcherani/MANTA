@@ -7,7 +7,6 @@
 #include "odyssey_data_struct.h"
 #include "vehicle.h"
 
-int assign_behavior_fcn_ptr(const char *name, struct behavior *b);
 int hirestime(double *hires);
 
 extern char *creation_date;

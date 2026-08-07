@@ -2,7 +2,9 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
-#define CREATION_DATE "2026/08/07 14:09:56 GMT"
+#define CREATION_DATE "2026/08/07 14:39:24 GMT"
+
+int assign_behavior_fcn_ptr(char *name, struct behavior *b);
 
 extern int M_PRESENT_TIME;
 extern int M_DT;

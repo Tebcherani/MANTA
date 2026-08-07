@@ -850,6 +850,8 @@ main( int argc, char **argv )
     fprintf( hfile, "#include \"ody_func.h\"\n");
     fprintf( hfile, "#define CREATION_DATE \"%s\"\n\n", cnow );
 
+    fprintf(hfile,"int assign_behavior_fcn_ptr(char *name, struct behavior *b);\n\n");
+
 				/* open sss in sensor file */
     fputs( "const struct sensor sss[] = {\n", sfile );
 				/* open bTemplate in behavior file */
