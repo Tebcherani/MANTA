@@ -106,10 +106,6 @@ int whoi_homing( struct behavior *b, int priority, int level )
 	b->state = B_COMPLETE;
 				/* release request to check MIO switches */
 	add_to_sensor( LATCH_CHECK, -1 );
-				/* compose start of exit message, remainder
-				   to be determined by exit condition */
-	sprintf( msg_buf, "% 8.2f: %s ", read_sensor(M_PRESENT_TIME),
-		 b->name );
 
 	if ( pole_secure )
 	{
@@ -117,16 +113,9 @@ int whoi_homing( struct behavior *b, int priority, int level )
 				/* send "I'm home" to dock */
 	    update_sensor( EDGE_XS_DATABYTE, getXSDataByte() );
 #endif
-	    strcat( msg_buf, "done with pole secure\n" );
 	}
-	else if ( bailout )
-
-	    sprintf( msg_buf+strlen(msg_buf), "bails with Rb %.1f < %.1f\n",
-		     rBucky, bArg(BAIL) );
 	else
 	    return 1;
-				/* write exit message */
-	write_message( MonitorLayeredControl | SLOG );
 	return 1;
     }
 				/* set the modes for the command vector */
@@ -209,11 +198,6 @@ void home_in( struct behavior *b, int priority, int level )
 	T_LOCK[idreg] = read_sensor(M_PRESENT_TIME);
 	REALIGN[idreg] = wrap_angle( read_sensor(M_YAW) - PI );
 	WAS_CLOSING[idreg] = 0;
-
-	sprintf( msg_buf, "% 8.2f: %s missed, turn 180 (%03d -> %03d T)\n",
-		 read_sensor(M_PRESENT_TIME), b->name, (int) R2D(read_sensor(M_YAW)),
-		 (int) R2D(REALIGN[idreg]) );
-	write_message( MonitorLayeredControl | SLOG );
     }
 				/* go straight for specified time */
     if ( read_sensor(M_PRESENT_TIME) < T_LOCK[idreg] + read_sensor(UO_T_STRAIGHT) )  
@@ -234,10 +218,6 @@ void home_in( struct behavior *b, int priority, int level )
 	{
 	    GOT_FIRST_BAD[idreg] = 0;
 	    GOT_FIRST_GOOD[idreg] = 1;
-
-	    sprintf( msg_buf, "% 8.2f: %s 1st good\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
-	    write_message( MonitorLayeredControl | SLOG );
 	}
 				/* negative range rate implies closing,
 				   make note here to prevent confusion
@@ -288,10 +268,6 @@ void search(  struct behavior *b, int priority, int level )
 
 	T_SRCH[idreg] = read_sensor(M_PRESENT_TIME);
 	SRCH_HDG[idreg] = read_sensor(M_YAW);
-
-	sprintf( msg_buf, "% 8.2f: %s 1st bad hit, go straight (%03d T)\n",
-		 read_sensor(M_PRESENT_TIME), b->name, (int) R2D(SRCH_HDG[idreg]) );
-	write_message( MonitorLayeredControl | SLOG );
     }
 				/* increment desired heading if straight
 				   time has elapsed */
