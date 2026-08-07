@@ -55,10 +55,6 @@
 #include "ody_func.h"
 #include "odyssey_data.h"
 
-#ifndef drand48
-#define drand48() ((double)rand()/RAND_MAX)
-#endif
-
 #define MAXROWS      300000
 #define MAXCOLS      25
 #define FIRST_RETURN 1

@@ -32,10 +32,5 @@ double oline(vector_t *x0, vector_t *x1, vector_t *x) ;
 double median(double x[],int n) ;
 double atan2_fix(double x, double y);
 int matinv3(double a[][3], double ainv[][3], double min_det, double *pdet);
-#ifdef LBLSIM
-double gasdev(long int *idum) ;
-#else
-double gasdev(int *idum) ;
-#endif
 
 #endif /* NAV_MATH_H */

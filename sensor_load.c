@@ -15,10 +15,7 @@
 #include "diagnostic.h"
 #include "odyssey_data.h"
 #include "vehicle.h"
-
-#ifndef drand48
-#define drand48() ((double)rand()/RAND_MAX)
-#endif
+#include "random_utils.h"
 
 /* #define KALMAN_LBL 1 /* comment out to have all tofs output together */
 
@@ -34,7 +31,6 @@ double usbl_rf[USBL_BEACONS] = {21.0, 25.0, 0.0, 0.0};
 void load_depth();
 void load_water_speed( void );
 void load_water_param();
-double gasdev();
 
 void load_inclinometers(double,double); 
 void low_pass_filter(double[2],double[2]);
@@ -58,7 +54,7 @@ void load_depth(void)
 {
     double noise;
 
-    noise = gasdev()*sensor(REAL_DEPTH_NOISE);
+    noise = std_normal_random_num()*sensor(REAL_DEPTH_NOISE);
     update( M_DEPTH, sensor(REAL_Z) + noise );
 }
 
@@ -68,8 +64,8 @@ void load_depth(void)
 
 void load_water_speed( void )
 {
-    double gasdev();
-    update( M_WATER_SPEED, sensor(REAL_U) + 0.02*gasdev() );
+    double std_normal_random_num();
+    update( M_WATER_SPEED, sensor(REAL_U) + 0.02*std_normal_random_num() );
 }
 
 /* ------------------------------------------------------------ */
@@ -90,8 +86,6 @@ void load_water_param(void)
  
   jl: 10/25/94 changing so that times 1,2,3,4 are used 
   (from now on, M_LBL_0T corresponds to the bottom return)
-
-  drand48() outputs values uniformly distributed between 0 and 1
 
   jv: 7/13/95 simulating the times of flight output as observed in JdF'95
   data. 
@@ -219,7 +213,7 @@ void simEdgeTechLBL()
                 time_of_flight = (dist1+dist2)/sound_speed + tat[i];
 
 				/* add noise */
-                noise = gasdev()*noise_amplitude/1000.0;
+                noise = std_normal_random_num()*noise_amplitude/1000.0;
                 time_of_flight += noise;
 
 				/* add bias */
@@ -358,7 +352,7 @@ void simLBL4EKF()
                 time_of_flight = (dist1+dist2)/sound_speed;
 
                 /*--- add noise and turn around time measurement errors */
-                noise = gasdev()*noise_amp/1000.0;
+                noise = std_normal_random_num()*noise_amp/1000.0;
                 time_of_flight += noise + tat[i];
 
 				/* add bias */
@@ -416,8 +410,8 @@ double raw_pitch_roll[2],filtered_pitch_roll[2];
     raw_pitch_roll[1]=-asin(ay/(GRAVITY*cos(raw_pitch_roll[0])));
     low_pass_filter(raw_pitch_roll,filtered_pitch_roll);
 
-    filtered_pitch_roll[0]+=inclino_noise*gasdev();
-    filtered_pitch_roll[1]+=inclino_noise*gasdev();
+    filtered_pitch_roll[0]+=inclino_noise*std_normal_random_num();
+    filtered_pitch_roll[1]+=inclino_noise*std_normal_random_num();
 
     update(M_INCLINO_PITCH,filtered_pitch_roll[0]);
     update(M_INCLINO_ROLL,filtered_pitch_roll[1]);

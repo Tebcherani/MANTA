@@ -3,13 +3,12 @@
 #include "common_defs.h"
 #include "ody_func.h"
 #include "ody_defs.h"
-#include "odyssey_sensors.h"
-#include "vehicle.h"
 #include "odyssey_data.h"
+#include "odyssey_sensors.h"
+#include "random_utils.h"
+#include "vehicle.h"
 
 double aax, aay;
-
-double gasdev();
 
 int update_odyssey_sensors(void) {
     update_angular_rate();
@@ -71,17 +70,17 @@ void update_angular_rate(void) {
     double sensor_noise, sensor_noise_level = 0.00001745;
 
     real_roll_rate = sensor(REAL_P);
-    sensor_noise = sensor_noise_level * gasdev(); 
+    sensor_noise = sensor_noise_level * std_normal_random_num(); 
     meas_roll_rate = real_roll_rate + sensor_noise + roll_rate_bias;
     update(M_ROLL_RATE, meas_roll_rate);
 
     real_pitch_rate = sensor(REAL_Q);
-    sensor_noise = sensor_noise_level * gasdev(); 
+    sensor_noise = sensor_noise_level * std_normal_random_num(); 
     meas_pitch_rate = real_pitch_rate + sensor_noise + pitch_rate_bias;
     update(M_PITCH_RATE, meas_pitch_rate);
 
     real_yaw_rate = sensor(REAL_R);
-    sensor_noise = sensor_noise_level * gasdev(); 
+    sensor_noise = sensor_noise_level * std_normal_random_num(); 
     meas_yaw_rate = real_yaw_rate + sensor_noise + yaw_rate_bias;
     update(M_YAW_RATE, meas_yaw_rate);
 }
@@ -154,7 +153,7 @@ void update_compass_yaw() {
     if ((mx>=0.0) && (my>0.0)) mg_yaw = atan(mx/my)+3.0*PI/2.0;
 
     // Add noise and write to the structure
-    mg_yaw += compass_noise*gasdev();
+    mg_yaw += compass_noise*std_normal_random_num();
 
     mg_yaw -= sensor(UO_MAGNETIC_VARIATION);
 
