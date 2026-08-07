@@ -1,6 +1,8 @@
 #include <math.h>
 
+#include "angle_utils.h"
 #include "common_defs.h"
+#include "ody_defs.h"
 #include "odyssey_data.h"
 #include "odyssey_sensors.h"
 #include "random_utils.h"
@@ -13,6 +15,7 @@ static void update_acceleration(void);
 static void update_angular_rate(void);
 static void update_compass_yaw(void);
 static void update_inclinometers(double ax, double ay);
+static void update_heading(void);
 
 /*-------------------------------------------------------------------------
 Low-pass filter for inclinometers simulation
@@ -191,6 +194,22 @@ static void update_compass_yaw() {
     update(M_COMPASS_YAW,mg_yaw);
 }
 
+static void update_heading(void) {
+    double meas_yaw, meas_pitch, meas_roll;
+    double meas_magnetic_variation, corrected_yaw;
+
+    meas_yaw = sensor(M_COMPASS_YAW);
+    meas_magnetic_variation = sensor(UO_MAGNETIC_VARIATION);
+    corrected_yaw = PI + wrap_angle(meas_yaw + meas_magnetic_variation - PI);
+    update(M_YAW, corrected_yaw);
+
+    meas_pitch = sensor(M_INCLINO_PITCH);
+    update(M_PITCH, meas_pitch);
+    
+    meas_roll = sensor(M_INCLINO_ROLL);
+    update(M_ROLL, meas_roll);
+}
+
 static void update_inclinometers( double ax, double ay ) {
     double inclino_noise=0.001745; /* 0.1 degree */
     double raw_pitch_roll[2],filtered_pitch_roll[2];
@@ -210,4 +229,5 @@ void update_ahrs_sensors(void) {
     update_angular_rate();
     update_acceleration();
     update_compass_yaw();
+    update_heading();
 }
