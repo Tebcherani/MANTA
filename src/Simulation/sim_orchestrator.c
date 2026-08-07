@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
     if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_odyssey_sim() != 0) exit_sim(EXIT_FAILURE, mission_started);
-    if (init_odyssey_data_logger(!options.nolog, DataFileName, &datafile) != 0) exit_sim(EXIT_FAILURE, mission_started);
+    if (init_odyssey_data_logger(DataFileName, &datafile) != 0) exit_sim(EXIT_FAILURE, mission_started);
     lhs();  // Initialize Odyssey dynamics
 
 /* 
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
             }
 
             capture_behavior_activity();
-	        if (!options.nolog) log_data(datafile);
+	        log_data(datafile);
 	    }
 	
         if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started);

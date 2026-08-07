@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-int init_odyssey_data_logger(int logging_enabled, char *data_file_name, FILE **data_file);
+int init_odyssey_data_logger(char *data_file_name, FILE **data_file);
 
 #endif

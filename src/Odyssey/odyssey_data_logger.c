@@ -6,17 +6,10 @@
 /* Legacy Odyssey function. */
 FILE *init_data_logging(char *data_file_name);
 
-int init_odyssey_data_logger(int logging_enabled, char *data_file_name, FILE **data_file) {
+int init_odyssey_data_logger(char *data_file_name, FILE **data_file) {
     if (data_file == NULL || data_file_name == NULL) {
         write_to_sim_log("Failed to initialize Odyssey data logger: invalid argument.\n");
         return -1;
-    }
-
-    *data_file = NULL;
-
-    if (!logging_enabled) {
-        write_to_sim_log("Odyssey data logging disabled (--nolog mode).\n");
-        return 0;
     }
 
     *data_file = init_data_logging(data_file_name);

@@ -4,7 +4,6 @@
 #include "common_defs.h"
 
 typedef struct {
-    int nolog;
     int show_help;
 
     const char *mission_file;
