@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 
 #include "odyssey_data_struct.h"
 #include "odyssey_nav.h"
@@ -23,6 +24,7 @@ static int matinv3(double a[][3], double ainv[][3], double min_det, double *pdet
 static double median(double x[],int n);
 static int nav2_xy( vector_t *pa, vector_t *pb, double ra, double rb, lbl_side_t nside, double min_angle, vector_t *pd );
 static int num_good(lbl_t *lbl);
+static double oline(vector_t *x0, vector_t *x1, vector_t *x);
 static void psuedo3(double A[NXP][3], double B[NXP], double x[]);
 static void sort(int n, double ra[]);
 
@@ -497,6 +499,12 @@ static int num_good(lbl_t *lbl)
     return(result);
 }
 
+static double oline(vector_t *x0, vector_t *x1, vector_t *x) {
+    double alpha ;
+    alpha = atan2(x1->x-x0->x, x1->y-x0->y);
+    return(-cos(alpha)*(x->x-x0->x) + sin(alpha)*(x->y-x0->y));
+}
+
 static void psuedo3(double A[NXP][3], double B[NXP], double x[])
 {
     double AtA[3][3], AtAinv[3][3], AtB[3], det ;
@@ -557,12 +565,6 @@ static void sort(int n, double ra[])
 	}
 	ra[i]=rra;
     }
-}
-
-double oline(vector_t *x0, vector_t *x1, vector_t *x) {
-    double alpha ;
-    alpha = atan2(x1->x-x0->x, x1->y-x0->y);
-    return(-cos(alpha)*(x->x-x0->x) + sin(alpha)*(x->y-x0->y));
 }
 
 /*----------------------------------------------------------------------*

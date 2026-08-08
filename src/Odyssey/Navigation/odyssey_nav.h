@@ -56,8 +56,6 @@ typedef struct {
 void update_dead_reckoned_pos(void);
 void update_lbl_pos(void);
 
-double oline(vector_t *x0, vector_t *x1, vector_t *x);
-
 int update_odyssey_nav(void);
 
 #endif
