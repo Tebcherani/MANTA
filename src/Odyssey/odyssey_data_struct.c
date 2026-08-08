@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "common_defs.h"
+#include "odyssey_behaviors.h"
 #include "odyssey_data_struct.h"
 #include "sim_log.h"
 #include "vehicle.h"

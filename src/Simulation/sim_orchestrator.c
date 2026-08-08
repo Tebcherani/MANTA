@@ -51,7 +51,6 @@ int main(int argc, char *argv[]) {
     if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
     if (!init_odyssey_sim(&odyssey_dirs)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!init_odyssey_model()) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
     if (!load_mission((char *)options.mission_file, odyssey_dirs.mission_dir)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
     if (!load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name, &odyssey_dirs)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
     if (!init_odyssey_state()) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
