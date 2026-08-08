@@ -1,18 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <malloc.h>
-#include <time.h>
-#include <unistd.h>
-#include <string.h>
 
 #include "vehicle.h"
 
 #include "command_line.h"
-#include "odyssey_data_struct.h"
-#include "odyssey_data_logger.h"
-#include "odyssey_mission.h"
-#include "odyssey_model.h"
 #include "odyssey_sim.h"
 #include "sim_behavior_logger.h"
 #include "sim_config.h"
