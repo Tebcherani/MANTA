@@ -10,10 +10,8 @@
 
 #include <stdio.h>
 
-int  simulate_usbl(void);
 int  handle_modem(void);
 void update_water_conductivity(void);
-void LBL_position(void);
 
 struct behavior;
                                 /* main.c */
@@ -21,7 +19,6 @@ void exit_gracefully( int );
                                 /* dynamic_control.c */
 void dynamic_control( void );
 double limit( double, double, double );
-double sgn( double value );
 
                                 /* layered_control.c */
 void layered_control( void );

@@ -67,7 +67,6 @@ SRCS = \
     log_data.c              \
     load_mission.c          \
     paths.c                 \
-    lbl_nav.c               \
     waypoint.c              \
     whoi_homing.c           \
     edc_homing.c            \

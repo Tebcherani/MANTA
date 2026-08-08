@@ -18,6 +18,8 @@
 #define P_INT_LIM D2R(10)	/* limit on pitch integrator */
 #define H_INT_LIM D2R( 5)	/* limit on hdg */
 
+static double sgn(double x);
+
 				/* local function prototypes */
 static double pitch_control( double pitch_now, double pitch_des, double
 			     pitch_rate, double kpp, double kdp, double
