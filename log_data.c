@@ -22,10 +22,6 @@
 
 
 static int loggerVersion = 2;	/* file format version number */
-const char *get_fault_file_name( void );
-const char *get_fault_file_path( void );
-const char *get_mission_file_name( void );
-const char *get_mission_file_path( void );
 
 int CycleCount=0;
 
@@ -138,52 +134,47 @@ static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
         "# ===== FAULT_FILE_END ==================================\xa" );
 }
 
-
-/*------------------------------------------------------------------*
- | write_mission_header
- |
- | Copies the active mission file verbatim into the ODB ASCII header so
- | a run can be reproduced from the data file.  The block is wrapped in
- | MISSION_FILE_BEGIN/END sentinels.  Every embedded line is prefixed
- | "# mi>" so existing parsers continue to skip it as a comment.
- *------------------------------------------------------------------*/
-
-static void write_mission_header( FILE *datafile, const odyssey_config_t *config )
+static void write_mission_header(FILE *datafile, const odyssey_config_t *config, const char *mission_file)
 {
-    FILE       *fmi;
-    char        mi_path[PATH_SIZE];
-    char        line[MAX_LINE];
-    int         n_lines = 0;
-    const char *fname   = get_mission_file_name();
+    FILE *fmi;
+    char mi_path[PATH_SIZE];
+    char line[MAX_LINE];
+    int n_lines = 0;
+    int result;
 
-    fprintf( datafile,
-        "# ===== MISSION_FILE_BEGIN ==============================\xa" );
+    fprintf(datafile,
+        "# ===== MISSION_FILE_BEGIN ==============================\xa");
 
-    if ( fname == NULL || fname[0] == '\0' ) {
-        fprintf( datafile, "# (no mission file loaded)\xa" );
+    if (mission_file == NULL || mission_file[0] == '\0') {
+        fprintf(datafile, "# (no mission file loaded)\xa");
     } else {
-        fprintf( datafile, "# mission file: %s\xa", fname );
-        strncpy( mi_path, get_mission_file_path(), sizeof(mi_path) - 1 );
-        mi_path[sizeof(mi_path) - 1] = '\0';
-        if ( mi_path[0] == '\0' )
-            ody_join_path( mi_path, sizeof(mi_path), config->mission_dir, fname );
+        result = snprintf(mi_path, sizeof(mi_path), "%s/%s",
+                          config->mission_dir, mission_file);
 
-        if ( (fmi = fopen(mi_path, "r")) == NULL ) {
-            fprintf( datafile,
-                "# WARNING: could not open %s for embedding\xa", mi_path );
+        if (result < 0 || (size_t)result >= sizeof(mi_path)) {
+            fprintf(datafile, "# WARNING: mission path is invalid or too long\xa");
         } else {
-            while ( fgets(line, sizeof(line), fmi) ) {
-                line[ strcspn(line, "\r\n") ] = '\0';
-                fprintf( datafile, "# mi> %s\xa", line );
-                n_lines++;
+            fmi = fopen(mi_path, "r");
+
+            if (fmi == NULL) {
+                fprintf(datafile,
+                        "# WARNING: could not open %s for embedding\xa",
+                        mi_path);
+            } else {
+                while (fgets(line, sizeof(line), fmi) != NULL) {
+                    line[strcspn(line, "\r\n")] = '\0';
+                    fprintf(datafile, "# mi> %s\xa", line);
+                    n_lines++;
+                }
+
+                fclose(fmi);
+                fprintf(datafile, "# (%d lines)\xa", n_lines);
             }
-            fclose( fmi );
-            fprintf( datafile, "# (%d lines)\xa", n_lines );
         }
     }
 
-    fprintf( datafile,
-        "# ===== MISSION_FILE_END ================================\xa" );
+    fprintf(datafile,
+        "# ===== MISSION_FILE_END ================================\xa");
 }
 
 
@@ -191,7 +182,7 @@ static void write_mission_header( FILE *datafile, const odyssey_config_t *config
  | init_data_logging()
  *------------------------------------------------------------------*/ 
 
-FILE *init_data_logging( char *DataFileName, const odyssey_config_t *config )
+FILE *init_data_logging( char *DataFileName, const odyssey_config_t *config, const char *mission_file)
 {
     FILE *datafile;
     int i=0, j, beh_id, offset;
@@ -239,7 +230,7 @@ FILE *init_data_logging( char *DataFileName, const odyssey_config_t *config )
 				/* embed fault file in header for
 				   self-documentation of fault scenario */
     write_fault_header( datafile, config );
-    write_mission_header( datafile, config );
+    write_mission_header( datafile, config, mission_file );
 
 				/* write sensor index, name, init values */
     for ( i = 0; i <= vvp->last_s; i++ )

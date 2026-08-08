@@ -20,6 +20,8 @@ struct command {
 };
 
 int stack_busy(struct command *cmd);
+
+int init_odyssey_mission(const char *file_name, const char *mission_dir);
 int update_odyssey_mission(void);
 
 #endif

@@ -20,7 +20,6 @@ EXTERN struct vehicle vvv, *vvp;
 /* Globals of serial port file numbers (Perhaps use a structure) */
 EXTERN int RunNumber;
 EXTERN int DeadManSwitchEnabled;  /* for aborting mission from RF modem */
-EXTERN int NewMissionFileEnabled; /* for reading new mission during run */
 EXTERN char MissionFileName[60];  
 
 EXTERN int MonitorDataLogging;

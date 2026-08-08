@@ -28,7 +28,7 @@ int manage_time( struct behavior *b, double duration );
 
 				/* log_data.c */
 int log_data( FILE *datafile );
-FILE *init_data_logging( char *DataFileName , const odyssey_config_t *config);
+FILE *init_data_logging( char *DataFileName, const odyssey_config_t *config, const char *mission_file);
 void init_tab( void );
 void update_tab( float depth );
 int write_tab(const odyssey_config_t *config);
