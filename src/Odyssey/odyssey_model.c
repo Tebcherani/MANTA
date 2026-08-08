@@ -17,13 +17,12 @@ static odyssey_state_t state;
 int convert_units(const char *expected, const char *given, const double inval, double *outval);
 int match_sensor(const char *name);
 
-int init_odyssey_model(const char *path)
-{
+int init_odyssey_model(const char *path) {
     FILE *fptr;
     char line[MAX_LINE], name[NAME_SIZE], header[NAME_SIZE];
     char *expect, *actual;
     double value;
-    int index, lineno = 0, n_set = 0, header_seen = 0;
+    int index, header_seen = 0;
 
     if (path == NULL || path[0] == '\0') {
         write_to_sim_log("[odyssey_model] Vehicle path is invalid.\n");
@@ -37,8 +36,6 @@ int init_odyssey_model(const char *path)
     }
 
     while (fgets(line, sizeof(line), fptr) != NULL) {
-        lineno++;
-
         if (line[0] == '\n' || line[0] == '\r' ||
             line[0] == '#' || line[0] == '%' || line[0] == '*')
             continue;
@@ -90,7 +87,6 @@ int init_odyssey_model(const char *path)
         }
 
         update_sensor(index, value);
-        n_set++;
     }
 
     fclose(fptr);
