@@ -90,9 +90,6 @@ void ABE_LBL()
 	    lblenv.tat[ii]  = read_sensor(U_LBL_1TAT   + offset);
 	    lblenv.max_range[ii] = 4000;
 	    offset += U_LBL_2NORTH - U_LBL_1NORTH;
-	    fprintf( syslog, "\tX%d: N %.1f E %.1f D %.1f T %.3g\n",
-		     ii + 1, lblenv.xp[ii].x, lblenv.xp[ii].y,
-		     lblenv.xp[ii].z, lblenv.tat[ii] );
 	    for ( jj = 0; jj < LBL_NUM_RANGES; jj++ )
 	    {
 		lblenv.range[ii][jj] = -100;
