@@ -44,6 +44,7 @@ SRCS = \
     src/Odyssey/vehicle.c                                   \
     src/Odyssey/Navigation/odyssey_nav.c                    \
     src/Odyssey/Navigation/odyssey_nav_dead_reckoning.c     \
+    src/Odyssey/Navigation/odyssey_nav_lbl.c                \
     src/Odyssey/Sensors/odyssey_sensors.c                   \
     src/Odyssey/Sensors/odyssey_sensors_ahrs.c              \
     src/Odyssey/Sensors/odyssey_sensors_depth.c             \

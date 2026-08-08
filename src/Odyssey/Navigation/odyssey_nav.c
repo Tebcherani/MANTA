@@ -3,7 +3,7 @@
 
 int update_odyssey_nav(void) {
     update_dead_reckoned_pos();
-    LBL_position();
+    update_lbl_pos();
 
     return 0;
 }
