@@ -14,86 +14,79 @@
 
 static odyssey_state_t state;
 
-static int load_vehicle_def(const char *fname);
-
 int convert_units(const char *expected, const char *given, const double inval, double *outval);
 int match_sensor(const char *name);
 
-/*-------------------------------------------------------------------------
-  LOAD_VEHICLE_DEF: load vehicle physical parameters (vs_*) from a
-  vehicle definition (.vd) file.  Call BEFORE load_mission().
-
-  File format mirrors mission-file sensor lines:
-
-      # comments start with # % or *
-      vehicle: <name>            <- must match VEHICLE_NAME or load fails
-      vs_<name>(<units>) <value>
-      vs_<name>(<units>) <value>
-      ...
-
-  Rules:
-   - Header 'vehicle:' must match this build's VEHICLE_NAME.
-   - Names must begin with 'vs_' (catches typos that would otherwise
-     silently clobber an m_/c_/u_ sensor).
-   - Unknown vs_* name -> hard error (catches stale references).
-   - vs_* not mentioned in the file -> keeps its compile-time default
-     from edit_struct.c (so old .vd files keep working as the data
-     structure grows).
-  -----------------------------------------------------------------------*/
-
-static int load_vehicle_def(const char *fname) {
+int init_odyssey_model(const char *path)
+{
     FILE *fptr;
     char line[MAX_LINE], name[NAME_SIZE], header[NAME_SIZE];
     char *expect, *actual;
     double value;
     int index, lineno = 0, n_set = 0, header_seen = 0;
 
-    if ((fptr = fopen(fname, "r")) == NULL) return -1;
+    if (path == NULL || path[0] == '\0') {
+        write_to_sim_log("[odyssey_model] Vehicle path is invalid.\n");
+        return 0;
+    }
+
+    fptr = fopen(path, "r");
+    if (fptr == NULL) {
+        write_to_sim_log("[odyssey_model] Failed to open vehicle definition.\n");
+        return 0;
+    }
 
     while (fgets(line, sizeof(line), fptr) != NULL) {
         lineno++;
-		
-        /* skip blank lines and comments */
-        if (line[0] == '\n' || line[0] == '\r' || line[0] == '#'  || line[0] == '%' || line[0] == '*') continue;
 
-		/* first real line must be the vehicle header */
+        if (line[0] == '\n' || line[0] == '\r' ||
+            line[0] == '#' || line[0] == '%' || line[0] == '*')
+            continue;
+
         if (!header_seen) {
             if (sscanf(line, " vehicle: %s", header) != 1) {
                 fclose(fptr);
-                return -1;
+                write_to_sim_log("[odyssey_model] Invalid vehicle definition header.\n");
+                return 0;
             }
+
             if (strcmp(header, VEHICLE_NAME) != 0) {
                 fclose(fptr);
-                return -1;
+                write_to_sim_log("[odyssey_model] Vehicle definition does not match VEHICLE_NAME.\n");
+                return 0;
             }
+
             header_seen = 1;
             continue;
         }
 
-		/* parse "<name> <value>" */
         if (sscanf(line, " %s %lg", name, &value) != 2) {
             fclose(fptr);
-            return -1;
+            write_to_sim_log("[odyssey_model] Invalid vehicle parameter line.\n");
+            return 0;
         }
 
-		/* only vs_* fields allowed */
         if (strncmp(name, "vs_", 3) != 0) {
             fclose(fptr);
-            return -1;
+            write_to_sim_log("[odyssey_model] Invalid non-vs_ vehicle parameter.\n");
+            return 0;
         }
 
-		/* look up by name */
-        if ((index = match_sensor(name)) < 0) {
+        index = match_sensor(name);
+        if (index < 0) {
             fclose(fptr);
-            return -1;
+            write_to_sim_log("[odyssey_model] Unknown vehicle parameter.\n");
+            return 0;
         }
 
-		/* convert units if given */
         expect = strchr(vvp->s[index].name, '(');
         actual = strchr(name, '(');
-        if (expect && actual && convert_units( expect, actual, value, &value)) {
+
+        if (expect && actual &&
+            convert_units(expect, actual, value, &value)) {
             fclose(fptr);
-            return -1;
+            write_to_sim_log("[odyssey_model] Failed to convert vehicle parameter units.\n");
+            return 0;
         }
 
         update_sensor(index, value);
@@ -102,19 +95,8 @@ static int load_vehicle_def(const char *fname) {
 
     fclose(fptr);
 
-    if (!header_seen) return -1;
-
-    return 0;
-}
-
-int init_odyssey_model(const char *path) {
-    if (path == NULL || path[0] == '\0') {
-        write_to_sim_log("[odyssey_model] Vehicle path is invalid.\n");
-        return 0;
-    }
-
-    if (load_vehicle_def(path) != 0) {
-        write_to_sim_log("[odyssey_model] Failed to load vehicle definition.\n");
+    if (!header_seen) {
+        write_to_sim_log("[odyssey_model] Vehicle definition header not found.\n");
         return 0;
     }
 
