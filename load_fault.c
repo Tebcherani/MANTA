@@ -117,7 +117,7 @@ int load_faults( const char *fname )
     vvp->fault_file_name[0] = '\0';
 
     if (fname == NULL || fname[0] == '\0') {
-        write_to_sim_log("[load_faults.c] No fault file specified.\n");
+        write_to_sim_log("[load_faults] No fault file specified.\n");
         return 1;
     }
 
@@ -133,7 +133,7 @@ int load_faults( const char *fname )
 
     fp = fopen(fullpath, "r");
     if (fp == NULL) {
-        write_to_sim_log("[load_faults.c] Optional fault file not found.\n");
+        write_to_sim_log("[load_faults] Optional fault file not found.\n");
         return 1;
     }
 
@@ -143,13 +143,13 @@ int load_faults( const char *fname )
         if ( linebuf[0] == '#' || linebuf[0] == '\0' ) continue;
 
         if (strncmp(linebuf, "fault:", 6) != 0) {
-            write_to_sim_log("[load_faults.c] Invalid fault rule.\n");
+            write_to_sim_log("[load_faults] Invalid fault rule.\n");
             fclose(fp);
             return 0;
         }
 
         if (n_rules >= MAX_FAULT_RULES) {
-            write_to_sim_log("[load_faults.c] Too many fault rules.\n");
+            write_to_sim_log("[load_faults] Too many fault rules.\n");
             fclose(fp);
             return 0;
         }
@@ -159,7 +159,7 @@ int load_faults( const char *fname )
 
         arrow = strstr( cond_str, "->" );
         if (arrow == NULL) {
-            write_to_sim_log("[load_faults.c] Fault rule is missing '->'.\n");
+            write_to_sim_log("[load_faults] Fault rule is missing '->'.\n");
             fclose(fp);
             return 0;
         }
@@ -178,13 +178,13 @@ int load_faults( const char *fname )
             memset( r, 0, sizeof(FaultRule) );
 
             if (parse_condition(cond_str, &r->cond) != 0) {
-                write_to_sim_log("[load_faults.c] Failed to parse fault condition.\n");
+                write_to_sim_log("[load_faults] Failed to parse fault condition.\n");
                 fclose(fp);
                 return 0;
             }
 
             if (parse_actions(act_str, MAX_ACT_TERMS, r->action, &r->n_actions) != 0) {
-                write_to_sim_log("[load_faults.c] Failed to parse fault actions.\n");
+                write_to_sim_log("[load_faults] Failed to parse fault actions.\n");
                 fclose(fp);
                 return 0;
             }
@@ -195,7 +195,7 @@ int load_faults( const char *fname )
 
     fclose(fp);
 
-    write_to_sim_log("[load_faults.c] Faults loaded.\n");
+    write_to_sim_log("[load_faults] Faults loaded.\n");
     return 0;
 }
 

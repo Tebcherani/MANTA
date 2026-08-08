@@ -70,25 +70,25 @@ int load_mission(const char *fname) {
     fptr = fopen(fullpath, "r");
 
     if (fptr == NULL) {
-        write_to_sim_log("[load_mission.c] Failed to open mission file.\n");
+        write_to_sim_log("[load_mission] Failed to open mission file.\n");
         return 0;
     }
 
     if (read_flags(fptr) != 0) {
-        write_to_sim_log("[load_mission.c] Failed to read mission flags.\n");
+        write_to_sim_log("[load_mission] Failed to read mission flags.\n");
         fclose(fptr);
         return 0;
     }
 
     if (read_state(fptr) != 0) {
-        write_to_sim_log("[load_mission.c] Failed to read mission state.\n");
+        write_to_sim_log("[load_mission] Failed to read mission state.\n");
         fclose(fptr);
         return 0;
     }
 
     fclose(fptr);
 
-    write_to_sim_log("[load_mission.c] Mission loaded.\n");
+    write_to_sim_log("[load_mission] Mission loaded.\n");
     return 1;
 }
 

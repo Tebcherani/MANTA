@@ -13,23 +13,23 @@ int open_sim_log(void) {
 
     path_ptr = getenv("SIM_LOG_PATH");
     if (path_ptr == NULL || path_ptr[0] == '\0') {
-        fprintf(stderr, "\n[sim_log.c] SIM_LOG_PATH is not set.\n");
+        fprintf(stderr, "\n[sim_log] SIM_LOG_PATH is not set.\n");
         return 0;
     }
 
     result = snprintf(path, sizeof(path), "%s", path_ptr);
     if (result < 0 || (size_t)result >= sizeof(path)) {
-        fprintf(stderr, "\n[sim_log.c] Invalid log path.\n");
+        fprintf(stderr, "\n[sim_log] Invalid log path.\n");
         return 0;
     }
 
     file = fopen(path, "w");
     if (file == NULL) {
-        fprintf(stderr, "\n[sim_log.c] Sim log failed to open.\n");
+        fprintf(stderr, "\n[sim_log] Sim log failed to open.\n");
         return 0;
     }
 
-    write_to_sim_log("\n[sim_log.c] Sim log opened.\n");
+    write_to_sim_log("\n[sim_log] Sim log opened.\n");
     return 1;
 }
 

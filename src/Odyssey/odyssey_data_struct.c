@@ -55,7 +55,7 @@ int init_data_structure() {
 
     strcpy(vvv.creation_date, creation_date);
 
-    write_to_sim_log("[odyssey_data_struct.c] Ody data struct initialized.\n");
+    write_to_sim_log("[odyssey_data_struct] Ody data struct initialized.\n");
     return 1;
 }
 
