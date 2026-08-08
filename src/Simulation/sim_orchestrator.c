@@ -51,7 +51,6 @@ int main(int argc, char *argv[]) {
     if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
     if (!init_odyssey_sim(&odyssey_config, &options)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
-    if (!load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name, &odyssey_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
     if (!init_odyssey_data_logger(DataFileName, &datafile, &odyssey_config, options.mission_file)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
 
     lhs();  // Initialize Odyssey dynamics

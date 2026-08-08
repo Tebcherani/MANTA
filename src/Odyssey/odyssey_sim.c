@@ -52,6 +52,7 @@ int init_odyssey_sim(odyssey_config_t *config, const command_line_options_t *opt
     if (!init_odyssey_data_structure()) return 0;
     if (!init_odyssey_model(config->model_path)) return 0;
     if (!init_odyssey_mission(options->mission_file, config->mission_dir)) return 0;
+    if (!load_faults(options->fault_file ? options->fault_file : vvp->fault_file_name, &config)) return 0;
 
     return 1;
 }
