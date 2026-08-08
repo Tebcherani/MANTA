@@ -257,14 +257,10 @@ int descend(struct behavior *b, int priority, int level)
 	if (bArg(DROPD) > 0)
 	{
 	    update_sensor( C_WEIGHT1_DROP, 1.0 );
-	    fprintf( syslog, "% 8.2f: %s dropping descent weight\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
 	}
     	if (bArg(DROPA) > 0)
 	{
 	    update_sensor( C_WEIGHT2_DROP, 1.0 );
-	    fprintf( syslog, "% 8.2f: %s dropping ascent weight\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
 	}
 	b->state = B_COMPLETE;
 	return 0;
@@ -333,15 +329,11 @@ int ascend( struct behavior *b, int priority, int level )
         if ( bArg(DROPD) > 0 )
 	{
             update_sensor( C_WEIGHT1_DROP, 1 );
-            fprintf( syslog, "% 8.2f: %s dropping descent weight\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
         }
 				/* drop ascent weight? */
         if ( bArg(DROPA) > 0 )
 	{
             update_sensor( C_WEIGHT2_DROP, 1 );
-            fprintf( syslog, "% 8.2f: %s dropping ascent weight\n",
-		     read_sensor(M_PRESENT_TIME), b->name );
         }
 				/* abort? replace given arguments with 30
 				   deg pitch spiral up */
