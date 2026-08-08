@@ -786,9 +786,9 @@ main( int argc, char **argv )
     int i, num_sensors=0, num_behaviors=0, num_b_args=0;
     FILE *fin, *lfile, *sfile, *bfile, *hfile, *cfile;
     char infile_name[MAX_LINE], line[MAX_LINE], first_word[MAX_LINE],
-	*lfile_name = "data_list",
-	*sfile_name = "sensors",
-	*bfile_name = "behaviors",
+	*lfile_name = "tools/data_list",
+	*sfile_name = "tools/sensors",
+	*bfile_name = "tools/behaviors",
 	*hfile_name = "src/Odyssey/vehicle.h",
   *cfile_name = "src/Odyssey/vehicle.c";
 				/* time stamp vars */

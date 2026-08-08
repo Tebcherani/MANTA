@@ -75,15 +75,23 @@ SRCS = \
 
 OBJS = $(SRCS:.c=.o)
 
-.PHONY: all clean setup debug both edit_struct dev-setup doctor run-sim review review2 mission-constructor mission-constructor-web
+.PHONY: all clean setup debug both edit_struct generate_odyssey dev-setup doctor run-sim review review2 mission-constructor mission-constructor-web
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-edit_struct: edit_struct.c
-	$(CC) -o edit_struct edit_struct.c
+EDIT_STRUCT = tools/edit_struct
+EDIT_STRUCT_SRC = tools/edit_struct.c
+
+edit_struct: $(EDIT_STRUCT)
+
+$(EDIT_STRUCT): $(EDIT_STRUCT_SRC)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $(EDIT_STRUCT) $(EDIT_STRUCT_SRC)
+
+generate_vehicle: $(EDIT_STRUCT)
+	./$(EDIT_STRUCT)
 
 dev-setup:
 	./ody setup
@@ -110,7 +118,7 @@ mission-constructor-web:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJS) $(TARGET) sim_debug edit_struct
+	rm -f $(OBJS) $(TARGET) sim_debug $(EDIT_STRUCT)
 
 debug: CFLAGS += -fsanitize=address
 debug: clean $(TARGET)
