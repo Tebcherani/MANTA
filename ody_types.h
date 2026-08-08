@@ -9,7 +9,7 @@
 
 #include "ody_defs.h"
 #include "common_defs.h"
-#include "odyssey_control.h"
+#include "odyssey_mission.h"
 
 struct sensor {
     char name[NAME_SIZE];	/* name AND UNITS!! */

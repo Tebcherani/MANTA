@@ -10,11 +10,9 @@
 #include <string.h>
 
 #include "odyssey_config.h"
-#include "odyssey_control.h"
 #include "odyssey_data_struct.h"
+#include "odyssey_mission.h"
 #include "vehicle.h"
-
-int stack_busy(struct command *cmd);
 
 /*----------------------------------------------------------------------*
   DOCK:  B.A. Moran, F.S. Hover, and H. Singh,  9 May 1997

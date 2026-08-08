@@ -10,10 +10,10 @@
 
 #include "common_defs.h"
 #include "odyssey_data_struct.h"
+#include "odyssey_mission.h"
 #include "vehicle.h"
 #include "angle_utils.h"
 
-int stack_busy( struct command *cmd );
 int getXSDataByte( void );
 
 				/* prototypes */

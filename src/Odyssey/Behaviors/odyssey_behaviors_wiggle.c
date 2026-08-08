@@ -2,6 +2,7 @@
 
 #include "odyssey_behaviors.h"
 #include "odyssey_data_struct.h"
+#include "odyssey_mission.h"
 #include "vehicle.h"
 
 int wiggle(struct behavior *b, int priority, int level) {

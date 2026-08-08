@@ -3,13 +3,12 @@
 
 #include "command_line.h"
 #include "ody_func.h"
+#include "odyssey_mission.h"
 #include "sim_behavior_logger.h"
 #include "vehicle.h"
 
 extern FILE *datafile;
 extern command_line_options_t options;
-
-int  stack_busy(struct command *);
 
 void exit_gracefully( int exit_status )
 {

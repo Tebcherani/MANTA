@@ -23,9 +23,9 @@
 #include "common_defs.h"
 #include "vehicle.h"
 #include "odyssey_data_struct.h"
+#include "odyssey_mission.h"
 #include "angle_utils.h"
 
-int stack_busy( struct command *cmd );
 int getXSDataByte( void );
 static int behavior_axis_mask( int behavior_id );
 
@@ -1246,13 +1246,6 @@ int manage_time( struct behavior *b, double duration )
     }
     return 0;			/* behavior has not yet completed */
 }
-
-int stack_busy( struct command *cmd )
-{
-    return (cmd->speed_mode != -1) && (cmd->heading_mode != -1) &&
-	(cmd->depth_mode != -1);
-}
-
   
 /* -------------------------------------------------------------------------- 
 |  SHUT_DOWN:        
