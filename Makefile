@@ -90,7 +90,7 @@ edit_struct: $(EDIT_STRUCT)
 $(EDIT_STRUCT): $(EDIT_STRUCT_SRC)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $(EDIT_STRUCT) $(EDIT_STRUCT_SRC)
 
-generate_vehicle: $(EDIT_STRUCT)
+generate_odyssey: $(EDIT_STRUCT)
 	./$(EDIT_STRUCT)
 
 dev-setup:
