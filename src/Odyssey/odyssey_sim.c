@@ -11,7 +11,9 @@
 #include "sim_log.h"
 #include "vehicle.h"
 
-int init_odyssey_sim(odyssey_dirs_t *dirs) {
+static int init_odyssey_dirs(odyssey_dirs_t *dirs);
+
+static int init_odyssey_dirs(odyssey_dirs_t *dirs) {
     if (dirs == NULL) {
         write_to_sim_log("[odyssey_sim] Directory config is NULL.\n");
         return 0;
@@ -36,9 +38,13 @@ int init_odyssey_sim(odyssey_dirs_t *dirs) {
     }
 
     write_to_sim_log("[odyssey_sim] Odyssey directories configured.\n");
+    return 1;
+}
 
-    if (!init_data_structure()) exit_sim(EXIT_FAILURE, 0, &dirs);
-    
+int init_odyssey_sim(odyssey_dirs_t *dirs) {
+    if (!init_odyssey_dirs(dirs)) return 0;
+    if (!init_data_structure()) return 0;
+
     return 1;
 }
 
