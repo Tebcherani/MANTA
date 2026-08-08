@@ -2,16 +2,12 @@
 
 #include "odyssey_control.h"
 #include "odyssey_data_struct.h"
+#include "odyssey_model.h"
 #include "odyssey_mission.h"
 #include "odyssey_nav.h"
 #include "odyssey_sensors.h"
 #include "odyssey_sim.h"
 #include "vehicle.h"
-
-typedef struct {
-    double force_moment[7];
-    double position_orientation[7];
-} odyssey_state_t;
 
 static odyssey_state_t state;
 
