@@ -167,10 +167,7 @@ void lhs()			/* calculates left-hand-side of the eqn */
 	printf("\n");
     }
 
-    if (matinv(a,ainv,6,work)==1) 
-    {
-	fprintf(syslog, "Matrix is singular in lhs of equations of motion\n");
-    }
+    matinv(a,ainv,6,work);
 }
                 
 /*----------------------------------------------------------------------*
