@@ -4,13 +4,14 @@
 # Run:   ./ody sim <mission_name> 
 
 CC       = gcc
-CPPFLAGS = -I.              \
-    -Isrc/Application       \
-    -Isrc/Common            \
-    -Isrc/Odyssey           \
-    -Isrc/Odyssey/Behaviors \
-    -Isrc/Odyssey/Sensors   \
-    -Isrc/Simulation        \
+CPPFLAGS = -I.                  \
+    -Isrc/Application           \
+    -Isrc/Common                \
+    -Isrc/Odyssey               \
+    -Isrc/Odyssey/Behaviors     \
+    -Isrc/Odyssey/Navigation    \
+    -Isrc/Odyssey/Sensors       \
+    -Isrc/Simulation            \
     -Isrc/World
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS  = -lm
@@ -29,31 +30,32 @@ SIM_EXE = ./$(TARGET)$(EXEEXT)
 MISSION ?= dive240.mi
 
 SRCS = \
-    src/Application/command_line.c                      \
-    src/Common/angle_utils.c                            \
-    src/Common/random_utils.c                           \
-    src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c    \
-    src/Odyssey/odyssey_config.c                        \
-    src/Odyssey/odyssey_control.c                       \
-    src/Odyssey/odyssey_data_logger.c                   \
-    src/Odyssey/odyssey_data_struct.c                   \
-    src/Odyssey/odyssey_mission.c                       \
-    src/Odyssey/odyssey_model.c                         \
-    src/Odyssey/odyssey_nav.c                           \
-    src/Odyssey/odyssey_sim.c                           \
-    src/Odyssey/vehicle.c                               \
-    src/Odyssey/Sensors/odyssey_sensors.c               \
-    src/Odyssey/Sensors/odyssey_sensors_ahrs.c          \
-    src/Odyssey/Sensors/odyssey_sensors_depth.c         \
-    src/Odyssey/Sensors/odyssey_sensors_lbl.c           \
-    src/Odyssey/Sensors/odyssey_sensors_usbl.c          \
-    src/Odyssey/Sensors/odyssey_sensors_water.c         \
-    src/Simulation/sim_behavior_logger.c                \
-    src/Simulation/sim_config.c                         \
-    src/Simulation/sim_exit.c                           \
-    src/Simulation/sim_log.c                            \
-    src/Simulation/sim_orchestrator.c                   \
-    src/Simulation/sim_state.c                          \
+    src/Application/command_line.c                          \
+    src/Common/angle_utils.c                                \
+    src/Common/random_utils.c                               \
+    src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
+    src/Odyssey/odyssey_config.c                            \
+    src/Odyssey/odyssey_control.c                           \
+    src/Odyssey/odyssey_data_logger.c                       \
+    src/Odyssey/odyssey_data_struct.c                       \
+    src/Odyssey/odyssey_mission.c                           \
+    src/Odyssey/odyssey_model.c                             \
+    src/Odyssey/odyssey_sim.c                               \
+    src/Odyssey/vehicle.c                                   \
+    src/Odyssey/Navigation/odyssey_nav.c                    \
+    src/Odyssey/Navigation/odyssey_nav_dead_reckoning.c     \
+    src/Odyssey/Sensors/odyssey_sensors.c                   \
+    src/Odyssey/Sensors/odyssey_sensors_ahrs.c              \
+    src/Odyssey/Sensors/odyssey_sensors_depth.c             \
+    src/Odyssey/Sensors/odyssey_sensors_lbl.c               \
+    src/Odyssey/Sensors/odyssey_sensors_usbl.c              \
+    src/Odyssey/Sensors/odyssey_sensors_water.c             \
+    src/Simulation/sim_behavior_logger.c                    \
+    src/Simulation/sim_config.c                             \
+    src/Simulation/sim_exit.c                               \
+    src/Simulation/sim_log.c                                \
+    src/Simulation/sim_orchestrator.c                       \
+    src/Simulation/sim_state.c                              \
     sim.c                   \
     sim_conduct.c           \
     sensor_load.c           \
