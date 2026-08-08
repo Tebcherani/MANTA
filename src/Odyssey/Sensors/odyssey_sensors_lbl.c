@@ -37,18 +37,17 @@ void update_lbl_sensor() {
     static int gotReply[5], cycle_number = 0;
     static double memo1[5];
     static double north[5], east[5], depth[5], tat[5];
-    static double last_cycle_time, cycle_time, lbl_cycle, next_ping = 0;
+    static double cycle_time, next_ping = 0;
     static double sound_speed, timeout, percent_bias, percent_dropout;
     static double bias_amplitude, noise_amplitude;
     static double north_ping, east_ping, depth_ping;
 
-    int i, j, offset;
+    int i, offset;
     double dist1, dist2, time_of_flight;
     double since_cycle, present_time;
     double noise, bias;
 
     if (uninitialized) {
-        lbl_cycle = read_sensor(U_LBL_CYCLE);
         sound_speed = read_sensor(U_SPEED_OF_SOUND);
         num_beacons = (int) read_sensor(U_LBL_BEACON_NUMBER);
         timeout = read_sensor(U_LBL_TIMEOUT);
@@ -56,7 +55,6 @@ void update_lbl_sensor() {
         percent_dropout = read_sensor(REAL_LBL_FRAC_DROPOUT);
         bias_amplitude = read_sensor(REAL_LBL_BIAS_AMPLITUDE);   // mSec
         noise_amplitude = read_sensor(REAL_LBL_TIMING_NOISE);    // mSec
-        last_cycle_time = 0.0;
 
         for (i = 1, offset = 0; i <= num_beacons; i++) {
             gotReply[i] = 0;

@@ -604,7 +604,7 @@ int survey_dead_reckon( struct behavior *b, int priority, int level )
     register struct command *cmd = &vvp->c[priority];
     enum { T_HEAD, T_TIME, L1_HEAD, L1_TIME, L2_HEAD, L2_TIME, CYCLE,
 	   DEPTH, T_SPEED, S_SPEED };
-    double elapsed = 0, heading, speed, frac, period, ipart;
+    double elapsed = 0, frac, period, ipart;
 
     switch ( b->state )
     {	

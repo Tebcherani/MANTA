@@ -15,15 +15,11 @@
 #include "odyssey_data_struct.h"
 #include "vehicle.h"
 
-static int MonitorLBLSim = 2;	/* output to logfile */
-
 /* ============================================================ */
 /* Display & clear modem send string.                           */
 
 int handle_modem(void)
 {
-    int monitor_high_level_control = 0;
-
     if( strlen(vvp->modem_send) > 0 )
     {
 	strcpy( vvp->modem_send, "" ); 

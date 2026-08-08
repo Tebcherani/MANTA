@@ -27,7 +27,6 @@ static const double rho = 1.025e3;  /* kg/m^3 seawater density */
 
 				/* global variables */
 static traj_t h_traj, d_traj;
-static int MonitorTraj = 0;
 
 /*-----------------------------------------------------------------------*
   dynamic_control: PID controller of heading and depth (inner & outer loops

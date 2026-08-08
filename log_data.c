@@ -38,7 +38,6 @@ int log_data( FILE *datafile )
     static int first = 1;
     static float last_elapsed_time=0.0;   /* for debugging data logging */
     float temp_float;
-    int dummy;
     int my_start_time;
 
 #ifdef NO_DATA_LOGGING
@@ -61,9 +60,9 @@ int log_data( FILE *datafile )
     update_tab( read_sensor(M_DEPTH) );
 
 				/* first write the flag (use 10001) */
-    dummy = fwrite( (void *) &flag, 2, 1, datafile);
+    fwrite( (void *) &flag, 2, 1, datafile);
 
-    dummy = fwrite( (void *) &last_elapsed_time, 4, 1, datafile);  
+    fwrite( (void *) &last_elapsed_time, 4, 1, datafile);  
 
 /* need to modify to write only those values that have changed since
    the last read (use >= to write every value the first time through)
@@ -73,7 +72,7 @@ int log_data( FILE *datafile )
     {
 	if ( sensor_time(i) >= sensor_time(M_PRESENT_TIME) )
 	{
-	    dummy = fwrite( (void *) &i, 2, 1, datafile );
+	    fwrite( (void *) &i, 2, 1, datafile );
 
 	    temp_float = (float) read_sensor(i); 
 	    fwrite((void *) &temp_float, 4, 1, datafile); 
@@ -196,7 +195,6 @@ FILE *init_data_logging( char *DataFileName )
     FILE *datafile;
     int i=0, j, beh_id, offset;
     char time_string[30], fname_string[32];
-    int dummy;
 
     time_t t;  
     struct tm *tp; 

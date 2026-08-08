@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "odyssey_data_struct.h"
 #include "odyssey_nav.h"
 #include "vehicle.h"
