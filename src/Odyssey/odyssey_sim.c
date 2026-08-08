@@ -47,10 +47,11 @@ static int init_odyssey_config(odyssey_config_t *config) {
     return 1;
 }
 
-int init_odyssey_sim(odyssey_config_t *config) {
+int init_odyssey_sim(odyssey_config_t *config, const command_line_options_t *options) {
     if (!init_odyssey_config(config)) return 0;
     if (!init_odyssey_data_structure()) return 0;
     if (!init_odyssey_model(config->model_path)) return 0;
+    if (!init_odyssey_mission(options->mission_file, config->mission_dir)) return 0;
 
     return 1;
 }
