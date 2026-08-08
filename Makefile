@@ -41,6 +41,7 @@ SRCS = \
     src/Odyssey/odyssey_model.c                         \
     src/Odyssey/odyssey_nav.c                           \
     src/Odyssey/odyssey_sim.c                           \
+    src/Odyssey/vehicle.c                               \
     src/Odyssey/Sensors/odyssey_sensors.c               \
     src/Odyssey/Sensors/odyssey_sensors_ahrs.c          \
     src/Odyssey/Sensors/odyssey_sensors_depth.c         \
@@ -62,7 +63,6 @@ SRCS = \
     log_data.c              \
     load_mission.c          \
     paths.c                 \
-    vehicle.c               \
     lbl.c                   \
     lbl_nav.c               \
     waypoint.c              \

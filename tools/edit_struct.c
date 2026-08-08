@@ -789,8 +789,8 @@ main( int argc, char **argv )
 	*lfile_name = "data_list",
 	*sfile_name = "sensors",
 	*bfile_name = "behaviors",
-	*hfile_name = "vehicle.h",
-	*cfile_name = "vehicle.c";
+	*hfile_name = "src/Odyssey/vehicle.h",
+  *cfile_name = "src/Odyssey/vehicle.c";
 				/* time stamp vars */
     struct tm *tp;
     time_t now;
