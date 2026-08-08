@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "command_line.h"
-#include "odyssey_log.h"
 #include "sim_behavior_logger.h"
 #include "sim_exit.h"
 #include "sim_log.h"
@@ -31,7 +30,6 @@ void exit_sim(int exit_status, int mission_started) {
         write_tab();
     }
 
-    if (close_odyssey_log() != 0) cleanup_failed = 1;
     if (close_sim_log() != 0) cleanup_failed = 1;
 
     if (cleanup_failed) exit(EXIT_FAILURE);

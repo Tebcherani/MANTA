@@ -33,8 +33,6 @@
 #include "common_defs.h"
 #include "vehicle.h"
 #include "odyssey_data_struct.h"
-#include "odyssey_log.h"
-
 
 /*-----------------------------------------------------------------------*
  | structure of this file: 

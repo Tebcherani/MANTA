@@ -37,7 +37,6 @@ SRCS = \
     src/Odyssey/odyssey_control.c                       \
     src/Odyssey/odyssey_data_logger.c                   \
     src/Odyssey/odyssey_data_struct.c                   \
-    src/Odyssey/odyssey_log.c                           \
     src/Odyssey/odyssey_mission.c                       \
     src/Odyssey/odyssey_model.c                         \
     src/Odyssey/odyssey_nav.c                           \

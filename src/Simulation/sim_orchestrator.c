@@ -12,7 +12,6 @@
 #include "odyssey_config.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_data_logger.h"
-#include "odyssey_log.h"
 #include "odyssey_mission.h"
 #include "odyssey_model.h"
 #include "odyssey_sim.h"
@@ -50,7 +49,6 @@ int main(int argc, char *argv[]) {
 
     if (open_sim_log() != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_sim_config(&sim_config) != 0) exit_sim(EXIT_FAILURE, mission_started);
-    if (open_odyssey_log() != 0) exit_sim(EXIT_FAILURE, mission_started);
     if (init_odyssey_config() != 0) exit_sim(EXIT_FAILURE, mission_started);
     init_data_structure();
     if (init_sim_state(&sim_state) != 0) exit_sim(EXIT_FAILURE, mission_started);

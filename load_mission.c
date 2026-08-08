@@ -14,7 +14,6 @@
 #include "odyssey_data_struct.h"
 #include "paths.h"
 #include "vehicle.h"
-#include "odyssey_log.h"
 #include "common_defs.h"
 
 static int match_behavior(const char *name);

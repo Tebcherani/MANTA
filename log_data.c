@@ -17,7 +17,6 @@
 #include "vehicle.h"
 #include "odyssey_config.h"
 #include "paths.h"
-#include "odyssey_log.h"
 #include "odyssey_data_struct.h"
 
 
