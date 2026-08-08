@@ -12,7 +12,7 @@ static void ABmat(double r[], lbl_t *lbl, double A[NXP][3], double B[]);
 static double atan2_fix(double x, double y);
 static range_status_t check_range(double r, double t, int channel, lbl_t *lbl);
 static void chside(vector_t *xhat, lbl_t *lbl);
-static void compute_lbl_fix(double rxyz[], lbl_t *lbl, double t, fix_t *fix, int noisy);
+static void compute_lbl_fix(double rxyz[], lbl_t *lbl, double t, fix_t *fix);
 static void copy_vector( vector_t *dest, vector_t *source );
 static double det3(double a[][3]);
 static int findwrst(lbl_t *lbl,double r[]);
@@ -88,7 +88,7 @@ static void ABE_LBL(void) {
         lblenv.xhat.x = read_sensor(M_POS_N);
         lblenv.xhat.y = read_sensor(M_POS_E);
 
-	    compute_lbl_fix(slant, &lblenv, read_sensor(M_PRESENT_TIME), &fix, 1);
+	    compute_lbl_fix(slant, &lblenv, read_sensor(M_PRESENT_TIME), &fix);
 
 		// Log the fix and its status
 	    update_sensor(LBL_FIX_ERR, lblenv.error);
@@ -183,7 +183,7 @@ static void chside(vector_t *xhat, lbl_t *lbl)
     lbl->side = (distance_from_baseline < 0.0) ? CW : CCW ;
 }
 
-static void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix, int noisy )
+static void compute_lbl_fix( double rxyz[], lbl_t *lbl, double t, fix_t *fix)
 {
     double r[NXP], dz;
     int i, i0,i1, ngood, iworst, result;
