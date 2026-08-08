@@ -18,7 +18,6 @@ void LBL_position(void);
 struct behavior;
                                 /* main.c */
 void exit_gracefully( int );
-void simple_dead_reckoning( void );
                                 /* dynamic_control.c */
 void dynamic_control( void );
 double limit( double, double, double );

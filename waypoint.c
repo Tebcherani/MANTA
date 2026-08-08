@@ -125,21 +125,3 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	break;
     }
 }
-
-
-void simple_dead_reckoning( void )
-{
-    double ds, dn, de;
-
-    ds = read_sensor(M_DT)*read_sensor(M_WATER_SPEED)*cos(read_sensor(M_PITCH));
-    dn = ds*cos(read_sensor(M_YAW));
-    de = ds*sin(read_sensor(M_YAW));
-				/* store DR deltas for all to use */
-    update_sensor( M_DR_DN, dn );
-    update_sensor( M_DR_DE, de );
-				/* update DR position */
-    add_to_sensor( M_DR_NORTH, dn );
-    add_to_sensor( M_DR_EAST,  de );
-
-	return 0;
-}
