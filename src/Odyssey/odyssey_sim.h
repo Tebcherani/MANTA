@@ -10,7 +10,7 @@ typedef struct {
     const char *model_path;
 } odyssey_config_t;
 
-int init_odyssey_sim(odyssey_config_t *config, const command_line_options_t *options);
+int init_odyssey_sim(odyssey_config_t *config, const command_line_options_t *options, char *data_file_name, size_t data_file_name_size, FILE **data_file);
 int update_odyssey_sim_cycle(void);
 
 #endif /* ODYSSEY_SIM_H */

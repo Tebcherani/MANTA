@@ -7,13 +7,12 @@
 #include "sim_log.h"
 #include "vehicle.h"
 
-extern FILE *datafile;
 extern command_line_options_t options;
 
 int handle_modem(void);
 int write_tab(const odyssey_config_t *config);
 
-void exit_sim(int exit_status, int mission_started, const odyssey_config_t *config) {
+void exit_sim(int exit_status, int mission_started, FILE *datafile, const odyssey_config_t *config) {
     int cleanup_failed = 0;
 
     if (datafile != NULL) {

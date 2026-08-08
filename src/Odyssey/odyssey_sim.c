@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "odyssey_control.h"
+#include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_model.h"
 #include "odyssey_mission.h"
@@ -47,12 +48,13 @@ static int init_odyssey_config(odyssey_config_t *config) {
     return 1;
 }
 
-int init_odyssey_sim(odyssey_config_t *config, const command_line_options_t *options) {
+int init_odyssey_sim(odyssey_config_t *config, const command_line_options_t *options, char *data_file_name, size_t data_file_name_size, FILE **data_file) {
     if (!init_odyssey_config(config)) return 0;
     if (!init_odyssey_data_structure()) return 0;
     if (!init_odyssey_model(config->model_path)) return 0;
     if (!init_odyssey_mission(options->mission_file, config->mission_dir)) return 0;
     if (!load_faults(options->fault_file ? options->fault_file : vvp->fault_file_name, &config)) return 0;
+    if (!init_odyssey_data_logger(data_file_name, data_file, config, options->mission_file)) return 0;
 
     return 1;
 }
