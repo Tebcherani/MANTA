@@ -14,6 +14,7 @@
 #include "odyssey_mission.h"
 #include "vehicle.h"
 #include "angle_utils.h"
+#include "unit_utils.h"
 
 /*----------------------------------------------------------------------*
   WAYPOINT_2D: attempts to achieve a position using the specified direction
@@ -115,7 +116,7 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 				   desired */
 	    kxte   = bArg(GAIN) * xte ;
 
-	    if ( fabs(kxte) < D2R(90) )
+	    if ( fabs(kxte) < convert_deg_to_rad(90) )
 		cmd->heading[0] = wrap_angle( psi_t + kxte );
 	    else
 		cmd->heading[0] = atan2( -de, -dn );

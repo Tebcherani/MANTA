@@ -12,6 +12,7 @@
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "vehicle.h"
+#include "unit_utils.h"
 #include "angle_utils.h"
 
 int getXSDataByte( void );
@@ -126,7 +127,7 @@ int whoi_homing( struct behavior *b, int priority, int level )
 
 				/* look for new usbl data and nonzero az */
     new_data = read_sensor(M_USBL_TIME) > LAST_TM[idreg];
-    if ( new_data && fabs(read_sensor(M_USBL_AZIMUTH)) > D2R(0.01) )
+    if ( new_data && fabs(read_sensor(M_USBL_AZIMUTH)) > convert_deg_to_rad(0.01) )
 
 	T_LAST_TM[idreg] = read_sensor(M_PRESENT_TIME);
 
@@ -173,8 +174,8 @@ void home_in( struct behavior *b, int priority, int level )
     int use_cnav;
 
 				/* validate data & use if OK */
-    if ( (fabs(read_sensor(M_INERTIAL_AZ)) > D2R(0.01)) &&
-	 (fabs(read_sensor(M_INERTIAL_AZ)) < D2R(89.0)) )
+    if ( (fabs(read_sensor(M_INERTIAL_AZ)) > convert_deg_to_rad(0.01)) &&
+	 (fabs(read_sensor(M_INERTIAL_AZ)) < convert_deg_to_rad(89.0)) )
 
 	az = read_sensor(M_INERTIAL_AZ);
 
@@ -182,8 +183,8 @@ void home_in( struct behavior *b, int priority, int level )
 	az = AZ_LAST[idreg];
 
 				/* validate data & use if OK */
-    if ( (fabs(read_sensor(M_INERTIAL_EL)) > D2R(0.01)) &&
-	 (fabs(read_sensor(M_INERTIAL_EL)) < D2R(89.0)) )
+    if ( (fabs(read_sensor(M_INERTIAL_EL)) > convert_deg_to_rad(0.01)) &&
+	 (fabs(read_sensor(M_INERTIAL_EL)) < convert_deg_to_rad(89.0)) )
 
 	el = read_sensor(M_INERTIAL_EL);
 

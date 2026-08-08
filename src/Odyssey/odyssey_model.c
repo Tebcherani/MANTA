@@ -10,11 +10,10 @@
 #include "odyssey_model.h"
 #include "ody_var.h"
 #include "sim_log.h"
+#include "unit_utils.h"
 #include "vehicle.h"
 
 static odyssey_state_t state;
-
-int convert_units(const char *expected, const char *given, const double inval, double *outval);
 
 int init_odyssey_model(const char *path) {
     FILE *fptr;

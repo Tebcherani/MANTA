@@ -8,15 +8,16 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "angle_utils.h"
 #include "common_defs.h"
+#include "unit_utils.h"
 #include "odyssey_data_struct.h"
 #include "vehicle.h"
 #include "whoi_traj.h"
-#include "angle_utils.h"
 
-#define FIN_LIMIT D2R(30)	/* maximum fin deflection */
-#define P_INT_LIM D2R(10)	/* limit on pitch integrator */
-#define H_INT_LIM D2R( 5)	/* limit on hdg */
+#define FIN_LIMIT convert_deg_to_rad(30)	/* maximum fin deflection */
+#define P_INT_LIM convert_deg_to_rad(10)	/* limit on pitch integrator */
+#define H_INT_LIM convert_deg_to_rad( 5)	/* limit on hdg */
 
 static double sgn(double x);
 
@@ -52,7 +53,7 @@ void dynamic_control( void )
 				   the controller is radian based.  Later
 				   in limit check compares a radian value
 				   to "30" */
-    pitch_limit = D2R( read_sensor(UO_CONTROL_PITCH_LIM) );
+    pitch_limit = convert_deg_to_rad( read_sensor(UO_CONTROL_PITCH_LIM) );
     kph = read_sensor( UO_CONTROL_KPH );
     kdh = read_sensor( UO_CONTROL_KDH );
     kih = read_sensor( UO_CONTROL_KIH );
@@ -156,7 +157,7 @@ void dynamic_control( void )
 	if ( fabs(d_traj.xdot) < .01 )
 	{
 	    add_to_sensor( D_INTEGRAL, read_sensor(UO_DEPTH_INT_K)*err_depth*dt );
-	    update_sensor( D_INTEGRAL, limit(read_sensor(D_INTEGRAL), D2R(5), -D2R(5)) );
+	    update_sensor( D_INTEGRAL, limit(read_sensor(D_INTEGRAL), convert_deg_to_rad(5), -convert_deg_to_rad(5)) );
 	}
 
 	des_pitch = read_sensor(UO_DEPTH_MAP_K)*err_depth + read_sensor(D_INTEGRAL);
@@ -226,7 +227,7 @@ void dynamic_control( void )
 
         rudder = read_sensor(C_RUDDER_ANGLE);
 
-	if ( fabs(h_traj.xdot) < D2R(1) )
+	if ( fabs(h_traj.xdot) < convert_deg_to_rad(1) )
 	{
 
 	    if ( (fabs(rudder) < FIN_LIMIT) || (fabs(kih) <= 1e-6) )

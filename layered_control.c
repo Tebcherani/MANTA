@@ -25,6 +25,7 @@
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "angle_utils.h"
+#include "unit_utils.h"
 
 int getXSDataByte( void );
 static int behavior_axis_mask( int behavior_id );
@@ -339,8 +340,8 @@ int ascend( struct behavior *b, int priority, int level )
 	if ( commandedAbort )
 	{
 	    if ( fabs(bArg(RUDDER)) < 1e-6 )
-		 bArg(RUDDER) = D2R(10);
-	    bArg(PITCH) = D2R(30);
+		 bArg(RUDDER) = convert_deg_to_rad(10);
+	    bArg(PITCH) = convert_deg_to_rad(30);
 	}
     }
     if ( b->state == B_ACTIVE )

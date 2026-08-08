@@ -15,15 +15,12 @@
 #include "paths.h"
 #include "vehicle.h"
 #include "common_defs.h"
+#include "unit_utils.h"
 
 static int match_behavior(const char *name);
 static int match_behavior_arg(const char *name, int b_index);
 static int skip_comments(FILE *file);
 
-
-				/* prototypes */
-int convert_units( const char *, const char *, const double,
-			  double * );
 				/* externals local to this file */
 static char linebuf[MAX_LINE], fullpath[MAX_LINE];
 static char loaded_mission_fname[MAX_FILE_NAME] = "";
@@ -512,42 +509,6 @@ static int match_behavior_arg( const char *name, int b_index )
             return i;
     }
     return -1;
-}
-
-/*----------------------------------------------------------------------*
-  CONVERT_UNITS: compare expected and actual units, convert if they
-  differ.  Upon successful conversion, return 0.  Upon unknown
-  conversion, return -1.
-
-  B. Moran, 18 jan 95
- *----------------------------------------------------------------------*/
-
-int convert_units( const char *expected, const char *given,
-			  const double inval, double *outval )
-{
-    int error = 0;
-                                /* if they differ, then check for cases */
-    if ( strcmp(expected, given) != 0 )
-    {
-        if ( !strncmp( expected, "(rad", 4 ) &&
-             !strncmp( given, "(deg", 4 ) )
-            *outval = D2R(inval);
-        else if ( !strncmp( expected, "(deg", 4 ) &&
-                  !strncmp( given, "(rad", 4 ) )
-            *outval = R2D(inval);
-	else if ( !strncmp(expected, "(m", 2) &&
-		  !strncmp(given, "(km", 3) )
-	    *outval = 1000*inval;
-	else if ( !strncmp(expected, "(km", 3) &&
-		  !strncmp(given, "(m", 2) )
-	    *outval = 0.001*inval;
-        else
-            error = -1;		/* differ, but unknown conversion */
-    }
-    else                        /* otherwise just transfer directly */
-        *outval = inval;
-
-    return error;
 }
 
 
