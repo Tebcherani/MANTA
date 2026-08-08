@@ -10,27 +10,15 @@ static char path[PATH_SIZE];
 int open_sim_log(void) {
     // Get simulation log file path from Docker compose
     const char *path_ptr = getenv("SIM_LOG_PATH");
-    if (path_ptr == NULL || path_ptr[0] == '\0') {
-        fprintf(stderr, "SIM_LOG_PATH environment variable is not set.\n");
-        return -1;
-    }
+    if (path_ptr == NULL || path_ptr[0] == '\0') return -1;
 
     int result = snprintf(path, sizeof(path), "%s", path_ptr);
-    if (result < 0 || (size_t)result >= sizeof(path)) {
-        fprintf(stderr, "SIM_LOG_PATH exceeds the maximum supported length.\n");
-        return -1;
-    }
+    if (result < 0 || (size_t)result >= sizeof(path)) return -1;
 
     // Open simulation log file
     file = fopen(path, "w");
     if (file == NULL) {
         perror(path);
-        return -1;
-    }
-
-    if (write_to_sim_log("Simulation log opened: %s\n\n", path) != 0) {
-        fclose(file);
-        file = NULL;
         return -1;
     }
 

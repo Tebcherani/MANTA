@@ -54,7 +54,7 @@ int init_data_structure() {
 
     strcpy(vvv.creation_date, creation_date);
 
-    return 1;
+    return 0;
 }
 
 double read_sensor(int sensor_name) {
