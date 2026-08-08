@@ -53,37 +53,43 @@ const char *get_mission_file_path( void )
   B. A. Moran, 29-May-1997
   -----------------------------------------------------------------------*/
 
-int load_mission( const char *fname )
-{
-				/* prototypes */
-    int read_flags( FILE *fptr );
-    int read_state( FILE *fptr );
-				/* locals */
+int load_mission(const char *fname) {
     FILE *fptr;
-    int error = -1;
 
-				/* construct full path to mission file */
-    if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
-	strcpy( fullpath, fname );
+    if (ody_path_is_explicit(fname) || ody_file_exists(fname))
+        strcpy(fullpath, fname);
     else
-	ody_join_path( fullpath, sizeof(fullpath), MISSION_DIR, fname );
-    strncpy( loaded_mission_fname, fname, sizeof(loaded_mission_fname) - 1 );
+        ody_join_path(fullpath, sizeof(fullpath), MISSION_DIR, fname);
+
+    strncpy(loaded_mission_fname, fname, sizeof(loaded_mission_fname) - 1);
     loaded_mission_fname[sizeof(loaded_mission_fname) - 1] = '\0';
-    strncpy( loaded_mission_path, fullpath, sizeof(loaded_mission_path) - 1 );
+
+    strncpy(loaded_mission_path, fullpath, sizeof(loaded_mission_path) - 1);
     loaded_mission_path[sizeof(loaded_mission_path) - 1] = '\0';
-    if ( (fptr = fopen(fullpath, "r")) == NULL )
-    {
-	return error;
+
+    fptr = fopen(fullpath, "r");
+
+    if (fptr == NULL) {
+        write_to_sim_log("[load_mission.c] Failed to open mission file.\n");
+        return 0;
     }
 
-				/* read flags then state (flags error
-				   prevents reading state) */
-    if ( !read_flags(fptr) && !read_state(fptr) )
-	error = 0;
+    if (read_flags(fptr) != 0) {
+        write_to_sim_log("[load_mission.c] Failed to read mission flags.\n");
+        fclose(fptr);
+        return 0;
+    }
 
-				/* close file, return error value */
-    fclose( fptr );
-    return error;
+    if (read_state(fptr) != 0) {
+        write_to_sim_log("[load_mission.c] Failed to read mission state.\n");
+        fclose(fptr);
+        return 0;
+    }
+
+    fclose(fptr);
+
+    write_to_sim_log("[load_mission.c] Mission loaded.\n");
+    return 1;
 }
 
 /*-------------------------------------------------------------------------

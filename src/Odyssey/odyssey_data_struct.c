@@ -4,6 +4,7 @@
 
 #include "common_defs.h"
 #include "odyssey_data_struct.h"
+#include "sim_log.h"
 #include "vehicle.h"
 
 static void copy_name(char *dest, size_t dest_size, const char *src);
@@ -54,7 +55,8 @@ int init_data_structure() {
 
     strcpy(vvv.creation_date, creation_date);
 
-    return 0;
+    write_to_sim_log("[odyssey_data_struct.c] Ody data struct initialized.\n");
+    return 1;
 }
 
 double read_sensor(int sensor_name) {

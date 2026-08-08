@@ -19,12 +19,21 @@ int match_sensor(const char *name);
 int load_vehicle_def(const char *fname);
 
 int init_odyssey_model(void) {
-    const char *model_path = getenv("VEHICLE_PATH");
-    if (model_path == NULL || model_path[0] == '\0') return -1;
+    const char *model_path;
 
-    if (load_vehicle_def(model_path) != 0) return -1;
+    model_path = getenv("VEHICLE_PATH");
+    if (model_path == NULL || model_path[0] == '\0') {
+        write_to_sim_log("[odyssey_model.c] VEHICLE_PATH is not set.\n");
+        return 0;
+    }
 
-    return 0;
+    if (load_vehicle_def(model_path) != 0) {
+        write_to_sim_log("[odyssey_model.c] Failed to load vehicle definition.\n");
+        return 0;
+    }
+
+    write_to_sim_log("[odyssey_model.c] Ody model initialized.\n");
+    return 1;
 }
 
 int init_odyssey_state(void) {
@@ -48,7 +57,8 @@ int init_odyssey_state(void) {
     state.force_moment[2] = read_sensor(REAL_V);
     state.force_moment[3] = read_sensor(REAL_W);
     
-    return 0;
+    write_to_sim_log("[odyssey_model.c] Ody state initialized.\n");
+    return 1;
 }
 
 int update_odyssey_state(double timestep) {

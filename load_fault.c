@@ -105,11 +105,6 @@ const char *get_fault_file_path( void )
     return loaded_path;
 }
 
-/*--------------------------------------------------------------------
-  LOAD_FAULTS
-  Call once after load_mission().  Returns 0 on success, -1 on error.
-  A missing fault file is not an error -- fault injection is optional.
- --------------------------------------------------------------------*/
 int load_faults( const char *fname )
 {
     FILE *fp;
@@ -121,8 +116,9 @@ int load_faults( const char *fname )
     loaded_path[0] = '\0';
     vvp->fault_file_name[0] = '\0';
 
-    if ( fname == NULL || fname[0] == '\0' ) {
-        return 0;
+    if (fname == NULL || fname[0] == '\0') {
+        write_to_sim_log("[load_faults.c] No fault file specified.\n");
+        return 1;
     }
 
     strncpy( loaded_fname, fname, sizeof(loaded_fname) - 1 );
@@ -135,8 +131,10 @@ int load_faults( const char *fname )
 	ody_join_path( fullpath, sizeof(fullpath), SFAULT_DIR, fname );
     strncpy( loaded_path, fullpath, sizeof(loaded_path) - 1 );
 
-    if ( (fp = fopen(fullpath, "r")) == NULL ) {
-        return 0;   /* optional -- not an error */
+    fp = fopen(fullpath, "r");
+    if (fp == NULL) {
+        write_to_sim_log("[load_faults.c] Optional fault file not found.\n");
+        return 1;
     }
 
     while ( fgets(linebuf, sizeof(linebuf), fp) ) {
@@ -144,19 +142,26 @@ int load_faults( const char *fname )
         linebuf[ strcspn(linebuf, "\r\n") ] = '\0';
         if ( linebuf[0] == '#' || linebuf[0] == '\0' ) continue;
 
-        if ( strncmp(linebuf, "fault:", 6) != 0 ) {
-            fclose(fp); return -1;
+        if (strncmp(linebuf, "fault:", 6) != 0) {
+            write_to_sim_log("[load_faults.c] Invalid fault rule.\n");
+            fclose(fp);
+            return 0;
         }
-        if ( n_rules >= MAX_FAULT_RULES ) {
-            fclose(fp); return -1;
+
+        if (n_rules >= MAX_FAULT_RULES) {
+            write_to_sim_log("[load_faults.c] Too many fault rules.\n");
+            fclose(fp);
+            return 0;
         }
 
         cond_str = linebuf + 6;
         while ( *cond_str == ' ' || *cond_str == '\t' ) cond_str++;
 
         arrow = strstr( cond_str, "->" );
-        if ( !arrow ) {
-            fclose(fp); return -1;
+        if (arrow == NULL) {
+            write_to_sim_log("[load_faults.c] Fault rule is missing '->'.\n");
+            fclose(fp);
+            return 0;
         }
 
         /* trim trailing whitespace from condition string */
@@ -172,12 +177,16 @@ int load_faults( const char *fname )
             FaultRule *r = &rules[n_rules];
             memset( r, 0, sizeof(FaultRule) );
 
-            if ( parse_condition(cond_str, &r->cond) != 0 ) {
-                fclose(fp); return -1;
+            if (parse_condition(cond_str, &r->cond) != 0) {
+                write_to_sim_log("[load_faults.c] Failed to parse fault condition.\n");
+                fclose(fp);
+                return 0;
             }
-            if ( parse_actions(act_str, MAX_ACT_TERMS,
-                               r->action, &r->n_actions) != 0 ) {
-                fclose(fp); return -1;
+
+            if (parse_actions(act_str, MAX_ACT_TERMS, r->action, &r->n_actions) != 0) {
+                write_to_sim_log("[load_faults.c] Failed to parse fault actions.\n");
+                fclose(fp);
+                return 0;
             }
 
             n_rules++;
@@ -185,6 +194,8 @@ int load_faults( const char *fname )
     }
 
     fclose(fp);
+
+    write_to_sim_log("[load_faults.c] Faults loaded.\n");
     return 0;
 }
 

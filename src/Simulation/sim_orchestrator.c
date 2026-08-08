@@ -47,41 +47,21 @@ int main(int argc, char *argv[]) {
         return EXIT_SUCCESS;
     }
 
-    if (open_sim_log() == 0) write_to_sim_log("\nSim log opened.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (init_sim_config(&sim_config) == 0) write_to_sim_log("Sim config complete.\n"); 
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (init_odyssey_sim() == 0) write_to_sim_log("Odyssey sim initialized.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (init_data_structure() == 0) write_to_sim_log("Data structure initialized.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (init_sim_state(&sim_state) == 0) write_to_sim_log("Sim state initialized.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (init_odyssey_model() == 0) write_to_sim_log("Odyssey model initialized.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (load_mission((char *)options.mission_file) == 0) write_to_sim_log("Mission loaded.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name) == 0) write_to_sim_log("Faults loaded.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (init_odyssey_state() == 0) write_to_sim_log("Odyssey state initialized.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
-
-    if (init_odyssey_data_logger(DataFileName, &datafile) == 0) write_to_sim_log("Odyssey data logger initialized.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
+    if (!open_sim_log()) exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_odyssey_sim()) exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_data_structure()) exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_odyssey_model()) exit_sim(EXIT_FAILURE, mission_started);
+    if (!load_mission((char *)options.mission_file)) exit_sim(EXIT_FAILURE, mission_started);
+    if (!load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name)) exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_odyssey_state()) exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_odyssey_data_logger(DataFileName, &datafile)) exit_sim(EXIT_FAILURE, mission_started);
 
     lhs();  // Initialize Odyssey dynamics
     write_to_sim_log("Odyssey dynamics initialized.\n");
 
-    if (init_mission_time(&sim_state) == 0) write_to_sim_log("Mission time initialized.\n");
-    else exit_sim(EXIT_FAILURE, mission_started);
+    if (!init_mission_time(&sim_state)) exit_sim(EXIT_FAILURE, mission_started);
 
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end

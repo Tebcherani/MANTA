@@ -61,17 +61,11 @@ int dump_behavior_log_json(const char *filename) {
     FILE *file;
     int entry_index;
 
-    if (filename == NULL || filename[0] == '\0') {
-        write_to_sim_log("Failed to dump behavior log: filename is empty.\n");
-        return -1;
-    }
+    if (filename == NULL || filename[0] == '\0') return -1;
 
     file = fopen(filename, "w");
 
-    if (file == NULL) {
-        write_to_sim_log("Failed to open behavior log file: %s\n", filename);
-        return -1;
-    }
+    if (file == NULL) return -1;
 
     fprintf(file, "[\n");
 
@@ -95,12 +89,7 @@ int dump_behavior_log_json(const char *filename) {
         fprintf(file, "\n");
     }
 
-    if (fclose(file) != 0) {
-        write_to_sim_log("Failed to close behavior log file: %s\n", filename);
-        return -1;
-    }
-
-    write_to_sim_log("Behavior log dumped to %s (%d entries).\n", filename, behavior_log_count);
+    if (fclose(file) != 0) return -1;
 
     return 0;
 }

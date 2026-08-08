@@ -26,7 +26,7 @@ void exit_sim(int exit_status, int mission_started) {
     if (mission_started) {
         handle_modem();
         if (options.behavior_dump_file[0] != '\0') dump_behavior_log_json(options.behavior_dump_file);
-        write_to_sim_log("Mission finished -- data file: %s\n", vvp->data_file_name);
+        write_to_sim_log("SIM: mission finished -- data file: %s\n", vvp->data_file_name);
         write_tab();
     }
 

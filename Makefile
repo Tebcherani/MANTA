@@ -33,6 +33,7 @@ SRCS = \
     src/Application/command_line.c                          \
     src/Common/angle_utils.c                                \
     src/Common/random_utils.c                               \
+    src/Common/sim_log.c                                    \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
     src/Odyssey/Behaviors/odyssey_behaviors_dock.c          \
     src/Odyssey/odyssey_config.c                            \
@@ -55,7 +56,6 @@ SRCS = \
     src/Simulation/sim_behavior_logger.c                    \
     src/Simulation/sim_config.c                             \
     src/Simulation/sim_exit.c                               \
-    src/Simulation/sim_log.c                                \
     src/Simulation/sim_orchestrator.c                       \
     src/Simulation/sim_state.c                              \
     sim.c                   \

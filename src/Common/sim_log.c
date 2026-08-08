@@ -8,21 +8,29 @@ static FILE *file = NULL;
 static char path[PATH_SIZE];
 
 int open_sim_log(void) {
-    // Get simulation log file path from Docker compose
-    const char *path_ptr = getenv("SIM_LOG_PATH");
-    if (path_ptr == NULL || path_ptr[0] == '\0') return -1;
+    const char *path_ptr;
+    int result;
 
-    int result = snprintf(path, sizeof(path), "%s", path_ptr);
-    if (result < 0 || (size_t)result >= sizeof(path)) return -1;
-
-    // Open simulation log file
-    file = fopen(path, "w");
-    if (file == NULL) {
-        perror(path);
-        return -1;
+    path_ptr = getenv("SIM_LOG_PATH");
+    if (path_ptr == NULL || path_ptr[0] == '\0') {
+        fprintf(stderr, "\n[sim_log.c] SIM_LOG_PATH is not set.\n");
+        return 0;
     }
 
-    return 0;
+    result = snprintf(path, sizeof(path), "%s", path_ptr);
+    if (result < 0 || (size_t)result >= sizeof(path)) {
+        fprintf(stderr, "\n[sim_log.c] Invalid log path.\n");
+        return 0;
+    }
+
+    file = fopen(path, "w");
+    if (file == NULL) {
+        fprintf(stderr, "\n[sim_log.c] Sim log failed to open.\n");
+        return 0;
+    }
+
+    write_to_sim_log("\n[sim_log.c] Sim log opened.\n");
+    return 1;
 }
 
 int close_sim_log(void) {
