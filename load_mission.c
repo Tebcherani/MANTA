@@ -701,7 +701,6 @@ static int skip_comments( FILE *file )
 	fprintf(stderr, "skip_comments() eof encountered\n");
 	return EOF;
     }
-    fprintf(syslog, "%s\n", line);
 				/* recursive call for next comment */
     return skip_comments(file);
 }
