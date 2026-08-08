@@ -275,18 +275,15 @@ int read_flags( FILE *fptr )
 	}
 #ifdef EDGEPS8000
 	if ( (sscanf(linebuf, "UseLBL %d", &value))==1) {
-	    UseLBL = value;
-	    fprintf(stderr, "UseLBL   %d\n", UseLBL);
+	    fprintf(stderr, "Ignoring obsolete UseLBL setting: %d\n", value);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "MonitorLBL %d", &value))==1) {
-	    MonitorLBL = value;
-	    fprintf(stderr, "MonitorLBL   %d\n", MonitorLBL);
+	    fprintf(stderr, "Ignoring obsolete MonitorLBL setting: %d\n", value);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "LBLTransponderMode %d", &value))==1) {
-	    LBLTransponderMode = value;
-	    fprintf(stderr, "LBLTransponderMode %d\n", LBLTransponderMode);
+	    fprintf(stderr, "Ignoring obsolete LBLTransponderMode setting: %d\n", value);
 	    continue;
 	}
 #endif
@@ -387,8 +384,7 @@ int read_flags( FILE *fptr )
 	}
 	if ( (sscanf(linebuf, "MonitorSim %d", &value))==1)
 	{
-	    MonitorSim = value;
-	    fprintf(stderr, "MonitorSim  %d\n", MonitorSim);
+	    fprintf(stderr, "Ignoring obsolete MonitorSim setting: %d\n", value);
 	    continue;
 	}
 	if ( (sscanf(linebuf, "AltimeterFrequency %d", &value))==1)

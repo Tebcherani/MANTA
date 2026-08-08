@@ -65,8 +65,6 @@ const double rho = 1.025e3;	/* kg/m^3 density of seawater */
 
 /*------------------- global variables -------------------------------*/
 
-int MonitorSim;   /* simulator enable / monitor flags */
-
 static double rhs[7];       /* calculated in hydro, used in motion */
 static double ainv[7][7];   /* calculated by lhs, used in motion */
 

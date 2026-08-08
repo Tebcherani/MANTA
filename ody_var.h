@@ -23,25 +23,8 @@ EXTERN int DeadManSwitchEnabled;  /* for aborting mission from RF modem */
 EXTERN int NewMissionFileEnabled; /* for reading new mission during run */
 EXTERN char MissionFileName[60];  
 
-/*---------------------------------------------------------------------*
- | For each vehicle system, we have four flags: Error, Status, Use, and
- | Monitor.   Error flags refer primarily to initialization, and will 
- | prevent a mission from proceeeding for a critical mission system. 
- | Status flags refer to sensor errors that occur during the main loop.
- |<In general, these won't turn off the device, because in most cases 
- | we could get in more trouble by simply turning the system off instead
- | of hoping the problem was a temporary glitch
- *---------------------------------------------------------------------*/
-				/* simulator mode */
-extern int MonitorSim;
-
 EXTERN int MonitorDataLogging;
 EXTERN int MonitorLayeredControl;
-
-#ifdef EDGEPS8000
-extern int LBLTransponderMode;  /* If mode = 0, then in pinger mode */
-extern int MonitorLBL, UseLBL;
-#endif
 
 				/* whoi_usbl */
 EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;
