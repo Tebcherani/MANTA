@@ -795,6 +795,8 @@ main( int argc, char **argv )
     struct tm *tp;
     time_t now;
     char cnow[32];
+    char config_file[MAX_LINE];
+
 				/* set default config name */
     strcpy( cfgs.name, VEHICLE_NAME );
 				/* parse command line */
@@ -815,11 +817,18 @@ main( int argc, char **argv )
     if ( verbose )
 	fprintf( stderr, "config: %s ...\n", cfgs.name );
 				/* read config file for list of configs */
-    load_configs( strcat(cfgs.name, ".cfg") );
+    snprintf(
+      config_file,
+      sizeof(config_file),
+      "tools/%s.cfg",
+      cfgs.name
+    );
+
+    load_configs(config_file);
                                 /* open $RCSfile: edit_struct.c,v $ (less
 				   prefix and ,v) in order to read the
 				   sensor and behavior lists */
-    sprintf( infile_name, "%.*s", strlen(rcsfile) - 14, rcsfile + 10 );
+    strcpy(infile_name, "tools/edit_struct.c");
     fin = fopen_fatal( infile_name, "r" );
 				/* open files for output */
     lfile = fopen_fatal( lfile_name, "w" );
@@ -833,7 +842,6 @@ main( int argc, char **argv )
     fputs( "#include <float.h>\n"
 	   "#include <stdio.h>\n"
      "#include <string.h>\n"
-	   "#include \"diagnostic.h\"\n"
 	   "#include \"ody_defs.h\"\n"
 	   "#include \"ody_types.h\"\n", cfile );
                                 /* jleonard EXTERN hack */
