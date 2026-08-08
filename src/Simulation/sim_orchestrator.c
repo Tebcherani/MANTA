@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     if (init_sim_config(&sim_config) == 0) write_to_sim_log("Sim config complete.\n"); 
     else exit_sim(EXIT_FAILURE, mission_started);
 
-    if (init_odyssey_config() == 0) write_to_sim_log("Odyssey config complete.\n");
+    if (init_odyssey_sim() == 0) write_to_sim_log("Odyssey sim initialized.\n");
     else exit_sim(EXIT_FAILURE, mission_started);
 
     if (init_data_structure() == 0) write_to_sim_log("Data structure initialized.\n");

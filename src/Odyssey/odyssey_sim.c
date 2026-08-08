@@ -10,7 +10,7 @@
 #include "vehicle.h"
 
 int init_odyssey_sim(void) {
-    return 0;
+    return init_odyssey_config();
 }
 
 int update_odyssey_sim_cycle(void) {
