@@ -41,7 +41,6 @@ int getXSDataByte( void )
 {
     int databyte = 0;
 
-#ifdef WHOI_LATCH
 				/* LSB is presence of pole */
     databyte |= read_sensor(M_POLE_PRESENT) > 0;
 				/* bits 1-2 are range from dock */
@@ -53,7 +52,6 @@ int getXSDataByte( void )
 	databyte |= 2;
 				/* bit 3 always high during missions */
     databyte |= 8;
-#endif
 				/* MSB high iff all else low */
     if ( !databyte )
 	databyte = 128;

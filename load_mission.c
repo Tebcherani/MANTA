@@ -446,7 +446,6 @@ int read_flags( FILE *fptr )
 	    continue;
 	}
 
-#if defined WHOI_LATCH
 	if ( sscanf(linebuf, "UseLatchMotor %d", &value) == 1 )
 	{
 	    fprintf(stderr, "Ignoring obsolete UseLatchMotor setting: %d\n", value);
@@ -457,7 +456,6 @@ int read_flags( FILE *fptr )
 	    fprintf(stderr, "Ignoring obsolete MonitorLatchMotor setting: %d\n", value);
     	continue;
 	}
-#endif /* WHOI_LATCH */
 
 	if ( strlen(linebuf) > 1 )
 	{
