@@ -7,16 +7,14 @@
 
 #include <math.h>
 #include <stdio.h>
-
-#include "paths.h"
-#include "odyssey_config.h"
-#include "odyssey_data_struct.h"
-#include "paths.h"
-#include "vehicle.h"
-
 #include <string.h>
 
-int stack_busy( struct command *cmd );
+#include "odyssey_config.h"
+#include "odyssey_control.h"
+#include "odyssey_data_struct.h"
+#include "vehicle.h"
+
+int stack_busy(struct command *cmd);
 
 /*----------------------------------------------------------------------*
   DOCK:  B.A. Moran, F.S. Hover, and H. Singh,  9 May 1997
@@ -28,9 +26,8 @@ int stack_busy( struct command *cmd );
     b_arg:                     speed(m/s)  0
   *---------------------------------------------------------------------*/
 
-int dock( struct behavior *b, int priority, int level )
-{
-    enum { IDLETIME, FWD_TIME, SPEED };
+int dock(struct behavior *b, int priority, int level) {
+    enum {IDLETIME, FWD_TIME, SPEED};
     struct command *cmd = &vvp->c[priority];
 
 /* If any other behavior above us don't execute.  Dock wants to do this
@@ -41,18 +38,15 @@ int dock( struct behavior *b, int priority, int level )
    whoi_homing should immediately satisfy it's own exit criteria and
    release the stack directly to its companion dock behavior. */
 
-    if ( b->state == B_UNINITIALIZED )  
-    {
-	if ( stack_busy(cmd) )
-	    return -1;
+    if (b->state == B_UNINITIALIZED) {
+		if (stack_busy(cmd)) return -1;
 
-	if ( read_sensor(M_POLE_PRESENT) == 0 )
-	{
-	    b->state = B_COMPLETE;
-	    return 1;
-	}
-				/* stop pinging LBL */
-	update_sensor( C_LBL_CONTROL, 0 );
+		if (read_sensor(M_POLE_PRESENT) == 0) {
+	    	b->state = B_COMPLETE;
+	    	return 1;
+		}
+
+		update_sensor(C_LBL_CONTROL, 0);	// Stop pinging LBL
 				/* request MIO for latch */
 	add_to_sensor( LATCH_CHECK, 1 );
     }

@@ -23,6 +23,8 @@ struct behavior {
     struct b_arg arg[B_ARG_SIZE];   // Its vector of arguments
 };
 
+int dock(struct behavior *b, int priority, int level);
+int undock(struct behavior *b, int priority, int level);
 int wiggle(struct behavior *b, int priority, int level);
 
 #endif /* ODYSSEY_BEHAVIORS_H */

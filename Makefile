@@ -34,6 +34,7 @@ SRCS = \
     src/Common/angle_utils.c                                \
     src/Common/random_utils.c                               \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
+    src/Odyssey/Behaviors/odyssey_behaviors_dock.c          \
     src/Odyssey/odyssey_config.c                            \
     src/Odyssey/odyssey_control.c                           \
     src/Odyssey/odyssey_data_logger.c                       \
@@ -70,7 +71,6 @@ SRCS = \
     waypoint.c              \
     whoi_homing.c           \
     edc_homing.c            \
-    docking.c               \
     sim_stubs.c             \
     load_fault.c            \
     odyssey_legacy_exit.c 
