@@ -63,14 +63,8 @@ int log_data( FILE *datafile )
 
 				/* first write the flag (use 10001) */
     dummy = fwrite( (void *) &flag, 2, 1, datafile);
-    if ( dummy < 1 ) 
-	fprintf( syslog, "cycle %d fwrite of flag returns %d in log_data\n", 
-		 CycleCount, dummy );
 
     dummy = fwrite( (void *) &last_elapsed_time, 4, 1, datafile);  
-    if (dummy < 1)
-	fprintf( syslog, "cycle %d fwrite of rtime returns %d in log_data\n", 
-		 CycleCount, dummy );
 
 /* need to modify to write only those values that have changed since
    the last read (use >= to write every value the first time through)
@@ -82,16 +76,8 @@ int log_data( FILE *datafile )
 	{
 	    dummy = fwrite( (void *) &i, 2, 1, datafile );
 
-	    if (dummy<1)
-		fprintf(syslog, "cycle %d fwrite ind %d ret "
-			"%d in log_data\n", CycleCount, i, dummy);
-
 	    temp_float = (float) read_sensor(i); 
 	    fwrite((void *) &temp_float, 4, 1, datafile); 
-
-	    if (dummy<1) 
-		fprintf(syslog, "cycle %d fwrite val %d ret "
-			"%d in log_data\n", CycleCount, i, dummy);
 	}
     }
     if ( first )
