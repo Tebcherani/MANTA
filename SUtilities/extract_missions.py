@@ -194,7 +194,7 @@ def main() -> int:
 
     odb_files = []
 
-    for root, dirs, files in os.walk(search_root):
+    for root, config, files in os.walk(search_root):
 
         print("ROOT:", root)
 

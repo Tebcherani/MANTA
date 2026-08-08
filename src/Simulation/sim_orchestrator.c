@@ -31,7 +31,7 @@ FILE *datafile;
 char DataFileName[PATH_SIZE];
 
 int main(int argc, char *argv[]) {
-    odyssey_dirs_t odyssey_dirs;
+    odyssey_config_t odyssey_config;
     sim_config_t sim_config;
     sim_state_t sim_state;
 
@@ -47,19 +47,18 @@ int main(int argc, char *argv[]) {
         return EXIT_SUCCESS;
     }
 
-    if (!open_sim_log()) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!init_odyssey_sim(&odyssey_dirs)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!load_mission((char *)options.mission_file, odyssey_dirs.mission_dir)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name, &odyssey_dirs)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!init_odyssey_state()) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
-    if (!init_odyssey_data_logger(DataFileName, &datafile, &odyssey_dirs)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
+    if (!open_sim_log()) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
+    if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
+    if (!init_odyssey_sim(&odyssey_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
+    if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
+    if (!load_mission((char *)options.mission_file, odyssey_config.mission_dir)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
+    if (!load_faults(options.fault_file ? options.fault_file : vvp->fault_file_name, &odyssey_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
+    if (!init_odyssey_data_logger(DataFileName, &datafile, &odyssey_config)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
 
     lhs();  // Initialize Odyssey dynamics
     write_to_sim_log("Odyssey dynamics initialized.\n");
 
-    if (!init_mission_time(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
+    if (!init_mission_time(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
 
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end
@@ -69,30 +68,30 @@ int main(int argc, char *argv[]) {
     while (sim_state.current_cycle < sim_config.num_cycles) {
 	    if (vvp->abort_mission) {
             write_to_sim_log("%8.2f: Mission aborted because vvp->abort_mission = %d\n", sim_state.sim_time, vvp->abort_mission);
-            exit_sim(EXIT_SUCCESS, mission_started, &odyssey_dirs);
+            exit_sim(EXIT_SUCCESS, mission_started, &odyssey_config);
         }
 
         if (update_odyssey_state(sim_config.timestep) != 0) {
             write_to_sim_log("Failed to update Odyssey state.\n");
-            exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
+            exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
         }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
             if (update_odyssey_sim_cycle() < 0) {
                 write_to_sim_log("Failed to update Odyssey cycle.\n");
-                exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
+                exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
             }
 
             capture_behavior_activity();
 	        log_data(datafile);
 	    }
 	
-        if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
+        if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
 
         // Update clock for next control cycle
         update_sensor(M_DT, sim_config.control_period * sim_config.timestep);
     }
 
-    exit_sim(EXIT_FAILURE, mission_started, &odyssey_dirs);
+    exit_sim(EXIT_FAILURE, mission_started, &odyssey_config);
     return EXIT_FAILURE;
 }

@@ -106,7 +106,7 @@ const char *get_fault_file_path( void )
     return loaded_path;
 }
 
-int load_faults( const char *fname, const odyssey_dirs_t *dirs )
+int load_faults( const char *fname, const odyssey_config_t *config )
 {
     FILE *fp;
     int   lineno = 0;
@@ -129,7 +129,7 @@ int load_faults( const char *fname, const odyssey_dirs_t *dirs )
     if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
 	strcpy( fullpath, fname );
     else
-	ody_join_path( fullpath, sizeof(fullpath), dirs->fault_dir, fname );
+	ody_join_path( fullpath, sizeof(fullpath), config->fault_dir, fname );
     strncpy( loaded_path, fullpath, sizeof(loaded_path) - 1 );
 
     fp = fopen(fullpath, "r");

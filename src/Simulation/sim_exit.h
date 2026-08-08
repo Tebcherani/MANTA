@@ -5,6 +5,6 @@
 
 #include "odyssey_sim.h"
 
-void exit_sim(int exit_status, int mission_started, const odyssey_dirs_t *dirs);
+void exit_sim(int exit_status, int mission_started, const odyssey_config_t *config);
 
 #endif

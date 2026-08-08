@@ -31,13 +31,13 @@ int match_sensor(const char *name);
 
 				/* log_data.c */
 int log_data( FILE *datafile );
-FILE *init_data_logging( char *DataFileName , const odyssey_dirs_t *dirs);
+FILE *init_data_logging( char *DataFileName , const odyssey_config_t *config);
 void init_tab( void );
 void update_tab( float depth );
-int write_tab(const odyssey_dirs_t *dirs);
+int write_tab(const odyssey_config_t *config);
 
 			/* load_fault.c */
-int load_faults(const char *fname, const odyssey_dirs_t *dirs);
+int load_faults(const char *fname, const odyssey_config_t *config);
 void        apply_faults       ( void );
 const char *get_fault_file_name( void );
 

@@ -5,6 +5,6 @@
 
 #include "odyssey_sim.h"
 
-int init_odyssey_data_logger(char *data_file_name, FILE **data_file, const odyssey_dirs_t *dirs);
+int init_odyssey_data_logger(char *data_file_name, FILE **data_file, const odyssey_config_t *config);
 
 #endif

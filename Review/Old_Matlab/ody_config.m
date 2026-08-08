@@ -6,8 +6,8 @@ function cfg = ody_config()
 %   AUV_Sim\
 %     Windows_Ody_C\        <-- exe lives here; Mission\ and Data\ are
 %       odyssey_sim.exe          junctions pointing to SMission\ and SData\
-%       Mission\  -->  ..\SMission    (junction, created by setup_sim_dirs.bat)
-%       Data\     -->  ..\SData       (junction, created by setup_sim_dirs.bat)
+%       Mission\  -->  ..\SMission    (junction, created by setup_sim_config.bat)
+%       Data\     -->  ..\SData       (junction, created by setup_sim_config.bat)
 %     SMission\             <-- mission files (.mis)
 %     SData\                <-- binary data files (.obd) and parsed output
 %     EnvironmentModels\    <-- currents, bathymetry, ocean params

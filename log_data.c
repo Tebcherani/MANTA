@@ -100,7 +100,7 @@ int log_data( FILE *datafile )
  | a one-line note — the header remains valid either way.
  *------------------------------------------------------------------*/
 
-static void write_fault_header( FILE *datafile, const odyssey_dirs_t *dirs )
+static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
 {
     FILE       *ffd;
     char        fd_path[256];
@@ -118,7 +118,7 @@ static void write_fault_header( FILE *datafile, const odyssey_dirs_t *dirs )
         strncpy( fd_path, get_fault_file_path(), sizeof(fd_path) - 1 );
         fd_path[sizeof(fd_path) - 1] = '\0';
         if ( fd_path[0] == '\0' )
-            ody_join_path( fd_path, sizeof(fd_path), dirs->fault_dir, fname );
+            ody_join_path( fd_path, sizeof(fd_path), config->fault_dir, fname );
 
         if ( (ffd = fopen(fd_path, "r")) == NULL ) {
             fprintf( datafile,
@@ -148,7 +148,7 @@ static void write_fault_header( FILE *datafile, const odyssey_dirs_t *dirs )
  | "# mi>" so existing parsers continue to skip it as a comment.
  *------------------------------------------------------------------*/
 
-static void write_mission_header( FILE *datafile, const odyssey_dirs_t *dirs )
+static void write_mission_header( FILE *datafile, const odyssey_config_t *config )
 {
     FILE       *fmi;
     char        mi_path[PATH_SIZE];
@@ -166,7 +166,7 @@ static void write_mission_header( FILE *datafile, const odyssey_dirs_t *dirs )
         strncpy( mi_path, get_mission_file_path(), sizeof(mi_path) - 1 );
         mi_path[sizeof(mi_path) - 1] = '\0';
         if ( mi_path[0] == '\0' )
-            ody_join_path( mi_path, sizeof(mi_path), dirs->mission_dir, fname );
+            ody_join_path( mi_path, sizeof(mi_path), config->mission_dir, fname );
 
         if ( (fmi = fopen(mi_path, "r")) == NULL ) {
             fprintf( datafile,
@@ -191,7 +191,7 @@ static void write_mission_header( FILE *datafile, const odyssey_dirs_t *dirs )
  | init_data_logging()
  *------------------------------------------------------------------*/ 
 
-FILE *init_data_logging( char *DataFileName, const odyssey_dirs_t *dirs )
+FILE *init_data_logging( char *DataFileName, const odyssey_config_t *config )
 {
     FILE *datafile;
     int i=0, j, beh_id, offset;
@@ -213,7 +213,7 @@ FILE *init_data_logging( char *DataFileName, const odyssey_dirs_t *dirs )
 	++RunNumber;
 	
 	snprintf( DataFileName, PATH_SIZE, "%s/%c%s%02d.obd",
-		  dirs->data_dir, PREFIX_CHAR, fname_string, RunNumber );
+		  config->data_dir, PREFIX_CHAR, fname_string, RunNumber );
 
 #define MODE F_OK		/* UNIX test for existence using access() */
 
@@ -238,8 +238,8 @@ FILE *init_data_logging( char *DataFileName, const odyssey_dirs_t *dirs )
 
 				/* embed fault file in header for
 				   self-documentation of fault scenario */
-    write_fault_header( datafile, dirs );
-    write_mission_header( datafile, dirs );
+    write_fault_header( datafile, config );
+    write_mission_header( datafile, config );
 
 				/* write sensor index, name, init values */
     for ( i = 0; i <= vvp->last_s; i++ )
@@ -304,14 +304,14 @@ void update_tab( float depth )
 	max_depth = depth;
 }
 
-int write_tab(const odyssey_dirs_t *dirs)
+int write_tab(const odyssey_config_t *config)
 {
     FILE *ftab;
     char *run;
     int error = -1;
     char msg_buf[256];
 
-    snprintf( msg_buf, 256, "%s/%s.tab", dirs->data_dir, VEHICLE_NAME );
+    snprintf( msg_buf, 256, "%s/%s.tab", config->data_dir, VEHICLE_NAME );
 
 				/* open tab-file for append */
     ftab = fopen( msg_buf, "a" );

@@ -14,20 +14,106 @@
 
 static odyssey_state_t state;
 
+static int load_vehicle_def(const char *fname);
+
 int convert_units(const char *expected, const char *given, const double inval, double *outval);
 int match_sensor(const char *name);
-int load_vehicle_def(const char *fname);
 
-int init_odyssey_model(void) {
-    const char *model_path;
+/*-------------------------------------------------------------------------
+  LOAD_VEHICLE_DEF: load vehicle physical parameters (vs_*) from a
+  vehicle definition (.vd) file.  Call BEFORE load_mission().
 
-    model_path = getenv("VEHICLE_PATH");
-    if (model_path == NULL || model_path[0] == '\0') {
-        write_to_sim_log("[odyssey_model] VEHICLE_PATH is not set.\n");
+  File format mirrors mission-file sensor lines:
+
+      # comments start with # % or *
+      vehicle: <name>            <- must match VEHICLE_NAME or load fails
+      vs_<name>(<units>) <value>
+      vs_<name>(<units>) <value>
+      ...
+
+  Rules:
+   - Header 'vehicle:' must match this build's VEHICLE_NAME.
+   - Names must begin with 'vs_' (catches typos that would otherwise
+     silently clobber an m_/c_/u_ sensor).
+   - Unknown vs_* name -> hard error (catches stale references).
+   - vs_* not mentioned in the file -> keeps its compile-time default
+     from edit_struct.c (so old .vd files keep working as the data
+     structure grows).
+  -----------------------------------------------------------------------*/
+
+static int load_vehicle_def(const char *fname) {
+    FILE *fptr;
+    char line[MAX_LINE], name[NAME_SIZE], header[NAME_SIZE];
+    char *expect, *actual;
+    double value;
+    int index, lineno = 0, n_set = 0, header_seen = 0;
+
+    if ((fptr = fopen(fname, "r")) == NULL) return -1;
+
+    while (fgets(line, sizeof(line), fptr) != NULL) {
+        lineno++;
+		
+        /* skip blank lines and comments */
+        if (line[0] == '\n' || line[0] == '\r' || line[0] == '#'  || line[0] == '%' || line[0] == '*') continue;
+
+		/* first real line must be the vehicle header */
+        if (!header_seen) {
+            if (sscanf(line, " vehicle: %s", header) != 1) {
+                fclose(fptr);
+                return -1;
+            }
+            if (strcmp(header, VEHICLE_NAME) != 0) {
+                fclose(fptr);
+                return -1;
+            }
+            header_seen = 1;
+            continue;
+        }
+
+		/* parse "<name> <value>" */
+        if (sscanf(line, " %s %lg", name, &value) != 2) {
+            fclose(fptr);
+            return -1;
+        }
+
+		/* only vs_* fields allowed */
+        if (strncmp(name, "vs_", 3) != 0) {
+            fclose(fptr);
+            return -1;
+        }
+
+		/* look up by name */
+        if ((index = match_sensor(name)) < 0) {
+            fclose(fptr);
+            return -1;
+        }
+
+		/* convert units if given */
+        expect = strchr(vvp->s[index].name, '(');
+        actual = strchr(name, '(');
+        if (expect && actual && convert_units( expect, actual, value, &value)) {
+            fclose(fptr);
+            return -1;
+        }
+
+        update_sensor(index, value);
+        n_set++;
+    }
+
+    fclose(fptr);
+
+    if (!header_seen) return -1;
+
+    return 0;
+}
+
+int init_odyssey_model(const char *path) {
+    if (path == NULL || path[0] == '\0') {
+        write_to_sim_log("[odyssey_model] Vehicle path is invalid.\n");
         return 0;
     }
 
-    if (load_vehicle_def(model_path) != 0) {
+    if (load_vehicle_def(path) != 0) {
         write_to_sim_log("[odyssey_model] Failed to load vehicle definition.\n");
         return 0;
     }
