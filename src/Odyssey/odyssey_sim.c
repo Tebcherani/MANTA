@@ -36,6 +36,9 @@ int init_odyssey_sim(odyssey_dirs_t *dirs) {
     }
 
     write_to_sim_log("[odyssey_sim] Odyssey directories configured.\n");
+
+    if (!init_data_structure()) exit_sim(EXIT_FAILURE, 0, &dirs);
+    
     return 1;
 }
 
