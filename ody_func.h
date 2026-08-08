@@ -10,12 +10,12 @@
 
 #include <stdio.h>
 
+#include "odyssey_sim.h"
+
 int  handle_modem(void);
 void update_water_conductivity(void);
 
 struct behavior;
-                                /* main.c */
-void exit_gracefully( int );
                                 /* dynamic_control.c */
 void dynamic_control( void );
 double limit( double, double, double );
@@ -31,13 +31,13 @@ int match_sensor(const char *name);
 
 				/* log_data.c */
 int log_data( FILE *datafile );
-FILE *init_data_logging( char *DataFileName );
+FILE *init_data_logging( char *DataFileName , const odyssey_dirs_t *dirs);
 void init_tab( void );
 void update_tab( float depth );
-int write_tab( void );
+int write_tab(const odyssey_dirs_t *dirs);
 
 			/* load_fault.c */
-int         load_faults        ( const char *fname );
+int load_faults(const char *fname, const odyssey_dirs_t *dirs);
 void        apply_faults       ( void );
 const char *get_fault_file_name( void );
 

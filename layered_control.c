@@ -1067,9 +1067,6 @@ int depth_envelope( struct behavior *b, int priority, int level )
                                    reached, shut vehicle down */
     if ( cut_active && (read_sensor(M_DEPTH) > bArg(CUT_MAX)) )
     {
-
-	exit_gracefully( 0 );
-
         return 1;
     }
 				/* check minimum altitude */

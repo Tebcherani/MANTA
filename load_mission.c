@@ -53,13 +53,13 @@ const char *get_mission_file_path( void )
   B. A. Moran, 29-May-1997
   -----------------------------------------------------------------------*/
 
-int load_mission(const char *fname) {
+int load_mission(const char *fname, const char *mission_dir) {
     FILE *fptr;
 
     if (ody_path_is_explicit(fname) || ody_file_exists(fname))
         strcpy(fullpath, fname);
     else
-        ody_join_path(fullpath, sizeof(fullpath), MISSION_DIR, fname);
+        ody_join_path(fullpath, sizeof(fullpath), mission_dir, fname);
 
     strncpy(loaded_mission_fname, fname, sizeof(loaded_mission_fname) - 1);
     loaded_mission_fname[sizeof(loaded_mission_fname) - 1] = '\0';
@@ -122,11 +122,7 @@ int load_vehicle_def( const char *fname )
     double value;
     int index, lineno = 0, n_set = 0, header_seen = 0;
 
-    if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
-	strcpy( fullpath, fname );
-    else
-	ody_join_path( fullpath, sizeof(fullpath), VEHICLE_DIR, fname );
-    if ( (fptr = fopen(fullpath, "r")) == NULL ) {
+    if ( (fptr = fopen(fname, "r")) == NULL ) {
         return -1;
     }
 
@@ -461,9 +457,7 @@ int read_flags( FILE *fptr )
 
 	if ( strlen(linebuf) > 1 )
 	{
-	    fprintf( stderr, 
-		     "read flags %s: no match, exiting ...\n", linebuf );
-	    exit_gracefully( -1 );
+	    return -1;
 	}
     }
     return 0;
@@ -492,7 +486,7 @@ int read_state(FILE *fptr) {
             strncpy( vvp->sta[vvp->nstates].name, name, MAX_STATE_NAME );
             vvp->nstates++;
             if ( vvp->nstates >= MAX_STATES ) {
-                exit_gracefully( -1 );
+                return -1;
             }
             if (vvp->nstates==1)
 				vvp->cstate = 0;
@@ -511,19 +505,19 @@ int read_state(FILE *fptr) {
 				expect = strchr( vvp->s[index].name, '(' );
 				actual = strchr( name, '(');
 				if ( expect && actual && convert_units( expect, actual, value, &value ) ) {
-		    		exit_gracefully( -1 );
+		    		return -1;
 				}
                 update_sensor( index, value );
 		
             } else {
-                exit_gracefully(-1);
+                return -1;
             }
         }
 				/* If a behavior name, get priority */
         else if (sscanf(linebuf, " behavior: %s", name) == 1 ) {
 	    	priority++;
             if ( priority >= MAX_COMMAND ) {
-                exit_gracefully( -1 );
+                return -1;
             }
 
             if ( (b_index = match_behavior(name)) >= 0 ) {
@@ -538,14 +532,14 @@ int read_state(FILE *fptr) {
                 assign_behavior_fcn_ptr( name, &(vvp->sta[vvp->cstate].c[priority].b) );
 
             } else {
-                exit_gracefully(-1);
+                return -1;
             }
 				/* If line is a behavior argument, then
                                    load it */
         }
 		else if (sscanf(linebuf, "  b_arg: %s %lg", name, &value) == 2 ) {
             if (b_index < 0) {
-				exit_gracefully(-1);
+				return -1;
 			}
 			
 			if ( b_index >= 0 ) {
@@ -554,7 +548,7 @@ int read_state(FILE *fptr) {
                     actual = strchr( name, '(' );
 
                     if ( expect && actual && convert_units( expect, actual, value, &value ) ) {
-                        exit_gracefully( -1 );
+                        return -1;
                     }
                     vvp->b[b_index].arg[index].x =
                         vvp->sta[vvp->cstate].c[priority].b.arg[index].x = value;
@@ -562,7 +556,7 @@ int read_state(FILE *fptr) {
                     strcpy( vvp->sta[vvp->cstate].c[priority].b.arg[index].name, 
                            vvp->b[b_index].arg[index].name );
                 } else {
-                    exit_gracefully( -1 );
+                    return -1;
                 }
 			}
         }
@@ -641,7 +635,7 @@ static int match_behavior_arg( const char *name, int b_index )
 /*----------------------------------------------------------------------*
   CONVERT_UNITS: compare expected and actual units, convert if they
   differ.  Upon successful conversion, return 0.  Upon unknown
-  conversion, return -1, recommended to exit_gracefully when this occurs.
+  conversion, return -1.
 
   B. Moran, 18 jan 95
  *----------------------------------------------------------------------*/

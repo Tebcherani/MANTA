@@ -70,8 +70,7 @@ SRCS = \
     whoi_homing.c           \
     edc_homing.c            \
     sim_stubs.c             \
-    load_fault.c            \
-    odyssey_legacy_exit.c 
+    load_fault.c
 
 OBJS = $(SRCS:.c=.o)
 

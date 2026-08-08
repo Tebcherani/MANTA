@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
-void exit_sim(int exit_status, int mission_started);
+#include "odyssey_sim.h"
+
+void exit_sim(int exit_status, int mission_started, const odyssey_dirs_t *dirs);
 
 #endif

@@ -19,6 +19,7 @@
 #include "odyssey_sim.h"
 #include "odyssey_data_struct.h"
 #include "paths.h"
+#include "sim_log.h"
 #include "vehicle.h"
 
 /* Use a local buffer size to avoid conflict with ody_defs.h MAX_LINE */
@@ -105,7 +106,7 @@ const char *get_fault_file_path( void )
     return loaded_path;
 }
 
-int load_faults( const char *fname )
+int load_faults( const char *fname, const odyssey_dirs_t *dirs )
 {
     FILE *fp;
     int   lineno = 0;
@@ -128,7 +129,7 @@ int load_faults( const char *fname )
     if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
 	strcpy( fullpath, fname );
     else
-	ody_join_path( fullpath, sizeof(fullpath), SFAULT_DIR, fname );
+	ody_join_path( fullpath, sizeof(fullpath), dirs->fault_dir, fname );
     strncpy( loaded_path, fullpath, sizeof(loaded_path) - 1 );
 
     fp = fopen(fullpath, "r");

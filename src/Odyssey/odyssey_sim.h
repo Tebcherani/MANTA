@@ -1,17 +1,13 @@
 #ifndef ODYSSEY_SIM_H
 #define ODYSSEY_SIM_H
 
-#define DATA_DIR ody_data_dir
-#define MISSION_DIR ody_mission_dir
-#define SFAULT_DIR ody_sfault_dir
-#define VEHICLE_DIR ody_vehicle_dir
+typedef struct {
+    const char *data_dir;
+    const char *mission_dir;
+    const char *fault_dir;
+} odyssey_dirs_t;
 
-extern const char *ody_data_dir;
-extern const char *ody_mission_dir;
-extern const char *ody_sfault_dir;
-extern const char *ody_vehicle_dir;
-
-int init_odyssey_sim(void);
-int update_odyssey_cycle(void);
+int init_odyssey_sim(odyssey_dirs_t *dirs);
+int update_odyssey_sim_cycle(void);
 
 #endif /* ODYSSEY_SIM_H */

@@ -11,9 +11,9 @@ extern FILE *datafile;
 extern command_line_options_t options;
 
 int handle_modem(void);
-int write_tab(void);
+int write_tab(const odyssey_dirs_t *dirs);
 
-void exit_sim(int exit_status, int mission_started) {
+void exit_sim(int exit_status, int mission_started, const odyssey_dirs_t *dirs) {
     int cleanup_failed = 0;
 
     if (datafile != NULL) {
@@ -27,7 +27,7 @@ void exit_sim(int exit_status, int mission_started) {
         handle_modem();
         if (options.behavior_dump_file[0] != '\0') dump_behavior_log_json(options.behavior_dump_file);
         write_to_sim_log("SIM: mission finished -- data file: %s\n", vvp->data_file_name);
-        write_tab();
+        write_tab(dirs);
     }
 
     if (close_sim_log() != 0) cleanup_failed = 1;

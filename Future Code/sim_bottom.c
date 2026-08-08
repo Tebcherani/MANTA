@@ -363,7 +363,7 @@ void sim_bottom(void)
             else if ( contact == -1 )  /* We overshot and need to back up. */
                 AltTip.Z = AltTip.Z - resolution;
             else {                     /* Something went wrong. */
-                exit_gracefully( -1 );
+                return -1;
             }
         }
         result = make_point_global( &GAltTip, &AltTip );
@@ -727,7 +727,7 @@ static int file_bottom( void )
     {
         LoadFlag = FALSE;
         if(load_data() == -1)
-            exit_gracefully(-1);
+            return -1;
         Facet_Ray = (struct ray_struct *) calloc( (num_triangles+1), 
                                                  sizeof(struct ray_struct) );
         for(k = 1; k <= num_triangles; k++) {
@@ -1054,7 +1054,7 @@ int get_plane(struct triangle_struct *Tri, int k)
     Zn = (P2->X - P1->X) * (P3->Y - P1->Y) - (P2->Y - P1->Y) * (P3->X - P1->X);
     ray_len = sqrt(Xn * Xn + Yn * Yn + Zn * Zn);
     if(ray_len == 0.0) {
-        exit_gracefully(-1);
+        return -1;
     }
 
     Nx = Xn/ray_len;
@@ -1650,19 +1650,19 @@ double triangle_search(struct state_vect *RealPos)
             if( temp1 >= 0.0 ) {
                 if( Order[i].node[j] != 0 ) j++;
                 else { 
-                    exit_gracefully(-1);
+                    return -1;
                 }
             }
             else if( temp2 >= 0.0 ) {
                 if( Order[i].node[j+1] != 0 ) j++;
                 else { 
-                    exit_gracefully(-1);
+                    return -1;
                 }
             }
             else if( temp3 >= 0.0 ) {
                 if( Order[i].node[j+1] != 0 ) j++;
                 else { 
-                    exit_gracefully(-1);
+                    return -1;
                 }
             }
             else {
@@ -1781,21 +1781,21 @@ double bottom_collision(struct state_vect *RealPos)
                     if( Order[i].node[j] != 0 )
                         j++;
                     else { 
-                        exit_gracefully(-1);
+                        return -1;
                     }
                 }
                 else if( temp2 <= 0.0 ) {
                     if( Order[i].node[j+1] != 0 ) 
                         j++;
                     else { 
-                        exit_gracefully(-1);
+                        return -1;
                     }
                 }
                 else if( temp3 <= 0.0 ) {
                     if( Order[i].node[j+1] != 0 ) 
                         j++;
                     else { 
-                        exit_gracefully(-1);
+                        return -1;
                     }
                 }
                 else {
