@@ -475,32 +475,6 @@ int read_state(FILE *fptr) {
     return 0;
 }
 
-
-/*-----------------------------------------------------------------------*
-  Find the sensor with the given name, return -1 if none found...
-  (JGB, 1/30/94)
- *-----------------------------------------------------------------------*/
-
-static char vvvName[NAME_SIZE], thisName[NAME_SIZE];
-
-int match_sensor( const char *name )
-{
-    int i;
-    char *eor;
-
-    strcpy( thisName, name );
-				/* terminate name where units begin */
-    if ( (eor = strchr(thisName, '(')) ) *eor = '\0';
-
-    for ( i = 0; i < MAX_SENSOR; i++ )
-    {
-	strcpy( vvvName, sss[i].name );
-	if ( (eor = strchr(vvvName, '(')) ) *eor = '\0';
-	if ( strcmp(vvvName, thisName) == 0 ) return i;
-    }
-    return -1;
-}
-
 /* -----------------------------------------------------------------------
    |Find the behavior with the given name...return -1 if none found...
    |(JGB, 1/30/94)
@@ -521,6 +495,8 @@ static int match_behavior_arg( const char *name, int b_index )
 {
     int i;
     char *loc;
+	char thisName[NAME_SIZE];
+    char vvvName[NAME_SIZE];
 
     strcpy( thisName, name );
     if ( (loc = strchr(thisName, '(')) != NULL )

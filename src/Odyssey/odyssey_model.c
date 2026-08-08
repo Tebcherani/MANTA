@@ -15,7 +15,6 @@
 static odyssey_state_t state;
 
 int convert_units(const char *expected, const char *given, const double inval, double *outval);
-int match_sensor(const char *name);
 
 int init_odyssey_model(const char *path) {
     FILE *fptr;

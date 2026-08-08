@@ -65,6 +65,33 @@ int init_odyssey_data_structure() {
     return 1;
 }
 
+int match_sensor(const char *name) {
+    int i;
+    char *eor;
+    char thisName[NAME_SIZE];
+    char vvvName[NAME_SIZE];
+
+    if (name == NULL)
+        return -1;
+
+    copy_name(thisName, sizeof(thisName), name);
+
+    if ((eor = strchr(thisName, '(')) != NULL)
+        *eor = '\0';
+
+    for (i = 0; i < num_sensors; i++) {
+        copy_name(vvvName, sizeof(vvvName), sss[i].name);
+
+        if ((eor = strchr(vvvName, '(')) != NULL)
+            *eor = '\0';
+
+        if (strcmp(vvvName, thisName) == 0)
+            return i;
+    }
+
+    return -1;
+}
+
 double read_sensor(int sensor_name) {
     return vvp->s[sensor_name].x;
 }

@@ -3,8 +3,8 @@
 
 int init_odyssey_data_structure(void);
 
+int match_sensor(const char *name);
 double read_sensor(int index);
-
 void update_sensor(int index, double value);
 void add_to_sensor(int index, double value);
 

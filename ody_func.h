@@ -26,9 +26,6 @@ void resolve( int priority );
 void shut_down( int );
 int manage_time( struct behavior *b, double duration );
 
-				/* load_mission.c */
-int match_sensor(const char *name);
-
 				/* log_data.c */
 int log_data( FILE *datafile );
 FILE *init_data_logging( char *DataFileName , const odyssey_config_t *config);
