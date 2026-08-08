@@ -34,6 +34,7 @@ SRCS = \
     src/Common/angle_utils.c                                \
     src/Common/random_utils.c                               \
     src/Common/sim_log.c                                    \
+    src/Odyssey/Behaviors/odyssey_behavior_registry.c       \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
     src/Odyssey/Behaviors/odyssey_behaviors_dock.c          \
     src/Odyssey/odyssey_control.c                           \

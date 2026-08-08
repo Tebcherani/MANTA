@@ -43,7 +43,7 @@ static int init_odyssey_dirs(odyssey_dirs_t *dirs) {
 
 int init_odyssey_sim(odyssey_dirs_t *dirs) {
     if (!init_odyssey_dirs(dirs)) return 0;
-    if (!init_data_structure()) return 0;
+    if (!init_odyssey_data_structure()) return 0;
 
     return 1;
 }

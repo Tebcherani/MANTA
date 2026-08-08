@@ -784,13 +784,14 @@ main( int argc, char **argv )
 
 				/* local vars */
     int i, num_sensors=0, num_behaviors=0, num_b_args=0;
-    FILE *fin, *lfile, *sfile, *bfile, *hfile, *cfile;
+    FILE *fin, *lfile, *sfile, *bfile, *hfile, *cfile, *rfile;
     char infile_name[MAX_LINE], line[MAX_LINE], first_word[MAX_LINE],
 	*lfile_name = "tools/data_list",
 	*sfile_name = "tools/sensors",
 	*bfile_name = "tools/behaviors",
 	*hfile_name = "src/Odyssey/vehicle.h",
-  *cfile_name = "src/Odyssey/vehicle.c";
+  *cfile_name = "src/Odyssey/vehicle.c",
+  *rfile_name = "src/Odyssey/Behaviors/odyssey_behavior_registry.c";
 				/* time stamp vars */
     struct tm *tp;
     time_t now;
@@ -836,6 +837,7 @@ main( int argc, char **argv )
     bfile = fopen_fatal( bfile_name, "w" );
     hfile = fopen_fatal( hfile_name, "w" );
     cfile = fopen_fatal( cfile_name, "w" );
+    rfile = fopen_fatal(rfile_name, "w");
 
 				/* put the necessary include statements in
 				   the C-file */
@@ -858,7 +860,12 @@ main( int argc, char **argv )
     fprintf( hfile, "#include \"ody_func.h\"\n");
     fprintf( hfile, "#define CREATION_DATE \"%s\"\n\n", cnow );
 
-    fprintf(hfile,"int assign_behavior_fcn_ptr(char *name, struct behavior *b);\n\n");
+    fputs(
+        "#include <string.h>\n"
+        "#include \"ody_types.h\"\n"
+        "#include \"odyssey_behaviors.h\"\n\n",
+        rfile
+    );
 
 				/* open sss in sensor file */
     fputs( "const struct sensor sss[] = {\n", sfile );
@@ -980,31 +987,43 @@ main( int argc, char **argv )
     }
     fputs( "\n};\n\n", cfile );
 
-				/* put in routine to assign function
-                                   pointers for the behaviors */
-    for ( i = 0; i < num_behaviors; i++ )
-        fprintf( cfile, "extern int %s( struct behavior *, int, int );\n",
-		 lower_b_array[i].name);
+		/* generate behavior function registry */
+    for (i = 0; i < num_behaviors; i++)
+        fprintf(
+            rfile,
+            "extern int %s(struct behavior *, int, int);\n",
+            lower_b_array[i].name
+        );
 
-    fputs( "\n\n"
-	     "int assign_behavior_fcn_ptr( char *name, struct behavior *b)\n"
-	     "{\n"
-	     "#ifndef COMM_VEHICLE_C\n"
-	     "    if ( b == NULL ) {\n"
-	     "        return -1;\n"
-	     "    }\n\n", cfile );
+    fputs(
+        "\n"
+        "int assign_behavior_fcn_ptr(const char *name, struct behavior *b)\n"
+        "{\n"
+        "    if (name == NULL || b == NULL)\n"
+        "        return -1;\n\n"
+        "    b->fcn = NULL;\n\n",
+        rfile
+    );
 
-    for ( i = 0; i < num_behaviors; i++ )    
-        fprintf( cfile, "    if ( strcmp(\"%s\", name) == 0 ) "
-		 "b->fcn = %s;\n", lower_b_array[i].name,
-		 lower_b_array[i].name );
-    
-    fprintf( cfile, "    if ( b->fcn == NULL )\n    {\n"
-	     "        return -1;\n"
-	     "    }\n"
-	     "#endif /* COMM_VEHICLE_C */\n}\n");
+    for (i = 0; i < num_behaviors; i++)
+        fprintf(
+            rfile,
+            "    if (strcmp(\"%s\", name) == 0) b->fcn = %s;\n",
+            lower_b_array[i].name,
+            lower_b_array[i].name
+        );
+
+    fputs(
+        "\n"
+        "    if (b->fcn == NULL)\n"
+        "        return -1;\n\n"
+        "    return 0;\n"
+        "}\n",
+        rfile
+    );
 
     fclose( cfile );
+    fclose( rfile );
 }
 
 

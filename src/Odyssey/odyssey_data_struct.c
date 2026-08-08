@@ -14,7 +14,7 @@ int hirestime(double *hires);
 extern char *creation_date;
 extern int *sindex[];
 
-int init_data_structure() {
+int init_odyssey_data_structure() {
     int i, j = 0;
 
     vvp = &vvv;
@@ -45,7 +45,12 @@ int init_data_structure() {
     // Initialize sindex and bindex arrays
     for (i = 0; i < num_sensors; i++) *(sindex[i]) = i;
 
-    for (i = 0; i < num_behaviors; i++) assign_behavior_fcn_ptr(bTemplate[i].name, &(vvv.b[i]));
+    for (i = 0; i < num_behaviors; i++) {
+        if (assign_behavior_fcn_ptr(bTemplate[i].name, &(vvv.b[i])) != 0) {
+            write_to_sim_log("[odyssey_data_struct] Failed to assign behavior function pointer.\n");
+            return 0;
+        }
+    }
 
     vvv.last_s = num_sensors - 1;
     vvv.abort_mission = 0;
