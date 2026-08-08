@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "odyssey_config.h"
+#include "odyssey_sim.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "vehicle.h"

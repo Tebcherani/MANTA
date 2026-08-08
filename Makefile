@@ -36,7 +36,6 @@ SRCS = \
     src/Common/sim_log.c                                    \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
     src/Odyssey/Behaviors/odyssey_behaviors_dock.c          \
-    src/Odyssey/odyssey_config.c                            \
     src/Odyssey/odyssey_control.c                           \
     src/Odyssey/odyssey_data_logger.c                       \
     src/Odyssey/odyssey_data_struct.c                       \

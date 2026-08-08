@@ -15,7 +15,7 @@
 #include "common_defs.h"
 #include "paths.h"
 #include "vehicle.h"
-#include "odyssey_config.h"
+#include "odyssey_sim.h"
 #include "paths.h"
 #include "odyssey_data_struct.h"
 
