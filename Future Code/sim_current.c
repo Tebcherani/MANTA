@@ -21,7 +21,7 @@
 #include "odyssey_data_struct.h"
 
 /* forward declaration for function defined in load_mission.c */
-void skip_comments( FILE *f );
+static int skip_comments( FILE *f );
 
 #define MAX_STRING  100
 
@@ -36,6 +36,30 @@ void sim_current();
 int limit_to_range(float, float, float, float);
 float read_from_file(char *, int);
 int init_current_params();   /* fixed: was init_currents_params */
+
+static int skip_comments( FILE *file )
+{
+    char line[MAX_LINE];
+    int c;
+				/* test first character */
+    c = fgetc(file);
+    if ( c == EOF )
+	return c;
+				/* if not comment, restore file */
+    if ( !strchr("%#*", c) )
+    {
+	ungetc(c, file);
+	return 0;
+    }
+				/* eat rest of line */
+    if ( fgets(line, sizeof(line), file) == NULL )
+    {
+	fprintf(stderr, "skip_comments() eof encountered\n");
+	return EOF;
+    }
+				/* recursive call for next comment */
+    return skip_comments(file);
+}
 
 void sim_current()
 {
