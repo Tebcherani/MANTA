@@ -13,8 +13,6 @@
 
 command_line_options_t options;
 
-/* Forward declarations for functions defined in other translation units */
-int  load_mission(char *, const char *);
 void lhs(void);
 
 extern struct vehicle vvv;	/* from vehicle.c */
