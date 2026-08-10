@@ -73,3 +73,7 @@ int update_odyssey_sim_cycle(void) {
     if (update_odyssey_control() != 0) return -1;
     return update_odyssey_mission();
 }
+
+int odyssey_abort_requested(void) {
+    return vvp->abort_mission;
+}

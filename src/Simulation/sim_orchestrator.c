@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     write_to_sim_log("[sim_orchestrator] Before main loop: current_cycle=%d, num_cycles=%d\n", sim_state.current_cycle, sim_config.num_cycles);
 
     while (sim_state.current_cycle < sim_config.num_cycles) {	    
-        if (vvp->abort_mission) {
+        if (odyssey_abort_requested()) {
             write_to_sim_log("%8.2f: Mission aborted because vvp->abort_mission = %d\n", sim_state.sim_time, vvp->abort_mission);
             exit_sim(EXIT_SUCCESS, mission_started, datafile, &odyssey_config);
         }
