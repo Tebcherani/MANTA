@@ -2,8 +2,6 @@
 #include <stdlib.h>
 
 #include "command_line.h"
-#include "odyssey_behavior_logger.h"
-#include "odyssey_data_logger.h"
 #include "sim_exit.h"
 #include "sim_log.h"
 #include "vehicle.h"
@@ -26,7 +24,7 @@ void exit_sim(int exit_status, int mission_started, FILE *datafile, const odysse
         handle_modem();
         if (options.behavior_dump_file[0] != '\0') dump_behavior_log_json(options.behavior_dump_file);
         write_to_sim_log("SIM: mission finished -- data file: %s\n", vvp->data_file_name);
-        write_tab(config);
+        end_odyssey_sim(config);
     }
 
     if (close_sim_log() != 0) cleanup_failed = 1;

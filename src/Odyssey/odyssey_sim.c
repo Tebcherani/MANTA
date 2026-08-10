@@ -87,3 +87,7 @@ int update_odyssey_sim_cycle(double control_dt, FILE *datafile) {
 int odyssey_abort_requested(void) {
     return vvp->abort_mission;
 }
+
+int end_odyssey_sim(const odyssey_config_t *config) {
+    write_tab(config);
+}
