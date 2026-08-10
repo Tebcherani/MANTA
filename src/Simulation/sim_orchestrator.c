@@ -13,10 +13,6 @@
 
 command_line_options_t options;
 
-void lhs(void);
-
-extern struct vehicle vvv;	/* from vehicle.c */
-
 int main(int argc, char *argv[]) {
     odyssey_config_t odyssey_config;
     sim_config_t sim_config;
