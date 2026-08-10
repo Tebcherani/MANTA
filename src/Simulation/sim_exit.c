@@ -1,11 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "command_line.h"
 #include "sim_exit.h"
 #include "sim_log.h"
-
-extern command_line_options_t options;
 
 int handle_modem(void);
 

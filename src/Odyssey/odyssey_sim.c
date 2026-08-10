@@ -88,10 +88,7 @@ int odyssey_abort_requested(void) {
     return vvp->abort_mission;
 }
 
-int end_odyssey_sim(FILE *datafile,
-                    const odyssey_config_t *config,
-                    const command_line_options_t *options)
-{
+int end_odyssey_sim(FILE *datafile, const odyssey_config_t *config, const command_line_options_t *options) {
     int cleanup_failed = 0;
 
     if (handle_modem() != 0)

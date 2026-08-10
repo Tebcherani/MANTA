@@ -10,9 +10,8 @@
 #include "sim_log.h"
 #include "sim_state.h"
 
-command_line_options_t options;
-
 int main(int argc, char *argv[]) {
+    command_line_options_t options;
     odyssey_config_t odyssey_config;
     sim_config_t sim_config;
     sim_state_t sim_state;
