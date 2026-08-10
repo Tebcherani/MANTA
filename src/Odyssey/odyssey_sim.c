@@ -71,10 +71,10 @@ int update_odyssey_sim_timestep(double timestep) {
     if (update_odyssey_state(timestep) != 0) return -1;
 }
 
-int update_odyssey_sim_cycle(void) {
+int update_odyssey_sim_cycle(double control_dt) {
     if (update_odyssey_sensors() != 0) return -1;
     if (update_odyssey_nav() != 0) return -1;
-    if (update_odyssey_control() != 0) return -1;
+    if (update_odyssey_control(control_dt) != 0) return -1;
     return update_odyssey_mission();
 }
 

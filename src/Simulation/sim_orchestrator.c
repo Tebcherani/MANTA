@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     while (sim_state.current_cycle < sim_config.num_cycles) {	    
         if (odyssey_abort_requested()) {
-            write_to_sim_log("%8.2f: Mission aborted because vvp->abort_mission = %d\n", sim_state.sim_time, vvp->abort_mission);
+            write_to_sim_log("%8.2f: Mission aborted.\n", sim_state.sim_time);
             exit_sim(EXIT_SUCCESS, mission_started, datafile, &odyssey_config);
         }
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
         }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            if (update_odyssey_sim_cycle() < 0) {
+            if (update_odyssey_sim_cycle(sim_config.control_period * sim_config.timestep) < 0) {
                 write_to_sim_log("Failed to update Odyssey cycle.\n");
                 exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
             }
@@ -67,9 +67,6 @@ int main(int argc, char *argv[]) {
 	    }
 	
         if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
-
-        // Update clock for next control cycle
-        update_sensor(M_DT, sim_config.control_period * sim_config.timestep);
     }
 
     exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);

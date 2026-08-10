@@ -4,6 +4,6 @@
 #include "common_defs.h"
 #include "odyssey_behaviors.h"
 
-int update_odyssey_control(void);
+int update_odyssey_control(double);
 
 #endif /* ODYSSEY_CONTROL_H */
