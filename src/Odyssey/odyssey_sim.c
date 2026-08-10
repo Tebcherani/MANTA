@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "odyssey_behavior_logger.h"
 #include "odyssey_control.h"
 #include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
@@ -71,11 +72,16 @@ int update_odyssey_sim_timestep(double timestep) {
     if (update_odyssey_state(timestep) != 0) return -1;
 }
 
-int update_odyssey_sim_cycle(double control_dt) {
+int update_odyssey_sim_cycle(double control_dt, FILE *datafile) {
     if (update_odyssey_sensors() != 0) return -1;
     if (update_odyssey_nav() != 0) return -1;
     if (update_odyssey_control(control_dt) != 0) return -1;
-    return update_odyssey_mission();
+    if (update_odyssey_mission() != 0) return -1;
+
+    capture_behavior_activity();
+	log_data(datafile);
+        
+    return 1;
 }
 
 int odyssey_abort_requested(void) {

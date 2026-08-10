@@ -5,7 +5,6 @@
 
 #include "command_line.h"
 #include "odyssey_sim.h"
-#include "sim_behavior_logger.h"
 #include "sim_config.h"
 #include "sim_exit.h"
 #include "sim_log.h"
@@ -57,13 +56,10 @@ int main(int argc, char *argv[]) {
         }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            if (update_odyssey_sim_cycle(sim_config.control_period * sim_config.timestep) < 0) {
+            if (update_odyssey_sim_cycle(sim_config.control_period * sim_config.timestep, datafile) < 0) {
                 write_to_sim_log("Failed to update Odyssey cycle.\n");
                 exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
             }
-
-            capture_behavior_activity();
-	        log_data(datafile);
 	    }
 	
         if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);

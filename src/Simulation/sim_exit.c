@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "command_line.h"
-#include "sim_behavior_logger.h"
+#include "odyssey_behavior_logger.h"
 #include "sim_exit.h"
 #include "sim_log.h"
 #include "vehicle.h"

@@ -39,6 +39,7 @@ SRCS = \
     src/Odyssey/Behaviors/odyssey_behavior_registry.c       \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
     src/Odyssey/Behaviors/odyssey_behaviors_dock.c          \
+    src/Odyssey/odyssey_behavior_logger.c                   \
     src/Odyssey/odyssey_control.c                           \
     src/Odyssey/odyssey_data_logger.c                       \
     src/Odyssey/odyssey_data_struct.c                       \
@@ -55,7 +56,6 @@ SRCS = \
     src/Odyssey/Sensors/odyssey_sensors_lbl.c               \
     src/Odyssey/Sensors/odyssey_sensors_usbl.c              \
     src/Odyssey/Sensors/odyssey_sensors_water.c             \
-    src/Simulation/sim_behavior_logger.c                    \
     src/Simulation/sim_config.c                             \
     src/Simulation/sim_exit.c                               \
     src/Simulation/sim_orchestrator.c                       \

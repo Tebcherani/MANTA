@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "sim_behavior_logger.h"
+#include "odyssey_behavior_logger.h"
 #include "sim_log.h"
 #include "vehicle.h"
 #include "odyssey_data_struct.h"
