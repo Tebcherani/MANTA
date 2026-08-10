@@ -67,6 +67,10 @@ int start_odyssey_sim(const odyssey_config_t *config, const command_line_options
     return 1;
 }
 
+int update_odyssey_sim_timestep(double timestep) {
+    if (update_odyssey_state(timestep) != 0) return -1;
+}
+
 int update_odyssey_sim_cycle(void) {
     if (update_odyssey_sensors() != 0) return -1;
     if (update_odyssey_nav() != 0) return -1;

@@ -10,7 +10,7 @@ typedef struct {
     time_t calendar_start_time;
 } sim_state_t;
 
-int init_sim_state(sim_state_t *state);
-int update_sim_state(sim_state_t *state, double timestep);
+int init_sim_state(sim_state_t *);
+int update_sim_state(sim_state_t *, double);
 
 #endif

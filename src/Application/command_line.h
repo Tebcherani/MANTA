@@ -12,7 +12,7 @@ typedef struct {
     char behavior_dump_file[PATH_SIZE];
 } command_line_options_t;
 
-int parse_command_line(int argc, char *argv[], command_line_options_t *options);
-void print_command_line_help(const char *program_name);
+int parse_command_line(int, char **, command_line_options_t *);
+void print_command_line_help(const char *);
 
 #endif

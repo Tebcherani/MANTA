@@ -43,8 +43,5 @@ int millisec( void );
 				/* sim.c — full prototypes required by modern GCC */
 double thruster_torque( double real_amps, double w_speed );
 double thruster_force( double real_amps, double w_speed );
-double act_model( double des_angle, double angle, double dt );
-int    matinv( double a[][7], double ainv[][7], int n, double adum[][7] );
-double hysteresis( double, double, double, double, double );
 
 #endif /* ODY_FUNC_H */

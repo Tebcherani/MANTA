@@ -21,12 +21,12 @@ struct command {
     double speed[C_ARG_SIZE];
 };
 
-int stack_busy(struct command *cmd);
+int stack_busy(struct command *);
 
-int init_mission_time(time_t calendar_start_time);
-int init_odyssey_mission(const char *file_name, const char *mission_dir);
+int init_mission_time(time_t);
+int init_odyssey_mission(const char *, const char *);
 int update_odyssey_mission(void);
 
-int match_behavior(const char *name);
+int match_behavior(const char *);
 
 #endif

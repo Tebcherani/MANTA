@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS, mission_started, datafile, &odyssey_config);
         }
 
-        if (update_odyssey_state(sim_config.timestep) != 0) {
+        if (update_odyssey_sim_timestep(sim_config.timestep) != 0) {
             write_to_sim_log("Failed to update Odyssey state.\n");
             exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
         }

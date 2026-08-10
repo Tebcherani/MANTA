@@ -6,9 +6,9 @@ typedef struct {
     double position_orientation[7];
 } odyssey_state_t;
 
-int init_odyssey_model(const char *path);
+int init_odyssey_model(const char *);
 int init_odyssey_state(void);
 int init_odyssey_dynamics(void);
-int update_odyssey_state(double timestep);
+int update_odyssey_state(double);
 
 #endif

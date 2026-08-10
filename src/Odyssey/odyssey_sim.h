@@ -12,8 +12,9 @@ typedef struct {
     const char *model_path;
 } odyssey_config_t;
 
-int init_odyssey_sim(odyssey_config_t *config);
-int start_odyssey_sim(const odyssey_config_t *config, const command_line_options_t *options, time_t calendar_start_time, char *data_file_name, FILE **data_file);
+int init_odyssey_sim(odyssey_config_t *);
+int start_odyssey_sim(const odyssey_config_t *, const command_line_options_t *, time_t, char *, FILE **);
+int update_odyssey_sim_timestep(double);
 int update_odyssey_sim_cycle(void);
 int odyssey_abort_requested(void);
 
