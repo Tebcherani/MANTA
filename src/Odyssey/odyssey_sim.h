@@ -17,6 +17,6 @@ int start_odyssey_sim(const odyssey_config_t *, const command_line_options_t *, 
 int update_odyssey_sim_timestep(double);
 int update_odyssey_sim_cycle(double, FILE *);
 int odyssey_abort_requested(void);
-int end_odyssey_sim(const odyssey_config_t *);
+int end_odyssey_sim(FILE *, const odyssey_config_t *, const command_line_options_t *);
 
 #endif /* ODYSSEY_SIM_H */

@@ -31,11 +31,11 @@ int main(int argc, char *argv[]) {
         return EXIT_SUCCESS;
     }
 
-    if (!open_sim_log()) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
-    if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
-    if (!init_odyssey_sim(&odyssey_config)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
-    if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
-    if (!start_odyssey_sim(&odyssey_config, &options, sim_state.calendar_start_time, data_file_name, &datafile)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
+    if (!open_sim_log()) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
+    if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
+    if (!init_odyssey_sim(&odyssey_config)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
+    if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
+    if (!start_odyssey_sim(&odyssey_config, &options, sim_state.calendar_start_time, data_file_name, &datafile)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
 
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end
@@ -47,24 +47,24 @@ int main(int argc, char *argv[]) {
     while (sim_state.current_cycle < sim_config.num_cycles) {	    
         if (odyssey_abort_requested()) {
             write_to_sim_log("%8.2f: Mission aborted.\n", sim_state.sim_time);
-            exit_sim(EXIT_SUCCESS, mission_started, datafile, &odyssey_config);
+            exit_sim(EXIT_SUCCESS, mission_started, datafile, &odyssey_config, &options);
         }
 
         if (update_odyssey_sim_timestep(sim_config.timestep) != 0) {
             write_to_sim_log("Failed to update Odyssey state.\n");
-            exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
+            exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
         }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
             if (update_odyssey_sim_cycle(sim_config.control_period * sim_config.timestep, datafile) < 0) {
                 write_to_sim_log("Failed to update Odyssey cycle.\n");
-                exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
+                exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
             }
 	    }
 	
-        if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
+        if (update_sim_state(&sim_state, sim_config.timestep) != 0) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
     }
 
-    exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
+    exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config, &options);
     return EXIT_FAILURE;
 }

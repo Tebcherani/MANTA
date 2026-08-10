@@ -88,6 +88,33 @@ int odyssey_abort_requested(void) {
     return vvp->abort_mission;
 }
 
-int end_odyssey_sim(const odyssey_config_t *config) {
-    write_tab(config);
+int end_odyssey_sim(FILE *datafile,
+                    const odyssey_config_t *config,
+                    const command_line_options_t *options)
+{
+    int cleanup_failed = 0;
+
+    if (handle_modem() != 0)
+        cleanup_failed = 1;
+
+    if (options != NULL &&
+        options->behavior_dump_file[0] != '\0') {
+        dump_behavior_log_json(options->behavior_dump_file);
+    }
+
+    if (datafile != NULL) {
+        if (fflush(datafile) != 0)
+            cleanup_failed = 1;
+
+        if (fclose(datafile) != 0)
+            cleanup_failed = 1;
+    }
+
+    write_to_sim_log("SIM: mission finished -- data file: %s\n",
+                     vvp->data_file_name);
+
+    if (write_tab(config) != 0)
+        cleanup_failed = 1;
+
+    return cleanup_failed ? 0 : 1;
 }
