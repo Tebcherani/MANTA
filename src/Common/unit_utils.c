@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "common_defs.h"
 #include "unit_utils.h"
 

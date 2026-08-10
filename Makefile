@@ -66,7 +66,6 @@ SRCS = \
     layered_control.c       \
     dynamic_control.c       \
     whoi_traj.c             \
-    log_data.c              \
     paths.c                 \
     waypoint.c              \
     whoi_homing.c           \

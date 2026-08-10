@@ -3,12 +3,17 @@
 #include <unistd.h>
 
 #include "odyssey_data_logger.h"
+#include "odyssey_data_struct.h"
 #include "odyssey_sim.h"
 #include "sim_log.h"
 #include "vehicle.h"
 
-static void write_fault_header( FILE *datafile, const odyssey_config_t *config );
-static void write_mission_header(FILE *datafile, const odyssey_config_t *config, const char *mission_file);
+static void write_fault_header( FILE *, const odyssey_config_t *);
+static void write_mission_header(FILE *, const odyssey_config_t *, const char *);
+static void init_tab(void);
+static void update_tab(float);
+
+static float north0, east0, max_depth;
 
 static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
 {
@@ -48,8 +53,7 @@ static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
         "# ===== FAULT_FILE_END ==================================\xa" );
 }
 
-static void write_mission_header(FILE *datafile, const odyssey_config_t *config, const char *mission_file)
-{
+static void write_mission_header(FILE *datafile, const odyssey_config_t *config, const char *mission_file) {
     FILE *fmi;
     char mi_path[PATH_SIZE];
     char line[MAX_LINE];
@@ -91,28 +95,73 @@ static void write_mission_header(FILE *datafile, const odyssey_config_t *config,
         "# ===== MISSION_FILE_END ================================\xa");
 }
 
-int init_odyssey_data_logger(char *data_file_name,
-                             FILE **data_file,
-                             const odyssey_config_t *config,
-                             const char *mission_file)
+/*-------------------------------------------------------------------------
+  The following functions automate some of the record keeping of the
+  missions.  A file in the data directory VEH_NAME.tab (Xanthos,
+  Amphitrite, Wodyssey, etc) will contain a tabulated summary of items such
+  as run name, start time, initial position, duration, max depth.
+
+  B. A. Moran 28-May-1997
+  -----------------------------------------------------------------------*/
+
+static void init_tab(void) {
+    north0 = read_sensor(M_POS_N);
+    east0  = read_sensor(M_POS_E);
+}
+
+static void update_tab(float depth) {
+    if (depth > max_depth)
+	max_depth = depth;
+}
+
+int write_tab(const odyssey_config_t *config)
 {
+    FILE *ftab;
+    char *run;
+    int error = -1;
+    char msg_buf[256];
+
+    snprintf( msg_buf, 256, "%s/%s.tab", config->data_dir, VEHICLE_NAME );
+
+				/* open tab-file for append */
+    ftab = fopen( msg_buf, "a" );
+
+    if ( ftab )
+    {
+				/* extract run name from data file name */
+	run = strrchr( vvp->data_file_name, '/' );
+	if ( !run ) run++;
+    else run = vvp->data_file_name;
+
+	if ( strlen(run) > 0 )
+	{
+				/* write entry to file and close */
+	    fprintf( ftab, "%s %.2f\t% 8.2f % 7.1f % 7.1f %6.1f\n", run,
+		     vvp->mission_start_time, read_sensor(M_PRESENT_TIME), north0, east0, max_depth );
+	    fclose( ftab );
+	}
+	error = 0;
+    }
+
+    return error;
+}
+
+int init_odyssey_data_logger(char *data_file_name, FILE **data_file, const odyssey_config_t *config, const char *mission_file) {
     int i = 0;
-    int j;
-    int beh_id;
-    int offset;
-    char time_string[30];
-    char fname_string[32];
+    int j, beh_id, offset, run_number;
+    char time_string[30], fname_string[32];
     time_t t;
     struct tm *tp;
-    int run_number;
 
-    if (data_file == NULL ||
-        data_file_name == NULL ||
-        config == NULL ||
-        mission_file == NULL) {
+    if (data_file == NULL || data_file_name == NULL || config == NULL || mission_file == NULL) {
         write_to_sim_log("[odyssey_data_logger] Invalid data logger arguments.\n");
         return 0;
     }
+
+    /* Capture initial values for the run summary. */
+    north0 = (float)read_sensor(M_POS_N);
+    east0 = (float)read_sensor(M_POS_E);
+    max_depth = (float)read_sensor(M_DEPTH);
 
     t = time(NULL);
     tp = gmtime(&t);
@@ -132,9 +181,7 @@ int init_odyssey_data_logger(char *data_file_name,
     do {
         ++run_number;
 
-        snprintf(data_file_name, PATH_SIZE, "%s/%c%s%02d.obd",
-                config->data_dir, PREFIX_CHAR, fname_string, run_number);
-
+        snprintf(data_file_name, PATH_SIZE, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
     } while (access(data_file_name, F_OK) != -1);
 
     *data_file = fopen(data_file_name, "wb");
@@ -146,28 +193,17 @@ int init_odyssey_data_logger(char *data_file_name,
 
     strcpy(vvp->data_file_name, data_file_name);
 
-    fprintf(*data_file,
-            "MIT_SG_AUV_LAB_v%d %s\xa",
-            2,
-            VEHICLE_NAME);
+    fprintf(*data_file, "MIT_SG_AUV_LAB_v%d %s\xa", 2, VEHICLE_NAME);
 
-    if (strftime(time_string,
-                 sizeof(time_string),
-                 "%Y/%m/%d %H:%M:%S GMT",
-                 tp) == 0) {
+    if (strftime(time_string, sizeof(time_string), "%Y/%m/%d %H:%M:%S GMT", tp) == 0) {
         fclose(*data_file);
         *data_file = NULL;
         write_to_sim_log("[odyssey_data_logger] Failed to create log timestamp.\n");
         return 0;
     }
 
-    fprintf(*data_file,
-            "%s     # OS-9 file creation time\xa",
-            time_string);
-
-    fprintf(*data_file,
-            "%s     # Structure creation time\xa",
-            vvp->creation_date);
+    fprintf(*data_file, "%s     # OS-9 file creation time\xa", time_string);
+    fprintf(*data_file, "%s     # Structure creation time\xa", vvp->creation_date);
 
     write_fault_header(*data_file, config);
     write_mission_header(*data_file, config, mission_file);
@@ -175,10 +211,8 @@ int init_odyssey_data_logger(char *data_file_name,
     for (i = 0; i <= vvp->last_s; i++) {
         fprintf(*data_file, "%d %-29s", i, sensor_name(i));
 
-        if (sensor_time(i) >= 0L)
-            fprintf(*data_file, " %.8g\xa", read_sensor(i));
-        else
-            fputc('\xa', *data_file);
+        if (sensor_time(i) >= 0L) fprintf(*data_file, " %.8g\xa", read_sensor(i));
+        else fputc('\xa', *data_file);
     }
 
     for (i = 0; i < MAX_COMMAND; i++) {
@@ -187,21 +221,11 @@ int init_odyssey_data_logger(char *data_file_name,
         if (beh_id != -1) {
             offset = vvp->last_s + 1 + (B_ARG_SIZE * (i - 1));
 
-            fprintf(*data_file,
-                    "%d %-30s \t%-d\n",
-                    offset,
-                    vvp->c[i].b.name,
-                    i);
+            fprintf(*data_file, "%d %-30s \t%-d\n", offset, vvp->c[i].b.name, i);
 
             for (j = 0; j < B_ARG_SIZE; j++) {
-                if (vvp->c[i].b.arg[j].name[0] != '\0' &&
-                    strlen(vvp->c[i].b.arg[j].name)) {
-                    fprintf(*data_file,
-                            "%d %s_%-30s \t%-g\xa",
-                            offset + 1 + j,
-                            vvp->c[i].b.name,
-                            vvp->c[i].b.arg[j].name,
-                            vvp->c[i].b.arg[j].x);
+                if (vvp->c[i].b.arg[j].name[0] != '\0' && strlen(vvp->c[i].b.arg[j].name)) {
+                    fprintf(*data_file, "%d %s_%-30s \t%-g\xa", offset + 1 + j, vvp->c[i].b.name, vvp->c[i].b.arg[j].name, vvp->c[i].b.arg[j].x);
                 }
             }
         }
@@ -216,4 +240,63 @@ int init_odyssey_data_logger(char *data_file_name,
 
     write_to_sim_log("[odyssey_data_logger] Ody data logger initialized.\n");
     return 1;
+}
+
+/*------------------------------------------------------------------*
+ | log_data
+ *------------------------------------------------------------------*/ 
+
+int log_data(FILE *datafile)
+{
+    short int flag=10001, i;
+    static int first = 1;
+    static float last_elapsed_time=0.0;   /* for debugging data logging */
+    float temp_float;
+    int my_start_time;
+
+#ifdef NO_DATA_LOGGING
+    return 0;
+#endif
+
+    my_start_time = millisec();
+				/* write timestamp on first call, special
+				   9999 format to parse this line in the
+				   data file */
+    if ( first )
+    {
+	fprintf( datafile, "9999 %.2f (%s)\xa", vvp->mission_start_time,
+		 vvp->mission_date );
+		 fflush( datafile );    /* ensure 9999 marker reaches disk */
+				/* initialize tabular record keeping */
+	init_tab();
+    }
+				/* keep track of max depth */
+    update_tab(read_sensor(M_DEPTH));
+
+				/* first write the flag (use 10001) */
+    fwrite( (void *) &flag, 2, 1, datafile);
+
+    fwrite( (void *) &last_elapsed_time, 4, 1, datafile);  
+
+/* need to modify to write only those values that have changed since
+   the last read (use >= to write every value the first time through)
+   Doesn't seem to work, use first */
+
+    for ( i = 0; i <= vvp->last_s; i++ )
+    {
+	if ( sensor_time(i) >= sensor_time(M_PRESENT_TIME) )
+	{
+	    fwrite( (void *) &i, 2, 1, datafile );
+
+	    temp_float = (float) read_sensor(i); 
+	    fwrite((void *) &temp_float, 4, 1, datafile); 
+	}
+    }
+    if ( first )
+
+	first = 0;
+
+    last_elapsed_time = (float) (millisec() - my_start_time);
+
+    return 0;
 }
