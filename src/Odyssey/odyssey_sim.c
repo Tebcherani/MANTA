@@ -48,13 +48,21 @@ static int init_odyssey_config(odyssey_config_t *config) {
     return 1;
 }
 
-int init_odyssey_sim(odyssey_config_t *config, const command_line_options_t *options, char *data_file_name, size_t data_file_name_size, FILE **data_file) {
+int init_odyssey_sim(odyssey_config_t *config) {
     if (!init_odyssey_config(config)) return 0;
     if (!init_odyssey_data_structure()) return 0;
+
+    return 1;
+}
+
+int start_odyssey_sim(const odyssey_config_t *config, const command_line_options_t *options, time_t calendar_start_time, char *data_file_name, FILE **data_file) {
+    if (!init_mission_time(calendar_start_time)) return 0;
     if (!init_odyssey_model(config->model_path)) return 0;
     if (!init_odyssey_mission(options->mission_file, config->mission_dir)) return 0;
-    if (!load_faults(options->fault_file ? options->fault_file : vvp->fault_file_name, &config)) return 0;
+    if (!load_faults(options->fault_file ? options->fault_file : vvp->fault_file_name, config)) return 0;
+    if (!init_odyssey_state()) return 0;
     if (!init_odyssey_data_logger(data_file_name, data_file, config, options->mission_file)) return 0;
+    if (!init_odyssey_dynamics()) return 0;
 
     return 1;
 }

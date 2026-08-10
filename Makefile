@@ -32,6 +32,7 @@ MISSION ?= dive240.mi
 SRCS = \
     src/Application/command_line.c                          \
     src/Common/angle_utils.c                                \
+    src/Common/matrix_utils.c                               \
     src/Common/random_utils.c                               \
     src/Common/sim_log.c                                    \
     src/Common/unit_utils.c                                 \

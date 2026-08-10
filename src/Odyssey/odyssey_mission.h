@@ -1,6 +1,8 @@
 #ifndef ODYSSEY_MISSION_H
 #define ODYSSEY_MISSION_H
 
+#include <time.h>
+
 #include "common_defs.h"
 #include "odyssey_behaviors.h"
 
@@ -21,7 +23,10 @@ struct command {
 
 int stack_busy(struct command *cmd);
 
+int init_mission_time(time_t calendar_start_time);
 int init_odyssey_mission(const char *file_name, const char *mission_dir);
 int update_odyssey_mission(void);
+
+int match_behavior(const char *name);
 
 #endif

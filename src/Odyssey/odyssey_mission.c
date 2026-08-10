@@ -2,20 +2,10 @@
 #include "sim_log.h"
 #include "vehicle.h"
 
-static int read_state(FILE *fptr);
-static int match_behavior(const char *name);
+int hirestime(double *time_value);
+
 static int match_behavior_arg(const char *name, int b_index);
-
-static int match_behavior( const char *name )
-{
-    int i = 0;
-
-    for ( i = 0; i < MAX_BEHAVIOR; i++ )
-        if ( strcmp(vvp->b[i].name, name) == 0 ) 
-            return i;
-    
-    return -1;
-}
+static int read_state(FILE *fptr);
 
 static int match_behavior_arg( const char *name, int b_index )
 {
@@ -39,7 +29,6 @@ static int match_behavior_arg( const char *name, int b_index )
     }
     return -1;
 }
-
 
 static int read_state(FILE *fptr) {
     char name[MAX_STATE_NAME];
@@ -169,9 +158,32 @@ static int read_state(FILE *fptr) {
     return 0;
 }
 
+int match_behavior( const char *name )
+{
+    int i = 0;
+
+    for ( i = 0; i < MAX_BEHAVIOR; i++ )
+        if ( strcmp(vvp->b[i].name, name) == 0 ) 
+            return i;
+    
+    return -1;
+}
+
 int stack_busy(struct command *cmd) {
     return (cmd->speed_mode != -1) && (cmd->heading_mode != -1) &&
 	(cmd->depth_mode != -1);
+}
+
+int init_mission_time(time_t calendar_start_time) {
+    struct tm *time_info;
+
+    time_info = gmtime(&calendar_start_time);
+    if (time_info == NULL) return 0;
+    if (strftime(vvp->mission_date, sizeof(vvp->mission_date), "%b %d, %Y %H:%M:%S", time_info) == 0) return 0;
+    if (hirestime(&vvp->mission_start_time) != 0) return 0;
+
+    write_to_sim_log("[odyssey_mission] Mission time initialized.\n");
+    return 1;
 }
 
 int init_odyssey_mission(const char *file_name, const char *mission_dir) {

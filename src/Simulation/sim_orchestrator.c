@@ -38,21 +38,19 @@ int main(int argc, char *argv[]) {
 
     if (!open_sim_log()) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
     if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
-    if (!init_odyssey_sim(&odyssey_config, &options, data_file_name, sizeof(data_file_name), &datafile)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
+    if (!init_odyssey_sim(&odyssey_config)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
-
-    lhs();  // Initialize Odyssey dynamics
-    write_to_sim_log("Odyssey dynamics initialized.\n");
-
-    if (!init_mission_time(&sim_state)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
+    if (!start_odyssey_sim(&odyssey_config, &options, sim_state.calendar_start_time, data_file_name, &datafile)) exit_sim(EXIT_FAILURE, mission_started, datafile, &odyssey_config);
 
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end
    for next cycle.
 */
     mission_started = 1;
-    while (sim_state.current_cycle < sim_config.num_cycles) {
-	    if (vvp->abort_mission) {
+    write_to_sim_log("[sim_orchestrator] Before main loop: current_cycle=%d, num_cycles=%d\n", sim_state.current_cycle, sim_config.num_cycles);
+
+    while (sim_state.current_cycle < sim_config.num_cycles) {	    
+        if (vvp->abort_mission) {
             write_to_sim_log("%8.2f: Mission aborted because vvp->abort_mission = %d\n", sim_state.sim_time, vvp->abort_mission);
             exit_sim(EXIT_SUCCESS, mission_started, datafile, &odyssey_config);
         }

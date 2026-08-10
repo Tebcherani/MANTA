@@ -8,6 +8,7 @@ typedef struct {
 
 int init_odyssey_model(const char *path);
 int init_odyssey_state(void);
+int init_odyssey_dynamics(void);
 int update_odyssey_state(double timestep);
 
 #endif

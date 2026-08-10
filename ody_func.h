@@ -41,10 +41,6 @@ const char *get_fault_file_name( void );
 int millisec( void );
 
 				/* sim.c — full prototypes required by modern GCC */
-void motion( double *e, double *p, double Amps, double Del13,
-	     double Del24, double dt );
-void hydro( double *, double *, double, double, double, double );
-void fins( double *, double, double );
 double thruster_torque( double real_amps, double w_speed );
 double thruster_force( double real_amps, double w_speed );
 double act_model( double des_angle, double angle, double dt );
