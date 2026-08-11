@@ -4,12 +4,14 @@
 #include "common_defs.h"
 
 double wrap_angle(double angle) {
-    double ipart, result;
+    double integer_part, result;
 
-    result = 2*PI*modf(angle/(2*PI), &ipart);
+    // Remove multiples of 2*PI
+    result = 2 * PI * modf(angle / (2 * PI), &integer_part);
 
-    if (result >= PI) result -= 2*PI;
-    if (result < -PI) result += 2*PI;
+    // Keep the result between -PI and PI
+    if (result >= PI) result -= 2 * PI;
+    if (result < -PI) result += 2 * PI;
 
     return result;
 }
