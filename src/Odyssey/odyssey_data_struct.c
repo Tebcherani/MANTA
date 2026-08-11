@@ -68,8 +68,8 @@ int init_odyssey_data_structure() {
 int match_sensor(const char *name) {
     int i;
     char *eor;
-    char thisName[NAME_SIZE];
-    char vvvName[NAME_SIZE];
+    char thisName[sizeof(vvp->s[0].name)];
+    char vvvName[sizeof(vvp->s[0].name)];
 
     if (name == NULL)
         return -1;
