@@ -4,22 +4,32 @@
 #include "random_utils.h"
 
 double std_normal_random_num(void) {
-    static int iset = 0;
-    static double gset;
-    double fac,r,v1,v2;
-  
-    if (iset == 0) {
-        do {
-            v1 = 2.0 * drand48() - 1.0;
-            v2 = 2.0 * drand48() - 1.0;
-            r = v1 * v1 + v2 * v2;
-        } while (r >= 1.0);
-        fac = sqrt(-2.0 * log(r) / r);
-        gset = v1 * fac;
-        iset = 1;
-        return v2 * fac;
-    } else {
-        iset = 0;
-        return gset;
+    static int has_saved_value = 0;
+    static double saved_value;
+
+    double scale;
+    double radius_squared;
+    double x;
+    double y;
+
+    // Return the saved value from the previous pair
+    if (has_saved_value) {
+        has_saved_value = 0;
+        return saved_value;
     }
+
+    // Generate a random point inside the unit circle
+    do {
+        x = 2.0 * drand48() - 1.0;
+        y = 2.0 * drand48() - 1.0;
+        radius_squared = x * x + y * y;
+    } while (radius_squared >= 1.0 || radius_squared == 0.0);
+
+    // Convert the uniform random values to standard normal values
+    scale = sqrt(-2.0 * log(radius_squared) / radius_squared);
+
+    saved_value = x * scale;
+    has_saved_value = 1;
+
+    return y * scale;
 }

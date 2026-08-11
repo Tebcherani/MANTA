@@ -20,7 +20,7 @@ static void get_indices(lbl_t *lbl);
 static int lbl_inc_index(lbl_t *lbl);
 static int lsquick2(double r[], lbl_t *lbl, double *perror);
 static void make_fix(lbl_t *lbl, double t, fix_t *fix);
-static int matinv3(double a[][3], double ainv[][3], double min_det, double *pdet);
+static int compute_matrix_inverse3(double a[][3], double ainv[][3], double min_det, double *pdet);
 static double median(double x[],int n);
 static int nav2_xy( vector_t *pa, vector_t *pb, double ra, double rb, lbl_side_t nside, double min_angle, vector_t *pd );
 static int num_good(lbl_t *lbl);
@@ -390,7 +390,7 @@ static void make_fix(lbl_t *lbl, double t, fix_t *fix)
     fix->new = 1 ;
 }
 
-static int matinv3(double a[][3], double ainv[][3], double min_det, double *pdet)
+static int compute_matrix_inverse3(double a[][3], double ainv[][3], double min_det, double *pdet)
 {
     double det ;
     int i;
@@ -525,7 +525,7 @@ static void psuedo3(double A[NXP][3], double B[NXP], double x[])
 	    AtB[i] += A[j][i]*B[j];
     }
 				/* invert Atranspose*A */
-    matinv3(AtA,AtAinv,.00001,&det) ;
+    compute_matrix_inverse3(AtA,AtAinv,.00001,&det) ;
 				/* x = inv(At*A)*At*B */
     for(i=0;i<3;i++)
     {
