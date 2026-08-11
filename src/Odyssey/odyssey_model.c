@@ -776,7 +776,7 @@ int init_odyssey_dynamics(void) {
     a[6][5] = -read_sensor(VS_IYZ);
     a[6][6] =  read_sensor(VS_IZZ) - read_sensor(VS_NRDOT);
 
-    compute_matrix_inverse(a,ainv,6,work);
+    compute_matrix_inverse(a,ainv,6);
 
     write_to_sim_log("[odyssey_model] Odyssey dynamics initialized.\n");
 

@@ -2,13 +2,11 @@
 
 #include "matrix_utils.h"
 
-int compute_matrix_inverse(double a[][7], double ainv[][7], int n, double adum[][7]) {
+int compute_matrix_inverse(double a[][7], double ainv[][7], int n) {
     double matrix[36];
     lapack_int pivots[6];
     lapack_int result;
     int i, j;
-
-    (void)adum;
 
     if (n < 1 || n > 6)
         return 1;
