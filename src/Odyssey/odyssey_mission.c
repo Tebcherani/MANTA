@@ -15,8 +15,8 @@ static int match_behavior_arg( const char *name, int b_index )
 {
     int i;
     char *loc;
-	char thisName[NAME_SIZE];
-    char vvvName[NAME_SIZE];
+	char thisName[sizeof(vvp->s[0].name)];
+    char vvvName[sizeof(vvp->s[0].name)];
 
     strcpy( thisName, name );
     if ( (loc = strchr(thisName, '(')) != NULL )
@@ -149,10 +149,10 @@ static int read_state(FILE *fptr) {
             strncpy(
                 vvp->sta[vvp->cstate].c[priority].b.arg[index].name,
                 vvp->b[b_index].arg[index].name,
-                NAME_SIZE - 1
+                sizeof(vvp->sta[vvp->cstate].c[priority].b.arg[index].name) - 1
             );
 
-            vvp->sta[vvp->cstate].c[priority].b.arg[index].name[NAME_SIZE - 1] = '\0';
+            vvp->sta[vvp->cstate].c[priority].b.arg[index].name[sizeof(vvp->sta[vvp->cstate].c[priority].b.arg[index].name) - 1] = '\0';
         }
     }
 
