@@ -12,8 +12,9 @@ typedef struct {
 
 int init_odyssey_sim(odyssey_config_t *);
 int start_odyssey_sim(const odyssey_config_t *, const char *, const char *, time_t, char *, FILE **);
-int update_odyssey_sim_timestep(double);
+int update_odyssey_sim_state(double);
 int update_odyssey_sim_cycle(double, FILE *);
+int update_odyssey_sim_time(double);
 int odyssey_abort_requested(void);
 int end_odyssey_sim(FILE *, const odyssey_config_t *, const char *);
 

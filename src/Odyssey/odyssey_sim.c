@@ -69,7 +69,7 @@ int start_odyssey_sim(const odyssey_config_t *config, const char *mission_file, 
     return 1;
 }
 
-int update_odyssey_sim_timestep(double timestep) {
+int update_odyssey_sim_state(double timestep) {
     if (update_odyssey_state(timestep) != 0) return 0;
 
     return 1;
@@ -84,6 +84,13 @@ int update_odyssey_sim_cycle(double control_dt, FILE *datafile) {
     capture_behavior_activity();
 	log_data(datafile);
         
+    return 1;
+}
+
+int update_odyssey_sim_time(double sim_time) {
+    update_sensor(M_PRESENT_TIME, sim_time);
+    sensor_time(M_PRESENT_TIME) = (long)(1000.0 * sim_time);
+
     return 1;
 }
 

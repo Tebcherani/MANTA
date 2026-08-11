@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
     if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, 0, datafile, &odyssey_config, options.behavior_dump_file);
     if (!init_odyssey_sim(&odyssey_config)) exit_sim(EXIT_FAILURE, 0, datafile, &odyssey_config, options.behavior_dump_file);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, 0, datafile, &odyssey_config, options.behavior_dump_file);
+    if (!update_odyssey_sim_time(sim_state.sim_time)) exit_sim(EXIT_FAILURE, 0, datafile, &odyssey_config,options.behavior_dump_file);
     if (!start_odyssey_sim(&odyssey_config, options.mission_file, options.fault_file, sim_state.calendar_start_time, data_file_name, &datafile)) exit_sim(EXIT_FAILURE, 0, datafile, &odyssey_config, options.behavior_dump_file);
 
 /* 
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS, 1, datafile, &odyssey_config, options.behavior_dump_file);
         }
 
-        if (!update_odyssey_sim_timestep(sim_config.timestep)) {
+        if (!update_odyssey_sim_state(sim_config.timestep)) {
             write_to_sim_log("Failed to update Odyssey state.\n");
             exit_sim(EXIT_FAILURE, 1, datafile, &odyssey_config, options.behavior_dump_file);
         }
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]) {
 	    }
 	
         if (!update_sim_state(&sim_state, sim_config.timestep)) exit_sim(EXIT_FAILURE, 1, datafile, &odyssey_config, options.behavior_dump_file);
+        if (!update_odyssey_sim_time(sim_state.sim_time)) exit_sim(EXIT_FAILURE, 1, datafile, &odyssey_config,options.behavior_dump_file);
     }
 
     exit_sim(EXIT_SUCCESS, 1, datafile, &odyssey_config, options.behavior_dump_file);
