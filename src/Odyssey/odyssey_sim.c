@@ -62,7 +62,7 @@ int start_odyssey_sim(const char *mission_file, const char *fault_file, time_t c
     if (!init_odyssey_mission(mission_file, config.mission_dir)) return 0;
     if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, &config)) return 0;
     if (!init_odyssey_state()) return 0;
-    if (!init_odyssey_data_logger(data_file_name, datafile, &config, mission_file)) return 0;
+    if (!init_odyssey_data_logger(data_file_name, &datafile, &config, mission_file)) return 0;
     if (!init_odyssey_dynamics()) return 0;
 
     return 1;

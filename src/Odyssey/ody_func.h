@@ -37,4 +37,6 @@ int millisec( void );
 double thruster_torque( double real_amps, double w_speed );
 double thruster_force( double real_amps, double w_speed );
 
+const char *get_fault_file_path(void);
+
 #endif /* ODY_FUNC_H */

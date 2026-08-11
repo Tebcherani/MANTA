@@ -6,6 +6,7 @@
 #include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_sim.h"
+#include "ody_func.h"
 #include "paths.h"
 #include "sim_log.h"
 #include "vehicle.h"
@@ -154,8 +155,6 @@ int init_odyssey_data_logger(char *data_file_name, FILE **datafile, const odysse
     char time_string[30], fname_string[32];
     time_t t;
     struct tm *tp;
-
-    if (!init_odyssey_data_logger(data_file_name, &datafile, &config, mission_file)) return 0;
 
     /* Capture initial values for the run summary. */
     north0 = (float)read_sensor(M_POS_N);

@@ -23,8 +23,7 @@ ODYSSEY_CPPFLAGS = \
 	-Isrc/Odyssey/Control       \
 	-Isrc/Odyssey/Faults        \
 	-Isrc/Odyssey/Navigation    \
-	-Isrc/Odyssey/Sensors       \
-	-Isrc/Simulation
+	-Isrc/Odyssey/Sensors
 
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS  = -lm
