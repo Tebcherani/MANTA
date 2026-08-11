@@ -1,7 +1,6 @@
 #include <math.h>
 
 #include "angle_utils.h"
-#include "common_defs.h"
 
 double wrap_angle(double angle) {
     double integer_part, result;

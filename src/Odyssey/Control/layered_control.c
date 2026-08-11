@@ -20,12 +20,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "common_defs.h"
-#include "vehicle.h"
-#include "odyssey_data_struct.h"
-#include "odyssey_mission.h"
 #include "angle_utils.h"
+#include "odyssey_data_struct.h"
+#include "odyssey_defs.h"
+#include "odyssey_mission.h"
 #include "unit_utils.h"
+#include "vehicle.h"
+#include "world_defs.h"
 
 int getXSDataByte( void );
 static int behavior_axis_mask( int behavior_id );

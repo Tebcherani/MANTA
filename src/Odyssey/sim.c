@@ -30,9 +30,9 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "common_defs.h"
 #include "vehicle.h"
 #include "odyssey_data_struct.h"
+#include "world_defs.h"
 
 /*------------------- generic constants -------------------------------*/
 

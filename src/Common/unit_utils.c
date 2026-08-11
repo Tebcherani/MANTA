@@ -1,7 +1,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "common_defs.h"
 #include "unit_utils.h"
 
 double convert_deg_to_rad(double degree) {

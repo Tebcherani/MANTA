@@ -3,8 +3,8 @@
 
 #include <time.h>
 
-#include "common_defs.h"
 #include "odyssey_behaviors.h"
+#include "odyssey_defs.h"
 
 typedef enum {D_ELEVATOR, D_DEPTH, D_PITCH} dpt_mode_t;
 typedef enum {H_RUDDER, H_HEADING} hdt_mode_t;

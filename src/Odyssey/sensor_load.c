@@ -11,7 +11,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "common_defs.h"
 #include "odyssey_data_struct.h"
 #include "vehicle.h"
 

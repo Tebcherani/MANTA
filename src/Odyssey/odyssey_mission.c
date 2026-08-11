@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "odyssey_data_struct.h"
+#include "odyssey_defs.h"
 #include "odyssey_mission.h"
 #include "sim_log.h"
 #include "unit_utils.h"

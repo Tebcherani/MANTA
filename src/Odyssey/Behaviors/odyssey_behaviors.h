@@ -1,7 +1,7 @@
 #ifndef ODYSSEY_BEHAVIORS_H
 #define ODYSSEY_BEHAVIORS_H
 
-#include "common_defs.h"
+#include "odyssey_defs.h"
 
 // The state of a behavior and its universe of allowed values
 typedef enum {

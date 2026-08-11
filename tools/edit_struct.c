@@ -728,7 +728,7 @@ END
 
 #include "ody_defs.h"
 #include "ody_types.h"
-#include "common_defs.h"
+#include "odyssey_defs.h"
 
                                 /* typedef from parse */
 struct sensor_name {

@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "common_defs.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "vehicle.h"

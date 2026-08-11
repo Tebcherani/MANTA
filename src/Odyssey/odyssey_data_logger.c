@@ -6,6 +6,7 @@
 
 #include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
+#include "odyssey_defs.h"
 #include "odyssey_sim.h"
 #include "ody_func.h"
 #include "paths.h"

@@ -11,6 +11,7 @@
 #include "sim_log.h"
 #include "unit_utils.h"
 #include "vehicle.h"
+#include "world_defs.h"
 
 static double act_model(double des_angle, double angle, double dt);
 static void fins( double *e, double rud_ang, double elev_ang );

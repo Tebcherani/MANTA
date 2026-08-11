@@ -46,13 +46,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common_defs.h"
 #include "vehicle.h"
 #include "ody_defs.h"
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
 #include "odyssey_data_struct.h"
+#include "world_defs.h"
 
 #define MAXROWS      300000
 #define MAXCOLS      25
@@ -653,7 +653,7 @@ static int math_bottom(void)
 /*
  * check #1 (seems to have a bug):
  if( (dd[i] >= Trench[i].width) || (fabs(PV_theta[i] - PQ_theta[i]) 
-                                                          >= (PI/2)) ) {
+                                                          >= (M_PI/2)) ) {
  */
                   if( (dd[i] >= Trench[i].width) || ((dd1[i] + dd2[i]) >= 
                                                                                  (trench_length[i] + 10.0))) {
@@ -675,13 +675,13 @@ static int math_bottom(void)
             
         case CHIRP_BOTTOM:                      /* A chirp-function bottom */
         wavelength = base_wavelength / (GAltTip.X * scale_factor);
-        Alt_Depth = base_depth + amplitude * sin( GAltTip.X / (wavelength * PI) );
+        Alt_Depth = base_depth + amplitude * sin( GAltTip.X / (wavelength * M_PI) );
         break;
 
     case SINE_BOTTOM:                      /* A simple Sine Wave Bottom */
 
     default:
-        Alt_Depth = base_depth + amplitude * sin( GAltTip.X / (wavelength * PI) );
+        Alt_Depth = base_depth + amplitude * sin( GAltTip.X / (wavelength * M_PI) );
         break;
     }
     
@@ -1264,7 +1264,7 @@ double beam_pattern( struct ray_struct *fac_ray )
     if( debug == NOBEAM) {
         loss = 0;
     } else {
-        temp1 = PI * DIAMETER / LAMBDA;
+        temp1 = M_PI * DIAMETER / LAMBDA;
         temp2 = (2.0 * bessj1(temp1 * sin(fac_ray->phi_t))) / 
             ( temp1 * sin(fac_ray->phi_t) );
         loss =  10.0 * log10( (temp2 * temp2) );

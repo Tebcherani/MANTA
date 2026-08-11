@@ -13,7 +13,6 @@
 
 #include <math.h>
 
-#include "common_defs.h"
 #include "whoi_traj.h"
 
 /* keeps heading between 0-2PI, only corrects once though */

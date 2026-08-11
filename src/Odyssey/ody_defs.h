@@ -1,8 +1,6 @@
 #ifndef ODY_DEFS_H
 #define ODY_DEFS_H
 
-#include "common_defs.h"
-
 #define MAX_SENSOR      550
 #define MAX_BEHAVIOR    30
 #define MAX_COMMAND     30

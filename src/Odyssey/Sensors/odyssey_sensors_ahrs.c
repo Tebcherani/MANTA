@@ -1,11 +1,11 @@
 #include <math.h>
 
 #include "angle_utils.h"
-#include "common_defs.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_sensors.h"
 #include "random_utils.h"
 #include "vehicle.h"
+#include "world_defs.h"
 
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
 static void update_acceleration(double *ax, double *ay, double *aax, double *aay);

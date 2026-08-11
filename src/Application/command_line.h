@@ -1,8 +1,6 @@
 #ifndef COMMAND_LINE_H
 #define COMMAND_LINE_H
 
-#include "common_defs.h"
-
 typedef struct {
     int show_help;
 

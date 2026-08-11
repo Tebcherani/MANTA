@@ -8,7 +8,7 @@
 #define ODY_TYPES_H
 
 #include "ody_defs.h"
-#include "common_defs.h"
+#include "odyssey_defs.h"
 #include "odyssey_mission.h"
 
 struct sensor {
