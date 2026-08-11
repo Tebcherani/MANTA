@@ -11,7 +11,7 @@ double convert_rad_to_deg(double rad) {
     return rad * 180.0 / PI;
 }
 
-int convert_units( const char *expected, const char *given, const double inval, double *outval ) {
+int convert_units(const char *expected, const char *given, const double inval, double *outval) {
     if (strcmp(expected, given) != 0) {
         if (!strncmp(expected, "(rad", 4) && !strncmp(given, "(deg", 4)) *outval = convert_deg_to_rad(inval);
         else if (!strncmp(expected, "(deg", 4) && !strncmp(given, "(rad", 4)) *outval = convert_rad_to_deg(inval);

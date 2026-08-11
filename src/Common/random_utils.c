@@ -4,7 +4,7 @@
 #include "random_utils.h"
 
 double std_normal_random_num(void) {
-    static int iset=0;
+    static int iset = 0;
     static double gset;
     double fac,r,v1,v2;
   

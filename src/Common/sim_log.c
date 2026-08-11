@@ -55,12 +55,12 @@ int write_to_sim_log(const char *fmt, ...) {
 
     if (file == NULL) {
         fprintf(stderr, "Simulation log is not open.\n");
-        return -1;
+        return 0;
     }
 
     if (fmt == NULL) {
         fprintf(stderr, "Simulation log format string is NULL.\n");
-        return -1;
+        return 0;
     }
 
     va_start(args_terminal, fmt);
@@ -72,13 +72,13 @@ int write_to_sim_log(const char *fmt, ...) {
     if (terminal_result < 0) {
         va_end(args_log);
         perror("stdout");
-        return -1;
+        return 0;
     }
 
     if (fflush(stdout) != 0) {
         va_end(args_log);
         perror("stdout");
-        return -1;
+        return 0;
     }
 
     int log_result = vfprintf(file, fmt, args_log);
@@ -86,13 +86,13 @@ int write_to_sim_log(const char *fmt, ...) {
 
     if (log_result < 0) {
         perror(path);
-        return -1;
+        return 0;
     }
 
     if (fflush(file) != 0) {
         perror(path);
-        return -1;
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
