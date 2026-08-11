@@ -2,147 +2,132 @@
 
 #include "matrix_utils.h"
 
-/*-----------------------------------------------------------------*
- | matrix calculations, not sure where their from, probably 
- | numerical recipes in fortran (note array element[0] unused!)
- *-----------------------------------------------------------------*/
-
-/***************************************************************
-  subroutine matinv(a,ainv,n,adum)
-
-  this routine computes the inverse of a matrix.
-  matrix inversion is performed by crout elimination
-
-   input matrix :  a
-  output matrix :  ainv
-          order :  n
-     error flag :  ier
-         adum   :  dummy matrix of order  n x n .
-
------------------------------------------------------------------ */
-
 int matinv(double a[][7], double ainv[][7], int n, double adum[][7]) {
-   int i, j, k, km, kp;
-   int ic = 0, ii = 0;
-   double p, t, s, dp, dt;
-   double eps = 1.0e-36;
-   int ier = 0;   // "ier" is a flag that is set to "1" if the matrix is singular
+    int i, j, k;
+    int pivot_row;
+    int row_swaps = 0;
+    int km, kp;
+    double pivot;
+    double temp;
+    double value;
+    double max_value;
+    double diagonal;
+    const double eps = 1.0e-36;
 
-   if (n == 1) {
-      if (fabs(a[1][1]) <= eps) return 1;
-      else {
-         ainv[1][1] = 1.0/a[1][1];
-         return (ier);
-      }
-   }    
+    // Handle 1x1 matrix
+    if (n == 1) {
+        if (fabs(a[1][1]) <= eps) return 1;
+        ainv[1][1] = 1.0 / a[1][1];
+        return 0;
+    }
 
-   for (i = 1; i <= n; i++)
-      for (j = 1; j <= n; j++) adum[i][j] = a[i][j];
+    // Copy input matrix into working matrix
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) adum[i][j] = a[i][j];
+    }
 
-   for (i = 1; i <= n; i++)
-      for (j = 1; j <= n; j++) {
-         ainv[i][j] = 0.0e0;
-         if (i == j) ainv[i][j] = 1.0e0;
-      }
+    // Initialize inverse as identity matrix
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) ainv[i][j] = (i == j) ? 1.0 : 0.0;
+    }
 
-   t  = fabs(adum[1][1]);
-   for (i = 2; i <= n; i++) {
-      if (t - fabs(adum[i][1]) < 0.0e0) {
-         ii = i;
-         t = fabs(adum[i][1]);
-      }
-   }
+    pivot_row = 1;
+    max_value = fabs(adum[1][1]);
 
-   if (ii != 0) {
-      ic++;
+    // Find first pivot
+    for (i = 2; i <= n; i++) {
+        if (fabs(adum[i][1]) > max_value) {
+            pivot_row = i;
+            max_value = fabs(adum[i][1]);
+        }
+    }
 
-      for (j = 1; j <= n; j++) {
-         s = ainv[1][j];
-         ainv[1][j] = ainv[ii][j];
-         ainv[ii][j] = s;
-      }
-   
-      for (j = 1; j <= n; j++) {
-         s = adum[1][j];
-         adum[1][j] = adum[ii][j];
-         adum[ii][j] = s;
-      }
-   }
-   
-   p = adum[1][1];
+    // Swap first row if needed
+    if (pivot_row != 1) {
+        row_swaps++;
 
-   if (fabs(p) <= eps) return 1;
+        for (j = 1; j <= n; j++) {
+            temp = ainv[1][j];
+            ainv[1][j] = ainv[pivot_row][j];
+            ainv[pivot_row][j] = temp;
 
-   for (j = 2; j <= n; j++) adum[1][j] = adum[1][j] / p;
-   for (j = 1; j <= n; j++) ainv[1][j] = ainv[1][j] / p;
- 
-   for (k = 2; k <= n; k++) {
-      km = k - 1;
-      t = -1.0;
+            temp = adum[1][j];
+            adum[1][j] = adum[pivot_row][j];
+            adum[pivot_row][j] = temp;
+        }
+    }
 
-      for (i = k; i <= n; i++) {
-         dp = adum[i][k];
+    pivot = adum[1][1];
+    if (fabs(pivot) <= eps) return 1;
 
-         for (j=1;j<=km;j++) dp = dp - adum[i][j] * adum[j][k];
-           
-         adum[i][k] = dp;
-         if (t - fabs(adum[i][k]) < 0.0e0) {
-            t = fabs(adum[i][k]);
-            ii = i;
-         }
-      }
-     
-      if (ii!=k) {
-         ic++;
+    // Normalize first row
+    for (j = 2; j <= n; j++) adum[1][j] /= pivot;
+    for (j = 1; j <= n; j++) ainv[1][j] /= pivot;
 
-         for (j = 1; j <= n; j++) {
-            s = ainv[k][j];
-            ainv[k][j] = ainv[ii][j];
-            ainv[ii][j] = s;
-         }
+    // Elimination
+    for (k = 2; k <= n; k++) {
+        km = k - 1;
+        pivot_row = k;
+        max_value = -1.0;
 
-         for (j=1;j<=n;j++) {
-            s = adum[k][j];
-            adum[k][j] = adum[ii][j];
-            adum[ii][j] = s;
-         }
-      }
-    
-      dt = adum[k][k];
-      if (fabs(dt) <= eps) return 1;
-      
-      p = p * dt;
-      if (k != n) {
-         kp = k + 1;
+        for (i = k; i <= n; i++) {
+            value = adum[i][k];
 
-         for (j = kp; j <= n; j++) {
-            dp = adum[k][j];
-            for (i = 1; i <= km; i++) dp = dp - adum[k][i] * adum[i][j];
-            adum[k][j] = dp / dt;
-         }
-      }
-        
-      for (j = 1; j <= n; j++) {
-         dp = ainv[k][j];
-         for (i = 1; i <= km; i++) dp = dp - adum[k][i] * ainv[i][j];
-         ainv[k][j] = dp / dt;
-      }
-   }
+            for (j = 1; j <= km; j++) value -= adum[i][j] * adum[j][k];
+            adum[i][k] = value;
 
-   if ((ic % 2) != 0) p = -p;
-  
-   ii = n;
+            if (fabs(value) > max_value) {
+                max_value = fabs(value);
+                pivot_row = i;
+            }
+        }
 
-   for (k = 2; k <= n; k++) {
-      kp = ii;
-      ii--;
+        if (pivot_row != k) {
+            row_swaps++;
 
-      for (j = 1; j <= n; j++) {
-         dp = ainv[ii][j];
-         for (i = kp; i <= n; i++) dp = dp - adum[ii][i] * ainv[i][j];
-         ainv[ii][j] = dp;
-      }
-   }
+            for (j = 1; j <= n; j++) {
+                temp = ainv[k][j];
+                ainv[k][j] = ainv[pivot_row][j];
+                ainv[pivot_row][j] = temp;
 
-   return (ier);
+                temp = adum[k][j];
+                adum[k][j] = adum[pivot_row][j];
+                adum[pivot_row][j] = temp;
+            }
+        }
+
+        diagonal = adum[k][k];
+
+        if (fabs(diagonal) <= eps) return 1;
+
+        if (k != n) {
+            kp = k + 1;
+
+            for (j = kp; j <= n; j++) {
+                value = adum[k][j];
+                for (i = 1; i <= km; i++) value -= adum[k][i] * adum[i][j];
+                adum[k][j] = value / diagonal;
+            }
+        }
+
+        for (j = 1; j <= n; j++) {
+            value = ainv[k][j];
+            for (i = 1; i <= km; i++) value -= adum[k][i] * ainv[i][j];
+            ainv[k][j] = value / diagonal;
+        }
+    }
+
+    // Back substitution
+    for (k = 2; k <= n; k++) {
+        kp = n - k + 2;
+        i = kp - 1;
+
+        for (j = 1; j <= n; j++) {
+            value = ainv[i][j];
+            for (pivot_row = kp; pivot_row <= n; pivot_row++) value -= adum[i][pivot_row] * ainv[pivot_row][j];
+            ainv[i][j] = value;
+        }
+    }
+
+    return 0;
 }
