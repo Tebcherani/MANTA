@@ -1,5 +1,8 @@
+#include <stdlib.h>
 #include <time.h>
 
+#include "odyssey_sim.h"
+#include "sim_exit.h"
 #include "sim_log.h"
 #include "sim_state.h"
 

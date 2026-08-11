@@ -10,7 +10,7 @@
 #include "sim_log.h"
 #include "vehicle.h"
 
-static void write_fault_header( FILE *, const odyssey_config_t *);
+static void write_fault_header(FILE *, const odyssey_config_t *);
 static void write_mission_header(FILE *, const odyssey_config_t *, const char *);
 static void init_tab(void);
 static void update_tab(float);
@@ -148,17 +148,14 @@ int write_tab(const odyssey_config_t *config)
     return error;
 }
 
-int init_odyssey_data_logger(char *data_file_name, FILE **data_file, const odyssey_config_t *config, const char *mission_file) {
+int init_odyssey_data_logger(char *data_file_name, FILE **datafile, const odyssey_config_t *config, const char *mission_file) {
     int i = 0;
     int j, beh_id, offset, run_number;
     char time_string[30], fname_string[32];
     time_t t;
     struct tm *tp;
 
-    if (data_file == NULL || data_file_name == NULL || config == NULL || mission_file == NULL) {
-        write_to_sim_log("[odyssey_data_logger] Invalid data logger arguments.\n");
-        return 0;
-    }
+    if (!init_odyssey_data_logger(data_file_name, &datafile, &config, mission_file)) return 0;
 
     /* Capture initial values for the run summary. */
     north0 = (float)read_sensor(M_POS_N);
@@ -186,35 +183,35 @@ int init_odyssey_data_logger(char *data_file_name, FILE **data_file, const odyss
         snprintf(data_file_name, PATH_SIZE, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
     } while (access(data_file_name, F_OK) != -1);
 
-    *data_file = fopen(data_file_name, "wb");
+    *datafile = fopen(data_file_name, "wb");
 
-    if (*data_file == NULL) {
+    if (*datafile == NULL) {
         write_to_sim_log("[odyssey_data_logger] Failed to open data file.\n");
         return 0;
     }
 
     strcpy(vvp->data_file_name, data_file_name);
 
-    fprintf(*data_file, "MIT_SG_AUV_LAB_v%d %s\xa", 2, VEHICLE_NAME);
+    fprintf(*datafile, "MIT_SG_AUV_LAB_v%d %s\xa", 2, VEHICLE_NAME);
 
     if (strftime(time_string, sizeof(time_string), "%Y/%m/%d %H:%M:%S GMT", tp) == 0) {
-        fclose(*data_file);
-        *data_file = NULL;
+        fclose(*datafile);
+        *datafile = NULL;
         write_to_sim_log("[odyssey_data_logger] Failed to create log timestamp.\n");
         return 0;
     }
 
-    fprintf(*data_file, "%s     # OS-9 file creation time\xa", time_string);
-    fprintf(*data_file, "%s     # Structure creation time\xa", vvp->creation_date);
+    fprintf(*datafile, "%s     # OS-9 file creation time\xa", time_string);
+    fprintf(*datafile, "%s     # Structure creation time\xa", vvp->creation_date);
 
-    write_fault_header(*data_file, config);
-    write_mission_header(*data_file, config, mission_file);
+    write_fault_header(*datafile, config);
+    write_mission_header(*datafile, config, mission_file);
 
     for (i = 0; i <= vvp->last_s; i++) {
-        fprintf(*data_file, "%d %-29s", i, sensor_name(i));
+        fprintf(*datafile, "%d %-29s", i, sensor_name(i));
 
-        if (sensor_time(i) >= 0L) fprintf(*data_file, " %.8g\xa", read_sensor(i));
-        else fputc('\xa', *data_file);
+        if (sensor_time(i) >= 0L) fprintf(*datafile, " %.8g\xa", read_sensor(i));
+        else fputc('\xa', *datafile);
     }
 
     for (i = 0; i < MAX_COMMAND; i++) {
@@ -223,19 +220,19 @@ int init_odyssey_data_logger(char *data_file_name, FILE **data_file, const odyss
         if (beh_id != -1) {
             offset = vvp->last_s + 1 + (B_ARG_SIZE * (i - 1));
 
-            fprintf(*data_file, "%d %-30s \t%-d\n", offset, vvp->c[i].b.name, i);
+            fprintf(*datafile, "%d %-30s \t%-d\n", offset, vvp->c[i].b.name, i);
 
             for (j = 0; j < B_ARG_SIZE; j++) {
                 if (vvp->c[i].b.arg[j].name[0] != '\0' && strlen(vvp->c[i].b.arg[j].name)) {
-                    fprintf(*data_file, "%d %s_%-30s \t%-g\xa", offset + 1 + j, vvp->c[i].b.name, vvp->c[i].b.arg[j].name, vvp->c[i].b.arg[j].x);
+                    fprintf(*datafile, "%d %s_%-30s \t%-g\xa", offset + 1 + j, vvp->c[i].b.name, vvp->c[i].b.arg[j].name, vvp->c[i].b.arg[j].x);
                 }
             }
         }
     }
 
-    if (fflush(*data_file) != 0) {
-        fclose(*data_file);
-        *data_file = NULL;
+    if (fflush(*datafile) != 0) {
+        fclose(*datafile);
+        *datafile = NULL;
         write_to_sim_log("[odyssey_data_logger] Failed to flush data file.\n");
         return 0;
     }
