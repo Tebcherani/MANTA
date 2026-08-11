@@ -684,7 +684,7 @@ int init_odyssey_model(const char *path) {
         actual = strchr(name, '(');
 
         if (expect && actual &&
-            convert_units(expect, actual, value, &value)) {
+            !convert_units(expect, actual, value, &value)) {
             fclose(fptr);
             write_to_sim_log("[odyssey_model] Failed to convert vehicle parameter units.\n");
             return 0;
@@ -730,7 +730,7 @@ int init_odyssey_state(void) {
 }
 
 int init_odyssey_dynamics(void) {
-    double a[7][7],work[7][7];
+    double a[7][7];
 
 				/* fsh checked inertia matrix 3/22/94 */
 

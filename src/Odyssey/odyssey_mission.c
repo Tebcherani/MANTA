@@ -82,7 +82,7 @@ static int read_state(FILE *fptr) {
             actual = strchr(name, '(');
 
             if (expect && actual &&
-                convert_units(expect, actual, value, &value) != 0) {
+                !convert_units(expect, actual, value, &value)) {
                 write_to_sim_log("[odyssey_mission] Failed to convert units for sensor: %s\n", name);
                 return -1;
             }
@@ -138,7 +138,7 @@ static int read_state(FILE *fptr) {
             actual = strchr(name, '(');
 
             if (expect && actual &&
-                convert_units(expect, actual, value, &value) != 0) {
+                !convert_units(expect, actual, value, &value)) {
                 write_to_sim_log("[odyssey_mission] Failed to convert behavior argument units: %s\n", name);
                 return -1;
             }

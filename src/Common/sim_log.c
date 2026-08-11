@@ -11,6 +11,7 @@ int open_sim_log(void) {
     const char *path_ptr;
     int result;
 
+    // Get path
     path_ptr = getenv("SIM_LOG_PATH");
     if (path_ptr == NULL || path_ptr[0] == '\0') {
         fprintf(stderr, "\n[sim_log] SIM_LOG_PATH is not set.\n");
@@ -23,6 +24,7 @@ int open_sim_log(void) {
         return 0;
     }
 
+    // Open file
     file = fopen(path, "w");
     if (file == NULL) {
         fprintf(stderr, "\n[sim_log] Sim log failed to open.\n");
