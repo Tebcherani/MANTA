@@ -26,7 +26,7 @@ ODYSSEY_CPPFLAGS = \
 	-Isrc/Odyssey/Sensors
 
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
-LDFLAGS  = -lm
+LDFLAGS = -llapacke -llapack -lblas -lm
 
 # Machine-specific overrides belong outside the OneDrive workspace.
 # Example Windows path:
