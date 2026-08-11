@@ -623,7 +623,7 @@ void motion( double e[], double p[], double Amps, double Del13,
 
 int init_odyssey_model(const char *path) {
     FILE *fptr;
-    char line[MAX_LINE], name[NAME_SIZE], header[NAME_SIZE];
+    char line[MAX_LINE], name[sizeof(vvp->s[0].name)], header[sizeof(vvp->s[0].name)];
     char *expect, *actual;
     double value;
     int index, header_seen = 0;
