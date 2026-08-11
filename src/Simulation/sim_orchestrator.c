@@ -6,13 +6,14 @@
 #include "sim_exit.h"
 #include "sim_log.h"
 #include "sim_state.h"
-#include "world_config.h"
+#include "world_sim.h"
 
 int main(int argc, char *argv[]) {
     command_line_options_t options;
     sim_config_t sim_config;
     sim_state_t sim_state;
-    world_config_t world_config;
+
+    const world_state_t *world;
 
     if (parse_command_line(argc, argv, &options) != 0) {
         print_command_line_help(argv[0]);
@@ -26,8 +27,12 @@ int main(int argc, char *argv[]) {
 
     if (!open_sim_log()) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
-    if (!init_world_config(&world_config)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
-    if (!init_odyssey_sim()) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
+    
+    if (!init_world_sim()) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
+    world = get_world_state();
+    if (world == NULL) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
+
+    if (!init_odyssey_sim(world)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!update_odyssey_sim_time(sim_state.sim_time)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!start_odyssey_sim(options.mission_file, options.fault_file, sim_state.calendar_start_time)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);

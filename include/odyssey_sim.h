@@ -3,6 +3,8 @@
 
 #include <time.h>
 
+#include "world_sim.h"
+
 typedef struct {
     const char *data_dir;
     const char *mission_dir;
@@ -10,7 +12,7 @@ typedef struct {
     const char *model_path;
 } odyssey_config_t;
 
-int init_odyssey_sim(void);
+int init_odyssey_sim(const world_state_t *);
 int start_odyssey_sim(const char *, const char *, time_t);
 int update_odyssey_sim_state(double);
 int update_odyssey_sim_cycle(double);

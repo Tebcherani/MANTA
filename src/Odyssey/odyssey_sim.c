@@ -48,7 +48,9 @@ static int init_odyssey_config(void) {
     return 1;
 }
 
-int init_odyssey_sim(void) {
+int init_odyssey_sim(const world_state_t *world_state) {
+    if (world_state == NULL) return 0;
+
     if (!init_odyssey_config()) return 0;
     if (!init_odyssey_data_structure()) return 0;
 

@@ -3,16 +3,13 @@
 # Build:  make
 # Run:    ./ody sim <mission_name>
 
-
 CC = gcc
 AR = ar
-
 
 COMMON_CPPFLAGS = \
 	-I. \
 	-Iinclude \
 	-Isrc/Common
-
 
 SIM_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
@@ -20,11 +17,9 @@ SIM_CPPFLAGS = \
 	-Isrc/Simulation \
 	-Isrc/World
 
-
 WORLD_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
 	-Isrc/World
-
 
 ODYSSEY_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
@@ -34,7 +29,6 @@ ODYSSEY_CPPFLAGS = \
 	-Isrc/Odyssey/Faults \
 	-Isrc/Odyssey/Navigation \
 	-Isrc/Odyssey/Sensors
-
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS = -llapacke -llapack -lblas -lm
@@ -47,14 +41,12 @@ MISSION ?= dive240.mi
 
 BUILD_DIR = build
 
-
 COMMON_SRCS = \
 	src/Common/angle_utils.c \
 	src/Common/matrix_utils.c \
 	src/Common/random_utils.c \
 	src/Common/sim_log.c \
 	src/Common/unit_utils.c
-
 
 SIM_SRCS = \
 	src/Application/command_line.c \
@@ -63,10 +55,9 @@ SIM_SRCS = \
 	src/Simulation/sim_orchestrator.c \
 	src/Simulation/sim_state.c
 
-
 WORLD_SRCS = \
-	src/World/world_config.c
-
+	src/World/world_config.c \
+	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
 	src/Odyssey/Behaviors/edc_homing.c \
@@ -102,15 +93,15 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Sensors/odyssey_sensors_water.c \
 	src/Odyssey/Sensors/sim_conduct.c
 
-
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
 WORLD_OBJS = $(WORLD_SRCS:%.c=$(BUILD_DIR)/%.o)
 ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 
-
 ODYSSEY_LIB = libodyssey.a
 
+EDIT_STRUCT = tools/edit_struct
+EDIT_STRUCT_SRC = tools/edit_struct.c
 
 .PHONY: \
 	all \
@@ -126,13 +117,10 @@ ODYSSEY_LIB = libodyssey.a
 	mission-constructor \
 	mission-constructor-web
 
-
 all: $(TARGET)
-
 
 $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
 	$(AR) rcs $@ $^
-
 
 $(TARGET): $(SIM_OBJS) $(WORLD_OBJS) $(COMMON_OBJS) $(ODYSSEY_LIB)
 	$(CC) $(CFLAGS) -o $@ \
@@ -142,76 +130,56 @@ $(TARGET): $(SIM_OBJS) $(WORLD_OBJS) $(COMMON_OBJS) $(ODYSSEY_LIB)
 		$(ODYSSEY_LIB) \
 		$(LDFLAGS)
 
-
-EDIT_STRUCT = tools/edit_struct
-EDIT_STRUCT_SRC = tools/edit_struct.c
-
-
 edit_struct: $(EDIT_STRUCT)
-
 
 $(EDIT_STRUCT): $(EDIT_STRUCT_SRC)
 	$(CC) $(ODYSSEY_CPPFLAGS) $(CFLAGS) \
 		-o $(EDIT_STRUCT) \
 		$(EDIT_STRUCT_SRC)
 
-
 generate_odyssey: $(EDIT_STRUCT)
 	./$(EDIT_STRUCT)
-
 
 dev-setup:
 	./ody setup
 
-
 doctor:
 	./ody doctor
-
 
 run-sim: $(TARGET)
 	$(SIM_EXE) $(MISSION)
 
-
 review:
 	./ody review
-
 
 review2:
 	./ody review2
 
-
 mission-constructor:
 	./ody mission-constructor
 
-
 mission-constructor-web:
 	./ody mission-constructor-web
-
 
 $(BUILD_DIR)/src/Simulation/%.o: src/Simulation/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
-
 $(BUILD_DIR)/src/Application/%.o: src/Application/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
-
 
 $(BUILD_DIR)/src/World/%.o: src/World/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(WORLD_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
-
 $(BUILD_DIR)/src/Odyssey/%.o: src/Odyssey/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(ODYSSEY_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
-
 $(BUILD_DIR)/src/Common/%.o: src/Common/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(COMMON_CPPFLAGS) $(CFLAGS) -c -o $@ $<
-
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -220,7 +188,6 @@ clean:
 		$(TARGET) \
 		sim_debug \
 		$(EDIT_STRUCT)
-
 
 debug: CFLAGS += -fsanitize=address
 debug: clean $(TARGET)
