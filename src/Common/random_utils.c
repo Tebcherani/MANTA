@@ -7,10 +7,8 @@ double std_normal_random_num(void) {
     static int has_saved_value = 0;
     static double saved_value;
 
-    double scale;
-    double radius_squared;
-    double x;
-    double y;
+    double scale, radius_squared;
+    double x, y;
 
     // Return the saved value from the previous pair
     if (has_saved_value) {
