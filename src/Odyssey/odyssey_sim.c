@@ -16,6 +16,9 @@
 
 static int init_odyssey_config(odyssey_config_t *config);
 
+static char data_file_name[PATH_SIZE];
+static FILE *datafile = NULL;
+
 static int init_odyssey_config(odyssey_config_t *config) {
     if (config == NULL) {
         write_to_sim_log("[odyssey_sim] Directory config is NULL.\n");
@@ -57,13 +60,13 @@ int init_odyssey_sim(odyssey_config_t *config) {
     return 1;
 }
 
-int start_odyssey_sim(const odyssey_config_t *config, const char *mission_file, const char *fault_file, time_t calendar_start_time, char *data_file_name, FILE **data_file) {
+int start_odyssey_sim(const odyssey_config_t *config, const char *mission_file, const char *fault_file, time_t calendar_start_time) {
     if (!init_mission_time(calendar_start_time)) return 0;
     if (!init_odyssey_model(config->model_path)) return 0;
     if (!init_odyssey_mission(mission_file, config->mission_dir)) return 0;
     if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, config)) return 0;
     if (!init_odyssey_state()) return 0;
-    if (!init_odyssey_data_logger(data_file_name, data_file, config, mission_file)) return 0;
+    if (!init_odyssey_data_logger(data_file_name, datafile, config, mission_file)) return 0;
     if (!init_odyssey_dynamics()) return 0;
 
     return 1;
@@ -75,7 +78,7 @@ int update_odyssey_sim_state(double timestep) {
     return 1;
 }
 
-int update_odyssey_sim_cycle(double control_dt, FILE *datafile) {
+int update_odyssey_sim_cycle(double control_dt) {
     if (update_odyssey_sensors() != 0) return 0;
     if (update_odyssey_nav() != 0) return 0;
     if (update_odyssey_control(control_dt) != 0) return 0;
@@ -98,7 +101,7 @@ int odyssey_abort_requested(void) {
     return vvp->abort_mission;
 }
 
-int end_odyssey_sim(FILE *datafile, const odyssey_config_t *config, const char *behavior_dump_file) {
+int end_odyssey_sim(const odyssey_config_t *config, const char *behavior_dump_file) {
     int cleanup_failed = 0;
 
     if (handle_modem() != 0)
