@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -56,32 +57,31 @@ static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
         "# ===== FAULT_FILE_END ==================================\xa" );
 }
 
-static void write_mission_header(FILE *datafile, const odyssey_config_t *config, const char *mission_file) {
+static void write_mission_header(
+    FILE *datafile,
+    const odyssey_config_t *config,
+    const char *mission_file
+) {
     FILE *fmi;
-    char mi_path[PATH_SIZE];
+    char *mission_path;
     char line[MAX_LINE];
+    size_t path_size;
     int n_lines = 0;
-    int result;
 
-    fprintf(datafile,
-        "# ===== MISSION_FILE_BEGIN ==============================\xa");
+    fprintf(datafile, "# ===== MISSION_FILE_BEGIN ==============================\xa");
 
-    if (mission_file == NULL || mission_file[0] == '\0') {
-        fprintf(datafile, "# (no mission file loaded)\xa");
-    } else {
-        result = snprintf(mi_path, sizeof(mi_path), "%s/%s",
-                          config->mission_dir, mission_file);
+    if (mission_file == NULL || mission_file[0] == '\0') fprintf(datafile, "# (no mission file loaded)\xa");
+    else {
+        path_size = strlen(config->mission_dir) + strlen(mission_file) + 2;
+        mission_path = malloc(path_size);
 
-        if (result < 0 || (size_t)result >= sizeof(mi_path)) {
-            fprintf(datafile, "# WARNING: mission path is invalid or too long\xa");
-        } else {
-            fmi = fopen(mi_path, "r");
+        if (mission_path == NULL) fprintf(datafile, "# WARNING: could not allocate mission path\xa");
+        else {
+            snprintf(mission_path, path_size, "%s/%s", config->mission_dir, mission_file);
 
-            if (fmi == NULL) {
-                fprintf(datafile,
-                        "# WARNING: could not open %s for embedding\xa",
-                        mi_path);
-            } else {
+            fmi = fopen(mission_path, "r");
+            if (fmi == NULL) fprintf(datafile, "# WARNING: could not open %s for embedding\xa", mission_path);
+            else {
                 while (fgets(line, sizeof(line), fmi) != NULL) {
                     line[strcspn(line, "\r\n")] = '\0';
                     fprintf(datafile, "# mi> %s\xa", line);
@@ -91,11 +91,12 @@ static void write_mission_header(FILE *datafile, const odyssey_config_t *config,
                 fclose(fmi);
                 fprintf(datafile, "# (%d lines)\xa", n_lines);
             }
+
+            free(mission_path);
         }
     }
 
-    fprintf(datafile,
-        "# ===== MISSION_FILE_END ================================\xa");
+    fprintf(datafile, "# ===== MISSION_FILE_END ================================\xa");
 }
 
 /*-------------------------------------------------------------------------
@@ -149,7 +150,7 @@ int write_tab(const odyssey_config_t *config)
     return error;
 }
 
-int init_odyssey_data_logger(char *data_file_name, FILE **datafile, const odyssey_config_t *config, const char *mission_file) {
+int init_odyssey_data_logger(char *data_file_name, size_t data_file_name_size, FILE **datafile, const odyssey_config_t *config, const char *mission_file) {
     int i = 0;
     int j, beh_id, offset, run_number;
     char time_string[30], fname_string[32];
@@ -179,7 +180,7 @@ int init_odyssey_data_logger(char *data_file_name, FILE **datafile, const odysse
     do {
         ++run_number;
 
-        snprintf(data_file_name, PATH_SIZE, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
+        snprintf(data_file_name, data_file_name_size, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
     } while (access(data_file_name, F_OK) != -1);
 
     *datafile = fopen(data_file_name, "wb");
