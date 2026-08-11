@@ -30,7 +30,7 @@ int init_sim_state(sim_state_t *state) {
 
 int update_sim_state(sim_state_t *state, double time)
 {
-    if (state == NULL) return -1;
+    if (state == NULL) return 0;
 
     state->current_cycle++;
     state->sim_time += time;
@@ -38,5 +38,5 @@ int update_sim_state(sim_state_t *state, double time)
     update_sensor(M_PRESENT_TIME, state->sim_time);
     sensor_time(M_PRESENT_TIME) = (long)(1000.0 * state->sim_time);
 
-    return 0;
+    return 1;
 }

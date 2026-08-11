@@ -1,7 +1,7 @@
 #include "odyssey_control.h"
-#include "vehicle.h"
-
+#include "odyssey_data_struct.h"
 #include "ody_func.h"
+#include "vehicle.h"
 
 int update_odyssey_control(double control_dt) {
     apply_faults();

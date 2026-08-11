@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_sim.h"
+#include "paths.h"
 #include "sim_log.h"
 #include "vehicle.h"
 
