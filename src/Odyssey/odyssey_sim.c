@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdlib.h>
 
 #include "odyssey_behavior_logger.h"
@@ -10,6 +9,8 @@
 #include "odyssey_nav.h"
 #include "odyssey_sensors.h"
 #include "odyssey_sim.h"
+#include "ody_var.h"
+#include "ody_func.h"
 #include "sim_log.h"
 #include "vehicle.h"
 
@@ -56,27 +57,29 @@ int init_odyssey_sim(odyssey_config_t *config) {
     return 1;
 }
 
-int start_odyssey_sim(const odyssey_config_t *config, const command_line_options_t *options, time_t calendar_start_time, char *data_file_name, FILE **data_file) {
+int start_odyssey_sim(const odyssey_config_t *config, const char *mission_file, const char *fault_file, time_t calendar_start_time, char *data_file_name, FILE **data_file) {
     if (!init_mission_time(calendar_start_time)) return 0;
     if (!init_odyssey_model(config->model_path)) return 0;
-    if (!init_odyssey_mission(options->mission_file, config->mission_dir)) return 0;
-    if (!load_faults(options->fault_file ? options->fault_file : vvp->fault_file_name, config)) return 0;
+    if (!init_odyssey_mission(mission_file, config->mission_dir)) return 0;
+    if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, config)) return 0;
     if (!init_odyssey_state()) return 0;
-    if (!init_odyssey_data_logger(data_file_name, data_file, config, options->mission_file)) return 0;
+    if (!init_odyssey_data_logger(data_file_name, data_file, config, mission_file)) return 0;
     if (!init_odyssey_dynamics()) return 0;
 
     return 1;
 }
 
 int update_odyssey_sim_timestep(double timestep) {
-    if (update_odyssey_state(timestep) != 0) return -1;
+    if (update_odyssey_state(timestep) != 0) return 0;
+
+    return 1;
 }
 
 int update_odyssey_sim_cycle(double control_dt, FILE *datafile) {
-    if (update_odyssey_sensors() != 0) return -1;
-    if (update_odyssey_nav() != 0) return -1;
-    if (update_odyssey_control(control_dt) != 0) return -1;
-    if (update_odyssey_mission() != 0) return -1;
+    if (update_odyssey_sensors() != 0) return 0;
+    if (update_odyssey_nav() != 0) return 0;
+    if (update_odyssey_control(control_dt) != 0) return 0;
+    if (update_odyssey_mission() != 0) return 0;
 
     capture_behavior_activity();
 	log_data(datafile);
@@ -88,15 +91,14 @@ int odyssey_abort_requested(void) {
     return vvp->abort_mission;
 }
 
-int end_odyssey_sim(FILE *datafile, const odyssey_config_t *config, const command_line_options_t *options) {
+int end_odyssey_sim(FILE *datafile, const odyssey_config_t *config, const char *behavior_dump_file) {
     int cleanup_failed = 0;
 
     if (handle_modem() != 0)
         cleanup_failed = 1;
 
-    if (options != NULL &&
-        options->behavior_dump_file[0] != '\0') {
-        dump_behavior_log_json(options->behavior_dump_file);
+    if (behavior_dump_file != NULL && behavior_dump_file[0] != '\0') {
+        dump_behavior_log_json(behavior_dump_file);
     }
 
     if (datafile != NULL) {

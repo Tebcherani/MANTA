@@ -4,13 +4,11 @@
 #include "sim_exit.h"
 #include "sim_log.h"
 
-int handle_modem(void);
-
-void exit_sim(int exit_status, int mission_started, FILE *datafile, const odyssey_config_t *config, const command_line_options_t *options) {
+void exit_sim(int exit_status, int mission_started, FILE *datafile, const odyssey_config_t *config, const char *behavior_dump_file) {
     int cleanup_failed = 0;
 
     if (mission_started) {
-        if (!end_odyssey_sim(datafile, config, options))
+        if (!end_odyssey_sim(datafile, config, behavior_dump_file))
             cleanup_failed = 1;
     }
     else if (datafile != NULL) {
