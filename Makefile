@@ -5,17 +5,27 @@
 
 CC = gcc
 AR = ar
-CPPFLAGS = -I.                  \
-    -Isrc/Application           \
-    -Isrc/Common                \
-    -Isrc/Odyssey               \
-    -Isrc/Odyssey/Behaviors     \
-    -Isrc/Odyssey/Control       \
-    -Isrc/Odyssey/Faults        \
-    -Isrc/Odyssey/Navigation    \
-    -Isrc/Odyssey/Sensors       \
-    -Isrc/Simulation            \
-    -Isrc/World
+
+COMMON_CPPFLAGS = \
+	-I.             \
+	-Iinclude       \
+	-Isrc/Common
+
+SIM_CPPFLAGS = \
+	$(COMMON_CPPFLAGS)  \
+	-Isrc/Application   \
+	-Isrc/Simulation
+
+ODYSSEY_CPPFLAGS = \
+	$(COMMON_CPPFLAGS)          \
+	-Isrc/Odyssey               \
+	-Isrc/Odyssey/Behaviors     \
+	-Isrc/Odyssey/Control       \
+	-Isrc/Odyssey/Faults        \
+	-Isrc/Odyssey/Navigation    \
+	-Isrc/Odyssey/Sensors       \
+	-Isrc/Simulation
+
 CFLAGS   = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS  = -lm
 
@@ -106,7 +116,7 @@ EDIT_STRUCT_SRC = tools/edit_struct.c
 edit_struct: $(EDIT_STRUCT)
 
 $(EDIT_STRUCT): $(EDIT_STRUCT_SRC)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -o $(EDIT_STRUCT) $(EDIT_STRUCT_SRC)
+	$(CC) $(ODYSSEY_CPPFLAGS) $(CFLAGS) -o $(EDIT_STRUCT) $(EDIT_STRUCT_SRC)
 
 generate_odyssey: $(EDIT_STRUCT)
 	./$(EDIT_STRUCT)
@@ -132,8 +142,17 @@ mission-constructor:
 mission-constructor-web:
 	./ody mission-constructor-web
 
-%.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+src/Simulation/%.o: src/Simulation/%.c
+	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+src/Application/%.o: src/Application/%.c
+	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+src/Odyssey/%.o: src/Odyssey/%.c
+	$(CC) $(ODYSSEY_CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+src/Common/%.o: src/Common/%.c
+	$(CC) $(COMMON_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(SIM_OBJS) $(COMMON_OBJS) $(ODYSSEY_OBJS) \
