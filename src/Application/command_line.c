@@ -17,7 +17,7 @@ int parse_command_line(int argc, char *argv[], command_line_options_t *options) 
     options->show_help = 0;
     options->mission_file = NULL;
     options->fault_file = NULL;
-    options->behavior_dump_file[0] = '\0';
+    options->behavior_dump_file = NULL;
 
     argument_index = 1;
 
@@ -28,9 +28,7 @@ int parse_command_line(int argc, char *argv[], command_line_options_t *options) 
                 return -1;
             }
 
-            strncpy(options->behavior_dump_file, argv[argument_index + 1], PATH_SIZE - 1);
-            options->behavior_dump_file[PATH_SIZE - 1] = '\0';
-
+            options->behavior_dump_file = argv[argument_index + 1];
             argument_index += 2;
         }
         else if (!strcmp(argv[argument_index], "--help") || !strcmp(argv[argument_index], "-h")) {

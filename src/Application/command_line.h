@@ -8,8 +8,7 @@ typedef struct {
 
     const char *mission_file;
     const char *fault_file;
-
-    char behavior_dump_file[PATH_SIZE];
+    const char *behavior_dump_file;
 } command_line_options_t;
 
 int parse_command_line(int, char **, command_line_options_t *);
