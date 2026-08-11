@@ -99,8 +99,7 @@ int odyssey_abort_requested(void) {
 int end_odyssey_sim(const char *behavior_dump_file) {
     int cleanup_failed = 0;
 
-    if (handle_modem() != 0)
-        cleanup_failed = 1;
+    vvp->modem_send[0] = '\0';
 
     if (behavior_dump_file != NULL && behavior_dump_file[0] != '\0') {
         dump_behavior_log_json(behavior_dump_file);

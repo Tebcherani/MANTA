@@ -12,7 +12,6 @@
 
 #include "odyssey_sim.h"
 
-int  handle_modem(void);
 void update_water_conductivity(void);
 
 struct behavior;

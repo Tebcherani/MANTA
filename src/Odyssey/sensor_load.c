@@ -15,19 +15,6 @@
 #include "odyssey_data_struct.h"
 #include "vehicle.h"
 
-/* ============================================================ */
-/* Display & clear modem send string.                           */
-
-int handle_modem(void)
-{
-    if( strlen(vvp->modem_send) > 0 )
-    {
-	strcpy( vvp->modem_send, "" ); 
-    }
-
-    return 0;
-}
-
 /*-----------------------------------------------------------------------*
   getXSDataByte: set appropriate bits of databyte that is to be sent
   through edgetech channel
