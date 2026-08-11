@@ -3,7 +3,8 @@
 # Build: make
 # Run:   ./ody sim <mission_name> 
 
-CC       = gcc
+CC = gcc
+AR = ar
 CPPFLAGS = -I.                  \
     -Isrc/Application           \
     -Isrc/Common                \
@@ -31,13 +32,21 @@ EXEEXT =
 SIM_EXE = ./$(TARGET)$(EXEEXT)
 MISSION ?= dive240.mi
 
-SRCS = \
-    src/Application/command_line.c                          \
+COMMON_SRCS = \
     src/Common/angle_utils.c                                \
     src/Common/matrix_utils.c                               \
     src/Common/random_utils.c                               \
     src/Common/sim_log.c                                    \
-    src/Common/unit_utils.c                                 \
+    src/Common/unit_utils.c
+
+SIM_SRCS = \
+    src/Application/command_line.c                          \
+    src/Simulation/sim_config.c                             \
+    src/Simulation/sim_exit.c                               \
+    src/Simulation/sim_orchestrator.c                       \
+    src/Simulation/sim_state.c
+
+ODYSSEY_SRCS = \
     src/Odyssey/Behaviors/edc_homing.c                      \
     src/Odyssey/Behaviors/odyssey_behavior_registry.c       \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
@@ -69,20 +78,27 @@ SRCS = \
     src/Odyssey/Sensors/odyssey_sensors_lbl.c               \
     src/Odyssey/Sensors/odyssey_sensors_usbl.c              \
     src/Odyssey/Sensors/odyssey_sensors_water.c             \
-    src/Odyssey/Sensors/sim_conduct.c                       \
-    src/Simulation/sim_config.c                             \
-    src/Simulation/sim_exit.c                               \
-    src/Simulation/sim_orchestrator.c                       \
-    src/Simulation/sim_state.c
+    src/Odyssey/Sensors/sim_conduct.c
 
-OBJS = $(SRCS:.c=.o)
+COMMON_OBJS  = $(COMMON_SRCS:.c=.o)
+SIM_OBJS     = $(SIM_SRCS:.c=.o)
+ODYSSEY_OBJS = $(ODYSSEY_SRCS:.c=.o)
+
+ODYSSEY_LIB = libodyssey.a
 
 .PHONY: all clean setup debug both edit_struct generate_odyssey dev-setup doctor run-sim review review2 mission-constructor mission-constructor-web
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(ODYSSEY_LIB): $(ODYSSEY_OBJS)
+	$(AR) rcs $@ $^
+
+$(TARGET): $(SIM_OBJS) $(COMMON_OBJS) $(ODYSSEY_LIB)
+	$(CC) $(CFLAGS) -o $@ \
+		$(SIM_OBJS) \
+		$(COMMON_OBJS) \
+		$(ODYSSEY_LIB) \
+		$(LDFLAGS)
 
 EDIT_STRUCT = tools/edit_struct
 EDIT_STRUCT_SRC = tools/edit_struct.c
@@ -120,13 +136,9 @@ mission-constructor-web:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJS) $(TARGET) sim_debug $(EDIT_STRUCT)
+	rm -f $(SIM_OBJS) $(COMMON_OBJS) $(ODYSSEY_OBJS) \
+		$(ODYSSEY_LIB) $(TARGET) sim_debug $(EDIT_STRUCT)
 
 debug: CFLAGS += -fsanitize=address
 debug: clean $(TARGET)
 	mv $(TARGET) sim_debug
-
-# Runtime file dependencies:
-#   ./get_am.tex    — hydrodynamic added-mass coefficients (read by sim.c)
-#   ./get_drag.tex  — drag coefficients (read by sim.c)
-#   ./get_shape.tex — vehicle shape parameters (read by sim.c)
