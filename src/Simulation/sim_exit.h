@@ -5,6 +5,6 @@
 
 #include "odyssey_sim.h"
 
-void exit_sim(int, int, const odyssey_config_t *, const char *);
+void exit_sim(int, int, const char *);
 
 #endif

@@ -14,37 +14,33 @@
 #include "sim_log.h"
 #include "vehicle.h"
 
-static int init_odyssey_config(odyssey_config_t *config);
+static int init_odyssey_config(void);
 
 static char data_file_name[PATH_SIZE];
 static FILE *datafile = NULL;
+static odyssey_config_t config;
 
-static int init_odyssey_config(odyssey_config_t *config) {
-    if (config == NULL) {
-        write_to_sim_log("[odyssey_sim] Directory config is NULL.\n");
-        return 0;
-    }
-
-    config->data_dir = getenv("ODYSSEY_DATA_DIR");
-    if (config->data_dir == NULL || config->data_dir[0] == '\0') {
+static int init_odyssey_config(void) {
+    config.data_dir = getenv("ODYSSEY_DATA_DIR");
+    if (config.data_dir == NULL || config.data_dir[0] == '\0') {
         write_to_sim_log("[odyssey_sim] ODYSSEY_DATA_DIR is not set.\n");
         return 0;
     }
 
-    config->mission_dir = getenv("ODYSSEY_MISSION_DIR");
-    if (config->mission_dir == NULL || config->mission_dir[0] == '\0') {
+    config.mission_dir = getenv("ODYSSEY_MISSION_DIR");
+    if (config.mission_dir == NULL || config.mission_dir[0] == '\0') {
         write_to_sim_log("[odyssey_sim] ODYSSEY_MISSION_DIR is not set.\n");
         return 0;
     }
 
-    config->fault_dir = getenv("ODYSSEY_FAULT_DIR");
-    if (config->fault_dir == NULL || config->fault_dir[0] == '\0') {
+    config.fault_dir = getenv("ODYSSEY_FAULT_DIR");
+    if (config.fault_dir == NULL || config.fault_dir[0] == '\0') {
         write_to_sim_log("[odyssey_sim] ODYSSEY_FAULT_DIR is not set.\n");
         return 0;
     }
 
-    config->model_path = getenv("VEHICLE_PATH");
-    if (config->model_path == NULL || config->model_path[0] == '\0') {
+    config.model_path = getenv("VEHICLE_PATH");
+    if (config.model_path == NULL || config.model_path[0] == '\0') {
         write_to_sim_log("[odyssey_sim] VEHICLE_PATH is not set.\n");
         return 0;
     }
@@ -53,20 +49,20 @@ static int init_odyssey_config(odyssey_config_t *config) {
     return 1;
 }
 
-int init_odyssey_sim(odyssey_config_t *config) {
-    if (!init_odyssey_config(config)) return 0;
+int init_odyssey_sim(void) {
+    if (!init_odyssey_config()) return 0;
     if (!init_odyssey_data_structure()) return 0;
 
     return 1;
 }
 
-int start_odyssey_sim(const odyssey_config_t *config, const char *mission_file, const char *fault_file, time_t calendar_start_time) {
+int start_odyssey_sim(const char *mission_file, const char *fault_file, time_t calendar_start_time) {
     if (!init_mission_time(calendar_start_time)) return 0;
-    if (!init_odyssey_model(config->model_path)) return 0;
-    if (!init_odyssey_mission(mission_file, config->mission_dir)) return 0;
-    if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, config)) return 0;
+    if (!init_odyssey_model(config.model_path)) return 0;
+    if (!init_odyssey_mission(mission_file, config.mission_dir)) return 0;
+    if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, &config)) return 0;
     if (!init_odyssey_state()) return 0;
-    if (!init_odyssey_data_logger(data_file_name, datafile, config, mission_file)) return 0;
+    if (!init_odyssey_data_logger(data_file_name, datafile, &config, mission_file)) return 0;
     if (!init_odyssey_dynamics()) return 0;
 
     return 1;
@@ -101,7 +97,7 @@ int odyssey_abort_requested(void) {
     return vvp->abort_mission;
 }
 
-int end_odyssey_sim(const odyssey_config_t *config, const char *behavior_dump_file) {
+int end_odyssey_sim(const char *behavior_dump_file) {
     int cleanup_failed = 0;
 
     if (handle_modem() != 0)
@@ -122,7 +118,7 @@ int end_odyssey_sim(const odyssey_config_t *config, const char *behavior_dump_fi
     write_to_sim_log("SIM: mission finished -- data file: %s\n",
                      vvp->data_file_name);
 
-    if (write_tab(config) != 0)
+    if (write_tab(&config) != 0)
         cleanup_failed = 1;
 
     return cleanup_failed ? 0 : 1;

@@ -10,12 +10,12 @@ typedef struct {
     const char *model_path;
 } odyssey_config_t;
 
-int init_odyssey_sim(odyssey_config_t *);
-int start_odyssey_sim(const odyssey_config_t *, const char *, const char *, time_t);
+int init_odyssey_sim(void);
+int start_odyssey_sim(const char *, const char *, time_t);
 int update_odyssey_sim_state(double);
 int update_odyssey_sim_cycle(double);
 int update_odyssey_sim_time(double);
 int odyssey_abort_requested(void);
-int end_odyssey_sim(const odyssey_config_t *, const char *);
+int end_odyssey_sim(const char *);
 
 #endif /* ODYSSEY_SIM_H */
