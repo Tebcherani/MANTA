@@ -5,50 +5,41 @@
 #include "sim_log.h"
 
 static FILE *file = NULL;
-static char path[PATH_SIZE];
+static const char *path = NULL;
 
 int open_sim_log(void) {
-    const char *path_ptr;
-    int result;
+    path = getenv("SIM_LOG_PATH");
 
-    // Get path
-    path_ptr = getenv("SIM_LOG_PATH");
-    if (path_ptr == NULL || path_ptr[0] == '\0') {
+    if (path == NULL || path[0] == '\0') {
         fprintf(stderr, "\n[sim_log] SIM_LOG_PATH is not set.\n");
         return 0;
     }
 
-    result = snprintf(path, sizeof(path), "%s", path_ptr);
-    if (result < 0 || (size_t)result >= sizeof(path)) {
-        fprintf(stderr, "\n[sim_log] Invalid log path.\n");
-        return 0;
-    }
-
-    // Open file
     file = fopen(path, "w");
     if (file == NULL) {
-        fprintf(stderr, "\n[sim_log] Sim log failed to open.\n");
+        perror(path);
         return 0;
     }
 
     write_to_sim_log("\n[sim_log] Sim log opened.\n");
+
     return 1;
 }
 
 int close_sim_log(void) {
     if (file == NULL) return 0;
 
-    // Close file
     if (fclose(file) != 0) {
         perror(path);
         file = NULL;
-        return -1;
+        return 0;
     }
+
     file = NULL;
 
     fprintf(stderr, "Simulation log closed.\n");
 
-    return 0;
+    return 1;
 }
 
 int write_to_sim_log(const char *fmt, ...) {
