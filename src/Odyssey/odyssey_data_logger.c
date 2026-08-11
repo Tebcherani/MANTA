@@ -150,14 +150,18 @@ int write_tab(const odyssey_config_t *config)
     return error;
 }
 
-int init_odyssey_data_logger(char *data_file_name, size_t data_file_name_size, FILE **datafile, const odyssey_config_t *config, const char *mission_file) {
+int init_odyssey_data_logger(FILE **datafile, const odyssey_config_t *config, const char *mission_file) {
     int i = 0;
     int j, beh_id, offset, run_number;
-    char time_string[30], fname_string[32];
+    int path_length;
+
+    char *data_file_name;
+    char time_string[30];
+    char fname_string[32];
+
     time_t t;
     struct tm *tp;
 
-    /* Capture initial values for the run summary. */
     north0 = (float)read_sensor(M_POS_N);
     east0 = (float)read_sensor(M_POS_E);
     max_depth = (float)read_sensor(M_DEPTH);
@@ -176,17 +180,28 @@ int init_odyssey_data_logger(char *data_file_name, size_t data_file_name_size, F
     }
 
     run_number = 0;
+    data_file_name = NULL;
 
     do {
         ++run_number;
 
-        snprintf(data_file_name, data_file_name_size, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
+        free(data_file_name);
+
+        path_length = snprintf(NULL, 0, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
+        if (path_length < 0)
+            return 0;
+
+        data_file_name = malloc((size_t)path_length + 1);
+        if (data_file_name == NULL)
+            return 0;
+
+        snprintf(data_file_name, (size_t)path_length + 1, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
     } while (access(data_file_name, F_OK) != -1);
 
     *datafile = fopen(data_file_name, "wb");
-
     if (*datafile == NULL) {
         write_to_sim_log("[odyssey_data_logger] Failed to open data file.\n");
+        free(data_file_name);
         return 0;
     }
 
@@ -197,6 +212,7 @@ int init_odyssey_data_logger(char *data_file_name, size_t data_file_name_size, F
     if (strftime(time_string, sizeof(time_string), "%Y/%m/%d %H:%M:%S GMT", tp) == 0) {
         fclose(*datafile);
         *datafile = NULL;
+        free(data_file_name);
         write_to_sim_log("[odyssey_data_logger] Failed to create log timestamp.\n");
         return 0;
     }
@@ -219,7 +235,6 @@ int init_odyssey_data_logger(char *data_file_name, size_t data_file_name_size, F
 
         if (beh_id != -1) {
             offset = vvp->last_s + 1 + (B_ARG_SIZE * (i - 1));
-
             fprintf(*datafile, "%d %-30s \t%-d\n", offset, vvp->c[i].b.name, i);
 
             for (j = 0; j < B_ARG_SIZE; j++) {
@@ -233,11 +248,15 @@ int init_odyssey_data_logger(char *data_file_name, size_t data_file_name_size, F
     if (fflush(*datafile) != 0) {
         fclose(*datafile);
         *datafile = NULL;
+        free(data_file_name);
         write_to_sim_log("[odyssey_data_logger] Failed to flush data file.\n");
         return 0;
     }
 
+    free(data_file_name);
+    
     write_to_sim_log("[odyssey_data_logger] Ody data logger initialized.\n");
+
     return 1;
 }
 
