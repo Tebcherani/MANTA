@@ -145,7 +145,7 @@ static void fins( double *e, double rud_ang, double elev_ang )
     CL4 = read_sensor(VS_FIN_DCL)*alpha4 + CDC*alpha4*fabs(alpha4);
   else CL4 = 0. ;
 
-  aa = 1.0/(PI*read_sensor(VS_FIN_ASPECT_RATIO)*read_sensor(VS_FIN_OSWALD));
+  aa = 1.0/(M_PI*read_sensor(VS_FIN_ASPECT_RATIO)*read_sensor(VS_FIN_OSWALD));
   
   CD1 = read_sensor(VS_FIN_CDO) + aa*CL1*CL1;
   CD2 = read_sensor(VS_FIN_CDO) + aa*CL2*CL2;

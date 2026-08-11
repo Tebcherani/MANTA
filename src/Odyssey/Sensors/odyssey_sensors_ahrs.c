@@ -175,9 +175,9 @@ static void update_compass_yaw(double aax, double aay) {
 
     // Compute heading from readings 
     if ((mx>0.0) && (my<=0.0)) mg_yaw = -atan(my/mx);
-    else if ((mx<=0.0) && (my<0.0)) mg_yaw = atan(mx/my)+PI/2.0;
-    else if ((mx<0.0) && (my>=0.0)) mg_yaw = -atan(my/mx)+PI;
-    else if ((mx>=0.0) && (my>0.0)) mg_yaw = atan(mx/my)+3.0*PI/2.0;
+    else if ((mx<=0.0) && (my<0.0)) mg_yaw = atan(mx/my)+M_PI/2.0;
+    else if ((mx<0.0) && (my>=0.0)) mg_yaw = -atan(my/mx)+M_PI;
+    else if ((mx>=0.0) && (my>0.0)) mg_yaw = atan(mx/my)+3.0*M_PI/2.0;
     else mg_yaw = 0.0;
 
     // Add noise and write to the structure
@@ -194,7 +194,7 @@ static void update_heading(void) {
 
     meas_yaw = read_sensor(M_COMPASS_YAW);
     meas_magnetic_variation = read_sensor(UO_MAGNETIC_VARIATION);
-    corrected_yaw = PI + wrap_angle(meas_yaw + meas_magnetic_variation - PI);
+    corrected_yaw = M_PI + wrap_angle(meas_yaw + meas_magnetic_variation - M_PI);
     update_sensor(M_YAW, corrected_yaw);
 
     meas_pitch = read_sensor(M_INCLINO_PITCH);

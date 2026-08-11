@@ -661,7 +661,7 @@ int survey_dead_reckon( struct behavior *b, int priority, int level )
 				/* integral part odd implies leg3, with
 				   heading reciprocal of leg1 */
 		if ( ((int) ipart) % 2 )
-		    cmd->heading[0] = bArg(L1_HEAD) + PI;
+		    cmd->heading[0] = bArg(L1_HEAD) + M_PI;
 		else
 		    cmd->heading[0] = bArg(L1_HEAD);
 	    }
@@ -1192,7 +1192,7 @@ int chirp_fin( struct behavior *b, int priority, int level )
     freq = b->arg[Freq_0].x + (b->arg[Freq_1].x - b->arg[Freq_0].x) *
         time / b->arg[Duration].x;
 
-    desired_angle = b->arg[Amplitude].x * sin( 2*PI*freq*time );
+    desired_angle = b->arg[Amplitude].x * sin( 2*M_PI*freq*time );
 
                                 /* Load the output commands... */
     if ( b->arg[Fin_Name].x <= 0.5 )

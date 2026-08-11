@@ -19,8 +19,8 @@
 /* keeps heading between 0-2PI, only corrects once though */
 void wrap_heading(double *h)
 {
-    while(*h > 2*PI)*h -= 2*PI ;
-    while(*h < 0)*h += 2*PI ;
+    while(*h > 2*M_PI)*h -= 2*M_PI ;
+    while(*h < 0)*h += 2*M_PI ;
 
 }
 /* corrects the difference between 2 headings to keep the value between
@@ -30,8 +30,8 @@ double delta_heading(double dh)
 {
     double result ;
     result = dh ;
-    while(result > PI)result -= 2*PI ;
-    while(result < -PI)result += 2*PI ;
+    while(result > M_PI)result -= 2*M_PI ;
+    while(result < -M_PI)result += 2*M_PI ;
     return(result) ;
 }
 

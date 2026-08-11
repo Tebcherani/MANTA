@@ -503,7 +503,7 @@ static void update_thruster_diagnostics( struct thruster_state *ts )
 {
     /* m_propeller_speed is existing telemetry; keep it for compatibility
        while also logging simulator truth in real_thruster_* channels. */
-    update_sensor( M_PROPELLER_SPEED, 2*PI*60/5.54*ts->prop_omega );
+    update_sensor( M_PROPELLER_SPEED, 2*M_PI*60/5.54*ts->prop_omega );
     update_sensor( REAL_THR_PROP_SPEED, ts->prop_omega );
     update_sensor( REAL_THR_MOTOR_SPEED, ts->motor_omega );
     update_sensor( REAL_THRUSTER_VOLTAGE, ts->motor_voltage );

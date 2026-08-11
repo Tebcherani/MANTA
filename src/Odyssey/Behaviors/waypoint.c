@@ -52,8 +52,8 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 				/* compute "direct to" trackline */
 	if ( bArg(HDG) < 0 )
 	{
-	    bArg(HDG) = PI + wrap_angle( atan2(bArg(EAST) - read_sensor(M_POS_E),
-				    bArg(NRTH) - read_sensor(M_POS_N)) - PI );
+	    bArg(HDG) = M_PI + wrap_angle( atan2(bArg(EAST) - read_sensor(M_POS_E),
+				    bArg(NRTH) - read_sensor(M_POS_N)) - M_PI );
 	}
 
 	b->state = B_ACTIVE;

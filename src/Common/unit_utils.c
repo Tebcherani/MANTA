@@ -1,14 +1,15 @@
+#include <math.h>
 #include <string.h>
 
 #include "common_defs.h"
 #include "unit_utils.h"
 
 double convert_deg_to_rad(double degree) {
-    return degree * PI /180.0;
+    return degree * M_PI /180.0;
 }
 
 double convert_rad_to_deg(double rad) {
-    return rad * 180.0 / PI;
+    return rad * 180.0 / M_PI;
 }
 
 int convert_units(const char *expected_units, const char *given_units, double input_value, double *output_value) {

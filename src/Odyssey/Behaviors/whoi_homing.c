@@ -194,7 +194,7 @@ void home_in( struct behavior *b, int priority, int level )
     if ( read_sensor(M_USBL_RDOT_MEAN) > 0.5 && WAS_CLOSING[idreg] )
     {
 	T_LOCK[idreg] = read_sensor(M_PRESENT_TIME);
-	REALIGN[idreg] = wrap_angle( read_sensor(M_YAW) - PI );
+	REALIGN[idreg] = wrap_angle( read_sensor(M_YAW) - M_PI );
 	WAS_CLOSING[idreg] = 0;
     }
 				/* go straight for specified time */
@@ -206,7 +206,7 @@ void home_in( struct behavior *b, int priority, int level )
     else if ( read_sensor(M_PRESENT_TIME) < T_LOCK[idreg] +
 	      read_sensor(UO_T_STRAIGHT) + 15 )
 
-	cmd->heading[0] = wrap_angle( REALIGN[idreg] + PI );
+	cmd->heading[0] = wrap_angle( REALIGN[idreg] + M_PI );
 
     else			/* otherwise, do regular homing */
     {
