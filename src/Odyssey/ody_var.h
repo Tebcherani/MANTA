@@ -17,15 +17,4 @@ extern const int num_behaviors, num_sensors;
 
 EXTERN struct vehicle vvv, *vvp;
 
-/* Globals of serial port file numbers (Perhaps use a structure) */
-EXTERN int RunNumber;
-EXTERN int DeadManSwitchEnabled;  /* for aborting mission from RF modem */
-EXTERN char MissionFileName[60];  
-
-EXTERN int MonitorDataLogging;
-EXTERN int MonitorLayeredControl;
-
-				/* whoi_usbl */
-EXTERN int UseModem, MonitorModem, StatusModem, ErrorModem;
-
 #endif /* ODY_VAR_H */

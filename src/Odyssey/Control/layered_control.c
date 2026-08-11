@@ -425,9 +425,7 @@ int broadcast( struct behavior *b, int priority, int level )
 	{
 				/* compose the databyte based on presence
 				   of pole in latch */
-#ifdef EDGEPS8000
 	    update_sensor( EDGE_XS_DATABYTE, getXSDataByte() );
-#endif
 				/* advance timer */
 	    bArg( XS_DELAY ) += bArg( XS_CYCLE );
 	}

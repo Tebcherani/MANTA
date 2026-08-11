@@ -9,6 +9,8 @@ CPPFLAGS = -I.                  \
     -Isrc/Common                \
     -Isrc/Odyssey               \
     -Isrc/Odyssey/Behaviors     \
+    -Isrc/Odyssey/Control       \
+    -Isrc/Odyssey/Faults        \
     -Isrc/Odyssey/Navigation    \
     -Isrc/Odyssey/Sensors       \
     -Isrc/Simulation            \
@@ -36,16 +38,27 @@ SRCS = \
     src/Common/random_utils.c                               \
     src/Common/sim_log.c                                    \
     src/Common/unit_utils.c                                 \
+    src/Odyssey/Behaviors/edc_homing.c                      \
     src/Odyssey/Behaviors/odyssey_behavior_registry.c       \
     src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c        \
     src/Odyssey/Behaviors/odyssey_behaviors_dock.c          \
+    src/Odyssey/Behaviors/waypoint.c                        \
+    src/Odyssey/Behaviors/whoi_homing.c                     \
+    src/Odyssey/Control/dynamic_control.c                   \
+    src/Odyssey/Control/layered_control.c                   \
+    src/Odyssey/Control/odyssey_control.c                   \
+    src/Odyssey/Control/whoi_traj.c                         \
+    src/Odyssey/Faults/load_fault.c                         \
+    src/Odyssey/Faults/paths.c                              \
     src/Odyssey/odyssey_behavior_logger.c                   \
-    src/Odyssey/odyssey_control.c                           \
     src/Odyssey/odyssey_data_logger.c                       \
     src/Odyssey/odyssey_data_struct.c                       \
     src/Odyssey/odyssey_mission.c                           \
     src/Odyssey/odyssey_model.c                             \
+    src/Odyssey/sensor_load.c                               \
+    src/Odyssey/sim_stubs.c                                 \
     src/Odyssey/odyssey_sim.c                               \
+    src/Odyssey/sim.c                                       \
     src/Odyssey/vehicle.c                                   \
     src/Odyssey/Navigation/odyssey_nav.c                    \
     src/Odyssey/Navigation/odyssey_nav_dead_reckoning.c     \
@@ -56,22 +69,11 @@ SRCS = \
     src/Odyssey/Sensors/odyssey_sensors_lbl.c               \
     src/Odyssey/Sensors/odyssey_sensors_usbl.c              \
     src/Odyssey/Sensors/odyssey_sensors_water.c             \
+    src/Odyssey/Sensors/sim_conduct.c                       \
     src/Simulation/sim_config.c                             \
     src/Simulation/sim_exit.c                               \
     src/Simulation/sim_orchestrator.c                       \
-    src/Simulation/sim_state.c                              \
-    sim.c                   \
-    sim_conduct.c           \
-    sensor_load.c           \
-    layered_control.c       \
-    dynamic_control.c       \
-    whoi_traj.c             \
-    paths.c                 \
-    waypoint.c              \
-    whoi_homing.c           \
-    edc_homing.c            \
-    sim_stubs.c             \
-    load_fault.c
+    src/Simulation/sim_state.c
 
 OBJS = $(SRCS:.c=.o)
 

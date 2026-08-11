@@ -109,10 +109,8 @@ int whoi_homing( struct behavior *b, int priority, int level )
 
 	if ( pole_secure )
 	{
-#ifdef EDGEPS8000
-				/* send "I'm home" to dock */
+
 	    update_sensor( EDGE_XS_DATABYTE, getXSDataByte() );
-#endif
 	}
 	else
 	    return 1;
