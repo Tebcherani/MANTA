@@ -3,10 +3,10 @@
 #include "ody_func.h"
 #include "vehicle.h"
 
-int update_odyssey_control(double control_dt) {
+int update_odyssey_control(const world_state_t *world_state, double control_dt) {
     apply_faults();
     layered_control();
-    dynamic_control();
+    dynamic_control(world_state);
 
     // Update clock for next control cycle
     update_sensor(M_DT, control_dt);

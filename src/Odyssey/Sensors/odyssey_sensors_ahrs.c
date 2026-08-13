@@ -12,7 +12,7 @@ static void inclinometer_low_pass_filter(double s[2], double sf[2]);
 static void update_acceleration(const world_state_t *, double *ax, double *ay, double *aax, double *aay);
 static void update_angular_rate(void);
 static void update_compass_yaw(double aax, double aay);
-static void update_inclinometers(double ax, double ay);
+static void update_inclinometers(const world_state_t *, double, double);
 static void update_heading(void);
 
 /*-------------------------------------------------------------------------
@@ -205,12 +205,12 @@ static void update_heading(void) {
     update_sensor(M_ROLL, meas_roll);
 }
 
-static void update_inclinometers( double ax, double ay ) {
+static void update_inclinometers(const world_state_t *world_state, double ax, double ay ) {
     double inclino_noise=0.001745; /* 0.1 degree */
     double raw_pitch_roll[2],filtered_pitch_roll[2];
 
-    raw_pitch_roll[0]=asin(ax/GRAVITY);
-    raw_pitch_roll[1]=-asin(ay/(GRAVITY*cos(raw_pitch_roll[0])));
+    raw_pitch_roll[0]=asin(ax/world_state->gravity);
+    raw_pitch_roll[1]=-asin(ay/(world_state->gravity*cos(raw_pitch_roll[0])));
     inclinometer_low_pass_filter(raw_pitch_roll,filtered_pitch_roll);
 
     filtered_pitch_roll[0]+=inclino_noise*std_normal_random_num();
@@ -226,7 +226,7 @@ void update_ahrs_sensors(const world_state_t *world_state) {
 
     update_angular_rate();
     update_acceleration(world_state,&ax, &ay, &aax, &aay);
-    update_inclinometers(ax, ay);
+    update_inclinometers(world_state, ax, ay);
     update_compass_yaw(aax, aay);
     update_heading();
 }

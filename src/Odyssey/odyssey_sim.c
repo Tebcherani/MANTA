@@ -67,8 +67,8 @@ int start_odyssey_sim(const char *mission_file, const char *fault_file, time_t c
     return 1;
 }
 
-int update_odyssey_sim_state(double timestep) {
-    if (update_odyssey_state(timestep) != 0) return 0;
+int update_odyssey_sim_state(const world_state_t *world_state, double timestep) {
+    if (update_odyssey_state(world_state, timestep) != 0) return 0;
 
     return 1;
 }
@@ -76,7 +76,7 @@ int update_odyssey_sim_state(double timestep) {
 int update_odyssey_sim_cycle(const world_state_t *world_state, double control_dt) {
     if (update_odyssey_sensors(world_state) != 0) return 0;
     if (update_odyssey_nav() != 0) return 0;
-    if (update_odyssey_control(control_dt) != 0) return 0;
+    if (update_odyssey_control(world_state, control_dt) != 0) return 0;
     if (update_odyssey_mission() != 0) return 0;
 
     capture_behavior_activity();

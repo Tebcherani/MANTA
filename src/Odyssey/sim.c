@@ -33,6 +33,7 @@
 #include "vehicle.h"
 #include "odyssey_data_struct.h"
 #include "world_defs.h"
+#include "world_sim.h"
 
 /*------------------- generic constants -------------------------------*/
 
@@ -86,7 +87,7 @@ static double clip_abs( double x, double limit )
     return x;
 }
 
-static void compute_thruster_state( double real_amps, double w_speed,
+static void compute_thruster_state(const world_state_t *world_state, double real_amps, double w_speed,
                                     struct thruster_state *ts )
 {
     double current_limit, voltage_limit;
@@ -125,15 +126,15 @@ static void compute_thruster_state( double real_amps, double w_speed,
     pitch = read_sensor(VS_THRUSTER_PITCH);
     area = read_sensor(VS_THRUSTER_DUCT_AREA) * area_scale;
 
-    numerator = kt_fit*amps + .5*area*eta*pitch*SEAWATER_DENSITY*inflow*inflow;
-    denominator = .5*area*eta*eta*eta*pitch*pitch*pitch*SEAWATER_DENSITY;
+    numerator = kt_fit * amps + .5 * area * eta * pitch * world_state->seawater_density * inflow*inflow;
+    denominator = .5 * area * eta * eta * eta * pitch * pitch * pitch * world_state->seawater_density;
 
     if (denominator > 0.0 && numerator > 0.0)
         ts->prop_omega = sqrt(numerator/denominator);
     else
         ts->prop_omega = 0.0;
 
-    ts->thrust = SEAWATER_DENSITY * area *
+    ts->thrust = world_state->seawater_density * area *
         (pow(eta*pitch*ts->prop_omega,2) - inflow*eta*pitch*ts->prop_omega);
 
     ts->vehicle_torque = read_sensor(VS_THRUSTER_KT) * amps * kq_scale;
@@ -155,12 +156,12 @@ static void compute_thruster_state( double real_amps, double w_speed,
        this has no effect and the legacy calibration is preserved. */
     if (voltage_limit > 0.0 && fabs(ts->motor_voltage) > voltage_limit) {
         amps = amps * voltage_limit / fabs(ts->motor_voltage);
-        numerator = kt_fit*amps + .5*area*eta*pitch*SEAWATER_DENSITY*inflow*inflow;
+        numerator = kt_fit*amps + .5*area*eta*pitch*world_state->seawater_density*inflow*inflow;
         if (denominator > 0.0 && numerator > 0.0)
             ts->prop_omega = sqrt(numerator/denominator);
         else
             ts->prop_omega = 0.0;
-        ts->thrust = SEAWATER_DENSITY * area *
+        ts->thrust = world_state->seawater_density * area *
             (pow(eta*pitch*ts->prop_omega,2) - inflow*eta*pitch*ts->prop_omega);
         ts->vehicle_torque = read_sensor(VS_THRUSTER_KT) * amps * kq_scale;
         ts->motor_omega = gear_ratio * ts->prop_omega;
@@ -522,9 +523,9 @@ static void update_thruster_diagnostics( struct thruster_state *ts )
     update_battery_load(ts);
 }
 
-double thruster_force( double real_amps, double w_speed )
+double thruster_force(const world_state_t *world_state, double real_amps, double w_speed )
 {
-    compute_thruster_state(real_amps, w_speed, &last_thruster_state);
+    compute_thruster_state(world_state, real_amps, w_speed, &last_thruster_state);
     last_thruster_state_valid = 1;
     update_thruster_diagnostics(&last_thruster_state);
     return last_thruster_state.thrust;
@@ -536,12 +537,12 @@ double thruster_force( double real_amps, double w_speed )
   J. G. Bellingham        1/94
  *======================================================================*/
 
-double thruster_torque( double real_amps, double w_speed )
+double thruster_torque(const world_state_t *world_state, double real_amps, double w_speed )
 {
     if (!last_thruster_state_valid ||
         last_thruster_state.amps != real_amps ||
         last_thruster_state.inflow != read_sensor(VS_THRUSTER_WAKE_FRACTION)*w_speed)
-        compute_thruster_state(real_amps, w_speed, &last_thruster_state);
+        compute_thruster_state(world_state, real_amps, w_speed, &last_thruster_state);
 
     return last_thruster_state.vehicle_torque;
 }

@@ -11,12 +11,13 @@
 #include <stdio.h>
 
 #include "odyssey_sim.h"
+#include "world_sim.h"
 
 void update_water_conductivity(void);
 
 struct behavior;
                                 /* dynamic_control.c */
-void dynamic_control( void );
+void dynamic_control(const world_state_t *);
 double limit( double, double, double );
 
                                 /* layered_control.c */
@@ -33,8 +34,8 @@ const char *get_fault_file_name( void );
 int millisec( void );
 
 				/* sim.c — full prototypes required by modern GCC */
-double thruster_torque( double real_amps, double w_speed );
-double thruster_force( double real_amps, double w_speed );
+double thruster_torque(const world_state_t *, double real_amps, double w_speed );
+double thruster_force(const world_state_t *, double real_amps, double w_speed );
 
 const char *get_fault_file_path(void);
 

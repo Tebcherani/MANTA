@@ -14,6 +14,7 @@
 #include "vehicle.h"
 #include "whoi_traj.h"
 #include "world_defs.h"
+#include "world_sim.h"
 
 #define FIN_LIMIT convert_deg_to_rad(30)	/* maximum fin deflection */
 #define P_INT_LIM convert_deg_to_rad(10)	/* limit on pitch integrator */
@@ -34,7 +35,7 @@ static traj_t h_traj, d_traj;
   for the latter) and simple cubic power law for speed
  *-----------------------------------------------------------------------*/
 
-void dynamic_control( void )
+void dynamic_control(const world_state_t *world_state)
 {
     double kpp, kdp, kip, kph, kdh, kih;
     double des_pitch, pitch, pitch_rate, pitch_limit;
@@ -99,13 +100,13 @@ void dynamic_control( void )
 
         LHS = -read_sensor(VS_XUABU)*pow(des_speed,2.)*( 2.455 - 2.175*des_speed + 
 					 0.75*pow(des_speed,2.) ) ;
-        des_omega = ( read_sensor(VS_THRUSTER_DUCT_AREA)*SEAWATER_DENSITY*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*des_speed + 
-		      sqrt( pow(read_sensor(VS_THRUSTER_DUCT_AREA)*SEAWATER_DENSITY*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*des_speed,2.) +
-			    4.*LHS*read_sensor(VS_THRUSTER_DUCT_AREA)*SEAWATER_DENSITY*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*read_sensor(VS_THRUSTER_PITCH) ) ) /
-	    (2.*read_sensor(VS_THRUSTER_DUCT_AREA)*SEAWATER_DENSITY*pow(read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH),2.));
+        des_omega = ( read_sensor(VS_THRUSTER_DUCT_AREA)*world_state->seawater_density*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*des_speed + 
+		      sqrt( pow(read_sensor(VS_THRUSTER_DUCT_AREA)*world_state->seawater_density*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*des_speed,2.) +
+			    4.*LHS*read_sensor(VS_THRUSTER_DUCT_AREA)*world_state->seawater_density*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*read_sensor(VS_THRUSTER_PITCH) ) ) /
+	    (2.*read_sensor(VS_THRUSTER_DUCT_AREA)*world_state->seawater_density*pow(read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH),2.));
 
-        thruster_current = (.5*SEAWATER_DENSITY*read_sensor(VS_THRUSTER_DUCT_AREA)*pow(read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH),3.)*des_omega*des_omega -
-                            .5*read_sensor(VS_THRUSTER_DUCT_AREA)*SEAWATER_DENSITY*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*pow(des_speed,2.))/read_sensor(VS_THRUSTER_KT);
+        thruster_current = (.5*world_state->seawater_density*read_sensor(VS_THRUSTER_DUCT_AREA)*pow(read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH),3.)*des_omega*des_omega -
+                            .5*read_sensor(VS_THRUSTER_DUCT_AREA)*world_state->seawater_density*read_sensor(VS_THRUSTER_ETA)*read_sensor(VS_THRUSTER_PITCH)*pow(des_speed,2.))/read_sensor(VS_THRUSTER_KT);
 				/* make sign same as desired speed */
 	thruster_current *= sgn(des_speed);
 

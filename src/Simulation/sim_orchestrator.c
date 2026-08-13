@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS, 1, options.behavior_dump_file);
         }
 
-        if (!update_odyssey_sim_state(sim_config.timestep)) {
+        if (!update_odyssey_sim_state(world_state, sim_config.timestep)) {
             write_to_sim_log("Failed to update Odyssey state.\n");
             exit_sim(EXIT_FAILURE, 1, options.behavior_dump_file);
         }
