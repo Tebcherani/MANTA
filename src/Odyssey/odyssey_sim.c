@@ -48,9 +48,7 @@ static int init_odyssey_config(void) {
     return 1;
 }
 
-int init_odyssey_sim(const world_state_t *world_state) {
-    if (world_state == NULL) return 0;
-
+int init_odyssey_sim() {
     if (!init_odyssey_config()) return 0;
     if (!init_odyssey_data_structure()) return 0;
 
@@ -75,8 +73,8 @@ int update_odyssey_sim_state(double timestep) {
     return 1;
 }
 
-int update_odyssey_sim_cycle(double control_dt) {
-    if (update_odyssey_sensors() != 0) return 0;
+int update_odyssey_sim_cycle(const world_state_t *world_state, double control_dt) {
+    if (update_odyssey_sensors(world_state) != 0) return 0;
     if (update_odyssey_nav() != 0) return 0;
     if (update_odyssey_control(control_dt) != 0) return 0;
     if (update_odyssey_mission() != 0) return 0;

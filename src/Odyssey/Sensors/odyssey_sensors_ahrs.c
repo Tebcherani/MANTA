@@ -6,9 +6,10 @@
 #include "random_utils.h"
 #include "vehicle.h"
 #include "world_defs.h"
+#include "world_sim.h"
 
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
-static void update_acceleration(double *ax, double *ay, double *aax, double *aay);
+static void update_acceleration(const world_state_t *, double *ax, double *ay, double *aax, double *aay);
 static void update_angular_rate(void);
 static void update_compass_yaw(double aax, double aay);
 static void update_inclinometers(double ax, double ay);
@@ -61,7 +62,7 @@ static void inclinometer_low_pass_filter( double s[2], double sf[2] ) {
     if(count<=2) count++;
 }
 
-static void update_acceleration(double *ax, double *ay, double *aax, double *aay) {
+static void update_acceleration(const world_state_t *world_state, double *ax, double *ay, double *aax, double *aay) {
     static double dx=1.390,dy=0.108,dz=0.076;
     double az;
     double p,q,r,pdot,qdot,rdot;
@@ -86,9 +87,9 @@ static void update_acceleration(double *ax, double *ay, double *aax, double *aay
     *aay = cos(phi) * (*ay) - sin(phi)*az;
 
 	// Add gravity
-    *ax += sin(theta)*GRAVITY;
-    *ay -= cos(theta)*sin(phi)*GRAVITY;
-    az -= cos(theta)*cos(phi)*GRAVITY;
+    *ax += sin(theta) * world_state->gravity;
+    *ay -= cos(theta) * sin(phi) * world_state->gravity;
+    az -= cos(theta) * cos(phi) * world_state->gravity;
 }
 
 static void update_angular_rate(void) {
@@ -219,12 +220,12 @@ static void update_inclinometers( double ax, double ay ) {
     update_sensor(M_INCLINO_ROLL,filtered_pitch_roll[1]);
 }
 
-void update_ahrs_sensors(void) {
+void update_ahrs_sensors(const world_state_t *world_state) {
     double ax, ay;
     double aax, aay;
 
     update_angular_rate();
-    update_acceleration(&ax, &ay, &aax, &aay);
+    update_acceleration(world_state,&ax, &ay, &aax, &aay);
     update_inclinometers(ax, ay);
     update_compass_yaw(aax, aay);
     update_heading();

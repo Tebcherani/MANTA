@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     sim_config_t sim_config;
     sim_state_t sim_state;
 
-    const world_state_t *world;
+    const world_state_t *world_state;
 
     if (parse_command_line(argc, argv, &options) != 0) {
         print_command_line_help(argv[0]);
@@ -29,10 +29,10 @@ int main(int argc, char *argv[]) {
     if (!init_sim_config(&sim_config)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     
     if (!init_world_sim()) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
-    world = get_world_state();
-    if (world == NULL) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
+    world_state = get_world_state();
+    if (world_state == NULL) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
 
-    if (!init_odyssey_sim(world)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
+    if (!init_odyssey_sim()) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!update_odyssey_sim_time(sim_state.sim_time)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!start_odyssey_sim(options.mission_file, options.fault_file, sim_state.calendar_start_time)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
         }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            if (!update_odyssey_sim_cycle(sim_config.control_period * sim_config.timestep)) {
+            if (!update_odyssey_sim_cycle(world_state, sim_config.control_period * sim_config.timestep)) {
                 write_to_sim_log("Failed to update Odyssey cycle.\n");
                 exit_sim(EXIT_FAILURE, 1, options.behavior_dump_file);
             }
