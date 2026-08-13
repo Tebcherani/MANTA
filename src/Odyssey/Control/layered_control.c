@@ -26,7 +26,6 @@
 #include "odyssey_mission.h"
 #include "unit_utils.h"
 #include "vehicle.h"
-#include "world_defs.h"
 
 int getXSDataByte( void );
 static int behavior_axis_mask( int behavior_id );

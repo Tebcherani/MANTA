@@ -32,7 +32,6 @@
 
 #include "vehicle.h"
 #include "odyssey_data_struct.h"
-#include "world_defs.h"
 #include "world_sim.h"
 
 /*------------------- generic constants -------------------------------*/

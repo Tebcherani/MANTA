@@ -1,8 +1,0 @@
-#ifndef COMMON_DEFS_H
-#define COMMON_DEFS_H
-
-#define EARTH_MAGNETIC_NORTH 0.275
-#define EARTH_MAGNETIC_EAST 0.0
-#define EARTH_MAGNETIC_DOWN 0.476
-
-#endif

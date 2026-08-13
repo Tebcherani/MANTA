@@ -13,7 +13,6 @@
 #include "odyssey_data_struct.h"
 #include "vehicle.h"
 #include "whoi_traj.h"
-#include "world_defs.h"
 #include "world_sim.h"
 
 #define FIN_LIMIT convert_deg_to_rad(30)	/* maximum fin deflection */

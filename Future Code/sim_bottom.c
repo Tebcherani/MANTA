@@ -52,7 +52,6 @@
 #include "ody_var.h"
 #include "ody_func.h"
 #include "odyssey_data_struct.h"
-#include "world_defs.h"
 
 #define MAXROWS      300000
 #define MAXCOLS      25

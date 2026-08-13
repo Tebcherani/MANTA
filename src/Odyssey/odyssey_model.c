@@ -11,7 +11,6 @@
 #include "sim_log.h"
 #include "unit_utils.h"
 #include "vehicle.h"
-#include "world_defs.h"
 
 static double act_model(double, double, double);
 static void fins(const world_state_t *, double *, double, double);

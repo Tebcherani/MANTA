@@ -5,13 +5,12 @@
 #include "odyssey_sensors.h"
 #include "random_utils.h"
 #include "vehicle.h"
-#include "world_defs.h"
 #include "world_sim.h"
 
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
-static void update_acceleration(const world_state_t *, double *ax, double *ay, double *aax, double *aay);
+static void update_acceleration(const world_state_t *, double *, double *, double *, double *);
 static void update_angular_rate(void);
-static void update_compass_yaw(double aax, double aay);
+static void update_compass_yaw(const world_state_t *, double, double);
 static void update_inclinometers(const world_state_t *, double, double);
 static void update_heading(void);
 
@@ -124,7 +123,7 @@ Simulation of the magnetic heading measured by the KVH DGC
     oscillator is first determined and the x-y displcaements converted
     into angles.
 *-------------------------------------------------------------------------*/
-static void update_compass_yaw(double aax, double aay) {
+static void update_compass_yaw(const world_state_t *world_state, double aax, double aay) {
     static int first=1;
     static double compass_noise=0.001745; /* 0.1 deg */
     static double dx=0.0, dy=0.0, dxp=0.0, dyp=0.0;
@@ -171,8 +170,8 @@ static void update_compass_yaw(double aax, double aay) {
     Mmg[3][2] = -(cos(psi)*sin(phi)) + cos(phi)*sin(psi)*sin(theta);
     Mmg[3][3] = cos(phi)*cos(theta);
 
-    mx = Mmg[1][1]*EARTH_MAGNETIC_NORTH + Mmg[1][2]*EARTH_MAGNETIC_EAST + Mmg[1][3]*EARTH_MAGNETIC_DOWN;
-    my = Mmg[2][1]*EARTH_MAGNETIC_NORTH + Mmg[2][2]*EARTH_MAGNETIC_EAST + Mmg[2][3]*EARTH_MAGNETIC_DOWN;
+    mx = Mmg[1][1]*world_state->magnetic_north + Mmg[1][2]*world_state->magnetic_east + Mmg[1][3]*world_state->magnetic_down;
+    my = Mmg[2][1]*world_state->magnetic_north + Mmg[2][2]*world_state->magnetic_east + Mmg[2][3]*world_state->magnetic_down;
 
     // Compute heading from readings 
     if ((mx>0.0) && (my<=0.0)) mg_yaw = -atan(my/mx);
@@ -227,6 +226,6 @@ void update_ahrs_sensors(const world_state_t *world_state) {
     update_angular_rate();
     update_acceleration(world_state,&ax, &ay, &aax, &aay);
     update_inclinometers(world_state, ax, ay);
-    update_compass_yaw(aax, aay);
+    update_compass_yaw(world_state, aax, aay);
     update_heading();
 }
