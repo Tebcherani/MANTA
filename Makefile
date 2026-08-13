@@ -1,7 +1,9 @@
 # Makefile — Odyssey AUV Standalone Simulator
 # Target: Linux / GCC
 # Build:  make
-# Run:    ./ody sim <mission_name>
+# Run:    make run-sim MISSION=dive240.mi
+#
+# Simulation output is written outside the source tree.
 
 CC = gcc
 AR = ar
@@ -35,11 +37,28 @@ LDFLAGS = -llapacke -llapack -lblas -lm
 
 TARGET = sim
 EXEEXT =
-SIM_EXE = ./$(TARGET)$(EXEEXT)
+
+# Absolute path to the repository root.
+PROJECT_DIR := $(abspath .)
+
+# Absolute path to the simulator executable.
+SIM_EXE := $(PROJECT_DIR)/$(TARGET)$(EXEEXT)
 
 MISSION ?= dive240.mi
 
 BUILD_DIR = build
+
+# -------------------------------------------------------------------------
+# Runtime output
+# -------------------------------------------------------------------------
+#
+# Keep generated simulator output outside the source repository.
+#
+# Override from the command line if desired:
+#
+#   make run-sim RUN_DIR=/data/odyssey/runs
+#
+RUN_DIR ?= $(abspath ../odyssey-runs)
 
 COMMON_SRCS = \
 	src/Common/angle_utils.c \
@@ -146,8 +165,18 @@ dev-setup:
 doctor:
 	./ody doctor
 
+# -------------------------------------------------------------------------
+# Run simulator
+# -------------------------------------------------------------------------
+#
+# The simulator is launched with RUN_DIR as its working directory.
+# Therefore files/directories created with relative paths, including .obd
+# output, are placed there rather than inside the source repository.
+#
 run-sim: $(TARGET)
-	$(SIM_EXE) $(MISSION)
+	@mkdir -p "$(RUN_DIR)"
+	@echo "Simulation output directory: $(RUN_DIR)"
+	cd "$(RUN_DIR)" && "$(SIM_EXE)" "$(MISSION)"
 
 review:
 	./ody review
