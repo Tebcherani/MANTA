@@ -26,11 +26,11 @@ WORLD_CPPFLAGS = \
 ODYSSEY_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
 	-Isrc/Odyssey \
-	-Isrc/Odyssey/Behaviors \
 	-Isrc/Odyssey/Control \
 	-Isrc/Odyssey/Faults \
 	-Isrc/Odyssey/Navigation \
-	-Isrc/Odyssey/Sensors
+	-Isrc/Odyssey/Sensors \
+	-Isrc/Odyssey/Vehicle/Behaviors
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS = -llapacke -llapack -lblas -lm
@@ -79,12 +79,6 @@ WORLD_SRCS = \
 	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
-	src/Odyssey/Behaviors/edc_homing.c \
-	src/Odyssey/Behaviors/odyssey_behavior_registry.c \
-	src/Odyssey/Behaviors/odyssey_behaviors_wiggle.c \
-	src/Odyssey/Behaviors/odyssey_behaviors_dock.c \
-	src/Odyssey/Behaviors/waypoint.c \
-	src/Odyssey/Behaviors/whoi_homing.c \
 	src/Odyssey/Control/dynamic_control.c \
 	src/Odyssey/Control/layered_control.c \
 	src/Odyssey/Control/odyssey_control.c \
@@ -110,7 +104,13 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Sensors/odyssey_sensors_lbl.c \
 	src/Odyssey/Sensors/odyssey_sensors_usbl.c \
 	src/Odyssey/Sensors/odyssey_sensors_water.c \
-	src/Odyssey/Sensors/sim_conduct.c
+	src/Odyssey/Sensors/sim_conduct.c \
+	src/Odyssey/Vehicle/Behaviors/edc_homing.c \
+	src/Odyssey/Vehicle/Behaviors/odyssey_behavior_registry.c \
+	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_wiggle.c \
+	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_dock.c \
+	src/Odyssey/Vehicle/Behaviors/waypoint.c \
+	src/Odyssey/Vehicle/Behaviors/whoi_homing.c
 
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
