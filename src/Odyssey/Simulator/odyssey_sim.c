@@ -8,10 +8,7 @@
 #include "sim_log.h"
 
 #include "odyssey_behavior_logger.h"
-#include "odyssey_control.h"
 #include "odyssey_data_logger.h"
-#include "odyssey_mission.h"
-#include "odyssey_nav.h"
 #include "vehicle.h"
 
 static int init_odyssey_config(void);
