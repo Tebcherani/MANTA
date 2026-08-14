@@ -126,7 +126,7 @@ int write_tab(const odyssey_config_t *config)
     int error = -1;
     char msg_buf[256];
 
-    snprintf( msg_buf, 256, "%s/%s.tab", config->data_dir, VEHICLE_NAME );
+    snprintf(msg_buf, 256, "%s/odyssey_simulator.tab", config->data_dir);
 
 				/* open tab-file for append */
     ftab = fopen( msg_buf, "a" );
@@ -207,8 +207,6 @@ int init_odyssey_data_logger(FILE **datafile, const odyssey_config_t *config, co
     }
 
     strcpy(vvp->data_file_name, data_file_name);
-
-    fprintf(*datafile, "MIT_SG_AUV_LAB_v%d %s\xa", 2, VEHICLE_NAME);
 
     if (strftime(time_string, sizeof(time_string), "%Y/%m/%d %H:%M:%S GMT", tp) == 0) {
         fclose(*datafile);

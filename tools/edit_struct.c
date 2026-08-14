@@ -745,7 +745,7 @@ main( int argc, char **argv )
     char config_file[MAX_LINE];
 
 				/* set default config name */
-    strcpy( cfgs.name, VEHICLE_NAME );
+    strcpy( cfgs.name, "Simulator" );
 				/* parse command line */
     parse_cmd_line( argc, argv );
 				/* make RCS announcement */

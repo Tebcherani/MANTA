@@ -9,9 +9,9 @@
 #include "sim_log.h"
 #include "unit_utils.h"
 
-#include "ody_defs.h"
-#include "odyssey_mission.h"
 #include "vehicle.h"
+
+#define MODEL_MAX_LINE 196
 
 static double act_model(double, double, double);
 static void fins(const world_state_t *, double *, double, double);
@@ -624,7 +624,7 @@ void motion(const world_state_t *world_state, double e[], double p[], double Amp
 
 int init_odyssey_model(const char *path) {
     FILE *fptr;
-    char line[MAX_LINE], name[sizeof(vvp->s[0].name)], header[sizeof(vvp->s[0].name)];
+    char line[MODEL_MAX_LINE], name[sizeof(vvp->s[0].name)], header[sizeof(vvp->s[0].name)];
     char *expect, *actual;
     double value;
     int index, header_seen = 0;
@@ -649,12 +649,6 @@ int init_odyssey_model(const char *path) {
             if (sscanf(line, " vehicle: %s", header) != 1) {
                 fclose(fptr);
                 write_to_sim_log("[odyssey_model] Invalid vehicle definition header.\n");
-                return 0;
-            }
-
-            if (strcmp(header, VEHICLE_NAME) != 0) {
-                fclose(fptr);
-                write_to_sim_log("[odyssey_model] Vehicle definition does not match VEHICLE_NAME.\n");
                 return 0;
             }
 

@@ -15,7 +15,6 @@
 
 #define EXTERN extern		/* EXTERN hack jleonard */
 
-#define VEHICLE_NAME "Simulator"
 #define PREFIX_CHAR  'S'
 
 #endif
