@@ -31,8 +31,6 @@ int load_faults(const char *fname, const odyssey_config_t *config);
 void        apply_faults       ( void );
 const char *get_fault_file_name( void );
 
-int millisec( void );
-
 				/* sim.c — full prototypes required by modern GCC */
 double thruster_torque(const world_state_t *, double real_amps, double w_speed );
 double thruster_force(const world_state_t *, double real_amps, double w_speed );

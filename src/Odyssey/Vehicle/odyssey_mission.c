@@ -4,10 +4,9 @@
 #include "odyssey_defs.h"
 #include "odyssey_mission.h"
 #include "sim_log.h"
+#include "time_utils.h"
 #include "unit_utils.h"
 #include "vehicle.h"
-
-int hirestime(double *time_value);
 
 static int match_behavior_arg(const char *name, int b_index);
 static int read_state(FILE *fptr);

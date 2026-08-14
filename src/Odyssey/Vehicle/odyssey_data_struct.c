@@ -10,8 +10,6 @@
 
 static void copy_name(char *dest, size_t dest_size, const char *src);
 
-int hirestime(double *hires);
-
 extern char *creation_date;
 extern int *sindex[];
 

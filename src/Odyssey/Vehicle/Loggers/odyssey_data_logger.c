@@ -11,6 +11,7 @@
 #include "ody_func.h"
 #include "paths.h"
 #include "sim_log.h"
+#include "time_utils.h"
 #include "vehicle.h"
 
 static void write_fault_header(FILE *, const odyssey_config_t *);

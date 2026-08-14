@@ -68,6 +68,7 @@ COMMON_SRCS = \
 	src/Common/matrix_utils.c \
 	src/Common/random_utils.c \
 	src/Common/sim_log.c \
+	src/Common/time_utils.c \
 	src/Common/unit_utils.c
 
 SIM_SRCS = \
@@ -83,7 +84,6 @@ WORLD_SRCS = \
 
 ODYSSEY_SRCS = \
 	src/Odyssey/sensor_load.c \
-	src/Odyssey/sim_stubs.c \
 	src/Odyssey/Sensors/odyssey_sensors.c \
 	src/Odyssey/Sensors/odyssey_sensors_ahrs.c \
 	src/Odyssey/Sensors/odyssey_sensors_depth.c \
