@@ -85,7 +85,6 @@ ODYSSEY_SRCS = \
 	src/Odyssey/odyssey_mission.c \
 	src/Odyssey/sensor_load.c \
 	src/Odyssey/sim_stubs.c \
-	src/Odyssey/odyssey_sim.c \
 	src/Odyssey/sim.c \
 	src/Odyssey/Sensors/odyssey_sensors.c \
 	src/Odyssey/Sensors/odyssey_sensors_ahrs.c \
@@ -111,6 +110,7 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav_dead_reckoning.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav_lbl.c \
 	src/Odyssey/Simulator/odyssey_model.c \
+	src/Odyssey/Simulator/odyssey_sim.c \
 	src/Odyssey/Simulator/Faults/load_fault.c \
 	src/Odyssey/Simulator/Faults/paths.c
 
