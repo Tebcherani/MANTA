@@ -4,7 +4,7 @@
 
 #include "matrix_utils.h"
 #include "ody_defs.h"
-#include "odyssey_data_struct.h"
+#include "odyssey.h"
 #include "odyssey_mission.h"
 #include "odyssey_model.h"
 #include "sim.h"

@@ -4,7 +4,7 @@
 #include "odyssey_behavior_logger.h"
 #include "odyssey_control.h"
 #include "odyssey_data_logger.h"
-#include "odyssey_data_struct.h"
+#include "odyssey.h"
 #include "odyssey_model.h"
 #include "odyssey_mission.h"
 #include "odyssey_nav.h"
