@@ -8,8 +8,9 @@ typedef struct {
 } odyssey_environment_t;
 
 int init_odyssey(void);
-int start_odyssey(const char *, const char *, time_t);
+int start_odyssey(const char *, const char *, const char *, const char *, time_t);
 int update_odyssey(double, double);
+int end_odyssey(const char *, const char *);
 
 int odyssey_abort_requested(void);
 const char *get_odyssey_data_file_name(void);

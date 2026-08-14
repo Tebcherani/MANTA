@@ -15,7 +15,7 @@
 #include "vehicle.h"
 
 static void write_fault_header(FILE *, const odyssey_config_t *);
-static void write_mission_header(FILE *, const odyssey_config_t *, const char *);
+static void write_mission_header(FILE **, const char *, const char *);
 static void init_tab(void);
 static void update_tab(float);
 
@@ -59,11 +59,7 @@ static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
         "# ===== FAULT_FILE_END ==================================\xa" );
 }
 
-static void write_mission_header(
-    FILE *datafile,
-    const odyssey_config_t *config,
-    const char *mission_file
-) {
+static void write_mission_header(FILE **datafile, const char *mission_file,  const char *mission_dir) {
     FILE *fmi;
     char *mission_path;
     char line[MAX_LINE];
@@ -74,12 +70,12 @@ static void write_mission_header(
 
     if (mission_file == NULL || mission_file[0] == '\0') fprintf(datafile, "# (no mission file loaded)\xa");
     else {
-        path_size = strlen(config->mission_dir) + strlen(mission_file) + 2;
+        path_size = strlen(mission_dir) + strlen(mission_file) + 2;
         mission_path = malloc(path_size);
 
         if (mission_path == NULL) fprintf(datafile, "# WARNING: could not allocate mission path\xa");
         else {
-            snprintf(mission_path, path_size, "%s/%s", config->mission_dir, mission_file);
+            snprintf(mission_path, path_size, "%s/%s", mission_dir, mission_file);
 
             fmi = fopen(mission_path, "r");
             if (fmi == NULL) fprintf(datafile, "# WARNING: could not open %s for embedding\xa", mission_path);
@@ -152,7 +148,7 @@ int write_tab(const odyssey_config_t *config)
     return error;
 }
 
-int init_odyssey_data_logger(FILE **datafile, const odyssey_config_t *config, const char *mission_file) {
+init_odyssey_data_logger(FILE **datafile, const char *data_dir, const char *mission_file, const char *mission_dir, const char *fault_dir) {
     int i = 0;
     int j, beh_id, offset, run_number;
     int path_length;
@@ -189,7 +185,7 @@ int init_odyssey_data_logger(FILE **datafile, const odyssey_config_t *config, co
 
         free(data_file_name);
 
-        path_length = snprintf(NULL, 0, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
+        path_length = snprintf(NULL, 0, "%s/%c%s%02d.obd", data_dir, PREFIX_CHAR, fname_string, run_number);
         if (path_length < 0)
             return 0;
 
@@ -197,7 +193,7 @@ int init_odyssey_data_logger(FILE **datafile, const odyssey_config_t *config, co
         if (data_file_name == NULL)
             return 0;
 
-        snprintf(data_file_name, (size_t)path_length + 1, "%s/%c%s%02d.obd", config->data_dir, PREFIX_CHAR, fname_string, run_number);
+        snprintf(data_file_name, (size_t)path_length + 1, "%s/%c%s%02d.obd", data_dir, PREFIX_CHAR, fname_string, run_number);
     } while (access(data_file_name, F_OK) != -1);
 
     *datafile = fopen(data_file_name, "wb");
@@ -220,8 +216,8 @@ int init_odyssey_data_logger(FILE **datafile, const odyssey_config_t *config, co
     fprintf(*datafile, "%s     # OS-9 file creation time\xa", time_string);
     fprintf(*datafile, "%s     # Structure creation time\xa", vvp->creation_date);
 
-    write_fault_header(*datafile, config);
-    write_mission_header(*datafile, config, mission_file);
+    write_fault_header(*datafile, fault_dir);
+    write_mission_header(*datafile, mission_file, mission_dir);
 
     for (i = 0; i <= vvp->last_s; i++) {
         fprintf(*datafile, "%d %-29s", i, sensor_name(i));

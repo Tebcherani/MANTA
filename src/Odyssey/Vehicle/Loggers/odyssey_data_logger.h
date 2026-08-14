@@ -6,7 +6,7 @@
 
 #include "odyssey_sim.h"
 
-int init_odyssey_data_logger(FILE **, const odyssey_config_t *, const char *);
+int init_odyssey_data_logger(FILE **, const char *, const char *, const char *, const char *);
 int log_data(FILE *);
 int write_tab(const odyssey_config_t *);
 
