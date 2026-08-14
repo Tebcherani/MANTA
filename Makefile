@@ -32,6 +32,7 @@ ODYSSEY_CPPFLAGS = \
 	-Isrc/Odyssey/Simulator/Faults \
 	-Isrc/Odyssey/Vehicle/Behaviors \
 	-Isrc/Odyssey/Vehicle/Control \
+	-Isrc/Odyssey/Vehicle/Loggers \
 	-Isrc/Odyssey/Vehicle/Navigation
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
@@ -81,9 +82,6 @@ WORLD_SRCS = \
 	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
-	src/Odyssey/odyssey_behavior_logger.c \
-	src/Odyssey/odyssey_data_logger.c \
-	src/Odyssey/odyssey_data_struct.c \
 	src/Odyssey/odyssey_mission.c \
 	src/Odyssey/sensor_load.c \
 	src/Odyssey/sim_stubs.c \
@@ -96,6 +94,7 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Sensors/odyssey_sensors_usbl.c \
 	src/Odyssey/Sensors/odyssey_sensors_water.c \
 	src/Odyssey/Sensors/sim_conduct.c \
+	src/Odyssey/Vehicle/odyssey_data_struct.c \
 	src/Odyssey/Vehicle/vehicle.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behavior_registry.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_wiggle.c \
@@ -106,6 +105,8 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Vehicle/Control/layered_control.c \
 	src/Odyssey/Vehicle/Control/odyssey_control.c \
 	src/Odyssey/Vehicle/Control/whoi_traj.c \
+	src/Odyssey/Vehicle/Loggers/odyssey_behavior_logger.c \
+	src/Odyssey/Vehicle/Loggers/odyssey_data_logger.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav_dead_reckoning.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav_lbl.c \
