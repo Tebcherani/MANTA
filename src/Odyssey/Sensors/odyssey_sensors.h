@@ -11,4 +11,6 @@ void update_lbl_sensor(void);
 
 int update_odyssey_sensors(const world_state_t *);
 
+void update_water_conductivity(void);
+
 #endif /* ODYSSEY_SENSORS_H */

@@ -21,6 +21,8 @@
 #include <string.h>
 
 #include "angle_utils.h"
+#include "dynamic_control.h"
+#include "layered_control.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_defs.h"
 #include "odyssey_mission.h"

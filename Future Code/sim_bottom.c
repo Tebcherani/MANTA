@@ -50,7 +50,6 @@
 #include "ody_defs.h"
 #include "ody_types.h"
 #include "ody_var.h"
-#include "ody_func.h"
 #include "odyssey_data_struct.h"
 
 #define MAXROWS      300000

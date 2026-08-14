@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "layered_control.h"
+#include "load_fault.h"
 #include "odyssey_sim.h"
 #include "odyssey_data_struct.h"
 #include "paths.h"

@@ -791,11 +791,11 @@ main( int argc, char **argv )
 	   "#include <stdio.h>\n"
      "#include <string.h>\n"
 	   "#include \"ody_defs.h\"\n"
-	   "#include \"ody_types.h\"\n", cfile );
+	   "#include \"ody_types.h\"\n"
+       "#include \"sim.h\"\n", cfile );
                                 /* jleonard EXTERN hack */
     fputs( "\n#undef EXTERN\n#define EXTERN \n\n"
-	   "#include \"ody_var.h\"\n"
-	   "#include \"ody_func.h\"\n", cfile );
+	   "#include \"ody_var.h\"\n", cfile );
 				/* variable creation_date in C-file */
     fprintf( cfile, "\nchar *creation_date = \"%s\";\n\n", cnow ); 
 
@@ -803,7 +803,6 @@ main( int argc, char **argv )
     fprintf( hfile, "#include \"ody_defs.h\"\n");
     fprintf( hfile, "#include \"ody_types.h\"\n");
     fprintf( hfile, "#include \"ody_var.h\"\n");
-    fprintf( hfile, "#include \"ody_func.h\"\n");
     fprintf( hfile, "#define CREATION_DATE \"%s\"\n\n", cnow );
 
     fputs(

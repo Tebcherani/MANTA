@@ -9,8 +9,9 @@
 #include <math.h>
 
 #include "angle_utils.h"
-#include "unit_utils.h"
+#include "dynamic_control.h"
 #include "odyssey_data_struct.h"
+#include "unit_utils.h"
 #include "vehicle.h"
 #include "whoi_traj.h"
 #include "world_sim.h"

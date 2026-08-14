@@ -1,4 +1,3 @@
-#include "ody_func.h"
 #include "odyssey_nav.h"
 
 int update_odyssey_nav(void) {

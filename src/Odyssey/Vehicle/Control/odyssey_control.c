@@ -1,6 +1,7 @@
+#include "dynamic_control.h"
+#include "layered_control.h"
 #include "odyssey_control.h"
 #include "odyssey_data_struct.h"
-#include "ody_func.h"
 #include "vehicle.h"
 
 int update_odyssey_control(const world_state_t *world_state, double control_dt) {

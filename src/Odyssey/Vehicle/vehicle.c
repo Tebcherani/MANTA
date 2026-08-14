@@ -3,14 +3,14 @@
 #include <string.h>
 #include "ody_defs.h"
 #include "ody_types.h"
+#include "sim.h"
 
 #undef EXTERN
 #define EXTERN 
 
 #include "ody_var.h"
-#include "ody_func.h"
 
-char *creation_date = "2026/08/14 01:18:49 GMT";
+char *creation_date = "2026/08/14 02:15:16 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,

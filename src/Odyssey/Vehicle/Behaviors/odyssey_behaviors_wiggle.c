@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "layered_control.h"
 #include "odyssey_behaviors.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"

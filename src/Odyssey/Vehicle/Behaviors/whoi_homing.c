@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "layered_control.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "vehicle.h"
