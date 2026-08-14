@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/08/14 01:04:16 GMT";
+char *creation_date = "2026/08/14 01:18:49 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -338,9 +338,6 @@ const struct sensor sss[] = {
     "vs_batt_runaway_temp(K)", 353, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_batt_runaway_heat(W)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "vs_hotel_load(W)", 30, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "edge_tr_xs_time(s)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "edge_am200_bacs()", 617505, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "edge_xs_databyte()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_lbl_timing_noise(mSec)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_lbl_frac_bias(0-1)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "real_lbl_frac_dropout(0-1)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -1006,9 +1003,6 @@ int VS_BATT_EST_INIT_SOC = -1;
 int VS_BATT_RUNAWAY_TEMP = -1;
 int VS_BATT_RUNAWAY_HEAT = -1;
 int VS_HOTEL_LOAD = -1;
-int EDGE_TR_XS_TIME = -1;
-int EDGE_AM200_BACS = -1;
-int EDGE_XS_DATABYTE = -1;
 int REAL_LBL_TIMING_NOISE = -1;
 int REAL_LBL_FRAC_BIAS = -1;
 int REAL_LBL_FRAC_DROPOUT = -1;
@@ -1448,9 +1442,6 @@ int *sindex[] = {
     &VS_BATT_RUNAWAY_TEMP,
     &VS_BATT_RUNAWAY_HEAT,
     &VS_HOTEL_LOAD,
-    &EDGE_TR_XS_TIME,
-    &EDGE_AM200_BACS,
-    &EDGE_XS_DATABYTE,
     &REAL_LBL_TIMING_NOISE,
     &REAL_LBL_FRAC_BIAS,
     &REAL_LBL_FRAC_DROPOUT,

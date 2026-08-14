@@ -106,13 +106,6 @@ int whoi_homing( struct behavior *b, int priority, int level )
 				/* release request to check MIO switches */
 	add_to_sensor( LATCH_CHECK, -1 );
 
-	if ( pole_secure )
-	{
-
-	    update_sensor( EDGE_XS_DATABYTE, getXSDataByte() );
-	}
-	else
-	    return 1;
 	return 1;
     }
 				/* set the modes for the command vector */

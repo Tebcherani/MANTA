@@ -101,23 +101,6 @@
   sensor:                     wp_xte(m)
   sensor:                     wp_dtw(m)
 
-config: camera
-  sensor:           c_camera_fire(bool) 0
-endconfig
-
-config: kvh_dgc
-  sensor:                 dgc_autocal() 0
-  sensor:             dgc_calmerit(int)
-  sensor:             dgc_locmerit(int)
-  sensor:             dgc_calcount(int)
-endconfig
-
-config: sbe_25
-  sensor:             sbe_temp_freq(Hz)
-  sensor:             sbe_cond_freq(Hz)
-  sensor:                      m_obs(?) 
-endconfig
-
 config: sim
   sensor:                     real_x(m) 0
   sensor:                     real_y(m) 0
@@ -354,41 +337,6 @@ config: vs
   sensor:                  vs_hotel_load(W) 30.0
 endconfig
 
-config: rdi_wh
-  sensor:                rdi_binsize(m) 2
-  sensor:              rdi_numbins(int) 50
-  sensor:                 rdi_range1(m) 
-  sensor:                 rdi_range2(m) 
-  sensor:                 rdi_range3(m) 
-  sensor:                 rdi_range4(m) 
-  sensor:                    rdi_alt(m)
-  sensor:                 rdi_vel1(m/s) 
-  sensor:                 rdi_vel2(m/s) 
-  sensor:                 rdi_vel3(m/s) 
-  sensor:                 rdi_vel4(m/s) 
-  sensor:                     rdi_dn(m)
-  sensor:                     rdi_de(m)
-endconfig
-
-config: sontek
-  sensor:                    adv_samp() 
-  sensor:                   adv_vx(m/s) 
-  sensor:                   adv_vy(m/s) 
-  sensor:                   adv_vz(m/s) 
-  sensor:                    adv_a1(dB) 
-  sensor:                    adv_a2(dB) 
-  sensor:                    adv_a3(dB) 
-  sensor:                     adv_c1(%) 
-  sensor:                     adv_c2(%) 
-  sensor:                     adv_c3(%) 
-endconfig
-
-config: edge8000
-  sensor:            edge_tr_xs_time(s) 
-  sensor:             edge_am200_bacs() 617505
-  sensor:            edge_xs_databyte() 0
-endconfig
-
 config: lbl
   sensor:   real_lbl_timing_noise(mSec) 0
   sensor:       real_lbl_frac_bias(0-1) 0 
@@ -457,10 +405,6 @@ config: lbl
   sensor:                m_ekf_north(m) 0
   sensor:                 m_ekf_east(m) 0
   sensor:  u_lbl_transponder_mode(bool) 1
-endconfig
-
-config: sidescan
-  sensor:            m_sidescan_no(int) 0
 endconfig
 
 config: ahrs

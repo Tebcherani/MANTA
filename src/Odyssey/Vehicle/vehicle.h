@@ -2,7 +2,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
-#define CREATION_DATE "2026/08/14 01:04:16 GMT"
+#define CREATION_DATE "2026/08/14 01:18:49 GMT"
 
 extern int M_PRESENT_TIME;
 extern int M_DT;
@@ -329,9 +329,6 @@ extern int VS_BATT_EST_INIT_SOC;
 extern int VS_BATT_RUNAWAY_TEMP;
 extern int VS_BATT_RUNAWAY_HEAT;
 extern int VS_HOTEL_LOAD;
-extern int EDGE_TR_XS_TIME;
-extern int EDGE_AM200_BACS;
-extern int EDGE_XS_DATABYTE;
 extern int REAL_LBL_TIMING_NOISE;
 extern int REAL_LBL_FRAC_BIAS;
 extern int REAL_LBL_FRAC_DROPOUT;

@@ -422,9 +422,6 @@ int broadcast( struct behavior *b, int priority, int level )
                                    EdgeTech data */
 	if ( read_sensor(M_PRESENT_TIME) >= bArg(XS_DELAY) )
 	{
-				/* compose the databyte based on presence
-				   of pole in latch */
-	    update_sensor( EDGE_XS_DATABYTE, getXSDataByte() );
 				/* advance timer */
 	    bArg( XS_DELAY ) += bArg( XS_CYCLE );
 	}

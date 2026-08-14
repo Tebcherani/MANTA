@@ -323,9 +323,6 @@
   sensor:       vs_batt_runaway_temp(K) 353
   sensor:       vs_batt_runaway_heat(W) 0
   sensor:              vs_hotel_load(W) 30
-  sensor:            edge_tr_xs_time(s)
-  sensor:             edge_am200_bacs() 617505
-  sensor:            edge_xs_databyte() 0
   sensor:   real_lbl_timing_noise(mSec) 0
   sensor:       real_lbl_frac_bias(0-1) 0
   sensor:    real_lbl_frac_dropout(0-1) 0

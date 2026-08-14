@@ -83,7 +83,6 @@ WORLD_SRCS = \
 	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
-	src/Odyssey/sensor_load.c \
 	src/Odyssey/Sensors/odyssey_sensors.c \
 	src/Odyssey/Sensors/odyssey_sensors_ahrs.c \
 	src/Odyssey/Sensors/odyssey_sensors_depth.c \
