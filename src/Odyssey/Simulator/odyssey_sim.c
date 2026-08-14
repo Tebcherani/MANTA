@@ -12,7 +12,6 @@
 #include "odyssey_data_logger.h"
 #include "odyssey_mission.h"
 #include "odyssey_nav.h"
-#include "ody_var.h"
 #include "vehicle.h"
 
 static int init_odyssey_config(void);
@@ -109,8 +108,7 @@ int end_odyssey_sim(const char *behavior_dump_file) {
             cleanup_failed = 1;
     }
 
-    write_to_sim_log("SIM: mission finished -- data file: %s\n",
-                     vvp->data_file_name);
+    write_to_sim_log("SIM: mission finished -- data file: %s\n", get_odyssey_data_file_name());
 
     if (write_tab(&config) != 0)
         cleanup_failed = 1;
