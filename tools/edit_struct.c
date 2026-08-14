@@ -657,14 +657,6 @@ behavior: survey_dead_reckon
   b_arg:             transit_speed(m/s) 0.0
   b_arg:              survey_speed(m/s) 0.0
 
-behavior: remote_delay
-  b_arg:                        time(s) 0.0
-  b_arg:                   heading(rad) 0.0
-  b_arg:                  min_time(sec) 1.0
-  b_arg:                  max_time(sec) 4.6
-  b_arg:     mission_abort_enable(bool) 0.0
-  b_arg:                 finished(bool) 0.0
-
 behavior: waypoint_2d
   b_arg:                       wpt_n(m)  0
   b_arg:                       wpt_e(m)  0

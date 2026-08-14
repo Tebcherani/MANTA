@@ -558,14 +558,7 @@
   b_arg:                       depth(m) 0
   b_arg:             transit_speed(m/s) 0
   b_arg:              survey_speed(m/s) 0
- behavior: remote_delay 17
-  b_arg:                        time(s) 0
-  b_arg:                   heading(rad) 0
-  b_arg:                  min_time(sec) 1
-  b_arg:                  max_time(sec) 4.6
-  b_arg:     mission_abort_enable(bool) 0
-  b_arg:                 finished(bool) 0
- behavior: waypoint_2d 18
+ behavior: waypoint_2d 17
   b_arg:                       wpt_n(m) 0
   b_arg:                       wpt_e(m) 0
   b_arg:                       depth(m) 0
@@ -576,18 +569,18 @@
   b_arg:                    gain(rad/m) 0.0175
   b_arg:                     timeout(s) 0
   b_arg:             abort_on_timeout() 0
- behavior: wiggle 19
+ behavior: wiggle 18
   b_arg:                        time(s) 30
   b_arg:                      period(s) 6
   b_arg:          rudder_amplitude(rad) 0
   b_arg:        elevator_amplitude(rad) 0
   b_arg:         thruster_current(amps) 0
- behavior: launch 20
+ behavior: launch 19
   b_arg:                     speed(m/s) 0
   b_arg:            elevator_angle(rad) 0
   b_arg:                       depth(m) 0
   b_arg:                     timeout(s) 5
- behavior: yo_yo 21
+ behavior: yo_yo 20
   b_arg:             desired_pitch(rad) 0
   b_arg:                   top_depth(m) 0
   b_arg:                bottom_depth(m) 0

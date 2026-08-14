@@ -13,16 +13,6 @@
 #include "vehicle.h"
 #include "time.h"
 
-/*----------------------------------------------------------------------*
- * remote_delay: stub behavior registered in vehicle.c but source file
- * not included in the simulator build.
- *----------------------------------------------------------------------*/
-int remote_delay( struct behavior *b, int priority, int level )
-{
-    (void)b; (void)priority; (void)level;
-    return 0;
-}
-
 /*======================================================================*
  * Serial-bus stubs (would live in serial.c / ody_serio.c)
  *

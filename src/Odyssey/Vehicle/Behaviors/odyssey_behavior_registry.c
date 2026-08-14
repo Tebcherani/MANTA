@@ -18,7 +18,6 @@ extern int setmode(struct behavior *, int, int);
 extern int setpoint(struct behavior *, int, int);
 extern int setvector(struct behavior *, int, int);
 extern int survey_dead_reckon(struct behavior *, int, int);
-extern int remote_delay(struct behavior *, int, int);
 extern int waypoint_2d(struct behavior *, int, int);
 extern int wiggle(struct behavior *, int, int);
 extern int launch(struct behavior *, int, int);
@@ -47,7 +46,6 @@ int assign_behavior_fcn_ptr(const char *name, struct behavior *b)
     if (strcmp("setpoint", name) == 0) b->fcn = setpoint;
     if (strcmp("setvector", name) == 0) b->fcn = setvector;
     if (strcmp("survey_dead_reckon", name) == 0) b->fcn = survey_dead_reckon;
-    if (strcmp("remote_delay", name) == 0) b->fcn = remote_delay;
     if (strcmp("waypoint_2d", name) == 0) b->fcn = waypoint_2d;
     if (strcmp("wiggle", name) == 0) b->fcn = wiggle;
     if (strcmp("launch", name) == 0) b->fcn = launch;

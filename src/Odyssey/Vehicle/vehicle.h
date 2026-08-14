@@ -2,7 +2,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
-#define CREATION_DATE "2026/08/14 00:33:59 GMT"
+#define CREATION_DATE "2026/08/14 01:04:16 GMT"
 
 extern int M_PRESENT_TIME;
 extern int M_DT;
@@ -463,8 +463,7 @@ extern int M_LOAD_VOLTAGE;
 #define SETPOINT 13
 #define SETVECTOR 14
 #define SURVEY_DEAD_RECKON 15
-#define REMOTE_DELAY 16
-#define WAYPOINT_2D 17
-#define WIGGLE 18
-#define LAUNCH 19
-#define YO_YO 20
+#define WAYPOINT_2D 16
+#define WIGGLE 17
+#define LAUNCH 18
+#define YO_YO 19
