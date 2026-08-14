@@ -28,9 +28,10 @@ ODYSSEY_CPPFLAGS = \
 	-Isrc/Odyssey \
 	-Isrc/Odyssey/Sensors \
 	-Isrc/Odyssey/Vehicle \
+	-Isrc/Odyssey/Simulator \
+	-Isrc/Odyssey/Simulator/Faults \
 	-Isrc/Odyssey/Vehicle/Behaviors \
 	-Isrc/Odyssey/Vehicle/Control \
-	-Isrc/Odyssey/Vehicle/Faults \
 	-Isrc/Odyssey/Vehicle/Navigation
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
@@ -106,11 +107,11 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Vehicle/Control/layered_control.c \
 	src/Odyssey/Vehicle/Control/odyssey_control.c \
 	src/Odyssey/Vehicle/Control/whoi_traj.c \
-	src/Odyssey/Vehicle/Faults/load_fault.c \
-	src/Odyssey/Vehicle/Faults/paths.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav_dead_reckoning.c \
-	src/Odyssey/Vehicle/Navigation/odyssey_nav_lbl.c
+	src/Odyssey/Vehicle/Navigation/odyssey_nav_lbl.c \
+	src/Odyssey/Simulator/Faults/load_fault.c \
+	src/Odyssey/Simulator/Faults/paths.c
 
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
