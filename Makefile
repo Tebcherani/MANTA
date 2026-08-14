@@ -26,11 +26,11 @@ WORLD_CPPFLAGS = \
 ODYSSEY_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
 	-Isrc/Odyssey \
-	-Isrc/Odyssey/Faults \
 	-Isrc/Odyssey/Sensors \
 	-Isrc/Odyssey/Vehicle \
 	-Isrc/Odyssey/Vehicle/Behaviors \
 	-Isrc/Odyssey/Vehicle/Control \
+	-Isrc/Odyssey/Vehicle/Faults \
 	-Isrc/Odyssey/Vehicle/Navigation
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
@@ -80,8 +80,6 @@ WORLD_SRCS = \
 	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
-	src/Odyssey/Faults/load_fault.c \
-	src/Odyssey/Faults/paths.c \
 	src/Odyssey/odyssey_behavior_logger.c \
 	src/Odyssey/odyssey_data_logger.c \
 	src/Odyssey/odyssey_data_struct.c \
@@ -108,6 +106,8 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Vehicle/Control/layered_control.c \
 	src/Odyssey/Vehicle/Control/odyssey_control.c \
 	src/Odyssey/Vehicle/Control/whoi_traj.c \
+	src/Odyssey/Vehicle/Faults/load_fault.c \
+	src/Odyssey/Vehicle/Faults/paths.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav_dead_reckoning.c \
 	src/Odyssey/Vehicle/Navigation/odyssey_nav_lbl.c
