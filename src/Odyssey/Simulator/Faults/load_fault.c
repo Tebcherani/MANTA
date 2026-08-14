@@ -16,12 +16,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "layered_control.h"
 #include "load_fault.h"
-#include "odyssey_sim.h"
 #include "odyssey.h"
+#include "odyssey_sim.h"
 #include "paths.h"
 #include "sim_log.h"
+
 #include "vehicle.h"
 
 /* Use a local buffer size to avoid conflict with ody_defs.h MAX_LINE */

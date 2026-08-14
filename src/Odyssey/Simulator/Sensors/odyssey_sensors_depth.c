@@ -1,6 +1,7 @@
-#include "odyssey_data_struct.h"
+#include "odyssey.h"
 #include "odyssey_sensors.h"
 #include "random_utils.h"
+
 #include "vehicle.h"
 
 void update_depth_sensor(void) {

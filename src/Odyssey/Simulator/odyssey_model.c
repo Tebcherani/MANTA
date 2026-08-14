@@ -3,13 +3,14 @@
 #include <string.h>
 
 #include "matrix_utils.h"
-#include "ody_defs.h"
 #include "odyssey.h"
-#include "odyssey_mission.h"
 #include "odyssey_model.h"
 #include "sim.h"
 #include "sim_log.h"
 #include "unit_utils.h"
+
+#include "ody_defs.h"
+#include "odyssey_mission.h"
 #include "vehicle.h"
 
 static double act_model(double, double, double);

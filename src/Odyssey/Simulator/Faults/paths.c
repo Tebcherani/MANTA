@@ -9,7 +9,6 @@
 
 #include "paths.h"
 
-
 static int has_dir_separator( const char *path )
 {
     return ( strchr(path, '/') != NULL ) || ( strchr(path, '\\') != NULL );

@@ -1,4 +1,5 @@
 #include "odyssey_sensors.h"
+
 #include "vehicle.h"
 
 int update_odyssey_sensors(const world_state_t *world_state) {

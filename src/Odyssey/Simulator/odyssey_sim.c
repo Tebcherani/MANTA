@@ -1,17 +1,18 @@
 #include <stdlib.h>
 
 #include "load_fault.h"
+#include "odyssey.h"
+#include "odyssey_model.h"
+#include "odyssey_sensors.h"
+#include "odyssey_sim.h"
+#include "sim_log.h"
+
 #include "odyssey_behavior_logger.h"
 #include "odyssey_control.h"
 #include "odyssey_data_logger.h"
-#include "odyssey.h"
-#include "odyssey_model.h"
 #include "odyssey_mission.h"
 #include "odyssey_nav.h"
-#include "odyssey_sensors.h"
-#include "odyssey_sim.h"
 #include "ody_var.h"
-#include "sim_log.h"
 #include "vehicle.h"
 
 static int init_odyssey_config(void);

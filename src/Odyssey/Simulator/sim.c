@@ -31,9 +31,10 @@
 #include <math.h>
 
 #include "odyssey.h"
-#include "vehicle.h"
 #include "sim.h"
 #include "world_sim.h"
+
+#include "vehicle.h"
 
 /*------------------- generic constants -------------------------------*/
 

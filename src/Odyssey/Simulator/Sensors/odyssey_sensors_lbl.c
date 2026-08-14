@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "odyssey_data_struct.h"
+#include "odyssey.h"
 #include "odyssey_sensors.h"
 #include "random_utils.h"
+
 #include "vehicle.h"
 
 /*--------------------------------------------------------------------------*
