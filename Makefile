@@ -83,6 +83,7 @@ WORLD_SRCS = \
 	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
+	src/Odyssey/Vehicle/odyssey.c \
 	src/Odyssey/Vehicle/odyssey_data_struct.c \
 	src/Odyssey/Vehicle/odyssey_mission.c \
 	src/Odyssey/Vehicle/vehicle.c \

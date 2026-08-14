@@ -51,15 +51,14 @@ static int init_odyssey_config(void) {
 
 int init_odyssey_sim() {
     if (!init_odyssey_config()) return 0;
-    if (!init_odyssey_data_structure()) return 0;
+    if (!init_odyssey()) return 0;
 
     return 1;
 }
 
 int start_odyssey_sim(const char *mission_file, const char *fault_file, time_t calendar_start_time) {
-    if (!init_mission_time(calendar_start_time)) return 0;
+    if (!start_odyssey(mission_file, config.mission_dir, calendar_start_time)) return 0;
     if (!init_odyssey_model(config.model_path)) return 0;
-    if (!init_odyssey_mission(mission_file, config.mission_dir)) return 0;
     if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, &config)) return 0;
     if (!init_odyssey_state()) return 0;
     if (!init_odyssey_data_logger(&datafile, &config, mission_file)) return 0;
@@ -75,10 +74,12 @@ int update_odyssey_sim_state(const world_state_t *world_state, double timestep) 
 }
 
 int update_odyssey_sim_cycle(const world_state_t *world_state, double control_dt) {
-    if (update_odyssey_sensors(world_state) != 0) return 0;
-    if (update_odyssey_nav() != 0) return 0;
-    if (update_odyssey_control(world_state, control_dt) != 0) return 0;
-    if (update_odyssey_mission() != 0) return 0;
+    odyssey_environment_t environment;
+
+    environment.seawater_density = world_state->seawater_density;
+
+    if (!update_odyssey_sensors(world_state)) return 0;
+    if (!update_odyssey(world_state->seawater_density, control_dt)) return 0;
 
     capture_behavior_activity();
 	log_data(datafile);
@@ -93,14 +94,8 @@ int update_odyssey_sim_time(double sim_time) {
     return 1;
 }
 
-int odyssey_abort_requested(void) {
-    return vvp->abort_mission;
-}
-
 int end_odyssey_sim(const char *behavior_dump_file) {
     int cleanup_failed = 0;
-
-    vvp->modem_send[0] = '\0';
 
     if (behavior_dump_file != NULL && behavior_dump_file[0] != '\0') {
         dump_behavior_log_json(behavior_dump_file);

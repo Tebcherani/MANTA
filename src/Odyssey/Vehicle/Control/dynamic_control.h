@@ -3,7 +3,7 @@
 
 #include "world_sim.h"
 
-void dynamic_control(const world_state_t *);
+void dynamic_control(double);
 double limit(double, double, double);
 
 #endif

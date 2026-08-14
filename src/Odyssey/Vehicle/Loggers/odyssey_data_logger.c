@@ -4,6 +4,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "load_fault.h"
 #include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_defs.h"

@@ -17,7 +17,6 @@ int start_odyssey_sim(const char *, const char *, time_t);
 int update_odyssey_sim_state(const world_state_t *, double);
 int update_odyssey_sim_cycle(const world_state_t *, double);
 int update_odyssey_sim_time(double);
-int odyssey_abort_requested(void);
 int end_odyssey_sim(const char *);
 
 #endif /* ODYSSEY_SIM_H */

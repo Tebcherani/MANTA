@@ -34,7 +34,6 @@ struct vehicle {
     int abort_mission;
     double mission_start_time;
     double rotation[3][3];
-    char modem_send[500];
     struct sensor s[MAX_SENSOR];
     struct behavior b[MAX_BEHAVIOR];
     struct command c[MAX_COMMAND];
