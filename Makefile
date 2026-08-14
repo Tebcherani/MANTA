@@ -27,11 +27,11 @@ ODYSSEY_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
 	-Isrc/Odyssey \
 	-Isrc/Odyssey/Faults \
-	-Isrc/Odyssey/Navigation \
 	-Isrc/Odyssey/Sensors \
 	-Isrc/Odyssey/Vehicle \
 	-Isrc/Odyssey/Vehicle/Behaviors \
-	-Isrc/Odyssey/Vehicle/Control
+	-Isrc/Odyssey/Vehicle/Control \
+	-Isrc/Odyssey/Vehicle/Navigation
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS = -llapacke -llapack -lblas -lm
@@ -91,9 +91,6 @@ ODYSSEY_SRCS = \
 	src/Odyssey/sim_stubs.c \
 	src/Odyssey/odyssey_sim.c \
 	src/Odyssey/sim.c \
-	src/Odyssey/Navigation/odyssey_nav.c \
-	src/Odyssey/Navigation/odyssey_nav_dead_reckoning.c \
-	src/Odyssey/Navigation/odyssey_nav_lbl.c \
 	src/Odyssey/Sensors/odyssey_sensors.c \
 	src/Odyssey/Sensors/odyssey_sensors_ahrs.c \
 	src/Odyssey/Sensors/odyssey_sensors_depth.c \
@@ -110,7 +107,10 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Vehicle/Control/dynamic_control.c \
 	src/Odyssey/Vehicle/Control/layered_control.c \
 	src/Odyssey/Vehicle/Control/odyssey_control.c \
-	src/Odyssey/Vehicle/Control/whoi_traj.c
+	src/Odyssey/Vehicle/Control/whoi_traj.c \
+	src/Odyssey/Vehicle/Navigation/odyssey_nav.c \
+	src/Odyssey/Vehicle/Navigation/odyssey_nav_dead_reckoning.c \
+	src/Odyssey/Vehicle/Navigation/odyssey_nav_lbl.c
 
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
