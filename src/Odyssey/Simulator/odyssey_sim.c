@@ -7,7 +7,6 @@
 #include "odyssey_sim.h"
 #include "sim_log.h"
 
-#include "odyssey_behavior_logger.h"
 #include "odyssey_data_logger.h"
 #include "vehicle.h"
 

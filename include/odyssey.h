@@ -18,4 +18,8 @@ const char *get_odyssey_data_file_name(void);
 double read_sensor(int);
 void update_sensor(int, double); 
 
+// odyssey_behavior_logger
+void capture_behavior_activity(void);
+void dump_behavior_log_json(const char *file_name);
+
 #endif
