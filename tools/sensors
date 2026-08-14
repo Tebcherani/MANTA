@@ -437,18 +437,7 @@ const struct sensor sss[] = {
     "latch_check()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "latch_stop()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_load_charge(coulomb)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_load_voltage(volt)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_x()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_y()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_z()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "u_edc_z_gain()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_intensity()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_north()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_east()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_down()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_bearing(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_inclination(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_axial_range(m)", 15, 0, 0, 0, 0, DBL_MAX, -DBL_MAX
+    "m_load_voltage(volt)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX
 };
 
 const int num_sensors = sizeof(sss)/sizeof(struct sensor);

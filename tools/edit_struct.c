@@ -613,12 +613,6 @@ config: edc
   sensor:          e_edc_b_bearing(rad) 0.0
   sensor:      e_edc_b_inclination(rad) 0.0
   sensor:          e_edc_axial_range(m) 15.0
-
-behavior: edc_homing
-  b_arg:                 elev_gain(num) 0.0
-  b_arg:                 azim_gain(num) 0.0
-  b_arg:                range_cutout(m) 0.0
-  b_arg:                     speed(m/s) 0.0
 endconfig
 
 behavior: set_elevator
@@ -720,6 +714,7 @@ behavior: yo_yo
 END
  *----------------------------------------------------------------------*/
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -763,6 +758,35 @@ static int line_no, verbose;
 static pass_t pass = READING_SENSORS;
 cfglst_t cfgs;
 
+/* prototypes */
+void parse_cmd_line(int argc, char **argv);
+void load_configs(const char *name);
+FILE *fopen_fatal(const char *name, const char *type);
+
+int add_sensor(
+    char *line,
+    int *n,
+    FILE *lfile,
+    FILE *sfile,
+    FILE *hfile
+);
+
+int add_behavior(
+    char *line,
+    int *numBeh,
+    int n_b_args,
+    FILE *lfile,
+    FILE *bfile,
+    FILE *hfile
+);
+
+int add_b_arg(
+    char *line,
+    int *n,
+    FILE *lfile,
+    FILE *bfile
+);
+
 
 /*-------------------------------------------------------------------------
   main function starts here
@@ -789,9 +813,9 @@ main( int argc, char **argv )
 	*lfile_name = "tools/data_list",
 	*sfile_name = "tools/sensors",
 	*bfile_name = "tools/behaviors",
-	*hfile_name = "src/Odyssey/vehicle.h",
-  *cfile_name = "src/Odyssey/vehicle.c",
-  *rfile_name = "src/Odyssey/Behaviors/odyssey_behavior_registry.c";
+	*hfile_name = "src/Odyssey/Vehicle/vehicle.h",
+  *cfile_name = "src/Odyssey/Vehicle/vehicle.c",
+  *rfile_name = "src/Odyssey/Vehicle/Behaviors/odyssey_behavior_registry.c";
 				/* time stamp vars */
     struct tm *tp;
     time_t now;
@@ -1024,6 +1048,8 @@ main( int argc, char **argv )
 
     fclose( cfile );
     fclose( rfile );
+
+    return 0;
 }
 
 
@@ -1223,6 +1249,8 @@ int add_behavior( char *line, int *numBeh, int n_b_args, FILE *lfile,
     for ( i = 0; i < strlen(name); i++ ) 
         fputc( toupper(name[i]), hfile );
     fprintf( hfile, " %d\n", (*numBeh) - 1 ); 
+
+    return 0;
 }
 
 int add_b_arg( char *line, int *n, FILE *lfile, FILE *bfile )
@@ -1247,4 +1275,6 @@ int add_b_arg( char *line, int *n, FILE *lfile, FILE *bfile )
     }
     fprintf( lfile, "  b_arg: %30s %g\n", name, value );
     fprintf( bfile, ",\n        \"%s\", %g", name, value );
+
+    return 0;
 }

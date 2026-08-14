@@ -12,7 +12,6 @@ extern int descend(struct behavior *, int, int);
 extern int dock(struct behavior *, int, int);
 extern int undock(struct behavior *, int, int);
 extern int whoi_homing(struct behavior *, int, int);
-extern int edc_homing(struct behavior *, int, int);
 extern int set_elevator(struct behavior *, int, int);
 extern int set_rudder(struct behavior *, int, int);
 extern int setmode(struct behavior *, int, int);
@@ -42,7 +41,6 @@ int assign_behavior_fcn_ptr(const char *name, struct behavior *b)
     if (strcmp("dock", name) == 0) b->fcn = dock;
     if (strcmp("undock", name) == 0) b->fcn = undock;
     if (strcmp("whoi_homing", name) == 0) b->fcn = whoi_homing;
-    if (strcmp("edc_homing", name) == 0) b->fcn = edc_homing;
     if (strcmp("set_elevator", name) == 0) b->fcn = set_elevator;
     if (strcmp("set_rudder", name) == 0) b->fcn = set_rudder;
     if (strcmp("setmode", name) == 0) b->fcn = setmode;

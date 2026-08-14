@@ -5,7 +5,7 @@
 
 // The state of a behavior and its universe of allowed values
 typedef enum {
-    B_ERROR=-1, B_UNINITIALIZED, B_ACTIVE, B_COMPLETE
+    B_UNINITIALIZED, B_ACTIVE, B_COMPLETE
 } b_state_t;
 
 struct b_arg {

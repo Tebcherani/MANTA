@@ -10,7 +10,7 @@
 #include "ody_var.h"
 #include "ody_func.h"
 
-char *creation_date = "2026/08/08 16:36:52 GMT";
+char *creation_date = "2026/08/14 00:29:44 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -451,18 +451,7 @@ const struct sensor sss[] = {
     "latch_check()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "latch_stop()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
     "m_load_charge(coulomb)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_load_voltage(volt)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_x()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_y()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_z()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "u_edc_z_gain()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "m_edc_b_intensity()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_north()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_east()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_down()", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_bearing(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_b_inclination(rad)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
-    "e_edc_axial_range(m)", 15, 0, 0, 0, 0, DBL_MAX, -DBL_MAX
+    "m_load_voltage(volt)", 0, -1, 0, 0, 0, DBL_MAX, -DBL_MAX
 };
 
 const int num_sensors = sizeof(sss)/sizeof(struct sensor);
@@ -578,17 +567,6 @@ const struct behavior bTemplate[] = {
         "pole_transient_time(s)", 0,
         "bailout_range(m)", -1e+06,
         "cnav_enable_range(m)", 100,
-    "edc_homing", 0, -1., 0., 0,
-        "elev_gain(num)", 0,
-        "azim_gain(num)", 0,
-        "range_cutout(m)", 0,
-        "speed(m/s)", 0,
-        "", 0,
-        "", 0,
-        "", 0,
-        "", 0,
-        "", 0,
-        "", 0,
     "set_elevator", 0, -1., 0., 0,
         "heading(rad)", 0,
         "elevator(rad)", 0,
@@ -1153,17 +1131,6 @@ int LATCH_CHECK = -1;
 int LATCH_STOP = -1;
 int M_LOAD_CHARGE = -1;
 int M_LOAD_VOLTAGE = -1;
-int M_EDC_B_X = -1;
-int M_EDC_B_Y = -1;
-int M_EDC_B_Z = -1;
-int U_EDC_Z_GAIN = -1;
-int M_EDC_B_INTENSITY = -1;
-int E_EDC_B_NORTH = -1;
-int E_EDC_B_EAST = -1;
-int E_EDC_B_DOWN = -1;
-int E_EDC_B_BEARING = -1;
-int E_EDC_B_INCLINATION = -1;
-int E_EDC_AXIAL_RANGE = -1;
 
 
 int *sindex[] = {
@@ -1605,17 +1572,6 @@ int *sindex[] = {
     &LATCH_CHECK,
     &LATCH_STOP,
     &M_LOAD_CHARGE,
-    &M_LOAD_VOLTAGE,
-    &M_EDC_B_X,
-    &M_EDC_B_Y,
-    &M_EDC_B_Z,
-    &U_EDC_Z_GAIN,
-    &M_EDC_B_INTENSITY,
-    &E_EDC_B_NORTH,
-    &E_EDC_B_EAST,
-    &E_EDC_B_DOWN,
-    &E_EDC_B_BEARING,
-    &E_EDC_B_INCLINATION,
-    &E_EDC_AXIAL_RANGE
+    &M_LOAD_VOLTAGE
 };
 

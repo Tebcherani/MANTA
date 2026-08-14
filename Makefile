@@ -30,6 +30,7 @@ ODYSSEY_CPPFLAGS = \
 	-Isrc/Odyssey/Faults \
 	-Isrc/Odyssey/Navigation \
 	-Isrc/Odyssey/Sensors \
+	-Isrc/Odyssey/Vehicle \
 	-Isrc/Odyssey/Vehicle/Behaviors
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
@@ -94,7 +95,6 @@ ODYSSEY_SRCS = \
 	src/Odyssey/sim_stubs.c \
 	src/Odyssey/odyssey_sim.c \
 	src/Odyssey/sim.c \
-	src/Odyssey/vehicle.c \
 	src/Odyssey/Navigation/odyssey_nav.c \
 	src/Odyssey/Navigation/odyssey_nav_dead_reckoning.c \
 	src/Odyssey/Navigation/odyssey_nav_lbl.c \
@@ -105,7 +105,7 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Sensors/odyssey_sensors_usbl.c \
 	src/Odyssey/Sensors/odyssey_sensors_water.c \
 	src/Odyssey/Sensors/sim_conduct.c \
-	src/Odyssey/Vehicle/Behaviors/edc_homing.c \
+	src/Odyssey/Vehicle/vehicle.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behavior_registry.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_wiggle.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_dock.c \

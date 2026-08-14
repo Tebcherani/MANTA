@@ -205,7 +205,6 @@ static int behavior_axis_mask( int behavior_id )
     case DOCK:
     case UNDOCK:
     case WHOI_HOMING:
-    case EDC_HOMING:
     case SET_ELEVATOR:
     case SET_RUDDER:
     case SETPOINT:

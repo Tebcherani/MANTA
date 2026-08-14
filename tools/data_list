@@ -437,17 +437,6 @@
   sensor:                  latch_stop() 0
   sensor:        m_load_charge(coulomb)
   sensor:          m_load_voltage(volt)
-  sensor:                   m_edc_b_x() 0
-  sensor:                   m_edc_b_y() 0
-  sensor:                   m_edc_b_z() 0
-  sensor:                u_edc_z_gain() 0
-  sensor:           m_edc_b_intensity() 0
-  sensor:               e_edc_b_north() 0
-  sensor:                e_edc_b_east() 0
-  sensor:                e_edc_b_down() 0
-  sensor:          e_edc_b_bearing(rad) 0
-  sensor:      e_edc_b_inclination(rad) 0
-  sensor:          e_edc_axial_range(m) 15
  behavior: mission_timer  1
   b_arg:                        time(s) 0
  behavior: acquire_heading  2
@@ -519,12 +508,7 @@
   b_arg:         pole_transient_time(s) 0
   b_arg:               bailout_range(m) -1e+06
   b_arg:           cnav_enable_range(m) 100
- behavior: edc_homing 11
-  b_arg:                 elev_gain(num) 0
-  b_arg:                 azim_gain(num) 0
-  b_arg:                range_cutout(m) 0
-  b_arg:                     speed(m/s) 0
- behavior: set_elevator 12
+ behavior: set_elevator 11
   b_arg:                   heading(rad) 0
   b_arg:                  elevator(rad) 0
   b_arg:                     speed(m/s) 0
@@ -533,13 +517,13 @@
   b_arg:                   min_depth(m) 0
   b_arg:                 max_pitch(rad) 0.52
   b_arg:                 finished(bool) 0
- behavior: set_rudder 13
+ behavior: set_rudder 12
   b_arg:                    rudder(rad) 0
   b_arg:                       depth(m) 0
   b_arg:                     speed(m/s) 0
   b_arg:                        time(s) 0
   b_arg:                 finished(bool) 0
- behavior: setmode 14
+ behavior: setmode 13
   b_arg:              heading_mode(int) 0
   b_arg:           heading_commmand1(?) 0
   b_arg:           heading_commmand2(?) 0
@@ -550,7 +534,7 @@
   b_arg:             speed_commmand1(?) 0
   b_arg:             speed_commmand2(?) 0
   b_arg:                        time(s) 0
- behavior: setpoint 15
+ behavior: setpoint 14
   b_arg:                   heading(rad) 0
   b_arg:                       depth(m) 0
   b_arg:                     speed(m/s) 0
@@ -558,12 +542,12 @@
   b_arg:                    cycles(int) 1
   b_arg:                      turn(rad) 0
   b_arg:             desired_pitch(rad) 0
- behavior: setvector 16
+ behavior: setvector 15
   b_arg:                     heading(m) 0
   b_arg:                     pitch(rad) 0
   b_arg:                     speed(m/s) 0
   b_arg:                        time(s) 0
- behavior: survey_dead_reckon 17
+ behavior: survey_dead_reckon 16
   b_arg:             trans_heading(rad) 0
   b_arg:                  trans_time(s) 0
   b_arg:              heading_leg1(rad) 0
@@ -574,14 +558,14 @@
   b_arg:                       depth(m) 0
   b_arg:             transit_speed(m/s) 0
   b_arg:              survey_speed(m/s) 0
- behavior: remote_delay 18
+ behavior: remote_delay 17
   b_arg:                        time(s) 0
   b_arg:                   heading(rad) 0
   b_arg:                  min_time(sec) 1
   b_arg:                  max_time(sec) 4.6
   b_arg:     mission_abort_enable(bool) 0
   b_arg:                 finished(bool) 0
- behavior: waypoint_2d 19
+ behavior: waypoint_2d 18
   b_arg:                       wpt_n(m) 0
   b_arg:                       wpt_e(m) 0
   b_arg:                       depth(m) 0
@@ -592,18 +576,18 @@
   b_arg:                    gain(rad/m) 0.0175
   b_arg:                     timeout(s) 0
   b_arg:             abort_on_timeout() 0
- behavior: wiggle 20
+ behavior: wiggle 19
   b_arg:                        time(s) 30
   b_arg:                      period(s) 6
   b_arg:          rudder_amplitude(rad) 0
   b_arg:        elevator_amplitude(rad) 0
   b_arg:         thruster_current(amps) 0
- behavior: launch 21
+ behavior: launch 20
   b_arg:                     speed(m/s) 0
   b_arg:            elevator_angle(rad) 0
   b_arg:                       depth(m) 0
   b_arg:                     timeout(s) 5
- behavior: yo_yo 22
+ behavior: yo_yo 21
   b_arg:             desired_pitch(rad) 0
   b_arg:                   top_depth(m) 0
   b_arg:                bottom_depth(m) 0

@@ -2,7 +2,7 @@
 #include "ody_types.h"
 #include "ody_var.h"
 #include "ody_func.h"
-#define CREATION_DATE "2026/08/08 16:36:52 GMT"
+#define CREATION_DATE "2026/08/14 00:29:44 GMT"
 
 extern int M_PRESENT_TIME;
 extern int M_DT;
@@ -443,17 +443,6 @@ extern int LATCH_CHECK;
 extern int LATCH_STOP;
 extern int M_LOAD_CHARGE;
 extern int M_LOAD_VOLTAGE;
-extern int M_EDC_B_X;
-extern int M_EDC_B_Y;
-extern int M_EDC_B_Z;
-extern int U_EDC_Z_GAIN;
-extern int M_EDC_B_INTENSITY;
-extern int E_EDC_B_NORTH;
-extern int E_EDC_B_EAST;
-extern int E_EDC_B_DOWN;
-extern int E_EDC_B_BEARING;
-extern int E_EDC_B_INCLINATION;
-extern int E_EDC_AXIAL_RANGE;
 
 /*
  * behavior names and corresponding id numbers
@@ -468,15 +457,14 @@ extern int E_EDC_AXIAL_RANGE;
 #define DOCK 7
 #define UNDOCK 8
 #define WHOI_HOMING 9
-#define EDC_HOMING 10
-#define SET_ELEVATOR 11
-#define SET_RUDDER 12
-#define SETMODE 13
-#define SETPOINT 14
-#define SETVECTOR 15
-#define SURVEY_DEAD_RECKON 16
-#define REMOTE_DELAY 17
-#define WAYPOINT_2D 18
-#define WIGGLE 19
-#define LAUNCH 20
-#define YO_YO 21
+#define SET_ELEVATOR 10
+#define SET_RUDDER 11
+#define SETMODE 12
+#define SETPOINT 13
+#define SETVECTOR 14
+#define SURVEY_DEAD_RECKON 15
+#define REMOTE_DELAY 16
+#define WAYPOINT_2D 17
+#define WIGGLE 18
+#define LAUNCH 19
+#define YO_YO 20
