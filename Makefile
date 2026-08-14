@@ -26,10 +26,10 @@ WORLD_CPPFLAGS = \
 ODYSSEY_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
 	-Isrc/Odyssey \
-	-Isrc/Odyssey/Sensors \
 	-Isrc/Odyssey/Vehicle \
 	-Isrc/Odyssey/Simulator \
 	-Isrc/Odyssey/Simulator/Faults \
+	-Isrc/Odyssey/Simulator/Sensors \
 	-Isrc/Odyssey/Vehicle/Behaviors \
 	-Isrc/Odyssey/Vehicle/Control \
 	-Isrc/Odyssey/Vehicle/Loggers \
@@ -83,13 +83,6 @@ WORLD_SRCS = \
 	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
-	src/Odyssey/Sensors/odyssey_sensors.c \
-	src/Odyssey/Sensors/odyssey_sensors_ahrs.c \
-	src/Odyssey/Sensors/odyssey_sensors_depth.c \
-	src/Odyssey/Sensors/odyssey_sensors_lbl.c \
-	src/Odyssey/Sensors/odyssey_sensors_usbl.c \
-	src/Odyssey/Sensors/odyssey_sensors_water.c \
-	src/Odyssey/Sensors/sim_conduct.c \
 	src/Odyssey/Vehicle/odyssey_data_struct.c \
 	src/Odyssey/Vehicle/odyssey_mission.c \
 	src/Odyssey/Vehicle/vehicle.c \
@@ -111,7 +104,14 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Simulator/odyssey_sim.c \
 	src/Odyssey/Simulator/sim.c \
 	src/Odyssey/Simulator/Faults/load_fault.c \
-	src/Odyssey/Simulator/Faults/paths.c
+	src/Odyssey/Simulator/Faults/paths.c \
+	src/Odyssey/Simulator/Sensors/odyssey_sensors.c \
+	src/Odyssey/Simulator/Sensors/odyssey_sensors_ahrs.c \
+	src/Odyssey/Simulator/Sensors/odyssey_sensors_depth.c \
+	src/Odyssey/Simulator/Sensors/odyssey_sensors_lbl.c \
+	src/Odyssey/Simulator/Sensors/odyssey_sensors_usbl.c \
+	src/Odyssey/Simulator/Sensors/odyssey_sensors_water.c \
+	src/Odyssey/Simulator/Sensors/sim_conduct.c \
 
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
