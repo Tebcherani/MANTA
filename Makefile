@@ -82,7 +82,6 @@ WORLD_SRCS = \
 	src/World/world_sim.c
 
 ODYSSEY_SRCS = \
-	src/Odyssey/odyssey_mission.c \
 	src/Odyssey/sensor_load.c \
 	src/Odyssey/sim_stubs.c \
 	src/Odyssey/sim.c \
@@ -94,6 +93,7 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Sensors/odyssey_sensors_water.c \
 	src/Odyssey/Sensors/sim_conduct.c \
 	src/Odyssey/Vehicle/odyssey_data_struct.c \
+	src/Odyssey/Vehicle/odyssey_mission.c \
 	src/Odyssey/Vehicle/vehicle.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behavior_registry.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_wiggle.c \
