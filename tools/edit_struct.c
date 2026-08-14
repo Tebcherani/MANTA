@@ -601,20 +601,6 @@ behavior: whoi_homing
 
 endconfig: whoi
 
-config: edc
-  sensor:                   m_edc_b_x() 0.0
-  sensor:                   m_edc_b_y() 0.0
-  sensor:                   m_edc_b_z() 0.0
-  sensor:                u_edc_z_gain() 0.0
-  sensor:           m_edc_b_intensity() 0.0
-  sensor:               e_edc_b_north() 0.0
-  sensor:                e_edc_b_east() 0.0
-  sensor:                e_edc_b_down() 0.0
-  sensor:          e_edc_b_bearing(rad) 0.0
-  sensor:      e_edc_b_inclination(rad) 0.0
-  sensor:          e_edc_axial_range(m) 15.0
-endconfig
-
 behavior: set_elevator
   b_arg:                   heading(rad) 0.0
   b_arg:                  elevator(rad) 0.0
