@@ -5,7 +5,7 @@
 
 #include "vehicle.h"
 
-void update_depth_sensor(void) {
+void update_odyssey_depth(void) {
     depth_input_t input;
     double measured_depth;
 

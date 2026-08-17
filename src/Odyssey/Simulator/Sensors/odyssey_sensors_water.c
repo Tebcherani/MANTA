@@ -9,18 +9,18 @@
 
 #include "vehicle.h"
 
-static void update_water_conductivity_sensor(void);
-static void update_water_speed_sensor(void);
-static void update_water_temp_sensor(void);
+static void update_odyssey_water_conductivity(void);
+static void update_odyssey_water_speed(void);
+static void update_odyssey_water_temp(void);
 
-static void update_water_conductivity_sensor(void) {
+static void update_odyssey_water_conductivity(void) {
     double measured_conductivity;
 
     measured_conductivity = update_water_conductivity(read_sensor(REAL_Z));
     update_sensor(WATER_COND, measured_conductivity);
 }
 
-static void update_water_speed_sensor(void) {
+static void update_odyssey_water_speed(void) {
     water_speed_input_t input;
     double measured_speed;
 
@@ -31,7 +31,7 @@ static void update_water_speed_sensor(void) {
     update_sensor(M_WATER_SPEED, measured_speed);
 }
 
-static void update_water_temp_sensor(void) {
+static void update_odyssey_water_temp(void) {
     double measured_temp;
 
     measured_temp = update_water_temp(read_sensor(REAL_Z));
@@ -39,7 +39,7 @@ static void update_water_temp_sensor(void) {
 }
 
 void update_water_sensors(void) {
-    update_water_speed_sensor();
-    update_water_temp_sensor();
-    update_water_conductivity_sensor();
+    update_odyssey_water_speed();
+    update_odyssey_water_temp();
+    update_odyssey_water_conductivity();
 }
