@@ -4,6 +4,7 @@
 #include "odyssey.h"
 #include "odyssey_sensors.h"
 #include "random_utils.h"
+#include "sensor_compass.h"
 #include "world_sim.h"
 
 #include "vehicle.h"
@@ -11,9 +12,9 @@
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
 static void update_acceleration(const world_state_t *, double *, double *, double *, double *);
 static void update_angular_rate(void);
-static void update_compass_yaw(const world_state_t *, double, double);
 static void update_inclinometers(const world_state_t *, double, double);
 static void update_heading(void);
+static void update_odyssey_compass(const world_state_t *, double, double, double);
 
 /*-------------------------------------------------------------------------
 Low-pass filter for inclinometers simulation
@@ -114,79 +115,24 @@ static void update_angular_rate(void) {
     update_sensor(M_YAW_RATE, meas_yaw_rate);
 }
 
-/*-------------------------------------------------------------------------*
-(JV 5/31/95)
-Simulation of the magnetic heading measured by the KVH DGC
-  . a 3-axis magnetometer (s3am) suspended in the DGC housing is considered.
-  . the s3am pitches and rolls with respect to the horizontal because
-    of the vehicle accelerations (linear and angular)
-  . to compute the s3am pitch and roll, the motion of a 2D linear damped
-    oscillator is first determined and the x-y displcaements converted
-    into angles.
-*-------------------------------------------------------------------------*/
-static void update_compass_yaw(const world_state_t *world_state, double aax, double aay) {
-    static int first=1;
-    static double compass_noise=0.001745; /* 0.1 deg */
-    static double dx=0.0, dy=0.0, dxp=0.0, dyp=0.0;
-    static double beta, omega0, omega1;
-    double dt=0.02, mass=0.1, kx=100.0, bxp=0.5, length=0.015;
-    double psi, theta, phi;
-    double mx, my;
-    double mg_yaw;
-    double cst1, cst2, cc, ss;
-    double Mmg[4][4];
+static void update_odyssey_compass(const world_state_t *world_state, double accel_x, double accel_y, double timestep) {
+    compass_state_t *compass;
+    double compass_yaw;
+    compass_input_t input;
 
-    if (first) {
-       first = 0;
-       beta = bxp/(2.0*mass); 
-       omega0=sqrt(kx/mass);
-       omega1 = sqrt(omega0*omega0-beta*beta);
-    }
+    compass = get_odyssey_compass_state();
 
-    // Compute pitch and roll of mg sensor given accelerations 
-    cc = cos(omega1*dt);
-    ss = sin(omega1*dt);
+    input.true_yaw = read_sensor(REAL_PSI);
+    input.accel_x = accel_x;
+    input.accel_y = accel_y;
+    input.magnetic_north = world_state->magnetic_north;
+    input.magnetic_east = world_state->magnetic_east;
+    input.magnetic_down = world_state->magnetic_down;
+    input.timestep = timestep;
 
-    cst1 = aax/(omega0*omega0)+dx;
-    cst2 = (dxp+beta*(aax/(omega0*omega0)+dx))/omega1;
-    dx = exp(-beta*dt)*(cst1*cc+cst2*ss)-aax/(omega0*omega0);
-    dxp = -beta*exp(-beta*dt)*(cst1*cc+cst2*ss) + exp(-beta*dt)*(-cst1*omega1*ss+cst2*omega1*cc);
-
-    cst1 = aay/(omega0*omega0)+dy;
-    cst2 = (dyp+beta*(aay/(omega0*omega0)+dy))/omega1;
-    dy = exp(-beta*dt)*(cst1*cc+cst2*ss)-aay/(omega0*omega0);
-    dyp = -beta*exp(-beta*dt)*(cst1*cc+cst2*ss) + exp(-beta*dt)*(-cst1*omega1*ss+cst2*omega1*cc);
-
-    theta = dx/length; phi = -dy/length;
-
-    // Compute the magnetic readings given the orientation of mg sensor 
-    psi=read_sensor(REAL_PSI);
-    Mmg[1][1] = cos(psi)*cos(theta);
-    Mmg[1][2] = cos(theta)*sin(psi);
-    Mmg[1][3] = -sin(theta);
-    Mmg[2][1] = -(cos(phi)*sin(psi)) + cos(psi)*sin(phi)*sin(theta);
-    Mmg[2][2] = cos(phi)*cos(psi) + sin(phi)*sin(psi)*sin(theta);
-    Mmg[2][3] = cos(theta)*sin(phi); 
-    Mmg[3][1] = sin(phi)*sin(psi) + cos(phi)*cos(psi)*sin(theta);
-    Mmg[3][2] = -(cos(psi)*sin(phi)) + cos(phi)*sin(psi)*sin(theta);
-    Mmg[3][3] = cos(phi)*cos(theta);
-
-    mx = Mmg[1][1]*world_state->magnetic_north + Mmg[1][2]*world_state->magnetic_east + Mmg[1][3]*world_state->magnetic_down;
-    my = Mmg[2][1]*world_state->magnetic_north + Mmg[2][2]*world_state->magnetic_east + Mmg[2][3]*world_state->magnetic_down;
-
-    // Compute heading from readings 
-    if ((mx>0.0) && (my<=0.0)) mg_yaw = -atan(my/mx);
-    else if ((mx<=0.0) && (my<0.0)) mg_yaw = atan(mx/my)+M_PI/2.0;
-    else if ((mx<0.0) && (my>=0.0)) mg_yaw = -atan(my/mx)+M_PI;
-    else if ((mx>=0.0) && (my>0.0)) mg_yaw = atan(mx/my)+3.0*M_PI/2.0;
-    else mg_yaw = 0.0;
-
-    // Add noise and write to the structure
-    mg_yaw += compass_noise*std_normal_random_num();
-
-    mg_yaw -= read_sensor(UO_MAGNETIC_VARIATION);
-
-    update_sensor(M_COMPASS_YAW,mg_yaw);
+    compass_yaw = update_compass_yaw(compass, &input);
+    compass_yaw -= read_sensor(UO_MAGNETIC_VARIATION);
+    update_sensor(M_COMPASS_YAW, compass_yaw);
 }
 
 static void update_heading(void) {
@@ -220,13 +166,13 @@ static void update_inclinometers(const world_state_t *world_state, double ax, do
     update_sensor(M_INCLINO_ROLL,filtered_pitch_roll[1]);
 }
 
-void update_ahrs_sensors(const world_state_t *world_state) {
-    double ax, ay;
-    double aax, aay;
+void update_ahrs_sensors(const world_state_t *world_state, double timestep) {
+    double inclinometer_accel_x, inclinometer_accel_y;
+    double compass_accel_x, compass_accel_y;
 
     update_angular_rate();
-    update_acceleration(world_state,&ax, &ay, &aax, &aay);
-    update_inclinometers(world_state, ax, ay);
-    update_compass_yaw(world_state, aax, aay);
+    update_acceleration(world_state,&inclinometer_accel_x, &inclinometer_accel_y, &compass_accel_x, &compass_accel_y);
+    update_inclinometers(world_state, inclinometer_accel_x, inclinometer_accel_y);
+    update_odyssey_compass(world_state, compass_accel_x, compass_accel_y, timestep);
     update_heading();
 }

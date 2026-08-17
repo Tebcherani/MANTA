@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "command_line.h"
+#include "odyssey.h"
 #include "odyssey_sim.h"
 #include "sim_config.h"
 #include "sim_exit.h"
@@ -9,6 +10,7 @@
 #include "world_sim.h"
 
 int main(int argc, char *argv[]) {
+    odyssey_update_status_t cycle_status;
     command_line_options_t options;
     sim_config_t sim_config;
     sim_state_t sim_state;
@@ -53,9 +55,16 @@ int main(int argc, char *argv[]) {
         }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            if (!update_odyssey_sim_cycle(world_state, sim_config.control_period * sim_config.timestep)) {
+            cycle_status = update_odyssey_sim_cycle(world_state, sim_config.control_period * sim_config.timestep);
+
+            if (cycle_status == ODYSSEY_UPDATE_ERROR) {
                 write_to_sim_log("Failed to update Odyssey cycle.\n");
                 exit_sim(EXIT_FAILURE, 1, options.behavior_dump_file);
+            }
+
+            if (cycle_status == ODYSSEY_UPDATE_MISSION_COMPLETE) {
+                write_to_sim_log("%8.2f: Mission completed.\n", sim_state.sim_time);
+                exit_sim(EXIT_SUCCESS, 1, options.behavior_dump_file);
             }
 	    }
 	

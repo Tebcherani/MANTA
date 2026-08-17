@@ -23,15 +23,15 @@ int start_odyssey(const char *mission_file, const char *mission_dir, const char 
     return 1;
 }
 
-int update_odyssey(double seawater_density, double control_dt) {
-    if (!update_odyssey_nav()) return 0;
-    if (!update_odyssey_control(seawater_density, control_dt)) return 0;
-    if (update_odyssey_mission() != 0) return 0;
+odyssey_update_status_t update_odyssey(double seawater_density, double control_dt) {
+    if (!update_odyssey_nav()) return ODYSSEY_UPDATE_ERROR;
+    if (!update_odyssey_control(seawater_density, control_dt)) return ODYSSEY_UPDATE_ERROR;
+    if (update_odyssey_mission() != 0) return ODYSSEY_UPDATE_MISSION_COMPLETE;
 
     capture_behavior_activity();
 	log_data(datafile);
 
-    return 1;
+    return ODYSSEY_UPDATE_OK;
 }
 
 int end_odyssey(const char *behavior_dump_file, const char *data_dir) {
@@ -49,8 +49,6 @@ int end_odyssey(const char *behavior_dump_file, const char *data_dir) {
     }
 
     write_to_sim_log("SIM: mission finished -- data file: %s\n", get_odyssey_data_file_name());
-
-    if (write_tab(data_dir) != 0) cleanup_failed = 1;
 
     return cleanup_failed ? 0 : 1;
 }

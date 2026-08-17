@@ -16,10 +16,6 @@
 
 static void write_fault_header(FILE *, const odyssey_config_t *);
 static void write_mission_header(FILE **, const char *, const char *);
-static void init_tab(void);
-static void update_tab(float);
-
-static float north0, east0, max_depth;
 
 static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
 {
@@ -97,57 +93,6 @@ static void write_mission_header(FILE **datafile, const char *mission_file,  con
     fprintf(datafile, "# ===== MISSION_FILE_END ================================\xa");
 }
 
-/*-------------------------------------------------------------------------
-  The following functions automate some of the record keeping of the
-  missions.  A file in the data directory VEH_NAME.tab (Xanthos,
-  Amphitrite, Wodyssey, etc) will contain a tabulated summary of items such
-  as run name, start time, initial position, duration, max depth.
-
-  B. A. Moran 28-May-1997
-  -----------------------------------------------------------------------*/
-
-static void init_tab(void) {
-    north0 = read_sensor(M_POS_N);
-    east0  = read_sensor(M_POS_E);
-}
-
-static void update_tab(float depth) {
-    if (depth > max_depth)
-	max_depth = depth;
-}
-
-int write_tab(const odyssey_config_t *config)
-{
-    FILE *ftab;
-    char *run;
-    int error = -1;
-    char msg_buf[256];
-
-    snprintf(msg_buf, 256, "%s/odyssey_simulator.tab", config->data_dir);
-
-				/* open tab-file for append */
-    ftab = fopen( msg_buf, "a" );
-
-    if ( ftab )
-    {
-				/* extract run name from data file name */
-	run = strrchr( vvp->data_file_name, '/' );
-	if ( !run ) run++;
-    else run = vvp->data_file_name;
-
-	if ( strlen(run) > 0 )
-	{
-				/* write entry to file and close */
-	    fprintf( ftab, "%s %.2f\t% 8.2f % 7.1f % 7.1f %6.1f\n", run,
-		     vvp->mission_start_time, read_sensor(M_PRESENT_TIME), north0, east0, max_depth );
-	    fclose( ftab );
-	}
-	error = 0;
-    }
-
-    return error;
-}
-
 init_odyssey_data_logger(FILE **datafile, const char *data_dir, const char *mission_file, const char *mission_dir, const char *fault_dir) {
     int i = 0;
     int j, beh_id, offset, run_number;
@@ -159,10 +104,6 @@ init_odyssey_data_logger(FILE **datafile, const char *data_dir, const char *miss
 
     time_t t;
     struct tm *tp;
-
-    north0 = (float)read_sensor(M_POS_N);
-    east0 = (float)read_sensor(M_POS_E);
-    max_depth = (float)read_sensor(M_DEPTH);
 
     t = time(NULL);
     tp = gmtime(&t);
@@ -281,12 +222,7 @@ int log_data(FILE *datafile)
 	fprintf( datafile, "9999 %.2f (%s)\xa", vvp->mission_start_time,
 		 vvp->mission_date );
 		 fflush( datafile );    /* ensure 9999 marker reaches disk */
-				/* initialize tabular record keeping */
-	init_tab();
     }
-				/* keep track of max depth */
-    update_tab(read_sensor(M_DEPTH));
-
 				/* first write the flag (use 10001) */
     fwrite( (void *) &flag, 2, 1, datafile);
 

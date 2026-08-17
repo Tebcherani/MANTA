@@ -8,6 +8,10 @@
 CC = gcc
 AR = ar
 
+# -------------------------------------------------------------------------
+# Compiler flags
+# -------------------------------------------------------------------------
+
 COMMON_CPPFLAGS = \
 	-I. \
 	-Iinclude \
@@ -23,8 +27,13 @@ WORLD_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
 	-Isrc/World
 
+SENSOR_CPPFLAGS = \
+	$(COMMON_CPPFLAGS) \
+	-Isrc/Sensors
+
 ODYSSEY_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
+	-Isrc/Sensors \
 	-Isrc/Odyssey \
 	-Isrc/Odyssey/Vehicle \
 	-Isrc/Odyssey/Simulator \
@@ -37,6 +46,10 @@ ODYSSEY_CPPFLAGS = \
 
 CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS = -llapacke -llapack -lblas -lm
+
+# -------------------------------------------------------------------------
+# Executable
+# -------------------------------------------------------------------------
 
 TARGET = sim
 EXEEXT =
@@ -63,6 +76,10 @@ BUILD_DIR = build
 #
 RUN_DIR ?= $(abspath ../odyssey-runs)
 
+# -------------------------------------------------------------------------
+# Common sources
+# -------------------------------------------------------------------------
+
 COMMON_SRCS = \
 	src/Common/angle_utils.c \
 	src/Common/matrix_utils.c \
@@ -71,6 +88,22 @@ COMMON_SRCS = \
 	src/Common/time_utils.c \
 	src/Common/unit_utils.c
 
+# -------------------------------------------------------------------------
+# Generic reusable sensor simulation sources
+# -------------------------------------------------------------------------
+#
+# These sensor models should not depend on Odyssey-specific sensor IDs
+# or Odyssey vehicle logic. They are intended to be reusable by other
+# simulated vehicles in the future.
+#
+
+SENSOR_SRCS = \
+	src/Sensors/sensor_compass.c
+
+# -------------------------------------------------------------------------
+# Simulation application sources
+# -------------------------------------------------------------------------
+
 SIM_SRCS = \
 	src/Application/command_line.c \
 	src/Simulation/sim_config.c \
@@ -78,9 +111,17 @@ SIM_SRCS = \
 	src/Simulation/sim_orchestrator.c \
 	src/Simulation/sim_state.c
 
+# -------------------------------------------------------------------------
+# World simulator sources
+# -------------------------------------------------------------------------
+
 WORLD_SRCS = \
 	src/World/world_config.c \
 	src/World/world_sim.c
+
+# -------------------------------------------------------------------------
+# Odyssey sources
+# -------------------------------------------------------------------------
 
 ODYSSEY_SRCS = \
 	src/Odyssey/Vehicle/odyssey.c \
@@ -112,17 +153,34 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_lbl.c \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_usbl.c \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_water.c \
-	src/Odyssey/Simulator/Sensors/sim_conduct.c \
+	src/Odyssey/Simulator/Sensors/sim_conduct.c
+
+# -------------------------------------------------------------------------
+# Object files
+# -------------------------------------------------------------------------
 
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
+SENSOR_OBJS = $(SENSOR_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
 WORLD_OBJS = $(WORLD_SRCS:%.c=$(BUILD_DIR)/%.o)
 ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 
+# -------------------------------------------------------------------------
+# Odyssey static library
+# -------------------------------------------------------------------------
+
 ODYSSEY_LIB = libodyssey.a
+
+# -------------------------------------------------------------------------
+# edit_struct
+# -------------------------------------------------------------------------
 
 EDIT_STRUCT = tools/edit_struct
 EDIT_STRUCT_SRC = tools/edit_struct.c
+
+# -------------------------------------------------------------------------
+# Phony targets
+# -------------------------------------------------------------------------
 
 .PHONY: \
 	all \
@@ -138,18 +196,41 @@ EDIT_STRUCT_SRC = tools/edit_struct.c
 	mission-constructor \
 	mission-constructor-web
 
+# -------------------------------------------------------------------------
+# Default build
+# -------------------------------------------------------------------------
+
 all: $(TARGET)
+
+# -------------------------------------------------------------------------
+# Odyssey library
+# -------------------------------------------------------------------------
 
 $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
 	$(AR) rcs $@ $^
 
-$(TARGET): $(SIM_OBJS) $(WORLD_OBJS) $(COMMON_OBJS) $(ODYSSEY_LIB)
+# -------------------------------------------------------------------------
+# Simulator executable
+# -------------------------------------------------------------------------
+
+$(TARGET): \
+	$(SIM_OBJS) \
+	$(WORLD_OBJS) \
+	$(SENSOR_OBJS) \
+	$(COMMON_OBJS) \
+	$(ODYSSEY_LIB)
+
 	$(CC) $(CFLAGS) -o $@ \
 		$(SIM_OBJS) \
 		$(WORLD_OBJS) \
+		$(SENSOR_OBJS) \
 		$(COMMON_OBJS) \
 		$(ODYSSEY_LIB) \
 		$(LDFLAGS)
+
+# -------------------------------------------------------------------------
+# edit_struct utility
+# -------------------------------------------------------------------------
 
 edit_struct: $(EDIT_STRUCT)
 
@@ -160,6 +241,10 @@ $(EDIT_STRUCT): $(EDIT_STRUCT_SRC)
 
 generate_odyssey: $(EDIT_STRUCT)
 	./$(EDIT_STRUCT)
+
+# -------------------------------------------------------------------------
+# Development helpers
+# -------------------------------------------------------------------------
 
 dev-setup:
 	./ody setup
@@ -175,10 +260,15 @@ doctor:
 # Therefore files/directories created with relative paths, including .obd
 # output, are placed there rather than inside the source repository.
 #
+
 run-sim: $(TARGET)
 	@mkdir -p "$(RUN_DIR)"
 	@echo "Simulation output directory: $(RUN_DIR)"
 	cd "$(RUN_DIR)" && "$(SIM_EXE)" "$(MISSION)"
+
+# -------------------------------------------------------------------------
+# Review tools
+# -------------------------------------------------------------------------
 
 review:
 	./ody review
@@ -186,11 +276,19 @@ review:
 review2:
 	./ody review2
 
+# -------------------------------------------------------------------------
+# Mission constructors
+# -------------------------------------------------------------------------
+
 mission-constructor:
 	./ody mission-constructor
 
 mission-constructor-web:
 	./ody mission-constructor-web
+
+# -------------------------------------------------------------------------
+# Compile rules
+# -------------------------------------------------------------------------
 
 $(BUILD_DIR)/src/Simulation/%.o: src/Simulation/%.c
 	@mkdir -p $(dir $@)
@@ -204,6 +302,10 @@ $(BUILD_DIR)/src/World/%.o: src/World/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(WORLD_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
+$(BUILD_DIR)/src/Sensors/%.o: src/Sensors/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(SENSOR_CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
 $(BUILD_DIR)/src/Odyssey/%.o: src/Odyssey/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(ODYSSEY_CPPFLAGS) $(CFLAGS) -c -o $@ $<
@@ -212,6 +314,10 @@ $(BUILD_DIR)/src/Common/%.o: src/Common/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(COMMON_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
+# -------------------------------------------------------------------------
+# Clean
+# -------------------------------------------------------------------------
+
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -f \
@@ -219,6 +325,10 @@ clean:
 		$(TARGET) \
 		sim_debug \
 		$(EDIT_STRUCT)
+
+# -------------------------------------------------------------------------
+# AddressSanitizer debug build
+# -------------------------------------------------------------------------
 
 debug: CFLAGS += -fsanitize=address
 debug: clean $(TARGET)

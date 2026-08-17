@@ -45,6 +45,7 @@ static int init_odyssey_config(void) {
 int init_odyssey_sim() {
     if (!init_odyssey_config()) return 0;
     if (!init_odyssey()) return 0;
+    if (!init_odyssey_sensors()) return 0;
 
     return 1;
 }
@@ -65,15 +66,14 @@ int update_odyssey_sim_state(const world_state_t *world_state, double timestep) 
     return 1;
 }
 
-int update_odyssey_sim_cycle(const world_state_t *world_state, double control_dt) {
+odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *world_state, double timestep) {
     odyssey_environment_t environment;
+    odyssey_update_status_t status;
 
     environment.seawater_density = world_state->seawater_density;
 
-    if (!update_odyssey_sensors(world_state)) return 0;
-    if (!update_odyssey(world_state->seawater_density, control_dt)) return 0;
-        
-    return 1;
+    if (!update_odyssey_sensors(world_state, timestep)) return ODYSSEY_UPDATE_ERROR;        
+    return update_odyssey(world_state->seawater_density, timestep);
 }
 
 int update_odyssey_sim_time(double sim_time) {
