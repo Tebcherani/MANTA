@@ -1,11 +1,16 @@
 #include "odyssey_sensors.h"
-#include "sensor_compass.h"
 
 static compass_state_t compass_state;
+static inclinometer_state_t inclinometer_state;
 
 int init_odyssey_sensors(void) {
     if (!init_compass_state(&compass_state)) {
         write_to_sim_log("[odyssey_sensors] Failed to initialize compass state.\n");
+        return 0;
+    }
+
+    if (!init_inclinometer_state(&inclinometer_state)) {
+        write_to_sim_log("[odyssey_sensors] Failed to initialize inclinometer state.\n");
         return 0;
     }
 
@@ -25,4 +30,8 @@ int update_odyssey_sensors(const world_state_t *world_state, double timestep) {
 
 compass_state_t *get_odyssey_compass_state(void) {
     return &compass_state;
+}
+
+inclinometer_state_t *get_odyssey_inclinometer_state(void) {
+    return &inclinometer_state;
 }
