@@ -101,6 +101,7 @@ SENSOR_SRCS = \
 	src/Sensors/sensor_accelerometer.c \
 	src/Sensors/sensor_compass.c \
 	src/Sensors/sensor_depth.c \
+	src/Sensors/sensor_gyro.c \
 	src/Sensors/sensor_water_conductivity.c \
 	src/Sensors/sensor_water_speed.c \
 	src/Sensors/sensor_water_temp.c

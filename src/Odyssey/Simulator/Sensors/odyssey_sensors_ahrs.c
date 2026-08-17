@@ -6,6 +6,7 @@
 #include "random_utils.h"
 #include "sensor_accelerometer.h"
 #include "sensor_compass.h"
+#include "sensor_gyro.h"
 #include "world_sim.h"
 
 #include "vehicle.h"
@@ -13,10 +14,10 @@
 static void calculate_compass_acceleration(const accelerometer_measurement_t *, const world_state_t *, double *, double *);
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
 static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *);
-static void update_angular_rate(void);
+static void update_odyssey_compass(const world_state_t *, double, double, double);
+static int update_odyssey_gyro(void);
 static void update_inclinometers(const world_state_t *, double, double);
 static void update_heading(void);
-static void update_odyssey_compass(const world_state_t *, double, double, double);
 
 static void calculate_compass_acceleration(const accelerometer_measurement_t *accelerometer, const world_state_t *world_state, double *compass_accel_x, double *compass_accel_y) {
     double body_accel_x, body_accel_y, body_accel_z;
@@ -115,28 +116,6 @@ static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *
     return update_accelerometer(&config, &vehicle);
 }
 
-static void update_angular_rate(void) {
-    double real_yaw_rate, real_roll_rate, real_pitch_rate;
-    double meas_yaw_rate, meas_roll_rate, meas_pitch_rate;
-    double yaw_rate_bias = -8.7266e-4, pitch_rate_bias = 8.7266e-4, roll_rate_bias = 4.3663e-4;
-    double sensor_noise, sensor_noise_level = 0.00001745;
-
-    real_roll_rate = read_sensor(REAL_P);
-    sensor_noise = sensor_noise_level * std_normal_random_num(); 
-    meas_roll_rate = real_roll_rate + sensor_noise + roll_rate_bias;
-    update_sensor(M_ROLL_RATE, meas_roll_rate);
-
-    real_pitch_rate = read_sensor(REAL_Q);
-    sensor_noise = sensor_noise_level * std_normal_random_num(); 
-    meas_pitch_rate = real_pitch_rate + sensor_noise + pitch_rate_bias;
-    update_sensor(M_PITCH_RATE, meas_pitch_rate);
-
-    real_yaw_rate = read_sensor(REAL_R);
-    sensor_noise = sensor_noise_level * std_normal_random_num(); 
-    meas_yaw_rate = real_yaw_rate + sensor_noise + yaw_rate_bias;
-    update_sensor(M_YAW_RATE, meas_yaw_rate);
-}
-
 static void update_odyssey_compass(const world_state_t *world_state, double accel_x, double accel_y, double timestep) {
     compass_state_t *compass;
     double compass_yaw;
@@ -155,6 +134,35 @@ static void update_odyssey_compass(const world_state_t *world_state, double acce
     compass_yaw = update_compass_yaw(compass, &input);
     compass_yaw -= read_sensor(UO_MAGNETIC_VARIATION);
     update_sensor(M_COMPASS_YAW, compass_yaw);
+}
+
+static int update_odyssey_gyro(void) {
+    gyro_config_t config;
+    gyro_input_t input;
+    gyro_result_t result;
+
+    config.roll_bias = 4.3663e-4;
+    config.pitch_bias = 8.7266e-4;
+    config.yaw_bias = -8.7266e-4;
+
+    config.noise_std_dev = 0.00001745;
+
+    input.roll_rate = read_sensor(REAL_P);
+    input.pitch_rate = read_sensor(REAL_Q);
+    input.yaw_rate = read_sensor(REAL_R);
+
+    result = update_gyro(&config, &input);
+
+    if (!result.success) {
+        write_to_sim_log("[odyssey_sensors_ahrs] Failed to update gyro.\n");
+        return 0;
+    }
+
+    update_sensor(M_ROLL_RATE, result.measurement.roll_rate);
+    update_sensor(M_PITCH_RATE, result.measurement.pitch_rate);
+    update_sensor(M_YAW_RATE, result.measurement.yaw_rate);
+
+    return 1;
 }
 
 static void update_heading(void) {
@@ -192,7 +200,7 @@ void update_ahrs_sensors(const world_state_t *world_state, double timestep) {
     double compass_accel_x, compass_accel_y;
     accelerometer_result_t accelerometer;
 
-    update_angular_rate();
+    update_odyssey_gyro();
     accelerometer = update_odyssey_accelerometer(world_state);
     update_inclinometers(world_state, accelerometer.measurement.accel_x, accelerometer.measurement.accel_y);
     calculate_compass_acceleration(&accelerometer.measurement, world_state, &compass_accel_x, &compass_accel_y);
