@@ -54,10 +54,7 @@ LDFLAGS = -llapacke -llapack -lblas -lm
 TARGET = sim
 EXEEXT =
 
-# Absolute path to the repository root.
 PROJECT_DIR := $(abspath .)
-
-# Absolute path to the simulator executable.
 SIM_EXE := $(PROJECT_DIR)/$(TARGET)$(EXEEXT)
 
 MISSION ?= dive240.mi
@@ -67,13 +64,7 @@ BUILD_DIR = build
 # -------------------------------------------------------------------------
 # Runtime output
 # -------------------------------------------------------------------------
-#
-# Keep generated simulator output outside the source repository.
-#
-# Override from the command line if desired:
-#
-#   make run-sim RUN_DIR=/data/odyssey/runs
-#
+
 RUN_DIR ?= $(abspath ../odyssey-runs)
 
 # -------------------------------------------------------------------------
@@ -92,9 +83,15 @@ COMMON_SRCS = \
 # Generic reusable sensor simulation sources
 # -------------------------------------------------------------------------
 #
-# These sensor models should not depend on Odyssey-specific sensor IDs
-# or Odyssey vehicle logic. They are intended to be reusable by other
-# simulated vehicles in the future.
+# These sources form libsim_sensors.a.
+#
+# Sensor models in this library should not depend on:
+#
+#   - Odyssey sensor IDs such as M_*, REAL_*, U_*, or C_*
+#   - Odyssey vehicle globals
+#   - Odyssey navigation/control/autonomy logic
+#
+# Vehicle-specific adapter code remains under src/Odyssey.
 #
 
 SENSOR_SRCS = \
@@ -174,10 +171,11 @@ WORLD_OBJS = $(WORLD_SRCS:%.c=$(BUILD_DIR)/%.o)
 ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 
 # -------------------------------------------------------------------------
-# Odyssey static library
+# Static libraries
 # -------------------------------------------------------------------------
 
 ODYSSEY_LIB = libodyssey.a
+SENSOR_LIB = libsim_sensors.a
 
 # -------------------------------------------------------------------------
 # edit_struct
@@ -211,6 +209,13 @@ EDIT_STRUCT_SRC = tools/edit_struct.c
 all: $(TARGET)
 
 # -------------------------------------------------------------------------
+# Sensor library
+# -------------------------------------------------------------------------
+
+$(SENSOR_LIB): $(SENSOR_OBJS)
+	$(AR) rcs $@ $^
+
+# -------------------------------------------------------------------------
 # Odyssey library
 # -------------------------------------------------------------------------
 
@@ -224,16 +229,16 @@ $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
 $(TARGET): \
 	$(SIM_OBJS) \
 	$(WORLD_OBJS) \
-	$(SENSOR_OBJS) \
 	$(COMMON_OBJS) \
-	$(ODYSSEY_LIB)
+	$(ODYSSEY_LIB) \
+	$(SENSOR_LIB)
 
 	$(CC) $(CFLAGS) -o $@ \
 		$(SIM_OBJS) \
 		$(WORLD_OBJS) \
-		$(SENSOR_OBJS) \
 		$(COMMON_OBJS) \
 		$(ODYSSEY_LIB) \
+		$(SENSOR_LIB) \
 		$(LDFLAGS)
 
 # -------------------------------------------------------------------------
@@ -263,11 +268,6 @@ doctor:
 # -------------------------------------------------------------------------
 # Run simulator
 # -------------------------------------------------------------------------
-#
-# The simulator is launched with RUN_DIR as its working directory.
-# Therefore files/directories created with relative paths, including .obd
-# output, are placed there rather than inside the source repository.
-#
 
 run-sim: $(TARGET)
 	@mkdir -p "$(RUN_DIR)"
@@ -330,6 +330,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 	rm -f \
 		$(ODYSSEY_LIB) \
+		$(SENSOR_LIB) \
 		$(TARGET) \
 		sim_debug \
 		$(EDIT_STRUCT)
