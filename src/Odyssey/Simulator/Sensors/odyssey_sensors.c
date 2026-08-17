@@ -1,8 +1,6 @@
 #include "odyssey_sensors.h"
 #include "sensor_compass.h"
 
-#include "vehicle.h"
-
 static compass_state_t compass_state;
 
 int init_odyssey_sensors(void) {
