@@ -4,11 +4,12 @@
 #include "odyssey_sensors.h"
 #include "random_utils.h"
 #include "sensor_water_speed.h"
+#include "sensor_water_temp.h"
 
 #include "vehicle.h"
 
 static void update_water_speed_sensor(void);
-static void update_water_temp(void);
+static void update_water_temp_sensor(void);
 
 static void update_water_speed_sensor(void) {
     water_speed_input_t input;
@@ -21,12 +22,18 @@ static void update_water_speed_sensor(void) {
     update_sensor(M_WATER_SPEED, measured_speed);
 }
 
-static void update_water_temp(void) {
-    update_sensor(WATER_TEMP, 10 * exp(-pow(read_sensor(REAL_Z)/30,2)));
+static void update_water_temp_sensor(void) {
+    water_temp_input_t input;
+    double measured_temp;
+
+    input.true_depth = read_sensor(REAL_Z);
+
+    measured_temp = update_water_temp(&input);
+    update_sensor(WATER_TEMP, measured_temp);
 }
 
 void update_water_sensors(void) {
     update_water_speed_sensor();
-    update_water_temp();
+    update_water_temp_sensor();
     update_water_conductivity();
 }
