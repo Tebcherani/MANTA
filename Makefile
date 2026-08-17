@@ -99,7 +99,8 @@ COMMON_SRCS = \
 
 SENSOR_SRCS = \
 	src/Sensors/sensor_compass.c \
-	src/Sensors/sensor_depth.c
+	src/Sensors/sensor_depth.c \
+	src/Sensors/sensor_water_speed.c
 
 # -------------------------------------------------------------------------
 # Simulation application sources
