@@ -36,7 +36,7 @@ services:
   odyssey_2:
     image: odyssey_sim
 
-    command: ["dive240.mi"]
+    command: ["dive240_diff.mi"]
 
     environment:
       ODYSSEY_VEHICLE_ID: odyssey_2
