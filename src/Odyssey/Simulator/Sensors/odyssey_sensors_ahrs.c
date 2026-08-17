@@ -4,17 +4,36 @@
 #include "odyssey.h"
 #include "odyssey_sensors.h"
 #include "random_utils.h"
+#include "sensor_accelerometer.h"
 #include "sensor_compass.h"
 #include "world_sim.h"
 
 #include "vehicle.h"
 
+static void calculate_compass_acceleration(const accelerometer_measurement_t *, const world_state_t *, double *, double *);
 static void inclinometer_low_pass_filter(double s[2], double sf[2]);
-static void update_acceleration(const world_state_t *, double *, double *, double *, double *);
+static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *);
 static void update_angular_rate(void);
 static void update_inclinometers(const world_state_t *, double, double);
 static void update_heading(void);
 static void update_odyssey_compass(const world_state_t *, double, double, double);
+
+static void calculate_compass_acceleration(const accelerometer_measurement_t *accelerometer, const world_state_t *world_state, double *compass_accel_x, double *compass_accel_y) {
+    double body_accel_x, body_accel_y, body_accel_z;
+    double pitch, roll;
+
+    pitch = read_sensor(REAL_THETA);
+    roll = read_sensor(REAL_PHI);
+
+    // Remove gravity from the accelerometer measurement to recover the non-gravitational acceleration at the AHRS mounting point.
+    body_accel_x = accelerometer->accel_x - sin(pitch) * world_state->gravity;
+    body_accel_y = accelerometer->accel_y + cos(pitch) * sin(roll) * world_state->gravity;
+    body_accel_z = accelerometer->accel_z + cos(pitch) * cos(roll) * world_state->gravity;
+
+    // Transform the non-gravitational acceleration from the vehicle body frame into the local horizontal frame used by the suspended compass model.
+    *compass_accel_x = cos(pitch) * body_accel_x + sin(roll) * sin(pitch) * body_accel_y + cos(roll) * sin(pitch) * body_accel_z;
+    *compass_accel_y = cos(roll) * body_accel_y - sin(roll) * body_accel_z;
+}
 
 /*-------------------------------------------------------------------------
 Low-pass filter for inclinometers simulation
@@ -63,34 +82,37 @@ static void inclinometer_low_pass_filter( double s[2], double sf[2] ) {
     if(count<=2) count++;
 }
 
-static void update_acceleration(const world_state_t *world_state, double *ax, double *ay, double *aax, double *aay) {
-    static double dx=1.390,dy=0.108,dz=0.076;
-    double az;
-    double p,q,r,pdot,qdot,rdot;
-    double u,v,w,udot,vdot,wdot;
-    double theta,phi;
-		
-    // Load real velocities and acceleration (linear and angular)
-    u    = read_sensor(REAL_U);     v = read_sensor(REAL_V);     w = read_sensor(REAL_W);
-    udot = read_sensor(REAL_UD); vdot = read_sensor(REAL_VD); wdot = read_sensor(REAL_WD);
-    p    = read_sensor(REAL_P);     q = read_sensor(REAL_Q);     r = read_sensor(REAL_R);
-    pdot = read_sensor(REAL_PD); qdot = read_sensor(REAL_QD); rdot = read_sensor(REAL_RD);
+static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *world_state) {
+    true_vehicle_motion_t vehicle;
+    accelerometer_config_t config;
 
-	// Non-gravitational acceleration at location of AHRS in vehicle frame
-    *ax = udot + q*w-r*v + qdot*dz-rdot*dy - (q*q+r*r)*dx + p*q*dy + p*r*dz;
-    *ay = vdot + r*u-p*w + rdot*dx-pdot*dz - (p*p+r*r)*dy + p*q*dx + q*r*dz;
-    az = wdot + p*v-q*u + pdot*dy-qdot*dx - (p*p+q*q)*dz + q*r*dy + p*r*dx;
+    // Odyssey AHRS mounting location relative to the vehicle reference point
+    config.mount_x = 1.390;
+    config.mount_y = 0.108;
+    config.mount_z = 0.076;
 
-	// Compute non-gravitational acc in local horizontal plane for compass
-    theta = read_sensor(REAL_THETA);
-    phi = read_sensor(REAL_PHI);
-    *aax = cos(theta) * (*ax) + sin(phi)*sin(theta) * (*ay) + cos(phi)*sin(theta)*az;
-    *aay = cos(phi) * (*ay) - sin(phi)*az;
+    vehicle.velocity_x = read_sensor(REAL_U);
+    vehicle.velocity_y = read_sensor(REAL_V);
+    vehicle.velocity_z = read_sensor(REAL_W);
 
-	// Add gravity
-    *ax += sin(theta) * world_state->gravity;
-    *ay -= cos(theta) * sin(phi) * world_state->gravity;
-    az -= cos(theta) * cos(phi) * world_state->gravity;
+    vehicle.acceleration_x = read_sensor(REAL_UD);
+    vehicle.acceleration_y = read_sensor(REAL_VD);
+    vehicle.acceleration_z = read_sensor(REAL_WD);
+
+    vehicle.angular_rate_x = read_sensor(REAL_P);
+    vehicle.angular_rate_y = read_sensor(REAL_Q);
+    vehicle.angular_rate_z = read_sensor(REAL_R);
+
+    vehicle.angular_acceleration_x = read_sensor(REAL_PD);
+    vehicle.angular_acceleration_y = read_sensor(REAL_QD);
+    vehicle.angular_acceleration_z = read_sensor(REAL_RD);
+
+    vehicle.pitch = read_sensor(REAL_THETA);
+    vehicle.roll = read_sensor(REAL_PHI);
+
+    vehicle.gravity = world_state->gravity;
+
+    return update_accelerometer(&config, &vehicle);
 }
 
 static void update_angular_rate(void) {
@@ -167,12 +189,13 @@ static void update_inclinometers(const world_state_t *world_state, double ax, do
 }
 
 void update_ahrs_sensors(const world_state_t *world_state, double timestep) {
-    double inclinometer_accel_x, inclinometer_accel_y;
     double compass_accel_x, compass_accel_y;
+    accelerometer_result_t accelerometer;
 
     update_angular_rate();
-    update_acceleration(world_state,&inclinometer_accel_x, &inclinometer_accel_y, &compass_accel_x, &compass_accel_y);
-    update_inclinometers(world_state, inclinometer_accel_x, inclinometer_accel_y);
+    accelerometer = update_odyssey_accelerometer(world_state);
+    update_inclinometers(world_state, accelerometer.measurement.accel_x, accelerometer.measurement.accel_y);
+    calculate_compass_acceleration(&accelerometer.measurement, world_state, &compass_accel_x, &compass_accel_y);
     update_odyssey_compass(world_state, compass_accel_x, compass_accel_y, timestep);
     update_heading();
 }
