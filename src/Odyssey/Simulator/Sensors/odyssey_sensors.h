@@ -15,6 +15,4 @@ void update_lbl_sensor(void);
 
 compass_state_t *get_odyssey_compass_state(void);
 
-void update_water_conductivity(void);
-
 #endif /* ODYSSEY_SENSORS_H */

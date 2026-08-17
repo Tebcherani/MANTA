@@ -100,6 +100,7 @@ COMMON_SRCS = \
 SENSOR_SRCS = \
 	src/Sensors/sensor_compass.c \
 	src/Sensors/sensor_depth.c \
+	src/Sensors/sensor_water_conductivity.c \
 	src/Sensors/sensor_water_speed.c \
 	src/Sensors/sensor_water_temp.c
 
@@ -155,8 +156,7 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_depth.c \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_lbl.c \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_usbl.c \
-	src/Odyssey/Simulator/Sensors/odyssey_sensors_water.c \
-	src/Odyssey/Simulator/Sensors/sim_conduct.c
+	src/Odyssey/Simulator/Sensors/odyssey_sensors_water.c
 
 # -------------------------------------------------------------------------
 # Object files
