@@ -11,6 +11,7 @@ typedef struct {
     const char *mission_dir;
     const char *fault_dir;
     const char *model_path;
+    const char *vehicle_id;
 } odyssey_config_t;
 
 int init_odyssey_sim();

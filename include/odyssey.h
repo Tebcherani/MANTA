@@ -14,7 +14,7 @@ typedef struct {
 } odyssey_environment_t;
 
 int init_odyssey(void);
-int start_odyssey(const char *, const char *, const char *, const char *, time_t);
+int start_odyssey(const char *, const char *, const char *, const char *, const char *, time_t);
 odyssey_update_status_t update_odyssey(double, double);
 int end_odyssey(const char *, const char *);
 

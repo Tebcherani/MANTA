@@ -93,7 +93,7 @@ static void write_mission_header(FILE **datafile, const char *mission_file,  con
     fprintf(datafile, "# ===== MISSION_FILE_END ================================\xa");
 }
 
-init_odyssey_data_logger(FILE **datafile, const char *data_dir, const char *mission_file, const char *mission_dir, const char *fault_dir) {
+init_odyssey_data_logger(FILE **datafile, const char *vehicle_id, const char *data_dir, const char *mission_file, const char *mission_dir, const char *fault_dir) {
     int i = 0;
     int j, beh_id, offset, run_number;
     int path_length;
@@ -126,7 +126,7 @@ init_odyssey_data_logger(FILE **datafile, const char *data_dir, const char *miss
 
         free(data_file_name);
 
-        path_length = snprintf(NULL, 0, "%s/%c%s%02d.obd", data_dir, PREFIX_CHAR, fname_string, run_number);
+        path_length = snprintf(NULL, 0, "%s/%s_%c%s%02d.obd", data_dir, vehicle_id, PREFIX_CHAR, fname_string, run_number);        
         if (path_length < 0)
             return 0;
 
@@ -134,7 +134,7 @@ init_odyssey_data_logger(FILE **datafile, const char *data_dir, const char *miss
         if (data_file_name == NULL)
             return 0;
 
-        snprintf(data_file_name, (size_t)path_length + 1, "%s/%c%s%02d.obd", data_dir, PREFIX_CHAR, fname_string, run_number);
+        snprintf(data_file_name, (size_t)path_length + 1, "%s/%s_%c%s%02d.obd", data_dir, vehicle_id, PREFIX_CHAR, fname_string, run_number);    
     } while (access(data_file_name, F_OK) != -1);
 
     *datafile = fopen(data_file_name, "wb");

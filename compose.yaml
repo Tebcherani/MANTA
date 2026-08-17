@@ -1,17 +1,18 @@
 services:
-  simulator:
+  odyssey_1:
     build:
       context: .
-      
+
     image: odyssey_sim
 
     command: ["dive240.mi"]
 
-    environment: 
+    environment:
+      ODYSSEY_VEHICLE_ID: odyssey_1
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
       ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
-      SIM_LOG_PATH: /odyssey/output/Logs/simulation.log
+      SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
 
     user: "${HOST_UID}:${HOST_GID}"
@@ -20,7 +21,38 @@ services:
       - type: bind
         source: ./output
         target: /odyssey/output
-    
+
+      - type: bind
+        source: ./assets
+        target: /odyssey/assets
+        read_only: true
+
+      - type: bind
+        source: ./SEnvironment
+        target: /odyssey/SEnvironment
+        read_only: true
+
+
+  odyssey_2:
+    image: odyssey_sim
+
+    command: ["dive240.mi"]
+
+    environment:
+      ODYSSEY_VEHICLE_ID: odyssey_2
+      ODYSSEY_DATA_DIR: /odyssey/output/Data
+      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
+      ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
+      SIM_LOG_PATH: /odyssey/output/Logs/odyssey_2.log
+      VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
+
+    user: "${HOST_UID}:${HOST_GID}"
+
+    volumes:
+      - type: bind
+        source: ./output
+        target: /odyssey/output
+
       - type: bind
         source: ./assets
         target: /odyssey/assets

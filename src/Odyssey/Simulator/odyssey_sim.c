@@ -32,6 +32,12 @@ static int init_odyssey_config(void) {
         return 0;
     }
 
+    config.vehicle_id = getenv("ODYSSEY_VEHICLE_ID");
+    if (config.vehicle_id == NULL || config.vehicle_id[0] == '\0') {
+        write_to_sim_log("[odyssey_sim] ODYSSEY_VEHICLE_ID is not set.\n");
+        return 0;
+    }
+
     config.model_path = getenv("VEHICLE_PATH");
     if (config.model_path == NULL || config.model_path[0] == '\0') {
         write_to_sim_log("[odyssey_sim] VEHICLE_PATH is not set.\n");
@@ -51,7 +57,7 @@ int init_odyssey_sim() {
 }
 
 int start_odyssey_sim(const char *mission_file, const char *fault_file, time_t calendar_start_time) {
-    if (!start_odyssey(mission_file, config.mission_dir, config.fault_dir, config.data_dir, calendar_start_time)) return 0;
+    if (!start_odyssey(config.vehicle_id, mission_file, config.mission_dir, config.fault_dir, config.data_dir, calendar_start_time)) return 0;
     if (!init_odyssey_model(config.model_path)) return 0;
     if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, &config)) return 0;
     if (!init_odyssey_state()) return 0;
