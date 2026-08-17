@@ -32,12 +32,9 @@ static void update_water_speed_sensor(void) {
 }
 
 static void update_water_temp_sensor(void) {
-    water_temp_input_t input;
     double measured_temp;
 
-    input.true_depth = read_sensor(REAL_Z);
-
-    measured_temp = update_water_temp(&input);
+    measured_temp = update_water_temp(read_sensor(REAL_Z));
     update_sensor(WATER_TEMP, measured_temp);
 }
 
