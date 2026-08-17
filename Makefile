@@ -103,6 +103,7 @@ SENSOR_SRCS = \
 	src/Sensors/sensor_depth.c \
 	src/Sensors/sensor_gyro.c \
 	src/Sensors/sensor_inclinometer.c \
+	src/Sensors/sensor_lbl.c \
 	src/Sensors/sensor_usbl.c \
 	src/Sensors/sensor_water_conductivity.c \
 	src/Sensors/sensor_water_speed.c \
