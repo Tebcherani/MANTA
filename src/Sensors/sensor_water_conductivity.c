@@ -81,7 +81,7 @@ static double temp_coeff_b(double temp) {
     return (4.464e-4 * temp + 3.426e-2) * temp + 1.0;
 }
 
-double update_water_conductivity(const water_conductivity_input_t *input) {
+double update_water_conductivity(double true_depth) {
     const double transition_depth_1 = 6.0;
     const double transition_depth_2 = 18.0;
     const double transition_depth_3 = 32.0;
@@ -92,14 +92,9 @@ double update_water_conductivity(const water_conductivity_input_t *input) {
     double pressure;
     double conductivity = 0.0;
 
-    if (input == NULL) {
-        write_to_sim_log("[sensor_water_conductivity] Failed to update water conductivity: input pointer is NULL.\n");
-        return 0.0;
-    }
-
-    if (input->true_depth <= transition_depth_1) pressure = 5.0 * input->true_depth;
-    else if (input->true_depth <= transition_depth_2) pressure = 4.0 * input->true_depth;
-    else if (input->true_depth <= transition_depth_3) pressure = 2.0 * input->true_depth;
+    if (true_depth <= transition_depth_1) pressure = 5.0 * true_depth;
+    else if (true_depth <= transition_depth_2) pressure = 4.0 * true_depth;
+    else if (true_depth <= transition_depth_3) pressure = 2.0 * true_depth;
 
     conductivity = salinity_conductivity_conversion(salinity, temp, pressure, 1);
 }

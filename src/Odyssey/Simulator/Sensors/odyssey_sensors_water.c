@@ -14,12 +14,9 @@ static void update_water_speed_sensor(void);
 static void update_water_temp_sensor(void);
 
 static void update_water_conductivity_sensor(void) {
-    water_conductivity_input_t input;
     double measured_conductivity;
 
-    input.true_depth = read_sensor(REAL_Z);
-
-    measured_conductivity = update_water_conductivity(&input);
+    measured_conductivity = update_water_conductivity(read_sensor(REAL_Z));
     update_sensor(WATER_COND, measured_conductivity);
 }
 
