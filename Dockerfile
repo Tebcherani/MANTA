@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ros:jazzy-ros-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ODY_ROOT=/odyssey

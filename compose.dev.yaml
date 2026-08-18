@@ -1,0 +1,20 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        HOST_UID: ${HOST_UID}
+        HOST_GID: ${HOST_GID}
+
+    image: odyssey_sim_dev
+
+    command: /bin/bash
+
+    stdin_open: true
+    tty: true
+
+    volumes:
+      - type: bind
+        source: .
+        target: /odyssey

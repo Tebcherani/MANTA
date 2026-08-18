@@ -44,11 +44,6 @@ dist/
 temp/
 behavior_log*.json
 cd
-CLAUDE.me
-edit_struct_thruster_real_naming.c
-
-# MATLAB autosave
-*.asv
 
 # Simulator output/data products
 *.obd
@@ -56,6 +51,11 @@ edit_struct_thruster_real_naming.c
 # Simulator runtime output directories
 Data/
 Logs/
+
+# ROS 2 / colcon
+ros_ws/build/
+ros_ws/install/
+ros_ws/log/
 
 # External CBOFS exploration tooling
 SEnvironment/_cbofs*

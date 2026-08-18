@@ -176,6 +176,7 @@ ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 
 ODYSSEY_LIB = libodyssey.a
 SENSOR_LIB = libsim_sensors.a
+COMMON_LIB = libsim_common.a
 
 # -------------------------------------------------------------------------
 # edit_struct
@@ -223,22 +224,29 @@ $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
 	$(AR) rcs $@ $^
 
 # -------------------------------------------------------------------------
+# Common library
+# -------------------------------------------------------------------------
+
+$(COMMON_LIB): $(COMMON_OBJS)
+	$(AR) rcs $@ $^
+
+# -------------------------------------------------------------------------
 # Simulator executable
 # -------------------------------------------------------------------------
 
 $(TARGET): \
 	$(SIM_OBJS) \
 	$(WORLD_OBJS) \
-	$(COMMON_OBJS) \
 	$(ODYSSEY_LIB) \
-	$(SENSOR_LIB)
+	$(SENSOR_LIB) \
+	$(COMMON_LIB)
 
 	$(CC) $(CFLAGS) -o $@ \
 		$(SIM_OBJS) \
 		$(WORLD_OBJS) \
-		$(COMMON_OBJS) \
 		$(ODYSSEY_LIB) \
 		$(SENSOR_LIB) \
+		$(COMMON_LIB) \
 		$(LDFLAGS)
 
 # -------------------------------------------------------------------------
@@ -331,6 +339,7 @@ clean:
 	rm -f \
 		$(ODYSSEY_LIB) \
 		$(SENSOR_LIB) \
+		$(COMMON_LIB) \
 		$(TARGET) \
 		sim_debug \
 		$(EDIT_STRUCT)

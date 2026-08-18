@@ -1,0 +1,39 @@
+FROM ros:jazzy-ros-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ODY_ROOT=/odyssey
+
+ARG HOST_UID=501
+ARG HOST_GID=20
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    liblapacke-dev \
+    liblapack-dev \
+    libblas-dev \
+    ros-dev-tools \
+    python3-colcon-common-extensions \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN EXISTING_GROUP=$(getent group ${HOST_GID} | cut -d: -f1) && \
+    if [ -z "$EXISTING_GROUP" ]; then \
+        groupadd -g ${HOST_GID} odyssey && \
+        EXISTING_GROUP=odyssey; \
+    fi && \
+    useradd \
+        -m \
+        -u ${HOST_UID} \
+        -g "$EXISTING_GROUP" \
+        -s /bin/bash \
+        odyssey
+
+WORKDIR /odyssey
+
+USER odyssey
+
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /home/odyssey/.bashrc
+
+CMD ["/bin/bash"]
