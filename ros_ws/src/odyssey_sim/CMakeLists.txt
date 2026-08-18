@@ -11,6 +11,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
 # -------------------------------------------------------------------------
 # Odyssey ROS node
@@ -45,6 +46,7 @@ target_include_directories(
 ament_target_dependencies(
   odyssey_node
   rclcpp
+  std_msgs
 )
 
 # -------------------------------------------------------------------------

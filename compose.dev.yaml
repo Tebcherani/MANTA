@@ -14,6 +14,17 @@ services:
     stdin_open: true
     tty: true
 
+    environment:
+      ROS_DOMAIN_ID: 1
+
+      ODYSSEY_VEHICLE_ID: odyssey_1
+      ODYSSEY_MISSION_FILE: dive240.mi
+      ODYSSEY_DATA_DIR: /odyssey/output/Data
+      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
+      ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
+      VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
+      SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
+
     volumes:
       - type: bind
         source: .
