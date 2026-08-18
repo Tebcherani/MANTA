@@ -8,47 +8,20 @@
 venv/
 env/
 Review/.venv/
-
-# Python caches
 __pycache__/
 *.pyc
 *.pyo
-*/__pycache__/
 
 # C build products
-*.exe
 *.o
-*.obj
-*.dll
-*.lib
 *.a
 
 # Linux compiled binaries (no extension)
 sim
 edit_struct
-parse
-sim_debug
 
-# Build/output folders
-build/
-bin/
-obj/
-dist/
-
-# PyInstaller spec files
-*.spec
-
-# Logs/temp
-*.log
-*.tmp
-temp/
-behavior_log*.json
-cd
-
-# Simulator output/data products
+# Simulator outputs
 *.obd
-
-# Simulator runtime output directories
 Data/
 Logs/
 
@@ -56,19 +29,6 @@ Logs/
 ros_ws/build/
 ros_ws/install/
 ros_ws/log/
-
-# External CBOFS exploration tooling
-SEnvironment/_cbofs*
-SEnvironment/cbofs_probe.json
-SEnvironment/_erddap_explore.py
-SEnvironment/wl_*.csv
-SEnvironment/wl_summary_*.csv
-
-# Generated analysis artifacts
-*.png
-*.pdf
-*.zip
-Review/*.dat
 
 # pip install artifacts
 Review/ody_review.egg-info/
