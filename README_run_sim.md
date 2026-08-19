@@ -1,6 +1,6 @@
 # Odyssey AUV Simulator (Docker)
 
-This project provides a Dockerized version of the MIT Sea Grant Odyssey Autonomous Underwater Vehicle (AUV) simulator. Docker allows the simulator to run in a consistent environment without requiring the user to manually install and configure its software dependencies.
+This project provides a Dockerized, two-vehicle version of the MIT Sea Grant Odyssey Autonomous Underwater Vehicle (AUV) simulator. Docker allows the simulator to run in a consistent environment without requiring the user to manually install and configure its software dependencies.
 
 ## Prerequisites
 
@@ -59,22 +59,20 @@ docker compose build
 Run the simulator container using:
 
 ```bash
-docker compose run --rm simulator
+docker compose up
 ```
 
-By default, the simulator executes the mission specified in the Docker image.
+## Analysing Results
 
-To run a different mission file, provide its name as a command-line argument:
+Analyze results using:
 
 ```bash
-docker compose run --rm simulator <mission_file>
+./ody review2
 ```
 
-For example:
+## Changing the Mission or Faults
 
-```bash
-docker compose run --rm simulator dive240.mi
-```
+In `compose.yaml`, simply set `MISSION_PATH` or `FAULT_PATH` to the mission or fault files, respectively, that you would like to use for the simulation. 
 
 ## Input and Output
 
@@ -84,24 +82,8 @@ The following directories are used:
 
 | Directory | Purpose |
 |-----------|---------|
-| `SMission/` | Mission files |
-| `Vehicle/` | Vehicle configuration |
-| `SFault/` | Fault configuration |
-| `SEnvironment/` | Environment configuration |
-| `SData/` | Simulation output |
-
-Simulation output is written directly to the `SData` directory on the host filesystem.
-
-## Typical Workflow
-
-```text
-Modify simulator source code
-        ↓
-docker compose build
-        ↓
-Edit mission or configuration files
-        ↓
-docker compose run --rm simulator <mission_file>
-        ↓
-Analyze results in SData/
-```
+| `assets/Missions/` | Mission files |
+| `assets/Vehicles/` | Vehicle configuration |
+| `assets/Faults/` | Fault configuration |
+| `output/Data` | Simulation output |
+| `output/Logs` | Simulation logs |
