@@ -93,7 +93,7 @@ APPLICATION_SRCS = \
 	src/Application/command_line.c
 
 # -------------------------------------------------------------------------
-# Generic reusable sensor sources
+# Sensor sources
 # -------------------------------------------------------------------------
 
 SENSOR_SRCS = \
@@ -179,6 +179,8 @@ ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 COMMON_LIB = libsim_common.a
 APPLICATION_LIB = libsim_application.a
 SENSOR_LIB = libsim_sensors.a
+SIMULATION_LIB = libsimulation.a
+WORLD_LIB = libworld_sim.a
 ODYSSEY_LIB = libodyssey.a
 
 # -------------------------------------------------------------------------
@@ -225,6 +227,12 @@ $(APPLICATION_LIB): $(APPLICATION_OBJS)
 $(SENSOR_LIB): $(SENSOR_OBJS)
 	$(AR) rcs $@ $^
 
+$(SIMULATION_LIB): $(SIM_OBJS)
+	$(AR) rcs $@ $^
+
+$(WORLD_LIB): $(WORLD_OBJS)
+	$(AR) rcs $@ $^
+
 $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
 	$(AR) rcs $@ $^
 
@@ -233,16 +241,16 @@ $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
 # -------------------------------------------------------------------------
 
 $(TARGET): \
-	$(SIM_OBJS) \
-	$(WORLD_OBJS) \
+	$(SIMULATION_LIB) \
+	$(WORLD_LIB) \
 	$(ODYSSEY_LIB) \
 	$(SENSOR_LIB) \
 	$(APPLICATION_LIB) \
 	$(COMMON_LIB)
 
 	$(CC) $(CFLAGS) -o $@ \
-		$(SIM_OBJS) \
-		$(WORLD_OBJS) \
+		$(SIMULATION_LIB) \
+		$(WORLD_LIB) \
 		$(ODYSSEY_LIB) \
 		$(SENSOR_LIB) \
 		$(APPLICATION_LIB) \
@@ -340,6 +348,8 @@ clean:
 		$(COMMON_LIB) \
 		$(APPLICATION_LIB) \
 		$(SENSOR_LIB) \
+		$(SIMULATION_LIB) \
+		$(WORLD_LIB) \
 		$(ODYSSEY_LIB) \
 		$(TARGET) \
 		sim_debug \

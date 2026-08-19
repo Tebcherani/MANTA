@@ -52,6 +52,8 @@ ament_target_dependencies(
 
 target_link_libraries(
   sim_orchestrator_node
+  /odyssey/libsimulation.a
+  /odyssey/libworld_sim.a
   /odyssey/libsim_common.a
 )
 

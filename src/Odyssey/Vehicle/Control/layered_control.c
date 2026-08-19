@@ -434,6 +434,9 @@ int broadcast( struct behavior *b, int priority, int level )
 				/* advance timer */
 	    bArg( UAM_DELAY ) += bArg( UAM_CYCLE );
 	}
+
+    case B_COMPLETE:
+        return 1;
     }
     return 0;
 }
@@ -657,6 +660,8 @@ int survey_dead_reckon( struct behavior *b, int priority, int level )
 		    cmd->heading[0] = bArg(L1_HEAD);
 	    }
 	}
+    case B_COMPLETE:
+        return 1;
     } /* switch */
     return 0;
 }
@@ -858,6 +863,9 @@ int setpoint( struct behavior *b, int priority, int level )
 
 	cmd->speed_mode = 1;
 	cmd->speed[0] = bArg(SPEED);
+
+    case B_COMPLETE:
+        return 1;
     }
     return 0;
 }
@@ -1136,6 +1144,9 @@ int launch( struct behavior *b, int priority, int level )
 				/* hold rudder straight */
 	cmd->heading_mode = 0;
 	cmd->heading[0] = 0.;
+
+    case B_COMPLETE:
+        return 1;
     }
     return 0;
 }

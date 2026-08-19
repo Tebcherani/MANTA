@@ -5,7 +5,9 @@
 #include "std_msgs/msg/bool.hpp"
 
 extern "C" {
+    #include "sim_config.h"
     #include "sim_log.h"
+    #include "world_sim.h"
 }
 
 
@@ -16,9 +18,11 @@ class SimOrchestratorNode : public rclcpp::Node {
             
             RCLCPP_INFO(get_logger(), "Initializing simulation orchestrator.");
 
+            // Open sim log
             if (open_sim_log()) RCLCPP_INFO(get_logger(), "Simulation log opened.");
             else throw std::runtime_error("Failed to open simulation log.");
 
+            // Tell Odysseys that they can begin initialization
             rclcpp::QoS ready_qos(1);
             ready_qos.transient_local();
             ready_qos.reliable();
@@ -29,6 +33,17 @@ class SimOrchestratorNode : public rclcpp::Node {
 
             RCLCPP_INFO(get_logger(), "Ready to begin Odyssey initialization.");
 
+            // Initialize sim config
+            if (init_sim_config(&sim_config_)) RCLCPP_INFO(get_logger(), "Simulation configuration initialized.");
+            else throw std::runtime_error("Failed to initialize simulation configuration.");
+
+            // Initialize world sim
+            if (init_world_sim()) RCLCPP_INFO(get_logger(), "World simulation initialized.");
+            else throw std::runtime_error("Failed to initialize world simulation.");
+            world_state_ = get_world_state();
+            if (world_state_ == NULL) throw std::runtime_error("Failed to get world state.");
+
+            // Wait for Odysseys to complete initialization
             odyssey_1_ready_sub_ = create_subscription<std_msgs::msg::Bool>(
                 "/odyssey_1/ready", ready_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
                 odyssey_1_ready_ = msg->data;

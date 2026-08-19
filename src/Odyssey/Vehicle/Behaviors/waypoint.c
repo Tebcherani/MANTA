@@ -104,6 +104,7 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 	{
 	    b->state = B_COMPLETE;
 	    cmd->depth_mode = cmd->heading_mode = cmd->speed_mode = -1;
+		return 0;
 	}
 	else
 	{
@@ -122,6 +123,11 @@ int waypoint_2d( struct behavior *b, int priority, int level )
 		cmd->heading[0] = atan2( -de, -dn );
 	}
 
-	break;
+	return 1;
+
+	case B_COMPLETE:
+    return 0;
     }
+
+	return 0;
 }

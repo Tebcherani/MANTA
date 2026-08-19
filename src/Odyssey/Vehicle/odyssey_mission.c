@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <string.h>
 
 #include "odyssey_data_struct.h"
@@ -56,9 +57,8 @@ static int read_state(FILE *fptr) {
                 return -1;
             }
 
-            strncpy(vvp->sta[vvp->nstates].name, name, MAX_STATE_NAME - 1);
-            vvp->sta[vvp->nstates].name[MAX_STATE_NAME - 1] = '\0';
-
+            snprintf(vvp->sta[vvp->nstates].name, MAX_STATE_NAME, "%s", name);
+            
             vvp->nstates++;
 
             if (vvp->nstates == 1)
@@ -190,18 +190,12 @@ int init_mission_time(time_t calendar_start_time) {
     return 1;
 }
 
-int init_odyssey_mission(const char *file_name, const char *mission_dir) {
+int init_odyssey_mission(const char *mission_path) {
     FILE *file;
-    char path[MAX_LINE];
 
-    if (snprintf(path, sizeof(path), "%s/%s", mission_dir, file_name) >= sizeof(path)) {
-        write_to_sim_log("[odyssey_mission] Mission path is too long.\n");
-        return 0;
-    }
-
-    file = fopen(path, "r");
+    file = fopen(mission_path, "r");
     if (file == NULL) {
-        write_to_sim_log("[load_mission] Failed to open mission file.\n");
+        write_to_sim_log("[load_mission] Failed to open mission file '%s': %s.\n", mission_path, strerror(errno));
         return 0;
     }
 

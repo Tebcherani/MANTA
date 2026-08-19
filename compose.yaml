@@ -5,13 +5,11 @@ services:
 
     image: odyssey_sim
 
-    command: ["dive240.mi"]
-
     environment:
       ODYSSEY_VEHICLE_ID: odyssey_1
       ODYSSEY_DATA_DIR: /odyssey/output/Data
-      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
-      ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
+      FAULT_PATH: "" #/odyssey/assets/Faults
+      MISSION_PATH: /odyssey/assets/Missions/dive240.mi
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
 
@@ -36,13 +34,11 @@ services:
   odyssey_2:
     image: odyssey_sim
 
-    command: ["dive240_diff.mi"]
-
     environment:
       ODYSSEY_VEHICLE_ID: odyssey_2
       ODYSSEY_DATA_DIR: /odyssey/output/Data
-      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
-      ODYSSEY_MISSION_DIR: /odyssey/assets/Missions
+      FAULT_PATH: "" #/odyssey/assets/Faults
+      MISSION_PATH: /odyssey/assets/Missions/dive240_diff.mi
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_2.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
 
