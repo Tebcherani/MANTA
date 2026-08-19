@@ -57,7 +57,7 @@ int init_odyssey_sim() {
     return 1;
 }
 
-int start_odyssey_sim(const char *fault_file, time_t calendar_start_time) {
+int start_odyssey_sim(time_t calendar_start_time) {
     if (!start_odyssey(config.vehicle_id, config.mission_path, config.fault_path, config.data_dir, calendar_start_time)) return 0;
     if (!init_odyssey_model(config.model_path)) return 0;
     if (!load_faults(config.fault_path)) return 0;

@@ -19,7 +19,6 @@ COMMON_CPPFLAGS = \
 
 SIM_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
-	-Isrc/Application \
 	-Isrc/Simulation \
 	-Isrc/World
 
@@ -111,7 +110,6 @@ SENSOR_SRCS = \
 # -------------------------------------------------------------------------
 
 SIM_SRCS = \
-	src/Application/command_line.c \
 	src/Simulation/sim_config.c \
 	src/Simulation/sim_exit.c \
 	src/Simulation/sim_orchestrator.c \
@@ -152,7 +150,6 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Simulator/odyssey_sim.c \
 	src/Odyssey/Simulator/sim.c \
 	src/Odyssey/Simulator/Faults/load_fault.c \
-	src/Odyssey/Simulator/Faults/paths.c \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors.c \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_ahrs.c \
 	src/Odyssey/Simulator/Sensors/odyssey_sensors_depth.c \
@@ -299,10 +296,6 @@ mission-constructor-web:
 # -------------------------------------------------------------------------
 
 $(BUILD_DIR)/src/Simulation/%.o: src/Simulation/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
-
-$(BUILD_DIR)/src/Application/%.o: src/Application/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
