@@ -46,10 +46,7 @@ int write_to_sim_log(const char *fmt, ...) {
     va_list args_terminal;
     va_list args_log;
 
-    if (file == NULL) {
-        fprintf(stderr, "Simulation log is not open.\n");
-        return 0;
-    }
+    if (file == NULL) return 0;
 
     if (fmt == NULL) {
         fprintf(stderr, "Simulation log format string is NULL.\n");
