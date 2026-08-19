@@ -14,7 +14,7 @@ extern "C" {
 class OdysseyNode : public rclcpp::Node {
     public:
         // Create the underlying ROS node and name it odyssey_simulator, then execute my Odyssey-specific initialization.
-        OdysseyNode() : Node("odyssey_simulator") {
+        OdysseyNode() : Node("odyssey_sim") {
             const char *vehicle_id_env;
             const char *mission_file_env;
             const char *fault_file_env;
@@ -24,10 +24,14 @@ class OdysseyNode : public rclcpp::Node {
             if (vehicle_id_env == nullptr || vehicle_id_env[0] == '\0') throw std::runtime_error("ODYSSEY_VEHICLE_ID is not set.");
             vehicle_id_ = vehicle_id_env;
 
+            RCLCPP_INFO(get_logger(), "Initializing vehicle '%s'.", vehicle_id_.c_str());
+
             rclcpp::QoS ready_qos(1);
             ready_qos.transient_local();
             ready_qos.reliable();
-            ready_publisher_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", ready_qos);
+            ready_publisher_ = create_publisher<std_msgs::msg::Bool>(
+                vehicle_id_ + "/ready", ready_qos
+            );
 
             mission_file_env = std::getenv("ODYSSEY_MISSION_FILE");
             if (mission_file_env == nullptr || mission_file_env[0] == '\0') throw std::runtime_error("ODYSSEY_MISSION_FILE is not set.");
@@ -35,8 +39,6 @@ class OdysseyNode : public rclcpp::Node {
 
             fault_file_env = std::getenv("ODYSSEY_FAULT_FILE");
             if (fault_file_env != nullptr && fault_file_env[0] != '\0') fault_file_ = fault_file_env;
-
-            RCLCPP_INFO(get_logger(), "Initializing vehicle '%s'.", vehicle_id_.c_str());
 
             if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize Odyssey simulator.");
 
