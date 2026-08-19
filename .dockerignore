@@ -1,9 +1,0 @@
-.git
-.gitignore
-*.o
-sim
-sim_debug
-edit_struct
-system.log
-__pycache__/
-*.pyc

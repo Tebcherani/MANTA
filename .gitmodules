@@ -1,0 +1,3 @@
+[submodule "vehicles/odyssey"]
+	path = vehicles/odyssey
+	url = https://github.com/Tebcherani/Odyssey_Simulator

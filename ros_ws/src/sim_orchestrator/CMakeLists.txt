@@ -29,10 +29,10 @@ add_executable(
 target_include_directories(
   sim_orchestrator_node
   PRIVATE
-    /odyssey/include
-    /odyssey/src/Common
-    /odyssey/src/World
-    /odyssey/src/Simulation
+    /odyssey/vehicles/odyssey/include
+    /odyssey/vehicles/odyssey/src/Common
+    /odyssey/vehicles/odyssey/src/World
+    /odyssey/vehicles/odyssey/src/Simulation
 )
 
 # -------------------------------------------------------------------------
@@ -51,9 +51,9 @@ ament_target_dependencies(
 
 target_link_libraries(
   sim_orchestrator_node
-  /odyssey/libsimulation.a
-  /odyssey/libworld_sim.a
-  /odyssey/libsim_common.a
+  /odyssey/vehicles/odyssey/lib/libsimulation.a
+  /odyssey/vehicles/odyssey/lib/libworld_sim.a
+  /odyssey/vehicles/odyssey/lib/libsim_common.a
 )
 
 # -------------------------------------------------------------------------

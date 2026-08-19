@@ -29,14 +29,15 @@ add_executable(
 target_include_directories(
   odyssey_node
   PRIVATE
-    /odyssey/include
-    /odyssey/src/Common
-    /odyssey/src/World
-    /odyssey/src/Odyssey
-    /odyssey/src/Odyssey/Vehicle
-    /odyssey/src/Odyssey/Simulator
-    /odyssey/src/Odyssey/Simulator/Faults
-    /odyssey/src/Odyssey/Simulator/Sensors
+    /odyssey/vehicles/odyssey/include
+    /odyssey/vehicles/odyssey/src/Common
+    /odyssey/vehicles/odyssey/src/World
+    /odyssey/vehicles/odyssey/src/Sensors
+    /odyssey/vehicles/odyssey/src/Odyssey
+    /odyssey/vehicles/odyssey/src/Odyssey/Vehicle
+    /odyssey/vehicles/odyssey/src/Odyssey/Simulator
+    /odyssey/vehicles/odyssey/src/Odyssey/Simulator/Faults
+    /odyssey/vehicles/odyssey/src/Odyssey/Simulator/Sensors
 )
 
 # -------------------------------------------------------------------------
@@ -55,9 +56,9 @@ ament_target_dependencies(
 
 target_link_libraries(
   odyssey_node
-  /odyssey/libodyssey.a
-  /odyssey/libsim_sensors.a
-  /odyssey/libsim_common.a
+  /odyssey/vehicles/odyssey/lib/libodyssey.a
+  /odyssey/vehicles/odyssey/lib/libsim_sensors.a
+  /odyssey/vehicles/odyssey/lib/libsim_common.a
   lapacke
   lapack
   blas
