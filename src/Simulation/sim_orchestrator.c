@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     if (!init_odyssey_sim()) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
     if (!update_odyssey_sim_time(sim_state.sim_time)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
-    if (!start_odyssey_sim(options.mission_file, options.fault_file, sim_state.calendar_start_time)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
+    if (!start_odyssey_sim(options.fault_file, sim_state.calendar_start_time)) exit_sim(EXIT_FAILURE, 0, options.behavior_dump_file);
 
 /* 
    This is the MAIN LOOP: initialize time, run loop, increment time at end

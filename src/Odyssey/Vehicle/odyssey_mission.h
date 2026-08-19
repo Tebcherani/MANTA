@@ -24,7 +24,7 @@ struct command {
 int stack_busy(struct command *);
 
 int init_mission_time(time_t);
-int init_odyssey_mission(const char *, const char *);
+int init_odyssey_mission(const char *);
 int update_odyssey_mission(void);
 
 int match_behavior(const char *);

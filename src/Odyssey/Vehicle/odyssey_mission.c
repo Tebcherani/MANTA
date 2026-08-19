@@ -190,16 +190,10 @@ int init_mission_time(time_t calendar_start_time) {
     return 1;
 }
 
-int init_odyssey_mission(const char *file_name, const char *mission_dir) {
+int init_odyssey_mission(const char *mission_path) {
     FILE *file;
-    char path[MAX_LINE];
 
-    if (snprintf(path, sizeof(path), "%s/%s", mission_dir, file_name) >= sizeof(path)) {
-        write_to_sim_log("[odyssey_mission] Mission path is too long.\n");
-        return 0;
-    }
-
-    file = fopen(path, "r");
+    file = fopen(mission_path, "r");
     if (file == NULL) {
         write_to_sim_log("[load_mission] Failed to open mission file.\n");
         return 0;

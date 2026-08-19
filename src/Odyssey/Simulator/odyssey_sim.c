@@ -20,9 +20,9 @@ static int init_odyssey_config(void) {
         return 0;
     }
 
-    config.mission_dir = getenv("ODYSSEY_MISSION_DIR");
-    if (config.mission_dir == NULL || config.mission_dir[0] == '\0') {
-        write_to_sim_log("[odyssey_sim] ODYSSEY_MISSION_DIR is not set.\n");
+    config.mission_path = getenv("MISSION_PATH");
+    if (config.mission_path == NULL || config.mission_path[0] == '\0') {
+        write_to_sim_log("[odyssey_sim] MISSION_PATH is not set.\n");
         return 0;
     }
 
@@ -56,8 +56,8 @@ int init_odyssey_sim() {
     return 1;
 }
 
-int start_odyssey_sim(const char *mission_file, const char *fault_file, time_t calendar_start_time) {
-    if (!start_odyssey(config.vehicle_id, mission_file, config.mission_dir, config.fault_dir, config.data_dir, calendar_start_time)) return 0;
+int start_odyssey_sim(const char *fault_file, time_t calendar_start_time) {
+    if (!start_odyssey(config.vehicle_id, config.mission_path, config.fault_dir, config.data_dir, calendar_start_time)) return 0;
     if (!init_odyssey_model(config.model_path)) return 0;
     if (!load_faults(fault_file ? fault_file : vvp->fault_file_name, &config)) return 0;
     if (!init_odyssey_state()) return 0;
