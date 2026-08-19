@@ -24,14 +24,7 @@ class OdysseyNode : public rclcpp::Node {
             if (vehicle_id_env == nullptr || vehicle_id_env[0] == '\0') throw std::runtime_error("ODYSSEY_VEHICLE_ID is not set.");
             vehicle_id_ = vehicle_id_env;
 
-            RCLCPP_INFO(get_logger(), "Initializing vehicle '%s'.", vehicle_id_.c_str());
-
-            rclcpp::QoS ready_qos(1);
-            ready_qos.transient_local();
-            ready_qos.reliable();
-            ready_publisher_ = create_publisher<std_msgs::msg::Bool>(
-                vehicle_id_ + "/ready", ready_qos
-            );
+            RCLCPP_INFO(get_logger(), "%s waiting for simulation log file.", vehicle_id_.c_str());
 
             mission_file_env = std::getenv("ODYSSEY_MISSION_FILE");
             if (mission_file_env == nullptr || mission_file_env[0] == '\0') throw std::runtime_error("ODYSSEY_MISSION_FILE is not set.");
@@ -40,16 +33,16 @@ class OdysseyNode : public rclcpp::Node {
             fault_file_env = std::getenv("ODYSSEY_FAULT_FILE");
             if (fault_file_env != nullptr && fault_file_env[0] != '\0') fault_file_ = fault_file_env;
 
-            if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize Odyssey simulator.");
+            rclcpp::QoS ready_qos(1);
+            ready_qos.transient_local();
+            ready_qos.reliable();
+            ready_publisher_ = create_publisher<std_msgs::msg::Bool>(
+                vehicle_id_ + "/ready", ready_qos
+            );
 
-            const time_t calendar_start_time = std::time(nullptr);  // Temporarily use current time
-            const char *fault_file = fault_file_.empty() ? nullptr : fault_file_.c_str();   // Convert C++ string to char *
-            if (!start_odyssey_sim(mission_file_.c_str(), fault_file, calendar_start_time)) throw std::runtime_error("Failed to start Odyssey simulator.");
-
-            ready_message.data = true;
-            ready_publisher_->publish(ready_message);
-
-            RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str());
+            startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", ready_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+                if (msg->data && !initialized_) initialize_odyssey();
+            });
         }
 
         // Destructor
@@ -58,11 +51,33 @@ class OdysseyNode : public rclcpp::Node {
         }
 
     private:
+        void initialize_odyssey() {
+            if (init_odyssey_sim()) RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
+            else throw std::runtime_error("Failed to initialize " + vehicle_id_ + ".");
+
+            const time_t calendar_start_time = std::time(nullptr);  // Temporarily use current time
+            const char *fault_file = fault_file_.empty() ? nullptr : fault_file_.c_str();   // Convert C++ string to char *
+            if (start_odyssey_sim(mission_file_.c_str(), fault_file, calendar_start_time)) RCLCPP_INFO(get_logger(), "Started '%s' simulator.", vehicle_id_.c_str());
+            else throw std::runtime_error("Failed to start " + vehicle_id_ + ".");
+
+            initialized_ = true;
+
+            std_msgs::msg::Bool ready_message;
+            ready_message.data = true;
+
+            ready_publisher_->publish(ready_message);
+
+            RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str());
+        }
+
         std::string vehicle_id_;
         std::string mission_file_;
         std::string fault_file_;
 
+        bool initialized_ = false;
+
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_publisher_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
 };
 
 

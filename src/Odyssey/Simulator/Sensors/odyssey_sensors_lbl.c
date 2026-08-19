@@ -1,6 +1,7 @@
 #include "odyssey.h"
 #include "odyssey_sensors.h"
 #include "sensor_lbl.h"
+#include "sim_log.h"
 
 #include "vehicle.h"
 

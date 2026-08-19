@@ -17,6 +17,12 @@ COMMON_CPPFLAGS = \
 	-Iinclude \
 	-Isrc/Common
 
+APPLICATION_CPPFLAGS = \
+	$(COMMON_CPPFLAGS) \
+	-Isrc/Application \
+	-Isrc/Simulation \
+	-Isrc/World
+
 SIM_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
 	-Isrc/Application \
@@ -80,19 +86,15 @@ COMMON_SRCS = \
 	src/Common/unit_utils.c
 
 # -------------------------------------------------------------------------
-# Generic reusable sensor simulation sources
+# Application sources
 # -------------------------------------------------------------------------
-#
-# These sources form libsim_sensors.a.
-#
-# Sensor models in this library should not depend on:
-#
-#   - Odyssey sensor IDs such as M_*, REAL_*, U_*, or C_*
-#   - Odyssey vehicle globals
-#   - Odyssey navigation/control/autonomy logic
-#
-# Vehicle-specific adapter code remains under src/Odyssey.
-#
+
+APPLICATION_SRCS = \
+	src/Application/command_line.c
+
+# -------------------------------------------------------------------------
+# Generic reusable sensor sources
+# -------------------------------------------------------------------------
 
 SENSOR_SRCS = \
 	src/Sensors/sensor_accelerometer.c \
@@ -107,18 +109,17 @@ SENSOR_SRCS = \
 	src/Sensors/sensor_water_temp.c
 
 # -------------------------------------------------------------------------
-# Simulation application sources
+# Simulation sources
 # -------------------------------------------------------------------------
 
 SIM_SRCS = \
-	src/Application/command_line.c \
 	src/Simulation/sim_config.c \
 	src/Simulation/sim_exit.c \
 	src/Simulation/sim_orchestrator.c \
 	src/Simulation/sim_state.c
 
 # -------------------------------------------------------------------------
-# World simulator sources
+# World sources
 # -------------------------------------------------------------------------
 
 WORLD_SRCS = \
@@ -165,6 +166,7 @@ ODYSSEY_SRCS = \
 # -------------------------------------------------------------------------
 
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
+APPLICATION_OBJS = $(APPLICATION_SRCS:%.c=$(BUILD_DIR)/%.o)
 SENSOR_OBJS = $(SENSOR_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
 WORLD_OBJS = $(WORLD_SRCS:%.c=$(BUILD_DIR)/%.o)
@@ -174,9 +176,10 @@ ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 # Static libraries
 # -------------------------------------------------------------------------
 
-ODYSSEY_LIB = libodyssey.a
-SENSOR_LIB = libsim_sensors.a
 COMMON_LIB = libsim_common.a
+APPLICATION_LIB = libsim_application.a
+SENSOR_LIB = libsim_sensors.a
+ODYSSEY_LIB = libodyssey.a
 
 # -------------------------------------------------------------------------
 # edit_struct
@@ -210,24 +213,19 @@ EDIT_STRUCT_SRC = tools/edit_struct.c
 all: $(TARGET)
 
 # -------------------------------------------------------------------------
-# Sensor library
+# Static library build rules
 # -------------------------------------------------------------------------
+
+$(COMMON_LIB): $(COMMON_OBJS)
+	$(AR) rcs $@ $^
+
+$(APPLICATION_LIB): $(APPLICATION_OBJS)
+	$(AR) rcs $@ $^
 
 $(SENSOR_LIB): $(SENSOR_OBJS)
 	$(AR) rcs $@ $^
 
-# -------------------------------------------------------------------------
-# Odyssey library
-# -------------------------------------------------------------------------
-
 $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
-	$(AR) rcs $@ $^
-
-# -------------------------------------------------------------------------
-# Common library
-# -------------------------------------------------------------------------
-
-$(COMMON_LIB): $(COMMON_OBJS)
 	$(AR) rcs $@ $^
 
 # -------------------------------------------------------------------------
@@ -239,6 +237,7 @@ $(TARGET): \
 	$(WORLD_OBJS) \
 	$(ODYSSEY_LIB) \
 	$(SENSOR_LIB) \
+	$(APPLICATION_LIB) \
 	$(COMMON_LIB)
 
 	$(CC) $(CFLAGS) -o $@ \
@@ -246,6 +245,7 @@ $(TARGET): \
 		$(WORLD_OBJS) \
 		$(ODYSSEY_LIB) \
 		$(SENSOR_LIB) \
+		$(APPLICATION_LIB) \
 		$(COMMON_LIB) \
 		$(LDFLAGS)
 
@@ -306,11 +306,11 @@ mission-constructor-web:
 # Compile rules
 # -------------------------------------------------------------------------
 
-$(BUILD_DIR)/src/Simulation/%.o: src/Simulation/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
-
 $(BUILD_DIR)/src/Application/%.o: src/Application/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(APPLICATION_CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_DIR)/src/Simulation/%.o: src/Simulation/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
@@ -337,9 +337,10 @@ $(BUILD_DIR)/src/Common/%.o: src/Common/%.c
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -f \
-		$(ODYSSEY_LIB) \
-		$(SENSOR_LIB) \
 		$(COMMON_LIB) \
+		$(APPLICATION_LIB) \
+		$(SENSOR_LIB) \
+		$(ODYSSEY_LIB) \
 		$(TARGET) \
 		sim_debug \
 		$(EDIT_STRUCT)

@@ -10,18 +10,10 @@ static const char *path = NULL;
 int open_sim_log(void) {
     path = getenv("SIM_LOG_PATH");
 
-    if (path == NULL || path[0] == '\0') {
-        fprintf(stderr, "\n[sim_log] SIM_LOG_PATH is not set.\n");
-        return 0;
-    }
+    if (path == NULL || path[0] == '\0') return 0;
 
     file = fopen(path, "w");
-    if (file == NULL) {
-        perror(path);
-        return 0;
-    }
-
-    write_to_sim_log("\n[sim_log] Sim log opened.\n");
+    if (file == NULL) return 0;
 
     return 1;
 }
@@ -46,10 +38,7 @@ int write_to_sim_log(const char *fmt, ...) {
     va_list args_terminal;
     va_list args_log;
 
-    if (file == NULL) {
-        fprintf(stderr, "Simulation log is not open.\n");
-        return 0;
-    }
+    if (file == NULL) return 0;
 
     if (fmt == NULL) {
         fprintf(stderr, "Simulation log format string is NULL.\n");

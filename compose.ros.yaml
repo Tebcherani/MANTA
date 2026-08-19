@@ -62,6 +62,7 @@ services:
 
     environment:
       ROS_DOMAIN_ID: 1
+      SIM_LOG_PATH: /odyssey/output/Logs/sim_orchestrator.log
 
     volumes:
       - type: bind

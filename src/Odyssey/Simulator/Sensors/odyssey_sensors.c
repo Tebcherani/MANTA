@@ -1,4 +1,5 @@
 #include "odyssey_sensors.h"
+#include "sim_log.h"
 
 static compass_state_t compass_state;
 static inclinometer_state_t inclinometer_state;

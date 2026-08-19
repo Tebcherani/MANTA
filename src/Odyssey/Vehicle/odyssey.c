@@ -1,11 +1,13 @@
 #include <stdio.h>
 
 #include "odyssey.h"
+#include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "odyssey_nav.h"
 #include "odyssey_control.h"
 #include "ody_var.h"
+#include "sim_log.h"
 
 static FILE *datafile = NULL;
 

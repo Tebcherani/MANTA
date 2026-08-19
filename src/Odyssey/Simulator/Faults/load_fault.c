@@ -18,6 +18,7 @@
 
 #include "load_fault.h"
 #include "odyssey.h"
+#include "odyssey_data_struct.h"
 #include "odyssey_sim.h"
 #include "paths.h"
 #include "sim_log.h"

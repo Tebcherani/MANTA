@@ -6,6 +6,7 @@
 #include "sensor_accelerometer.h"
 #include "sensor_compass.h"
 #include "sensor_gyro.h"
+#include "sim_log.h"
 #include "world_sim.h"
 
 #include "vehicle.h"

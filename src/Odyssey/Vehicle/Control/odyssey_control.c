@@ -1,5 +1,6 @@
 #include "dynamic_control.h"
 #include "layered_control.h"
+#include "load_fault.h"
 #include "odyssey_control.h"
 #include "odyssey_data_struct.h"
 #include "vehicle.h"
