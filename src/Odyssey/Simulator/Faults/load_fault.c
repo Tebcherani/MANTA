@@ -92,23 +92,7 @@ static int    eval_comparison( const Comparison *c );
 /* PUBLIC API                                                          */
 /* ================================================================== */
 
-/*--------------------------------------------------------------------
-  GET_FAULT_FILE_NAME
-  Returns the bare filename of the last successfully opened fault file,
-  or "" if none was loaded.  Used by log_data.c to embed the fault
-  scenario in the ODB header.
- --------------------------------------------------------------------*/
-const char *get_fault_file_name( void )
-{
-    return loaded_fname;
-}
-
-const char *get_fault_file_path( void )
-{
-    return loaded_path;
-}
-
-int load_faults( const char *fname, const odyssey_config_t *config )
+int load_faults(const char *fault_path)
 {
     FILE *fp;
     int   lineno = 0;
@@ -119,22 +103,12 @@ int load_faults( const char *fname, const odyssey_config_t *config )
     loaded_path[0] = '\0';
     vvp->fault_file_name[0] = '\0';
 
-    if (fname == NULL || fname[0] == '\0') {
+    if (fault_path == NULL) {
         write_to_sim_log("[load_faults] No fault file specified.\n");
         return 1;
     }
 
-    strncpy( loaded_fname, fname, sizeof(loaded_fname) - 1 );
-    strncpy( vvp->fault_file_name, fname,
-             sizeof(vvp->fault_file_name) - 1 );
-
-    if ( ody_path_is_explicit(fname) || ody_file_exists(fname) )
-	strcpy( fullpath, fname );
-    else
-	ody_join_path( fullpath, sizeof(fullpath), config->fault_dir, fname );
-    strncpy( loaded_path, fullpath, sizeof(loaded_path) - 1 );
-
-    fp = fopen(fullpath, "r");
+    fp = fopen(fault_path, "r");
     if (fp == NULL) {
         write_to_sim_log("[load_faults] Optional fault file not found.\n");
         return 1;

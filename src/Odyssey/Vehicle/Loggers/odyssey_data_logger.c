@@ -14,30 +14,23 @@
 #include "time_utils.h"
 #include "vehicle.h"
 
-static void write_fault_header(FILE *, const odyssey_config_t *);
+static void write_fault_header(FILE *, const char *);
 static void write_mission_header(FILE **, const char *);
 
-static void write_fault_header( FILE *datafile, const odyssey_config_t *config )
+static void write_fault_header(FILE *datafile, const char *fault_path)
 {
     FILE       *ffd;
     char        fd_path[256];
     char        line[256];
     int         n_lines = 0;
-    const char *fname   = get_fault_file_name();
 
     fprintf( datafile,
         "# ===== FAULT_FILE_BEGIN ================================\xa" );
 
-    if ( fname == NULL || fname[0] == '\0' ) {
-        fprintf( datafile, "# (no fault file loaded)\xa" );
+    if (fault_path == NULL) {
+        fprintf( datafile, "# (no fault file)\xa" );
     } else {
-        fprintf( datafile, "# fault file: %s\xa", fname );
-        strncpy( fd_path, get_fault_file_path(), sizeof(fd_path) - 1 );
-        fd_path[sizeof(fd_path) - 1] = '\0';
-        if ( fd_path[0] == '\0' )
-            ody_join_path( fd_path, sizeof(fd_path), config->fault_dir, fname );
-
-        if ( (ffd = fopen(fd_path, "r")) == NULL ) {
+        if ( (ffd = fopen(fault_path, "r")) == NULL ) {
             fprintf( datafile,
                 "# WARNING: could not open %s for embedding\xa", fd_path );
         } else {
@@ -82,7 +75,7 @@ static void write_mission_header(FILE **datafile, const char *mission_path) {
     fprintf(datafile, "# ===== MISSION_FILE_END ================================\xa");
 }
 
-init_odyssey_data_logger(FILE **datafile, const char *vehicle_id, const char *data_dir, const char *mission_path, const char *fault_dir) {
+init_odyssey_data_logger(FILE **datafile, const char *vehicle_id, const char *data_dir, const char *mission_path, const char *fault_path) {
     int i = 0;
     int j, beh_id, offset, run_number;
     int path_length;
@@ -146,7 +139,7 @@ init_odyssey_data_logger(FILE **datafile, const char *vehicle_id, const char *da
     fprintf(*datafile, "%s     # OS-9 file creation time\xa", time_string);
     fprintf(*datafile, "%s     # Structure creation time\xa", vvp->creation_date);
 
-    write_fault_header(*datafile, fault_dir);
+    write_fault_header(*datafile, fault_path);
     write_mission_header(*datafile, mission_path);
 
     for (i = 0; i <= vvp->last_s; i++) {

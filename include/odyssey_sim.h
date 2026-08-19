@@ -8,7 +8,7 @@
 
 typedef struct {
     const char *data_dir;
-    const char *fault_dir;
+    const char *fault_path;
     const char *mission_path;
     const char *model_path;
     const char *vehicle_id;

@@ -15,10 +15,10 @@ int init_odyssey(void) {
     return 1;
 }
 
-int start_odyssey(const char *vehicle_id, const char *mission_path, const char *fault_dir, const char *data_dir, time_t calendar_start_time) {
+int start_odyssey(const char *vehicle_id, const char *mission_path, const char *fault_path, const char *data_dir, time_t calendar_start_time) {
     if (!init_mission_time(calendar_start_time)) return 0;
     if (!init_odyssey_mission(mission_path)) return 0;
-    if (!init_odyssey_data_logger(&datafile, vehicle_id, data_dir, mission_path, fault_dir)) return 0;
+    if (!init_odyssey_data_logger(&datafile, vehicle_id, data_dir, mission_path, fault_path)) return 0;
 
     return 1;
 }

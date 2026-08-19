@@ -7,7 +7,7 @@ services:
 
     environment: 
       ODYSSEY_DATA_DIR: /odyssey/output/Data
-      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
+      FAULT_PATH: "" #/odyssey/assets/Faults
       MISSION_PATH: /odyssey/assets/Missions/dive240.mi
       SIM_LOG_PATH: /odyssey/output/Logs/simulation.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd

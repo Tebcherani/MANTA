@@ -8,7 +8,7 @@ services:
     environment:
       ODYSSEY_VEHICLE_ID: odyssey_1
       ODYSSEY_DATA_DIR: /odyssey/output/Data
-      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
+      FAULT_PATH: "" #/odyssey/assets/Faults
       MISSION_PATH: /odyssey/assets/Missions/dive240.mi
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd
@@ -37,7 +37,7 @@ services:
     environment:
       ODYSSEY_VEHICLE_ID: odyssey_2
       ODYSSEY_DATA_DIR: /odyssey/output/Data
-      ODYSSEY_FAULT_DIR: /odyssey/assets/Faults
+      FAULT_PATH: "" #/odyssey/assets/Faults
       MISSION_PATH: /odyssey/assets/Missions/dive240_diff.mi
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_2.log
       VEHICLE_PATH: /odyssey/assets/Vehicles/Borealis.vd

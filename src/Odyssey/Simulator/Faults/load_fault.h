@@ -3,9 +3,7 @@
 
 #include "odyssey_sim.h"
 
-int load_faults(const char *fname, const odyssey_config_t *config);
+int load_faults(const char *);
 void apply_faults(void);
-const char *get_fault_file_name(void);
-const char *get_fault_file_path(void);
 
 #endif
