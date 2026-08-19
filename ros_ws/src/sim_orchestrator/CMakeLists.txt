@@ -30,7 +30,6 @@ target_include_directories(
   sim_orchestrator_node
   PRIVATE
     /odyssey/include
-    /odyssey/src/Application
     /odyssey/src/Common
     /odyssey/src/World
     /odyssey/src/Simulation

@@ -17,15 +17,8 @@ COMMON_CPPFLAGS = \
 	-Iinclude \
 	-Isrc/Common
 
-APPLICATION_CPPFLAGS = \
-	$(COMMON_CPPFLAGS) \
-	-Isrc/Application \
-	-Isrc/Simulation \
-	-Isrc/World
-
 SIM_CPPFLAGS = \
 	$(COMMON_CPPFLAGS) \
-	-Isrc/Application \
 	-Isrc/Simulation \
 	-Isrc/World
 
@@ -84,13 +77,6 @@ COMMON_SRCS = \
 	src/Common/sim_log.c \
 	src/Common/time_utils.c \
 	src/Common/unit_utils.c
-
-# -------------------------------------------------------------------------
-# Application sources
-# -------------------------------------------------------------------------
-
-APPLICATION_SRCS = \
-	src/Application/command_line.c
 
 # -------------------------------------------------------------------------
 # Sensor sources
@@ -166,7 +152,6 @@ ODYSSEY_SRCS = \
 # -------------------------------------------------------------------------
 
 COMMON_OBJS = $(COMMON_SRCS:%.c=$(BUILD_DIR)/%.o)
-APPLICATION_OBJS = $(APPLICATION_SRCS:%.c=$(BUILD_DIR)/%.o)
 SENSOR_OBJS = $(SENSOR_SRCS:%.c=$(BUILD_DIR)/%.o)
 SIM_OBJS = $(SIM_SRCS:%.c=$(BUILD_DIR)/%.o)
 WORLD_OBJS = $(WORLD_SRCS:%.c=$(BUILD_DIR)/%.o)
@@ -177,7 +162,6 @@ ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 # -------------------------------------------------------------------------
 
 COMMON_LIB = libsim_common.a
-APPLICATION_LIB = libsim_application.a
 SENSOR_LIB = libsim_sensors.a
 SIMULATION_LIB = libsimulation.a
 WORLD_LIB = libworld_sim.a
@@ -221,9 +205,6 @@ all: $(TARGET)
 $(COMMON_LIB): $(COMMON_OBJS)
 	$(AR) rcs $@ $^
 
-$(APPLICATION_LIB): $(APPLICATION_OBJS)
-	$(AR) rcs $@ $^
-
 $(SENSOR_LIB): $(SENSOR_OBJS)
 	$(AR) rcs $@ $^
 
@@ -245,7 +226,6 @@ $(TARGET): \
 	$(WORLD_LIB) \
 	$(ODYSSEY_LIB) \
 	$(SENSOR_LIB) \
-	$(APPLICATION_LIB) \
 	$(COMMON_LIB)
 
 	$(CC) $(CFLAGS) -o $@ \
@@ -253,7 +233,6 @@ $(TARGET): \
 		$(WORLD_LIB) \
 		$(ODYSSEY_LIB) \
 		$(SENSOR_LIB) \
-		$(APPLICATION_LIB) \
 		$(COMMON_LIB) \
 		$(LDFLAGS)
 
@@ -314,10 +293,6 @@ mission-constructor-web:
 # Compile rules
 # -------------------------------------------------------------------------
 
-$(BUILD_DIR)/src/Application/%.o: src/Application/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(APPLICATION_CPPFLAGS) $(CFLAGS) -c -o $@ $<
-
 $(BUILD_DIR)/src/Simulation/%.o: src/Simulation/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SIM_CPPFLAGS) $(CFLAGS) -c -o $@ $<
@@ -346,7 +321,6 @@ clean:
 	rm -rf $(BUILD_DIR)
 	rm -f \
 		$(COMMON_LIB) \
-		$(APPLICATION_LIB) \
 		$(SENSOR_LIB) \
 		$(SIMULATION_LIB) \
 		$(WORLD_LIB) \

@@ -3,6 +3,6 @@
 
 #include "odyssey_sim.h"
 
-void exit_sim(int, int, const char *);
+void exit_sim(int);
 
 #endif

@@ -73,6 +73,9 @@ class SimOrchestratorNode : public rclcpp::Node {
         bool odyssey_1_ready_ = false;
         bool odyssey_2_ready_ = false;
 
+        sim_config_t sim_config_;
+        const world_state_t *world_state_ = nullptr;
+
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr startup_ready_pub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_1_ready_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_2_ready_sub_;
