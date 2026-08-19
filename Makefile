@@ -2,8 +2,6 @@
 # Target: Linux / GCC
 # Build:  make
 # Run:    make run-sim MISSION=dive240.mi
-#
-# Simulation output is written outside the source tree.
 
 CC = gcc
 AR = ar
@@ -47,6 +45,13 @@ CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
 LDFLAGS = -llapacke -llapack -lblas -lm
 
 # -------------------------------------------------------------------------
+# Build directories
+# -------------------------------------------------------------------------
+
+BUILD_DIR = build
+LIB_DIR = lib
+
+# -------------------------------------------------------------------------
 # Executable
 # -------------------------------------------------------------------------
 
@@ -57,8 +62,6 @@ PROJECT_DIR := $(abspath .)
 SIM_EXE := $(PROJECT_DIR)/$(TARGET)$(EXEEXT)
 
 MISSION ?= dive240.mi
-
-BUILD_DIR = build
 
 # -------------------------------------------------------------------------
 # Runtime output
@@ -81,17 +84,6 @@ COMMON_SRCS = \
 # -------------------------------------------------------------------------
 # Generic reusable sensor simulation sources
 # -------------------------------------------------------------------------
-#
-# These sources form libsim_sensors.a.
-#
-# Sensor models in this library should not depend on:
-#
-#   - Odyssey sensor IDs such as M_*, REAL_*, U_*, or C_*
-#   - Odyssey vehicle globals
-#   - Odyssey navigation/control/autonomy logic
-#
-# Vehicle-specific adapter code remains under src/Odyssey.
-#
 
 SENSOR_SRCS = \
 	src/Sensors/sensor_accelerometer.c \
@@ -106,7 +98,7 @@ SENSOR_SRCS = \
 	src/Sensors/sensor_water_temp.c
 
 # -------------------------------------------------------------------------
-# Simulation application sources
+# Simulation sources
 # -------------------------------------------------------------------------
 
 SIM_SRCS = \
@@ -171,8 +163,18 @@ ODYSSEY_OBJS = $(ODYSSEY_SRCS:%.c=$(BUILD_DIR)/%.o)
 # Static libraries
 # -------------------------------------------------------------------------
 
-ODYSSEY_LIB = libodyssey.a
-SENSOR_LIB = libsim_sensors.a
+COMMON_LIB = $(LIB_DIR)/libsim_common.a
+SENSOR_LIB = $(LIB_DIR)/libsim_sensors.a
+SIMULATION_LIB = $(LIB_DIR)/libsimulation.a
+WORLD_LIB = $(LIB_DIR)/libworld_sim.a
+ODYSSEY_LIB = $(LIB_DIR)/libodyssey.a
+
+LIBRARIES = \
+	$(COMMON_LIB) \
+	$(SENSOR_LIB) \
+	$(SIMULATION_LIB) \
+	$(WORLD_LIB) \
+	$(ODYSSEY_LIB)
 
 # -------------------------------------------------------------------------
 # edit_struct
@@ -187,6 +189,7 @@ EDIT_STRUCT_SRC = tools/edit_struct.c
 
 .PHONY: \
 	all \
+	libraries \
 	clean \
 	debug \
 	edit_struct \
@@ -206,36 +209,48 @@ EDIT_STRUCT_SRC = tools/edit_struct.c
 all: $(TARGET)
 
 # -------------------------------------------------------------------------
-# Sensor library
+# Build all static libraries
 # -------------------------------------------------------------------------
 
-$(SENSOR_LIB): $(SENSOR_OBJS)
+libraries: $(LIBRARIES)
+
+# -------------------------------------------------------------------------
+# Static library build rules
+# -------------------------------------------------------------------------
+
+$(COMMON_LIB): $(COMMON_OBJS)
+	@mkdir -p $(LIB_DIR)
 	$(AR) rcs $@ $^
 
-# -------------------------------------------------------------------------
-# Odyssey library
-# -------------------------------------------------------------------------
+$(SENSOR_LIB): $(SENSOR_OBJS)
+	@mkdir -p $(LIB_DIR)
+	$(AR) rcs $@ $^
+
+$(SIMULATION_LIB): $(SIM_OBJS)
+	@mkdir -p $(LIB_DIR)
+	$(AR) rcs $@ $^
+
+$(WORLD_LIB): $(WORLD_OBJS)
+	@mkdir -p $(LIB_DIR)
+	$(AR) rcs $@ $^
 
 $(ODYSSEY_LIB): $(ODYSSEY_OBJS)
+	@mkdir -p $(LIB_DIR)
 	$(AR) rcs $@ $^
 
 # -------------------------------------------------------------------------
 # Simulator executable
 # -------------------------------------------------------------------------
 
-$(TARGET): \
-	$(SIM_OBJS) \
-	$(WORLD_OBJS) \
-	$(COMMON_OBJS) \
-	$(ODYSSEY_LIB) \
-	$(SENSOR_LIB)
-
+$(TARGET): $(LIBRARIES)
 	$(CC) $(CFLAGS) -o $@ \
-		$(SIM_OBJS) \
-		$(WORLD_OBJS) \
-		$(COMMON_OBJS) \
+		-Wl,--start-group \
+		$(SIMULATION_LIB) \
+		$(WORLD_LIB) \
 		$(ODYSSEY_LIB) \
 		$(SENSOR_LIB) \
+		$(COMMON_LIB) \
+		-Wl,--end-group \
 		$(LDFLAGS)
 
 # -------------------------------------------------------------------------
@@ -321,9 +336,8 @@ $(BUILD_DIR)/src/Common/%.o: src/Common/%.c
 
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -rf $(LIB_DIR)
 	rm -f \
-		$(ODYSSEY_LIB) \
-		$(SENSOR_LIB) \
 		$(TARGET) \
 		sim_debug \
 		$(EDIT_STRUCT)
