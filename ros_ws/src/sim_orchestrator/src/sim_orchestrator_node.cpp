@@ -6,6 +6,8 @@
 #include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/int64.hpp"
 
+#include "manta_interfaces/msg/sim_step.hpp"
+
 extern "C" {
     #include "sim_config.h"
     #include "sim_log.h"
@@ -35,6 +37,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             // -----------------------------------------------------------------
             calendar_start_time_pub_ = create_publisher<std_msgs::msg::Int64>("/sim/calendar_start_time", ready_qos);
             startup_ready_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/startup_ready", ready_qos);
+            sim_step_pub_ = create_publisher<manta_interfaces::msg::SimStep>("/sim/step", 10);
             sim_time_pub_ = create_publisher<std_msgs::msg::Float64>("/sim/time", ready_qos);
 
             // ----------------------------------------------------------------- 
@@ -107,8 +110,18 @@ class SimOrchestratorNode : public rclcpp::Node {
 
     private:
         void check_all_ready() {
+            manta_interfaces::msg::SimStep step_message;
+
             if (odyssey_1_ready_ && odyssey_2_ready_) {
                 RCLCPP_INFO(get_logger(), "All Odyssey vehicles are ready.");
+
+                step_message.current_cycle = sim_state_.current_cycle;
+                step_message.sim_time = sim_state_.sim_time;
+                step_message.timestep = sim_config_.timestep;
+                step_message.control_period = sim_config_.control_period;
+
+                sim_step_pub_->publish(step_message);
+                RCLCPP_INFO(get_logger(), "Published simulation step %lu.", step_message.current_cycle);
             }
         }
 
@@ -120,6 +133,7 @@ class SimOrchestratorNode : public rclcpp::Node {
         const world_state_t *world_state_ = nullptr;
 
         rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr calendar_start_time_pub_;
+        rclcpp::Publisher<manta_interfaces::msg::SimStep>::SharedPtr sim_step_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr sim_time_pub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr startup_ready_pub_;
         

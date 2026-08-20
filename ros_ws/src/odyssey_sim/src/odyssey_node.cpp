@@ -9,6 +9,8 @@
 #include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/int64.hpp"
 
+#include "manta_interfaces/msg/sim_step.hpp"
+
 extern "C" {
     #include "odyssey_sim.h"
 }
@@ -41,6 +43,13 @@ class OdysseyNode : public rclcpp::Node {
             // ----------------------------------------------------------------- 
             // Create subscribers
             // -----------------------------------------------------------------
+            calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>( "/sim/calendar_start_time", startup_qos, [this](const std_msgs::msg::Int64::SharedPtr msg) { 
+                calendar_start_time_ = static_cast<time_t>(msg->data);
+                calendar_start_time_received_ = true; 
+                
+                try_finish_init();  
+            });
+            
             startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
                 if (msg->data && !odyssey_initialized_) {
                     if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize " + vehicle_id_ + ".");
@@ -51,19 +60,20 @@ class OdysseyNode : public rclcpp::Node {
                 }
             });
 
-            sim_time_sub_ = create_subscription<std_msgs::msg::Float64>("/sim/time", startup_qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {
-                sim_time_ = msg->data;
-                sim_time_received_ = true;
+            sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
+                "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
+                    RCLCPP_INFO(get_logger(), "%s received cycle %lu at sim time %.2f", vehicle_id_.c_str(), msg->current_cycle, msg->sim_time);
+                }
+            );
 
-                try_finish_init();
-            });
+            sim_time_sub_ = create_subscription<std_msgs::msg::Float64>(
+                "/sim/time", startup_qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {
+                    sim_time_ = msg->data;
+                    sim_time_received_ = true;
 
-            calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>( "/sim/calendar_start_time", startup_qos, [this](const std_msgs::msg::Int64::SharedPtr msg) { 
-                calendar_start_time_ = static_cast<time_t>(msg->data);
-                calendar_start_time_received_ = true; 
-                
-                try_finish_init();  
-            });
+                    try_finish_init();
+                }
+            );
 
             RCLCPP_INFO(get_logger(), "%s waiting for simulation startup data.", vehicle_id_.c_str());
         }
@@ -104,8 +114,10 @@ class OdysseyNode : public rclcpp::Node {
             }
         }
 
-        rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr calendar_start_time_sub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
+
+        rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr calendar_start_time_sub_;
+        rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sim_time_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
 
