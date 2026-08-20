@@ -33,6 +33,8 @@ target_include_directories(
     /odyssey/vehicles/odyssey/src/Common
     /odyssey/vehicles/odyssey/src/World
     /odyssey/vehicles/odyssey/src/Simulation
+    /odyssey/vehicles/odyssey/src/Sensors
+    /odyssey/vehicles/odyssey/src/Odyssey
 )
 
 # -------------------------------------------------------------------------
@@ -51,9 +53,16 @@ ament_target_dependencies(
 
 target_link_libraries(
   sim_orchestrator_node
+  "-Wl,--start-group"
   /odyssey/vehicles/odyssey/lib/libsimulation.a
   /odyssey/vehicles/odyssey/lib/libworld_sim.a
   /odyssey/vehicles/odyssey/lib/libsim_common.a
+  /odyssey/vehicles/odyssey/lib/libsim_sensors.a
+  /odyssey/vehicles/odyssey/lib/libodyssey.a
+  "-Wl,--end-group"
+  lapacke
+  lapack
+  blas
 )
 
 # -------------------------------------------------------------------------

@@ -1,10 +1,13 @@
 #include <cstdlib>
 #include <ctime>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/float64.hpp"
+#include "std_msgs/msg/int64.hpp"
 
 extern "C" {
     #include "odyssey_sim.h"
@@ -13,28 +16,56 @@ extern "C" {
 
 class OdysseyNode : public rclcpp::Node {
     public:
-        // Create the underlying ROS node and name it odyssey_simulator, then execute my Odyssey-specific initialization.
         OdysseyNode() : Node("odyssey_sim") {
             const char *vehicle_id_env;
-            std_msgs::msg::Bool ready_message;
 
-            // Get vehicle ID
+            // ----------------------------------------------------------------- 
+            // Get vehicle ID 
+            // -----------------------------------------------------------------
             vehicle_id_env = std::getenv("ODYSSEY_VEHICLE_ID");
             if (vehicle_id_env == nullptr || vehicle_id_env[0] == '\0') throw std::runtime_error("ODYSSEY_VEHICLE_ID is not set.");
             vehicle_id_ = vehicle_id_env;
 
-            rclcpp::QoS ready_qos(1);
-            ready_qos.transient_local();
-            ready_qos.reliable();
-            ready_publisher_ = create_publisher<std_msgs::msg::Bool>(
-                vehicle_id_ + "/ready", ready_qos
-            );
+            // ----------------------------------------------------------------- 
+            // Startup/ready QoS 
+            // -----------------------------------------------------------------
+            rclcpp::QoS startup_qos(1);
+            startup_qos.transient_local();
+            startup_qos.reliable();
 
-            RCLCPP_INFO(get_logger(), "%s waiting for simulation log file.", vehicle_id_.c_str());
+            // ----------------------------------------------------------------- 
+            // Create publisher 
+            // -----------------------------------------------------------------
+            ready_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", startup_qos);
 
-            startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", ready_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                if (msg->data && !initialized_) initialize_odyssey();
+            // ----------------------------------------------------------------- 
+            // Create subscribers
+            // -----------------------------------------------------------------
+            startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+                if (msg->data && !odyssey_initialized_) {
+                    if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize " + vehicle_id_ + ".");
+                    odyssey_initialized_ = true;
+                    RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
+
+                    try_finish_init();
+                }
             });
+
+            sim_time_sub_ = create_subscription<std_msgs::msg::Float64>("/sim/time", startup_qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {
+                sim_time_ = msg->data;
+                sim_time_received_ = true;
+
+                try_finish_init();
+            });
+
+            calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>( "/sim/calendar_start_time", startup_qos, [this](const std_msgs::msg::Int64::SharedPtr msg) { 
+                calendar_start_time_ = static_cast<time_t>(msg->data);
+                calendar_start_time_received_ = true; 
+                
+                try_finish_init();  
+            });
+
+            RCLCPP_INFO(get_logger(), "%s waiting for simulation startup data.", vehicle_id_.c_str());
         }
 
         // Destructor
@@ -43,32 +74,52 @@ class OdysseyNode : public rclcpp::Node {
         }
 
     private:
-        void initialize_odyssey() {
-            if (init_odyssey_sim()) RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
-            else throw std::runtime_error("Failed to initialize " + vehicle_id_ + ".");
+        void try_finish_init() {
+            if (!odyssey_initialized_) return;
+            if (!sim_time_received_) return;
 
-            const time_t calendar_start_time = std::time(nullptr);  // Temporarily use current time
-            if (start_odyssey_sim(calendar_start_time)) RCLCPP_INFO(get_logger(), "Started '%s' simulator.", vehicle_id_.c_str());
-            else throw std::runtime_error("Failed to start " + vehicle_id_ + ".");
+            // Init Odyssey sim time
+            if (!sim_time_initialized_) {
+                if (!update_odyssey_sim_time(sim_time_)) throw std::runtime_error("Failed to initialize " + vehicle_id_ + " simulation time.");
+                sim_time_initialized_ = true;
+                RCLCPP_INFO(get_logger(), "Initialized '%s' simulation time.", vehicle_id_.c_str());
+            }
 
-            initialized_ = true;
+            if (!calendar_start_time_received_) return;
 
-            std_msgs::msg::Bool ready_message;
-            ready_message.data = true;
+            // Start Odyssey sim
+            if (!odyssey_sim_started_) {
+                if (!start_odyssey_sim(calendar_start_time_)) throw std::runtime_error("Failed to start " + vehicle_id_ + " simulator.");
+                odyssey_sim_started_ = true;
+                RCLCPP_INFO(get_logger(), "Started '%s' simulator.", vehicle_id_.c_str());
+            }
 
-            ready_publisher_->publish(ready_message);
-
-            RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str());
+            // Notify orchestrator that Odyssey init is complete
+            if (!ready_published_) {
+                std_msgs::msg::Bool ready_message;        
+                ready_message.data = true;
+                ready_pub_->publish(ready_message);
+                ready_published_ = true;
+                RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str()); 
+            }
         }
 
-        std::string vehicle_id_;
-
-        bool initialized_ = false;
-
-        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_publisher_;
+        rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr calendar_start_time_sub_;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
+        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sim_time_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
-};
 
+        bool calendar_start_time_received_ = false;
+        bool odyssey_initialized_ = false;
+        bool ready_published_ = false;
+        bool sim_time_initialized_ = false;
+        bool sim_time_received_ = false;
+        bool odyssey_sim_started_ = false;
+
+        time_t calendar_start_time_ = 0;
+        double sim_time_ = 0.0;
+        std::string vehicle_id_;
+}; 
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);   // Initialize ROS 2
