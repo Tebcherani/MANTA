@@ -23,12 +23,19 @@ RUN EXISTING_GROUP=$(getent group ${HOST_GID} | cut -d: -f1) && \
         groupadd -g ${HOST_GID} odyssey && \
         EXISTING_GROUP=odyssey; \
     fi && \
-    useradd \
-        -m \
-        -u ${HOST_UID} \
-        -g "$EXISTING_GROUP" \
-        -s /bin/bash \
-        odyssey
+    EXISTING_USER=$(getent passwd ${HOST_UID} | cut -d: -f1) && \
+    if [ -n "$EXISTING_USER" ]; then \
+        usermod -l odyssey "$EXISTING_USER" && \
+        usermod -d /home/odyssey -m odyssey && \
+        usermod -g "$EXISTING_GROUP" odyssey; \
+    else \
+        useradd \
+            -m \
+            -u ${HOST_UID} \
+            -g "$EXISTING_GROUP" \
+            -s /bin/bash \
+            odyssey; \
+    fi
 
 WORKDIR /odyssey
 

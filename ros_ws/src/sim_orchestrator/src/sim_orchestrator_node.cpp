@@ -7,6 +7,7 @@
 extern "C" {
     #include "sim_config.h"
     #include "sim_log.h"
+    #include "sim_state.h"
     #include "world_sim.h"
 }
 
@@ -56,6 +57,9 @@ class SimOrchestratorNode : public rclcpp::Node {
                 check_all_ready();
             });
 
+            if (init_sim_state(&sim_state_)) RCLCPP_INFO(get_logger(), "Simulation state initialized.");
+            else throw std::runtime_error("Failed to initialize simulation state.");
+
             RCLCPP_INFO(get_logger(), "Simulation orchestrator initialized and ready.");
         }
 
@@ -74,6 +78,7 @@ class SimOrchestratorNode : public rclcpp::Node {
         bool odyssey_2_ready_ = false;
 
         sim_config_t sim_config_;
+        sim_state_t sim_state_;
         const world_state_t *world_state_ = nullptr;
 
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr startup_ready_pub_;
