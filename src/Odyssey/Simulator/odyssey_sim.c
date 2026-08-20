@@ -45,7 +45,7 @@ static int init_odyssey_config(void) {
         return 0;
     }
 
-    write_to_sim_log("[odyssey_sim] Ody configuration complete.\n");
+    write_to_sim_log("[odyssey_sim] Odyssey configuration complete.\n");
     return 1;
 }
 

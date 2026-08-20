@@ -21,8 +21,6 @@ int open_sim_log(void) {
         return 0;
     }
 
-    write_to_sim_log("\n[sim_log] Sim log opened.\n");
-
     return 1;
 }
 

@@ -21,7 +21,6 @@ int init_sim_state(sim_state_t *state) {
         return 0;
     }
 
-    write_to_sim_log("[sim_state] Sim state initialized.\n");
     return 1;
 }
 

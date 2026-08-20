@@ -13,6 +13,5 @@ int init_sim_config(sim_config_t *config) {
     config->timestep = 0.02;
     config->control_period = 10;
 
-    write_to_sim_log("[sim_config] Sim configured.\n");
     return 1;
 }
