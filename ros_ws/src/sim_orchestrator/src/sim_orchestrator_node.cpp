@@ -26,34 +26,55 @@ class SimOrchestratorNode : public rclcpp::Node {
             RCLCPP_INFO(get_logger(), "Initializing simulation orchestrator.");
 
             // ----------------------------------------------------------------- 
-            // Startup/ready QoS 
+            // QoS 
             // -----------------------------------------------------------------
-            rclcpp::QoS ready_qos(1);
-            ready_qos.transient_local();
-            ready_qos.reliable();
+            // Startup messages should be retained for late subscribers.
+            rclcpp::QoS startup_qos(1);
+            startup_qos.transient_local();
+            startup_qos.reliable();
+
+            // Simulation steps should not be retained/replayed.
+            rclcpp::QoS step_qos(1);
+            step_qos.reliable();
 
             // ----------------------------------------------------------------- 
             // Create publishers 
             // -----------------------------------------------------------------
-            calendar_start_time_pub_ = create_publisher<std_msgs::msg::Int64>("/sim/calendar_start_time", ready_qos);
-            startup_ready_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/startup_ready", ready_qos);
-            sim_step_pub_ = create_publisher<manta_interfaces::msg::SimStep>("/sim/step", 10);
-            sim_time_pub_ = create_publisher<std_msgs::msg::Float64>("/sim/time", ready_qos);
+            calendar_start_time_pub_ = create_publisher<std_msgs::msg::Int64>("/sim/calendar_start_time", startup_qos);
+            startup_ready_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/startup_ready", startup_qos);
+            sim_step_pub_ = create_publisher<manta_interfaces::msg::SimStep>("/sim/step", step_qos);
+            sim_time_pub_ = create_publisher<std_msgs::msg::Float64>("/sim/time", startup_qos);
 
             // ----------------------------------------------------------------- 
             // Create subscribers
             // -----------------------------------------------------------------
             odyssey_1_ready_sub_ = create_subscription<std_msgs::msg::Bool>(
-                "/odyssey_1/ready", ready_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                odyssey_1_ready_ = msg->data;
-                check_all_ready();
-            });
+                "/odyssey_1/ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+                    odyssey_1_ready_ = msg->data;
+                    check_all_ready();
+                }
+            );
 
             odyssey_2_ready_sub_ = create_subscription<std_msgs::msg::Bool>(
-                "/odyssey_2/ready", ready_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                odyssey_2_ready_ = msg->data;
-                check_all_ready();
-            });
+                "/odyssey_2/ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+                    odyssey_2_ready_ = msg->data;
+                    check_all_ready();
+                }
+            );
+
+            odyssey_1_step_complete_sub_ = create_subscription<std_msgs::msg::Bool>(
+                "/odyssey_1/step_complete", step_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+                    odyssey_1_step_complete_ = msg->data;
+                    check_step_complete();
+                }
+            );
+
+            odyssey_2_step_complete_sub_ = create_subscription<std_msgs::msg::Bool>(
+                "/odyssey_2/step_complete", step_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+                    odyssey_2_step_complete_ = msg->data;
+                    check_step_complete();
+                }
+            );
 
             // ----------------------------------------------------------------- 
             // Open sim log
@@ -125,8 +146,14 @@ class SimOrchestratorNode : public rclcpp::Node {
             }
         }
 
+        void check_step_complete() {
+            if (odyssey_1_step_complete_ && odyssey_2_step_complete_) RCLCPP_INFO(get_logger(), "All Odyssey vehicles completed simulation step %d.", sim_state_.current_cycle);
+        }
+
         bool odyssey_1_ready_ = false;
+        bool odyssey_1_step_complete_ = false;
         bool odyssey_2_ready_ = false;
+        bool odyssey_2_step_complete_ = false;
 
         sim_config_t sim_config_;
         sim_state_t sim_state_;
@@ -139,6 +166,8 @@ class SimOrchestratorNode : public rclcpp::Node {
         
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_1_ready_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_2_ready_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_1_step_complete_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_2_step_complete_sub_;
 };
 
 

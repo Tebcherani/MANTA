@@ -31,14 +31,20 @@ class OdysseyNode : public rclcpp::Node {
             // ----------------------------------------------------------------- 
             // Startup/ready QoS 
             // -----------------------------------------------------------------
+            // Startup messages should be retained for late subscribers.
             rclcpp::QoS startup_qos(1);
             startup_qos.transient_local();
             startup_qos.reliable();
 
+            // Simulation steps should not be retained/replayed.
+            rclcpp::QoS step_qos(1);
+            step_qos.reliable();
+
             // ----------------------------------------------------------------- 
-            // Create publisher 
+            // Create publishers 
             // -----------------------------------------------------------------
             ready_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", startup_qos);
+            step_complete_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/step_complete", step_qos);
 
             // ----------------------------------------------------------------- 
             // Create subscribers
@@ -61,8 +67,13 @@ class OdysseyNode : public rclcpp::Node {
             });
 
             sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
-                "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
+                "/sim/step", step_qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
+                    std_msgs::msg::Bool complete_message;
+                
                     RCLCPP_INFO(get_logger(), "%s received cycle %lu at sim time %.2f", vehicle_id_.c_str(), msg->current_cycle, msg->sim_time);
+
+                    complete_message.data = true;
+                    step_complete_pub_->publish(complete_message);
                 }
             );
 
@@ -115,6 +126,7 @@ class OdysseyNode : public rclcpp::Node {
         }
 
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr step_complete_pub_;
 
         rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr calendar_start_time_sub_;
         rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;
