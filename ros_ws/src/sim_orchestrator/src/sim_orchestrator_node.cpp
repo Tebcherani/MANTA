@@ -102,6 +102,7 @@ class SimOrchestratorNode : public rclcpp::Node {
 
         ~SimOrchestratorNode() {
             RCLCPP_INFO(get_logger(), "Shutting down simulation orchestrator.");
+            if (close_sim_log() != 0) RCLCPP_ERROR(get_logger(), "Failed to close simulation log.");
         }
 
     private:
