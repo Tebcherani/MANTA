@@ -4,10 +4,8 @@
 # Linux/Ubuntu build — do not commit compiled binaries or generated output.
 
 # Python virtual environments
-.venv/
-venv/
-env/
-Review/.venv/
+*.venv/
+*.egg-info
 __pycache__/
 *.pyc
 *.pyo
