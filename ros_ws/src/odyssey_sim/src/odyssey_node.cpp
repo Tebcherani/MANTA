@@ -165,6 +165,11 @@ class OdysseyNode : public rclcpp::Node {
         // Destructor
         ~OdysseyNode() {
             RCLCPP_INFO(get_logger(), "Shutting down vehicle '%s'.", vehicle_id_.c_str());
+            
+            // Flush and close Odyssey's mission data file if the simulator successfully reached its started state.
+            if (odyssey_sim_started_ && !end_odyssey_sim(nullptr)) {
+                RCLCPP_ERROR(get_logger(), "Failed to cleanly end simulator for vehicle '%s'.", vehicle_id_.c_str());
+            }
         }
 
     private:
