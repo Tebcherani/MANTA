@@ -25,6 +25,28 @@ def load_config(path: Path) -> dict:
     return config
 
 
+def load_plugin(root: Path, plugin_id: str) -> dict:
+    """Load and validate a MANTA vehicle plugin manifest."""
+    path = root / "vehicles" / plugin_id / "manta_plugin.yaml"
+
+    if not path.is_file():
+        raise ValueError(f"Vehicle plugin '{plugin_id}' was not found: {path}")
+
+    manifest = load_config(path)
+    plugin = manifest.get("plugin")
+
+    if not isinstance(plugin, dict):
+        raise ValueError(f"Plugin '{plugin_id}' has no 'plugin' section.")
+
+    if plugin.get("id") != plugin_id:
+        raise ValueError( f"Plugin manifest ID '{plugin.get('id')}' does not match configured type '{plugin_id}'.")
+
+    if plugin.get("kind") != "vehicle":
+        raise ValueError(f"Plugin '{plugin_id}' is not a vehicle plugin.")
+
+    return manifest
+
+
 def validate_config(config: dict, root: Path) -> None:
     vehicles = config.get("vehicles")
     output = config.get("output")
@@ -59,27 +81,31 @@ def validate_config(config: dict, root: Path) -> None:
         if not isinstance(vehicle_type, str) or not vehicle_type:
             raise ValueError(f"Vehicle '{vehicle_id}' must have a nonempty string 'type'.")
 
-        if vehicle_type != "odyssey":
-            raise ValueError(f"Unsupported vehicle type: {vehicle_type}")
+        manifest = load_plugin(root, vehicle_type)
+        plugin_config = manifest.get("configuration", {})
+        required_fields = plugin_config.get("required", [])
+        optional_fields = plugin_config.get("optional", [])
 
-        for field in ("mission", "model"):
+        if not isinstance(required_fields, list) or not isinstance(optional_fields, list):
+            raise ValueError(f"Plugin '{vehicle_type}' configuration fields must be YAML lists.")
+
+        for field in required_fields:
             value = vehicle.get(field)
 
             if not isinstance(value, str) or not value:
                 raise ValueError(f"Vehicle '{vehicle_id}' must define a nonempty '{field}' path.")
 
-            path = (root / value).resolve()
+        for field in required_fields + optional_fields:
+            value = vehicle.get(field, "")
 
-            if not path.is_file():
-                raise ValueError(f"Vehicle '{vehicle_id}' {field} file does not exist: {path}")
+            if not isinstance(value, str):
+                raise ValueError(f"Vehicle '{vehicle_id}' field '{field}' must be a string.")
 
-        fault = vehicle.get("fault", "")
+            if value:
+                path = (root / value).resolve()
 
-        if not isinstance(fault, str):
-            raise ValueError(f"Vehicle '{vehicle_id}' fault path must be a string.")
-
-        if fault and not (root / fault).resolve().is_file():
-            raise ValueError(f"Vehicle '{vehicle_id}' fault file does not exist: {(root / fault).resolve()}")
+                if not path.is_file():
+                    raise ValueError(f"Vehicle '{vehicle_id}' {field} file does not exist: {path}")
 
 
 def print_summary(config: dict, path: Path) -> None:
@@ -131,27 +157,47 @@ def write_runtime_env(config: dict, root: Path) -> Path:
 
 
 def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> dict:
+    """Generate a Compose service from a vehicle plugin manifest."""
     vehicle_id = vehicle["id"]
+    vehicle_type = vehicle["type"]
+    manifest = load_plugin(root, vehicle_type)
+    runtime = manifest.get("runtime", {})
+    environment_names = runtime.get("environment", {})
+    config_environment = runtime.get("configuration_environment", {})
+
+    try:
+        image = runtime["image"]
+        ros_package = runtime["ros_package"]
+        executable = runtime["executable"]
+        vehicle_id_env = environment_names["vehicle_id"]
+        data_dir_env = environment_names["data_directory"]
+        log_dir_env = environment_names["log_directory"]
+        simulation_log_env = environment_names["simulation_log"]
+    except KeyError as error:
+        raise ValueError(f"Plugin '{vehicle_type}' is missing runtime setting: {error.args[0]}") from error
+
+    environment = {
+        "ROS_DOMAIN_ID": "1",
+        vehicle_id_env: vehicle_id,
+        data_dir_env: data_dir,
+        log_dir_env: log_dir,
+        simulation_log_env: f"{log_dir}/{vehicle_id}.log",
+    }
+
+    for field, environment_name in config_environment.items():
+        value = vehicle.get(field, "")
+        environment[environment_name] = container_path(root, value) if value else ""
 
     return {
-        "image": "odyssey_sim_dev",
-        "environment": {
-            "ROS_DOMAIN_ID": "1",
-            "ODYSSEY_VEHICLE_ID": vehicle_id,
-            "ODYSSEY_DATA_DIR": data_dir,
-            "ROS_LOG_DIR": log_dir,
-            "FAULT_PATH": container_path(root, vehicle["fault"]) if vehicle.get("fault") else "",
-            "MISSION_PATH": container_path(root, vehicle["mission"]),
-            "VEHICLE_PATH": container_path(root, vehicle["model"]),
-            "SIM_LOG_PATH": f"{log_dir}/{vehicle_id}.log",
-        },
+        "image": image,
+        "environment": environment,
         "volumes": [{"type": "bind", "source": str(root), "target": "/odyssey"}],
         "command": [
             "/bin/bash",
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
-            "ros2 run odyssey_sim odyssey_node",
+            f"ros2 run {ros_package} {executable}",
         ],
     }
 

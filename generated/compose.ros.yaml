@@ -7,10 +7,10 @@ services:
       ODYSSEY_VEHICLE_ID: odyssey_1
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ROS_LOG_DIR: /odyssey/output/Logs
-      FAULT_PATH: ''
+      SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
       MISSION_PATH: /odyssey/vehicles/odyssey/assets/Missions/dive240.mi
       VEHICLE_PATH: /odyssey/vehicles/odyssey/assets/Vehicles/Borealis.vd
-      SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
+      FAULT_PATH: ''
     volumes:
     - type: bind
       source: /home/tanya/Documents/MANTA
@@ -30,10 +30,10 @@ services:
       ODYSSEY_VEHICLE_ID: odyssey_2
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ROS_LOG_DIR: /odyssey/output/Logs
-      FAULT_PATH: ''
+      SIM_LOG_PATH: /odyssey/output/Logs/odyssey_2.log
       MISSION_PATH: /odyssey/vehicles/odyssey/assets/Missions/dive240_diff.mi
       VEHICLE_PATH: /odyssey/vehicles/odyssey/assets/Vehicles/Borealis.vd
-      SIM_LOG_PATH: /odyssey/output/Logs/odyssey_2.log
+      FAULT_PATH: ''
     volumes:
     - type: bind
       source: /home/tanya/Documents/MANTA
