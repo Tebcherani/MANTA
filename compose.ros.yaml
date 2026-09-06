@@ -78,4 +78,4 @@ services:
       - |
         source /opt/ros/jazzy/setup.bash
         source /odyssey/ros_ws/install/setup.bash
-        ros2 run sim_orchestrator sim_orchestrator_node
+        ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[odyssey_1, odyssey_2]"

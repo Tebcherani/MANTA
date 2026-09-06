@@ -4,6 +4,8 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -20,6 +22,11 @@ extern "C" {
     #include "world_sim.h"
 }
 
+struct VehicleState {
+    bool ready = false;
+    bool active = true;
+    bool step_complete = false;
+};
 
 class SimOrchestratorNode : public rclcpp::Node {
     public:
@@ -29,6 +36,15 @@ class SimOrchestratorNode : public rclcpp::Node {
             std_msgs::msg::Bool startup_message;
 
             RCLCPP_INFO(get_logger(), "Initializing simulation orchestrator.");
+
+            vehicle_ids_ = declare_parameter<std::vector<std::string>>("vehicle_ids", std::vector<std::string>{});
+            if (vehicle_ids_.empty()) throw std::runtime_error("The vehicle_ids parameter must contain at least one vehicle.");
+            for (const std::string &vehicle_id : vehicle_ids_) {
+                const bool inserted = vehicle_states_.emplace(vehicle_id, VehicleState{}).second;
+                if (!inserted) throw std::runtime_error("Duplicate vehicle ID: " + vehicle_id);
+            }
+
+            RCLCPP_INFO(get_logger(), "Configured %zu simulation vehicles.", vehicle_ids_.size());
 
             // ----------------------------------------------------------------- 
             // QoS 
@@ -54,29 +70,27 @@ class SimOrchestratorNode : public rclcpp::Node {
             // ----------------------------------------------------------------- 
             // Create subscribers
             // -----------------------------------------------------------------
-            odyssey_1_ready_sub_ = create_subscription<std_msgs::msg::Bool>(
-                "/odyssey_1/ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                    odyssey_1_ready_ = msg->data;
-                    check_all_vehicles_initialized();
-                }
-            );
+            // Ready subscription
+            for (const std::string &vehicle_id : vehicle_ids_) {
+                const std::string ready_topic = "/" + vehicle_id + "/ready";
+                auto subscription = create_subscription<std_msgs::msg::Bool>(
+                    ready_topic, startup_qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {
+                        vehicle_states_.at(vehicle_id).ready = msg->data;
+                        check_all_vehicles_initialized();
+                });
+                ready_subs_.push_back(subscription);
+            }
 
-            odyssey_2_ready_sub_ = create_subscription<std_msgs::msg::Bool>(
-                "/odyssey_2/ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                    odyssey_2_ready_ = msg->data;
-                    check_all_vehicles_initialized();
-                }
-            );
-
-            odyssey_1_step_result_sub_ = create_subscription<manta_interfaces::msg::SimStepResult>(
-                "/odyssey_1/step_result", step_qos, [this](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
-                    handle_step_result(msg, "odyssey_1", odyssey_1_active_, odyssey_1_step_complete_);
-            });
-
-            odyssey_2_step_result_sub_ = create_subscription<manta_interfaces::msg::SimStepResult>(
-                "/odyssey_2/step_result", step_qos, [this](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
-                    handle_step_result(msg, "odyssey_2", odyssey_2_active_, odyssey_2_step_complete_);
-            });
+            // Step result subscription
+            for (const std::string &vehicle_id : vehicle_ids_) {
+                const std::string result_topic = "/" + vehicle_id + "/step_result";
+                auto subscription = create_subscription<manta_interfaces::msg::SimStepResult>(
+                    result_topic, step_qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
+                        VehicleState &state = vehicle_states_.at(vehicle_id);
+                        handle_step_result(msg, vehicle_id, state.active, state.step_complete);
+                });
+                step_result_subs_.push_back(subscription);
+            }
 
             // ----------------------------------------------------------------- 
             // Open sim log
@@ -137,8 +151,15 @@ class SimOrchestratorNode : public rclcpp::Node {
 
     private:
         void check_all_vehicles_initialized() {
-            if (!odyssey_1_ready_ || !odyssey_2_ready_) return;
-            RCLCPP_INFO(get_logger(), "All vehicles are initialized.");
+            if (simulation_started_) return;
+
+            for (const auto &entry : vehicle_states_) {
+                const VehicleState &state = entry.second;
+                if (!state.ready) return;
+            }
+
+            simulation_started_ = true;
+            RCLCPP_INFO(get_logger(), "All %zu vehicles are initialized.", vehicle_states_.size());
             publish_current_step();
         }
 
@@ -160,13 +181,22 @@ class SimOrchestratorNode : public rclcpp::Node {
         }
 
         void check_all_step_results_received() {
-            // Wait only for vehicles whose missions are still active.
-            if ((odyssey_1_active_ && !odyssey_1_step_complete_) || (odyssey_2_active_ && !odyssey_2_step_complete_)) return;
+            // Wait until every active vehicle has returned a result for the current simulation cycle.
+            for (const auto &entry : vehicle_states_) {
+                const VehicleState &state = entry.second;
+                if (state.active && !state.step_complete) return;
+            }
 
-            RCLCPP_DEBUG(get_logger(), "All active vehicles completed simulation step %d.", sim_state_.current_cycle);
+            // Determine whether any vehicle still has an active mission.
+            bool any_vehicle_active = false;
 
-            // The simulation is complete when no active vehicles remain.
-            if (!odyssey_1_active_ && !odyssey_2_active_) {
+            for (const auto &entry : vehicle_states_) {
+                if (entry.second.active) {
+                    any_vehicle_active = true;
+                    break;
+            }}
+
+            if (!any_vehicle_active) {
                 RCLCPP_INFO(get_logger(), "All vehicle missions have completed.");
                 request_simulation_shutdown();
                 return;
@@ -180,8 +210,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             }
 
             // Reset acknowledgements before publishing the next step.
-            odyssey_1_step_complete_ = false;
-            odyssey_2_step_complete_ = false;
+            for (auto &entry : vehicle_states_) entry.second.step_complete = false;
 
             // Advance the shared simulation cycle and clock.
             if (!update_sim_state(&sim_state_, sim_config_.timestep)) {
@@ -268,19 +297,12 @@ class SimOrchestratorNode : public rclcpp::Node {
             });
         }
 
-        // Initialization state
-        bool odyssey_1_ready_ = false;
-        bool odyssey_2_ready_ = false;
-
-        // Whether each vehicle is still participating in the simulation
-        bool odyssey_1_active_ = true;
-        bool odyssey_2_active_ = true;
-
-        // Whether each active vehicle has returned a result for the current simulation cycle
-        bool odyssey_1_step_complete_ = false;
-        bool odyssey_2_step_complete_ = false;
-
+        bool simulation_started_ = false;
         bool simulation_failed_ = false;
+
+        std::vector<std::string> vehicle_ids_;
+        std::unordered_map<std::string, VehicleState> vehicle_states_;
+        
         sim_config_t sim_config_;
         sim_state_t sim_state_;
         const world_state_t *world_state_ = nullptr;
@@ -293,10 +315,8 @@ class SimOrchestratorNode : public rclcpp::Node {
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr startup_ready_pub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr shutdown_pub_;
         
-        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_1_ready_sub_;
-        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_2_ready_sub_;
-        rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr odyssey_1_step_result_sub_;
-        rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr odyssey_2_step_result_sub_;
+        std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
+        std::vector<rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr> step_result_subs_;
 };
 
 
