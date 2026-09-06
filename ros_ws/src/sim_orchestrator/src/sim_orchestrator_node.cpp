@@ -131,6 +131,10 @@ class SimOrchestratorNode : public rclcpp::Node {
             if (!close_sim_log()) RCLCPP_ERROR(get_logger(), "Failed to close simulation log.");
         }
 
+        bool simulation_failed() const {
+            return simulation_failed_;
+        }
+
     private:
         void check_all_vehicles_initialized() {
             if (!odyssey_1_ready_ || !odyssey_2_ready_) return;
@@ -182,6 +186,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             // Advance the shared simulation cycle and clock.
             if (!update_sim_state(&sim_state_, sim_config_.timestep)) {
                 RCLCPP_ERROR(get_logger(), "Failed to advance the simulation state.");
+                request_simulation_shutdown(true);
                 return;
             }
 
@@ -247,7 +252,8 @@ class SimOrchestratorNode : public rclcpp::Node {
             check_all_step_results_received();
         }
 
-        void request_simulation_shutdown() {
+        void request_simulation_shutdown(bool failed = false) {
+            simulation_failed_ = failed;
             std_msgs::msg::Bool shutdown_message;
             shutdown_message.data = true;
 
@@ -274,10 +280,11 @@ class SimOrchestratorNode : public rclcpp::Node {
         bool odyssey_1_step_complete_ = false;
         bool odyssey_2_step_complete_ = false;
 
+        bool simulation_failed_ = false;
         sim_config_t sim_config_;
         sim_state_t sim_state_;
         const world_state_t *world_state_ = nullptr;
-        
+
         rclcpp::TimerBase::SharedPtr shutdown_timer_;
 
         rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr calendar_start_time_pub_;
@@ -294,11 +301,13 @@ class SimOrchestratorNode : public rclcpp::Node {
 
 
 int main(int argc, char *argv[]) {    
+    int exit_status = EXIT_SUCCESS;
     rclcpp::init(argc, argv);   // Initialize ROS 2
 
     try {
         auto node = std::make_shared<SimOrchestratorNode>();  
-        rclcpp::spin(node);                             
+        rclcpp::spin(node);      
+        if (node->simulation_failed()) exit_status = EXIT_FAILURE;
     }
     catch (const std::exception &error) {
         RCLCPP_FATAL(rclcpp::get_logger("sim_orchestrator_node"), "%s", error.what());   // Get error message
@@ -307,5 +316,5 @@ int main(int argc, char *argv[]) {
     }
 
     rclcpp::shutdown();
-    return EXIT_SUCCESS;
+    return exit_status;
 }
