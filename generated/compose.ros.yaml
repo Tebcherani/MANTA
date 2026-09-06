@@ -1,81 +1,67 @@
+name: manta
 services:
   odyssey_1:
     image: odyssey_sim_dev
-
     environment:
-      ROS_DOMAIN_ID: 1
-
+      ROS_DOMAIN_ID: '1'
       ODYSSEY_VEHICLE_ID: odyssey_1
-
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ROS_LOG_DIR: /odyssey/output/Logs
-
-      FAULT_PATH: "" #/odyssey/assets/Faults
+      FAULT_PATH: ''
       MISSION_PATH: /odyssey/vehicles/odyssey/assets/Missions/dive240.mi
       VEHICLE_PATH: /odyssey/vehicles/odyssey/assets/Vehicles/Borealis.vd
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
-
     volumes:
-      - type: bind
-        source: .
-        target: /odyssey
-
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
     command:
-      - /bin/bash
-      - -lc
-      - |
-        source /opt/ros/jazzy/setup.bash
-        source /odyssey/ros_ws/install/setup.bash
-        ros2 run odyssey_sim odyssey_node
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
 
+      source /odyssey/ros_ws/install/setup.bash
 
+      ros2 run odyssey_sim odyssey_node'
   odyssey_2:
     image: odyssey_sim_dev
-
     environment:
-      ROS_DOMAIN_ID: 1
-
+      ROS_DOMAIN_ID: '1'
       ODYSSEY_VEHICLE_ID: odyssey_2
-
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ROS_LOG_DIR: /odyssey/output/Logs
-
-      FAULT_PATH: "" #/odyssey/assets/Faults
+      FAULT_PATH: ''
       MISSION_PATH: /odyssey/vehicles/odyssey/assets/Missions/dive240_diff.mi
       VEHICLE_PATH: /odyssey/vehicles/odyssey/assets/Vehicles/Borealis.vd
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_2.log
-
     volumes:
-      - type: bind
-        source: .
-        target: /odyssey
-
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
     command:
-      - /bin/bash
-      - -lc
-      - |
-        source /opt/ros/jazzy/setup.bash
-        source /odyssey/ros_ws/install/setup.bash
-        ros2 run odyssey_sim odyssey_node
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
 
+      source /odyssey/ros_ws/install/setup.bash
 
+      ros2 run odyssey_sim odyssey_node'
   sim_orchestrator:
     image: odyssey_sim_dev
-
     environment:
-      ROS_DOMAIN_ID: 1
+      ROS_DOMAIN_ID: '1'
       ROS_LOG_DIR: /odyssey/output/Logs
       SIM_LOG_PATH: /odyssey/output/Logs/sim_orchestrator.log
-
     volumes:
-      - type: bind
-        source: .
-        target: /odyssey
-
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
     command:
-      - /bin/bash
-      - -lc
-      - |
-        source /opt/ros/jazzy/setup.bash
-        source /odyssey/ros_ws/install/setup.bash
-        ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[odyssey_1, odyssey_2]"
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
+
+      source /odyssey/ros_ws/install/setup.bash
+
+      ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[odyssey_1,
+      odyssey_2]"'

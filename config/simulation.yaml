@@ -1,0 +1,23 @@
+version: 1
+
+simulation:
+  timestep: 0.02
+  control_period: 10
+  max_cycles: 1000000
+
+output:
+  data_directory: ./output/Data
+  log_directory: ./output/Logs
+
+vehicles:
+  - id: odyssey_1
+    type: odyssey
+    mission: ./vehicles/odyssey/assets/Missions/dive240.mi
+    model: ./vehicles/odyssey/assets/Vehicles/Borealis.vd
+    fault: ""
+
+  - id: odyssey_2
+    type: odyssey
+    mission: ./vehicles/odyssey/assets/Missions/dive240_diff.mi
+    model: ./vehicles/odyssey/assets/Vehicles/Borealis.vd
+    fault: ""
