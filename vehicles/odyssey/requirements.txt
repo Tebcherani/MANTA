@@ -1,0 +1,4 @@
+# Shared GUI and analysis dependencies are declared by the Review package.
+# SciPy is additionally used by SEnvironment/cbofs_viewer.py.
+-e ./Review
+scipy>=1.7

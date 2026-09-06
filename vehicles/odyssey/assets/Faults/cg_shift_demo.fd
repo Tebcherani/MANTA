@@ -1,0 +1,24 @@
+# -----------------------------------------------------------------------
+# cg_shift_demo.fd
+#
+# Fault scenario: forward CG shift equal to the CG-CB vertical separation.
+#
+# Background: the Odyssey is trimmed with vs_zg = 0.082 m (CG below the
+# centerline) and vs_zb = 0.0 m (CB on centerline), giving a vertical
+# CG-CB separation of 0.082 m.  This separation provides roll restoring
+# moment.  Shifting vs_xg forward by the same 0.082 m represents a
+# realistic mass redistribution (e.g. a shifted battery pack) and
+# introduces a significant pitch-down moment that the elevator must work
+# to counteract.
+#
+# Trigger: vehicle reaches 5 m depth (m_depth > 5.0).
+# Action:  vs_xg = 0.082  (forward of the nominal 0.0 m)
+#
+# The fault is persistent -- it remains active every cycle once triggered.
+# To model a one-time step change that stays, this is correct behavior.
+#
+# Expected observable effect: increased nose-down pitch tendency, elevator
+# deflection increase, possible depth excursion if PID gains are marginal.
+# -----------------------------------------------------------------------
+
+fault: m_depth > 5.0 -> vs_xg = 0.082

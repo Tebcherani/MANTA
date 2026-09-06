@@ -1,0 +1,77 @@
+# ==============================================================================
+# BUILD PRODUCTS AND GENERATED FILES
+# ==============================================================================
+# Linux/Ubuntu build — do not commit compiled binaries or generated output.
+
+# Python virtual environments
+.venv/
+venv/
+env/
+Review/.venv/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*/__pycache__/
+
+# C build products
+*.exe
+*.o
+*.obj
+*.dll
+*.lib
+*.a
+
+# Linux compiled binaries (no extension)
+sim
+edit_struct
+parse
+sim_debug
+
+# Build/output folders
+build/
+bin/
+obj/
+dist/
+
+# PyInstaller spec files
+*.spec
+
+# Logs/temp
+*.log
+*.tmp
+temp/
+behavior_log*.json
+cd
+CLAUDE.me
+edit_struct_thruster_real_naming.c
+
+# MATLAB autosave
+*.asv
+
+# Simulator output/data products
+*.obd
+
+# Simulator runtime output directories
+Data/
+Logs/
+
+# External CBOFS exploration tooling
+SEnvironment/_cbofs*
+SEnvironment/cbofs_probe.json
+SEnvironment/_erddap_explore.py
+SEnvironment/wl_*.csv
+SEnvironment/wl_summary_*.csv
+
+# Generated analysis artifacts
+*.png
+*.pdf
+*.zip
+Review/*.dat
+
+# pip install artifacts
+Review/ody_review.egg-info/
+
+# Docker files
+.env

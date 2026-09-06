@@ -1,0 +1,40 @@
+schema_version: 1
+
+plugin:
+  id: odyssey
+  kind: vehicle
+  name: Odyssey AUV
+
+build:
+  working_directory: .
+  command:
+    - make
+    - libraries
+
+runtime:
+  image: odyssey_sim_dev
+  ros_package: odyssey_sim
+  executable: odyssey_node
+
+  environment:
+    vehicle_id: ODYSSEY_VEHICLE_ID
+    data_directory: ODYSSEY_DATA_DIR
+    log_directory: ROS_LOG_DIR
+    simulation_log: SIM_LOG_PATH
+
+  configuration_environment:
+    mission: MISSION_PATH
+    model: VEHICLE_PATH
+    fault: FAULT_PATH
+
+configuration:
+  required:
+    - mission
+    - model
+  optional:
+    - fault
+
+results:
+  native_format: obd
+  extensions:
+    - .obd
