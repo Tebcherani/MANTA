@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ody-review"
+version = "0.1.0"
+description = "Python framework for reviewing Odyssey AUV .obd log files"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.20",
+    "xarray>=2022.3",
+    "matplotlib>=3.5",
+    "PyQt5>=5.15",
+]
+
+[project.optional-dependencies]
+seawater = ["gsw>=3.4"]
+
+[project.scripts]
+ody-review = "ody_review.gui:main"
+review2 = "ody_review.review2:main"
+
+[tool.setuptools]
+packages = ["ody_review"]

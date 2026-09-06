@@ -33,9 +33,6 @@ ros_ws/build/
 ros_ws/install/
 ros_ws/log/
 
-# pip install artifacts
-Review/ody_review.egg-info/
-
 # Docker files
 .env
 
