@@ -245,13 +245,23 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
 
 
 def parse_args(root: Path) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build, run, and review MANTA simulations.")
+    parser = argparse.ArgumentParser(
+        description="Build, run, and review MANTA simulations."
+    )
 
     parser.add_argument(
         "command",
         nargs="?",
         default="generate",
         choices=("generate", "build", "dev", "run", "down", "review"),
+    )
+
+    parser.add_argument(
+        "plot",
+        nargs="?",
+        default="tracks",
+        choices=("tracks", "energy"),
+        help="Plot to show with the review command.",
     )
 
     parser.add_argument(
@@ -269,8 +279,13 @@ def main() -> int:
     args = parse_args(root)
 
     if args.command == "review":
+        scripts = {
+            "tracks": "plot_tracks.py",
+            "energy": "plot_energy.py",
+        }
+
         python = root / "review" / ".venv" / "bin" / "python"
-        script = root / "review" / "manta_review" / "plot_tracks.py"
+        script = root / "review" / "manta_review" / scripts[args.plot]
 
         if not python.is_file():
             print(f"Review Python is missing: {python}", file=sys.stderr)
@@ -280,7 +295,11 @@ def main() -> int:
             print(f"Review script is missing: {script}", file=sys.stderr)
             return 1
 
-        return subprocess.run([str(python), str(script)], cwd=script.parent, check=False).returncode
+        return subprocess.run(
+            [str(python), str(script)],
+            cwd=script.parent,
+            check=False,
+        ).returncode
 
     try:
         config_path = Path(args.config).resolve()
