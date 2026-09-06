@@ -269,9 +269,20 @@ def main() -> int:
     args = parse_args(root)
 
     if args.command == "review":
+        review_command = root / "review" / ".venv" / "bin" / "manta-review"
+
+        if not review_command.is_file():
+            print(
+                "MANTA Review is not installed. Run:\n"
+                "  cd review && python3 -m venv .venv\n"
+                "  .venv/bin/python -m pip install -e .",
+                file=sys.stderr,
+            )
+            return 1
+
         return subprocess.run(
-            ["./ody", "review2"],
-            cwd=root / "vehicles" / "odyssey",
+            [str(review_command)],
+            cwd=root,
             check=False,
         ).returncode
 
