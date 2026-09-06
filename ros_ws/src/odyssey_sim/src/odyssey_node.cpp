@@ -74,15 +74,16 @@ class OdysseyNode : public rclcpp::Node {
                     manta_interfaces::msg::SimStepResult result;
                     world_state_t world_state;
 
-                    RCLCPP_INFO(get_logger(), "%s received cycle %lu at sim time %.2f", vehicle_id_.c_str(), static_cast<unsigned long>(msg->current_cycle), msg->sim_time);
-
                     // Prepare the result returned to the orchestrator and the native world structure required by the existing Odyssey C simulator.
                     result.vehicle_id = vehicle_id_;
                     result.completed_cycle = msg->current_cycle;
                     result.status = manta_interfaces::msg::SimStepResult::RUNNING;
                     result.detail = "";
 
-                    // Prepare the result returned to the orchestrator and the native world structure required by the existing Odyssey C simulator.
+                    // A vehicle whose mission has finished no longer participates in subsequent simulation cycles.
+                    if (mission_finished_) return;
+
+                    // Convert the ROS world snapshot into the native world structure required by the existing Odyssey C simulator.                    
                     world_state.gravity = msg->world.gravity;
                     world_state.magnetic_north = msg->world.magnetic_north;
                     world_state.magnetic_east = msg->world.magnetic_east;
@@ -99,6 +100,7 @@ class OdysseyNode : public rclcpp::Node {
 
                     // Stop processing this vehicle if its mission requested an abort.
                     if (odyssey_abort_requested()) {
+                        mission_finished_ = true;
                         result.status = manta_interfaces::msg::SimStepResult::ABORTED;
                         result.detail = "Odyssey requested mission abort.";
                         step_result_pub_->publish(result);
@@ -127,6 +129,7 @@ class OdysseyNode : public rclcpp::Node {
                         }
 
                         if (cycle_status == ODYSSEY_UPDATE_MISSION_COMPLETE) {
+                            mission_finished_ = true;
                             result.status = manta_interfaces::msg::SimStepResult::MISSION_COMPLETE;
                             result.detail = "Odyssey mission completed.";
                             step_result_pub_->publish(result);
@@ -209,6 +212,7 @@ class OdysseyNode : public rclcpp::Node {
         bool sim_time_initialized_ = false;
         bool sim_time_received_ = false;
         bool odyssey_sim_started_ = false;
+        bool mission_finished_ = false;
 
         time_t calendar_start_time_ = 0;
         double sim_time_ = 0.0;
