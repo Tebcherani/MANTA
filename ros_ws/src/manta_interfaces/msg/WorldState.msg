@@ -1,0 +1,5 @@
+float64 gravity
+float64 magnetic_north
+float64 magnetic_east
+float64 magnetic_down
+float64 seawater_density

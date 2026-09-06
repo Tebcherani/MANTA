@@ -131,18 +131,24 @@ class SimOrchestratorNode : public rclcpp::Node {
 
     private:
         void check_all_ready() {
-            manta_interfaces::msg::SimStep step_message;
+            manta_interfaces::msg::SimStep step;
 
             if (odyssey_1_ready_ && odyssey_2_ready_) {
                 RCLCPP_INFO(get_logger(), "All Odyssey vehicles are ready.");
 
-                step_message.current_cycle = sim_state_.current_cycle;
-                step_message.sim_time = sim_state_.sim_time;
-                step_message.timestep = sim_config_.timestep;
-                step_message.control_period = sim_config_.control_period;
+                step.current_cycle = sim_state_.current_cycle;
+                step.sim_time = sim_state_.sim_time;
+                step.timestep = sim_config_.timestep;
+                step.control_period = sim_config_.control_period;
 
-                sim_step_pub_->publish(step_message);
-                RCLCPP_INFO(get_logger(), "Published simulation step %lu.", step_message.current_cycle);
+                step.world.gravity = world_state_->gravity;
+                step.world.magnetic_north = world_state_->magnetic_north;
+                step.world.magnetic_east = world_state_->magnetic_east;
+                step.world.magnetic_down = world_state_->magnetic_down;
+                step.world.seawater_density = world_state_->seawater_density;
+
+                sim_step_pub_->publish(step);
+                RCLCPP_INFO(get_logger(), "Published simulation step %lu.", step.current_cycle);
             }
         }
 
@@ -178,7 +184,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             // Step for this vehicle is complete
             step_complete = true;
             RCLCPP_INFO(get_logger(), "Received result from %s for cycle %llu with status %s.", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), status_name(msg->status));
-            
+
             // Check if all vehicles have completed this step
             if (!odyssey_1_step_complete_ || !odyssey_2_step_complete_) return;
             RCLCPP_INFO(get_logger(), "All Odyssey vehicles completed simulation step %d.", sim_state_.current_cycle);

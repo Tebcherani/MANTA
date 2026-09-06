@@ -13,7 +13,9 @@
 #include "manta_interfaces/msg/sim_step_result.hpp"
 
 extern "C" {
+    #include "odyssey.h"
     #include "odyssey_sim.h"
+    #include "world_sim.h"
 }
 
 
@@ -77,6 +79,13 @@ class OdysseyNode : public rclcpp::Node {
                     result.completed_cycle = msg->current_cycle;
                     result.status = manta_interfaces::msg::SimStepResult::RUNNING;
                     result.detail = "";
+
+                    if (odyssey_abort_requested()) {
+                        result.status = manta_interfaces::msg::SimStepResult::ABORTED;
+                        result.detail = "Odyssey requested mission abort.";
+                        step_result_pub_->publish(result);
+                        return;
+                    }
 
                     step_result_pub_->publish(result);
             });
