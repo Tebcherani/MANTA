@@ -39,3 +39,6 @@ Review/ody_review.egg-info/
 # Docker files
 .env
 
+# Development files
+/manta-source.tar.gz
+

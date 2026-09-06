@@ -1,5 +1,8 @@
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -7,6 +10,7 @@
 #include "std_msgs/msg/int64.hpp"
 
 #include "manta_interfaces/msg/sim_step.hpp"
+#include "manta_interfaces/msg/sim_step_result.hpp"
 
 extern "C" {
     #include "sim_config.h"
@@ -62,19 +66,15 @@ class SimOrchestratorNode : public rclcpp::Node {
                 }
             );
 
-            odyssey_1_step_complete_sub_ = create_subscription<std_msgs::msg::Bool>(
-                "/odyssey_1/step_complete", step_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                    odyssey_1_step_complete_ = msg->data;
-                    check_step_complete();
-                }
-            );
+            odyssey_1_step_result_sub_ = create_subscription<manta_interfaces::msg::SimStepResult>(
+                "/odyssey_1/step_result", step_qos, [this](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
+                    handle_step_result(msg, "odyssey_1", odyssey_1_step_complete_);
+            });
 
-            odyssey_2_step_complete_sub_ = create_subscription<std_msgs::msg::Bool>(
-                "/odyssey_2/step_complete", step_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                    odyssey_2_step_complete_ = msg->data;
-                    check_step_complete();
-                }
-            );
+            odyssey_2_step_result_sub_ = create_subscription<manta_interfaces::msg::SimStepResult>(
+                "/odyssey_2/step_result", step_qos, [this](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
+                    handle_step_result(msg, "odyssey_2", odyssey_2_step_complete_);
+            });
 
             // ----------------------------------------------------------------- 
             // Open sim log
@@ -146,8 +146,42 @@ class SimOrchestratorNode : public rclcpp::Node {
             }
         }
 
-        void check_step_complete() {
-            if (odyssey_1_step_complete_ && odyssey_2_step_complete_) RCLCPP_INFO(get_logger(), "All Odyssey vehicles completed simulation step %d.", sim_state_.current_cycle);
+        const char *status_name(uint8_t status) const {
+            using SimStepResult = manta_interfaces::msg::SimStepResult;
+
+            switch (status) {
+                case SimStepResult::RUNNING: return "RUNNING";
+                case SimStepResult::MISSION_COMPLETE: return "MISSION_COMPLETE";
+                case SimStepResult::ABORTED: return "ABORTED";
+                case SimStepResult::ERROR: return "ERROR";
+                default: return "UNKNOWN";
+            }
+        }
+
+        void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id, bool &step_complete) {
+            // Error handling
+            if (msg->vehicle_id != expected_vehicle_id) {
+                RCLCPP_WARN(get_logger(), "Ignored step result from unexpected vehicle '%s' on the %s topic.", msg->vehicle_id.c_str(), expected_vehicle_id.c_str());
+                return;
+            }
+
+            if (msg->completed_cycle != static_cast<uint64_t>(sim_state_.current_cycle)) {
+                RCLCPP_WARN(get_logger(), "Ignored result from %s for cycle %llu; current cycle is %d.", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), sim_state_.current_cycle);
+                return;
+            }
+
+            if (step_complete) {
+                RCLCPP_WARN(get_logger(), "Ignored duplicate result from %s for cycle %llu.", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle));
+                return;
+            }
+
+            // Step for this vehicle is complete
+            step_complete = true;
+            RCLCPP_INFO(get_logger(), "Received result from %s for cycle %llu with status %s.", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), status_name(msg->status));
+            
+            // Check if all vehicles have completed this step
+            if (!odyssey_1_step_complete_ || !odyssey_2_step_complete_) return;
+            RCLCPP_INFO(get_logger(), "All Odyssey vehicles completed simulation step %d.", sim_state_.current_cycle);
         }
 
         bool odyssey_1_ready_ = false;
@@ -166,8 +200,8 @@ class SimOrchestratorNode : public rclcpp::Node {
         
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_1_ready_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_2_ready_sub_;
-        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_1_step_complete_sub_;
-        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_2_step_complete_sub_;
+        rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr odyssey_1_step_result_sub_;
+        rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr odyssey_2_step_result_sub_;
 };
 
 
