@@ -269,22 +269,18 @@ def main() -> int:
     args = parse_args(root)
 
     if args.command == "review":
-        review_command = root / "review" / ".venv" / "bin" / "manta-review"
+        python = root / "review" / ".venv" / "bin" / "python"
+        script = root / "review" / "manta_review" / "plot_tracks.py"
 
-        if not review_command.is_file():
-            print(
-                "MANTA Review is not installed. Run:\n"
-                "  cd review && python3 -m venv .venv\n"
-                "  .venv/bin/python -m pip install -e .",
-                file=sys.stderr,
-            )
+        if not python.is_file():
+            print(f"Review Python is missing: {python}", file=sys.stderr)
             return 1
 
-        return subprocess.run(
-            [str(review_command)],
-            cwd=root,
-            check=False,
-        ).returncode
+        if not script.is_file():
+            print(f"Review script is missing: {script}", file=sys.stderr)
+            return 1
+
+        return subprocess.run([str(python), str(script)], cwd=script.parent, check=False).returncode
 
     try:
         config_path = Path(args.config).resolve()
