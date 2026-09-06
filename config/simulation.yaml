@@ -58,13 +58,13 @@ scenario:
 vehicles:
   - id: odyssey_1
     type: odyssey
-    mission: ./config/missions/dive240/dive240.mi
+    mission: ./missions/dive240/dive240.mi
     model: ./config/vehicles/Borealis.vd
     fault: ""
 
   - id: odyssey_2
     type: odyssey
-    mission: ./config/missions/dive240/dive240_diff.mi
+    mission: ./missions/dive240/dive240_diff.mi
     model: ./config/vehicles/Borealis.vd
     fault: ""
 

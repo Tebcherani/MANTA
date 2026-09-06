@@ -1,7 +1,6 @@
 # ==============================================================================
 # BUILD PRODUCTS AND GENERATED FILES
 # ==============================================================================
-# Linux/Ubuntu build — do not commit compiled binaries or generated output.
 
 # Python virtual environments
 *.venv/
@@ -9,6 +8,25 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Accidental root-level ROS build output
+/build/
+/install/
+/log/
+
+# MANTA-generated runtime files and results
+/generated/
+/output/
+
+# Python-generated files
+/review/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Crash dumps
+core
+core.*
 
 # C build products
 install/
@@ -30,10 +48,4 @@ Logs/
 ros_ws/build/
 ros_ws/install/
 ros_ws/log/
-
-# Docker files
-.env
-
-# Development files
-/manta-source.tar.gz
 

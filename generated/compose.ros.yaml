@@ -8,7 +8,7 @@ services:
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ROS_LOG_DIR: /odyssey/output/Logs
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_1.log
-      MISSION_PATH: /odyssey/config/missions/dive240/dive240.mi
+      MISSION_PATH: /odyssey/missions/dive240/dive240.mi
       VEHICLE_PATH: /odyssey/config/vehicles/Borealis.vd
       FAULT_PATH: ''
     volumes:
@@ -31,7 +31,7 @@ services:
       ODYSSEY_DATA_DIR: /odyssey/output/Data
       ROS_LOG_DIR: /odyssey/output/Logs
       SIM_LOG_PATH: /odyssey/output/Logs/odyssey_2.log
-      MISSION_PATH: /odyssey/config/missions/dive240/dive240_diff.mi
+      MISSION_PATH: /odyssey/missions/dive240/dive240_diff.mi
       VEHICLE_PATH: /odyssey/config/vehicles/Borealis.vd
       FAULT_PATH: ''
     volumes:
