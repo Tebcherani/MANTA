@@ -156,8 +156,14 @@ class OdysseyNode : public rclcpp::Node {
                     sim_time_received_ = true;
 
                     try_finish_init();
-                }
-            );
+            });
+
+            shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
+                "/sim/shutdown", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+                    if (!msg->data) return;
+                    RCLCPP_INFO(get_logger(), "Vehicle '%s' received simulation shutdown.", vehicle_id_.c_str());
+                    rclcpp::shutdown();
+            });
 
             RCLCPP_INFO(get_logger(), "%s waiting for simulation startup data.", vehicle_id_.c_str());
         }
@@ -210,6 +216,7 @@ class OdysseyNode : public rclcpp::Node {
         rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sim_time_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
 
         bool calendar_start_time_received_ = false;
         bool odyssey_initialized_ = false;

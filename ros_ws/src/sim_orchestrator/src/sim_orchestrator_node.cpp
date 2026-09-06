@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
@@ -48,6 +49,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             startup_ready_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/startup_ready", startup_qos);
             sim_step_pub_ = create_publisher<manta_interfaces::msg::SimStep>("/sim/step", step_qos);
             sim_time_pub_ = create_publisher<std_msgs::msg::Float64>("/sim/time", startup_qos);
+            shutdown_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/shutdown", startup_qos);
 
             // ----------------------------------------------------------------- 
             // Create subscribers
@@ -162,14 +164,14 @@ class SimOrchestratorNode : public rclcpp::Node {
             // The simulation is complete when no active vehicles remain.
             if (!odyssey_1_active_ && !odyssey_2_active_) {
                 RCLCPP_INFO(get_logger(), "All vehicle missions have completed.");
-                rclcpp::shutdown();
+                request_simulation_shutdown();
                 return;
             }
 
             // Stop after completing the configured number of cycles.
             if (sim_state_.current_cycle + 1 >= sim_config_.num_cycles) {
                 RCLCPP_INFO(get_logger(), "Simulation completed all %d configured cycles.", sim_config_.num_cycles);
-                rclcpp::shutdown();
+                request_simulation_shutdown();
                 return;
             }
 
@@ -245,6 +247,21 @@ class SimOrchestratorNode : public rclcpp::Node {
             check_all_step_results_received();
         }
 
+        void request_simulation_shutdown() {
+            std_msgs::msg::Bool shutdown_message;
+            shutdown_message.data = true;
+
+            RCLCPP_INFO(get_logger(), "Requesting shutdown of all simulation nodes.");
+            shutdown_pub_->publish(shutdown_message);
+
+            // Allow the reliable shutdown message time to reach the vehicle nodes before stopping the orchestrator's ROS context.
+            shutdown_timer_ = create_wall_timer(
+                std::chrono::milliseconds(500), [this]() {
+                    shutdown_timer_->cancel(); 
+                    rclcpp::shutdown();
+            });
+        }
+
         // Initialization state
         bool odyssey_1_ready_ = false;
         bool odyssey_2_ready_ = false;
@@ -260,11 +277,14 @@ class SimOrchestratorNode : public rclcpp::Node {
         sim_config_t sim_config_;
         sim_state_t sim_state_;
         const world_state_t *world_state_ = nullptr;
+        
+        rclcpp::TimerBase::SharedPtr shutdown_timer_;
 
         rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr calendar_start_time_pub_;
         rclcpp::Publisher<manta_interfaces::msg::SimStep>::SharedPtr sim_step_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr sim_time_pub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr startup_ready_pub_;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr shutdown_pub_;
         
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_1_ready_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr odyssey_2_ready_sub_;
