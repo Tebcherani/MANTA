@@ -8,6 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(manta_interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(whale_node src/whale_node.cpp)
 
@@ -15,6 +16,7 @@ ament_target_dependencies(
   whale_node
   rclcpp
   manta_interfaces
+  std_msgs
 )
 
 install(

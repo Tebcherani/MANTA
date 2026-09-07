@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -104,6 +105,13 @@ class SimOrchestratorNode : public rclcpp::Node {
             if (init_sim_config(&sim_config_)) RCLCPP_INFO(get_logger(), "Simulation configuration initialized.");
             else throw std::runtime_error("Failed to initialize simulation configuration.");
 
+            sim_config_.timestep = declare_parameter<double>("timestep", sim_config_.timestep);
+            sim_config_.control_period = static_cast<int>(declare_parameter<int64_t>("control_period", sim_config_.control_period));
+            sim_config_.num_cycles = static_cast<int>(declare_parameter<int64_t>("max_cycles", sim_config_.num_cycles));
+            steps_per_message_ = static_cast<int>(declare_parameter<int64_t>("steps_per_message", 1));
+
+            if (steps_per_message_ < 1) throw std::runtime_error("steps_per_message must be at least 1.");
+
             // ----------------------------------------------------------------- 
             // Init world state
             // -----------------------------------------------------------------
@@ -169,6 +177,8 @@ class SimOrchestratorNode : public rclcpp::Node {
             step.current_cycle = static_cast<uint64_t>(sim_state_.current_cycle);
             step.sim_time = sim_state_.sim_time;
             step.timestep = sim_config_.timestep;
+            const int remaining_cycles = sim_config_.num_cycles - sim_state_.current_cycle;
+            step.step_count = static_cast<uint32_t>(std::min(steps_per_message_, remaining_cycles));
             step.control_period = static_cast<uint64_t>(sim_config_.control_period);
 
             step.world.gravity = world_state_->gravity;
@@ -202,21 +212,25 @@ class SimOrchestratorNode : public rclcpp::Node {
                 return;
             }
 
-            // Stop after completing the configured number of cycles.
-            if (sim_state_.current_cycle + 1 >= sim_config_.num_cycles) {
+            const int completed_steps = std::min(steps_per_message_, sim_config_.num_cycles - sim_state_.current_cycle);
+
+            // Stop when the completed batch reaches the configured cycle limit.
+            if (sim_state_.current_cycle + completed_steps >= sim_config_.num_cycles) {
                 RCLCPP_INFO(get_logger(), "Simulation completed all %d configured cycles.", sim_config_.num_cycles);
                 request_simulation_shutdown();
                 return;
             }
 
-            // Reset acknowledgements before publishing the next step.
+            // Reset acknowledgements before publishing the next batch.
             for (auto &entry : vehicle_states_) entry.second.step_complete = false;
 
-            // Advance the shared simulation cycle and clock.
-            if (!update_sim_state(&sim_state_, sim_config_.timestep)) {
-                RCLCPP_ERROR(get_logger(), "Failed to advance the simulation state.");
-                request_simulation_shutdown(true);
-                return;
+            // Advance the shared clock through every completed native timestep.
+            for (int step = 0; step < completed_steps; ++step) {
+                if (!update_sim_state(&sim_state_, sim_config_.timestep)) {
+                    RCLCPP_ERROR(get_logger(), "Failed to advance the simulation state.");
+                    request_simulation_shutdown(true);
+                    return;
+                }
             }
 
             publish_current_step();
@@ -241,8 +255,25 @@ class SimOrchestratorNode : public rclcpp::Node {
                 return;
             }
 
-            if (msg->completed_cycle != static_cast<uint64_t>(sim_state_.current_cycle)) {
-                RCLCPP_WARN(get_logger(), "Ignored result from %s for cycle %llu; current cycle is %d.", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), sim_state_.current_cycle);
+            const uint64_t first_cycle = static_cast<uint64_t>(sim_state_.current_cycle);
+            const uint64_t last_cycle = first_cycle + static_cast<uint64_t>(std::min(steps_per_message_, sim_config_.num_cycles - sim_state_.current_cycle)) - 1;
+
+            // Terminal results may occur partway through a batch.
+            if (msg->completed_cycle < first_cycle || msg->completed_cycle > last_cycle) {
+                RCLCPP_WARN(get_logger(), "Ignored result from %s for cycle %llu; expected cycle %llu through %llu.", msg->vehicle_id.c_str(),
+                    static_cast<unsigned long long>(msg->completed_cycle),
+                    static_cast<unsigned long long>(first_cycle),
+                    static_cast<unsigned long long>(last_cycle)
+                );
+                return;
+            }
+
+            // A running vehicle must have completed the entire batch.
+            if (msg->status == manta_interfaces::msg::SimStepResult::RUNNING && msg->completed_cycle != last_cycle) {
+                RCLCPP_WARN(get_logger(), "Ignored incomplete batch result from %s at cycle %llu; expected cycle %llu.", msg->vehicle_id.c_str(),
+                    static_cast<unsigned long long>(msg->completed_cycle),
+                    static_cast<unsigned long long>(last_cycle)
+                );
                 return;
             }
 
@@ -306,6 +337,7 @@ class SimOrchestratorNode : public rclcpp::Node {
         sim_config_t sim_config_;
         sim_state_t sim_state_;
         const world_state_t *world_state_ = nullptr;
+        int steps_per_message_ = 1;
 
         rclcpp::TimerBase::SharedPtr shutdown_timer_;
 

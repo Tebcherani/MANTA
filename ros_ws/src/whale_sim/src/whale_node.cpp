@@ -10,6 +10,7 @@
 #include "manta_interfaces/msg/whale_state.hpp"
 #include "manta_interfaces/msg/whale_state_array.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 class WhaleNode : public rclcpp::Node {
 public:
@@ -23,19 +24,22 @@ public:
         speed_max_ = declare_parameter<double>("speed_max", 2.0);
         start_distance_ = declare_parameter<double>("start_distance", 2000.0);
         whale_depth_ = declare_parameter<double>("depth", 20.0);
+        mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
+        call_rate_per_hour_ = declare_parameter<double>("call_rate_per_hour", 6.4);
 
         initialize_whales();
 
-        whale_states_publisher_ =
-            create_publisher<manta_interfaces::msg::WhaleStateArray>(
-                "/sim/whales/ground_truth", 10);
+        whale_states_pub_ = create_publisher<manta_interfaces::msg::WhaleStateArray>("/sim/whales/ground_truth", 10);
 
-        step_subscription_ =
-            create_subscription<manta_interfaces::msg::SimStep>(
-                "/sim/step", 10,
-                [this](const manta_interfaces::msg::SimStep::SharedPtr step) {
-                    update_whales(*step);
-                });
+        step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {
+            update_whales(*step);
+        });
+        
+        shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {
+            if (!message->data) return;
+            RCLCPP_INFO(get_logger(), "Shutting down whale node.");
+            rclcpp::shutdown();
+        });
 
         RCLCPP_INFO(get_logger(), "Initialized %d whales.", whale_count_);
     }
@@ -89,20 +93,28 @@ private:
     }
 
     void update_whales(const manta_interfaces::msg::SimStep &step) {
-        if (step.current_cycle > 0) {
-            for (auto &whale : whales_) {
-                whale.north += whale.velocity_north * step.timestep;
-                whale.east += whale.velocity_east * step.timestep;
-            }
+        if (step.step_count == 0) {
+            RCLCPP_ERROR(get_logger(), "Received a simulation batch with zero steps.");
+            return;
         }
 
+        // Constant whale velocity makes this exactly equivalent to advancing one timestep at a time.
+        const double batch_timestep = static_cast<double>(step.step_count) * step.timestep;
+
+        for (auto &whale : whales_) {
+            whale.north += whale.velocity_north * batch_timestep;
+            whale.east += whale.velocity_east * batch_timestep;
+        }
+
+        const uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
+
         manta_interfaces::msg::WhaleStateArray message;
-        message.cycle = step.current_cycle;
+        message.cycle = completed_cycle;
 
         for (const auto &whale : whales_) {
             manta_interfaces::msg::WhaleState state;
             state.whale_id = whale.id;
-            state.cycle = step.current_cycle;
+            state.cycle = completed_cycle;
             state.north = whale.north;
             state.east = whale.east;
             state.depth = whale.depth;
@@ -112,7 +124,7 @@ private:
             message.whales.push_back(state);
         }
 
-        whale_states_publisher_->publish(message);
+        whale_states_pub_->publish(message);
     }
 
     int whale_count_;
@@ -124,14 +136,15 @@ private:
     double speed_max_;
     double start_distance_;
     double whale_depth_;
+    double mission_duration_;
+    double call_rate_per_hour_;
 
     std::mt19937 generator_;
     std::vector<Whale> whales_;
 
-    rclcpp::Publisher<manta_interfaces::msg::WhaleStateArray>::SharedPtr
-        whale_states_publisher_;
-    rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr
-        step_subscription_;
+    rclcpp::Publisher<manta_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
+    rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr step_sub_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
 };
 
 int main(int argc, char **argv) {

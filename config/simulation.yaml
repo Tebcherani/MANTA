@@ -9,7 +9,8 @@ version: 1
 simulation:
   timestep: 0.02
   control_period: 10
-  max_cycles: 1000000
+  max_cycles: 12960000  
+  steps_per_message: 10000
 
 #--------------------------------------------------
 # Output directories
@@ -24,7 +25,7 @@ output:
 scenario:
   type: picket_line
 
-  duration: 604800.0 # one week, seconds
+  duration: 259200.0  # 3 days
 
   picket_line:
     start:
@@ -43,9 +44,10 @@ scenario:
 
   whales:
     count: 46
-    speed: 1.5        # meters per second
-    call_rate: 6.4    # calls per hour
+    speed: 1.5
+    call_rate: 6.4
     start_distance: 11000.0
+    depth: 20.0
 
   monte_carlo:
     realizations: 500
@@ -58,13 +60,13 @@ scenario:
 vehicles:
   - id: odyssey_1
     type: odyssey
-    mission: ./missions/dive240/dive240.mi
+    mission: ./generated/missions/picket_line_odyssey_1.mi
     model: ./config/vehicles/Borealis.vd
     fault: ""
 
   - id: odyssey_2
     type: odyssey
-    mission: ./missions/dive240/dive240_diff.mi
+    mission: ./generated/missions/picket_line_odyssey_2.mi
     model: ./config/vehicles/Borealis.vd
     fault: ""
 

@@ -234,30 +234,32 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
   static double old_TForce = 0.0, old_TTorque = 0.0, old_TVolt = 0.0;
   double Wdw1, Wdw2, W,B ;
   const int debug=0;
-  
-				/* if weight dropped, then vehicle feels 0 */
-  if (read_sensor(C_WEIGHT1_DROP)==0.0) 
-      Wdw1 = read_sensor(REAL_WDW1);
-  else 
-      Wdw1 = 0.0;
-        
-  if (read_sensor(C_WEIGHT2_DROP)==0.0) 
-      Wdw2 = read_sensor(REAL_WDW2);
-  else 
-      Wdw2 = 0.0;
-        
-  W = read_sensor(REAL_VEH_W);
-  B = read_sensor(REAL_VEH_B);
-				/* get weight and buoyancy of vehicle */
-  Wp = W + Wdw1 + Wdw2;
-  Bp = B + read_sensor(VS_BDW1) + read_sensor(VS_BDW2);
-  Xgp = (read_sensor(VS_XG)*W + read_sensor(VS_XDW1)*Wdw1 + read_sensor(VS_XDW2)*Wdw2) / Wp;
-  Ygp = (read_sensor(VS_YG)*W + read_sensor(VS_YDW1)*Wdw1 + read_sensor(VS_YDW2)*Wdw2) / Wp;
-  Zgp = (read_sensor(VS_ZG)*W + read_sensor(VS_ZDW1)*Wdw1 + read_sensor(VS_ZDW2)*Wdw2) / Wp;
-  Xbp = (read_sensor(VS_XB)*W + read_sensor(VS_XDW1)*read_sensor(VS_BDW1) + read_sensor(VS_XDW2)*read_sensor(VS_BDW2)) / Bp;
-  Ybp = (read_sensor(VS_YB)*W + read_sensor(VS_YDW1)*read_sensor(VS_BDW1) + read_sensor(VS_YDW2)*read_sensor(VS_BDW2)) / Bp;
-  Zbp = (read_sensor(VS_ZB)*W + read_sensor(VS_ZDW1)*read_sensor(VS_BDW1) + read_sensor(VS_ZDW2)*read_sensor(VS_BDW2)) / Bp;
 
+  double mass, ixx, iyy, izz, ixy, iyz, izx, fin1_x;
+  
+  /*
+  * Weight, buoyancy, and their effective centers cannot change between
+  * the four RK4 stages, so calculate them only during the first stage.
+  */
+  if (l == 1) {
+    if (read_sensor(C_WEIGHT1_DROP)==0.0) Wdw1 = read_sensor(REAL_WDW1);
+    else Wdw1 = 0.0;
+          
+    if (read_sensor(C_WEIGHT2_DROP)==0.0) Wdw2 = read_sensor(REAL_WDW2);
+    else Wdw2 = 0.0;
+          
+    W = read_sensor(REAL_VEH_W);
+    B = read_sensor(REAL_VEH_B);
+          /* get weight and buoyancy of vehicle */
+    Wp = W + Wdw1 + Wdw2;
+    Bp = B + read_sensor(VS_BDW1) + read_sensor(VS_BDW2);
+    Xgp = (read_sensor(VS_XG)*W + read_sensor(VS_XDW1)*Wdw1 + read_sensor(VS_XDW2)*Wdw2) / Wp;
+    Ygp = (read_sensor(VS_YG)*W + read_sensor(VS_YDW1)*Wdw1 + read_sensor(VS_YDW2)*Wdw2) / Wp;
+    Zgp = (read_sensor(VS_ZG)*W + read_sensor(VS_ZDW1)*Wdw1 + read_sensor(VS_ZDW2)*Wdw2) / Wp;
+    Xbp = (read_sensor(VS_XB)*W + read_sensor(VS_XDW1)*read_sensor(VS_BDW1) + read_sensor(VS_XDW2)*read_sensor(VS_BDW2)) / Bp;
+    Ybp = (read_sensor(VS_YB)*W + read_sensor(VS_YDW1)*read_sensor(VS_BDW1) + read_sensor(VS_YDW2)*read_sensor(VS_BDW2)) / Bp;
+    Zbp = (read_sensor(VS_ZB)*W + read_sensor(VS_ZDW1)*read_sensor(VS_BDW1) + read_sensor(VS_ZDW2)*read_sensor(VS_BDW2)) / Bp;
+  }
   update_sensor(REAL_EXCESS_BUOYANCY, Bp-Wp);
 
   vv = e[2] * e[2];
@@ -285,10 +287,19 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
   cp4 = cos(p[4]);  
   cp5 = cos(p[5]);
   sp4 = sin(p[4]);
-  sp5 = sin(p[5]);       
+  sp5 = sin(p[5]);  
+  
+  mass = read_sensor(VS_MASS);
+  ixx = read_sensor(VS_IXX);
+  iyy = read_sensor(VS_IYY);
+  izz = read_sensor(VS_IZZ);
+  ixy = read_sensor(VS_IXY);
+  iyz = read_sensor(VS_IYZ);
+  izx = read_sensor(VS_IZX);
+  fin1_x = read_sensor(VS_FIN1_X);
 
-  vt = e[2] + read_sensor(VS_FIN1_X)*e[6] ;
-  wt = e[3] - read_sensor(VS_FIN1_X)*e[5] ;
+  vt = e[2] + fin1_x*e[6];
+  wt = e[3] - fin1_x*e[5];
 
   if (read_sensor(M_PRESENT_TIME) <= .2) {
     old_rud_ang = -read_sensor(VS_RUD_HYST_CENTER) ;
@@ -353,7 +364,7 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
   
   rhs[1] = TForce                   /* AXIAL FORCES */
          - (Wp-Bp)*sp5 
-         + read_sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr) 
+         + mass*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr) 
          + F1[1] + F2[1] + F3[1] + F4[1]
          + read_sensor(VS_XVV)*vv + read_sensor(VS_XWW)*ww + read_sensor(VS_XVR)*vr + read_sensor(VS_XWQ)*wq + read_sensor(VS_XRR)*rr + read_sensor(VS_XQQ)*qq;
 
@@ -367,7 +378,7 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
       printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e ",
              read_sensor(M_PRESENT_TIME),rud_ang,
              TForce,
-             read_sensor(VS_MASS)*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr),
+             mass*(vr - wq + Xgp*(qq + rr) - Ygp*pq - Zgp*pr),
              F1[1] + F2[1] + F3[1] + F4[1],
              read_sensor(VS_XVV)*vv , read_sensor(VS_XWW)*ww , read_sensor(VS_XVR)*vr ,read_sensor(VS_XWQ)*wq , read_sensor(VS_XRR)*rr , read_sensor(VS_XQQ)*qq,
              read_sensor(VS_XUABU)*uabu*(2.455-2.175*e[1]+.75*e[1]*e[1])) ;
@@ -376,29 +387,29 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
   rhs[2] = (Wp-Bp)*cp5*sp4         /* LATERAL FORCES */
          + read_sensor(VS_YVABV)*vabv
          + read_sensor(VS_YUV)*uv + read_sensor(VS_YUR)*ur + read_sensor(VS_YRABR)*rabr + read_sensor(VS_YWP)*wp 
-         + read_sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq) 
+         + mass*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq) 
          + F1[2] + F2[2] + F3[2] + F4[2];
 
   if ((debug)&&(l == 1)) {
           printf("%5.2e %5.2e %5.2e %5.2e %5.2e %5.2e %5.2e ",
                  read_sensor(VS_YVABV)*vabv,
                  read_sensor(VS_YUV)*uv , read_sensor(VS_YUR)*ur , read_sensor(VS_YRABR)*rabr , read_sensor(VS_YWP)*wp, 
-                 read_sensor(VS_MASS)*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq),
+                 mass*(wp - ur + Ygp*(rr+pp) -Zgp*qr - Xgp*pq),
                  F1[2] + F2[2] + F3[2] + F4[2]);
   }
   
   rhs[3] = (Wp-Bp)*cp5*cp4   /* NORMAL FORCES */
          + read_sensor(VS_ZWABW)*wabw
          + read_sensor(VS_ZUQ)*uq + read_sensor(VS_ZUW)*uw + read_sensor(VS_ZQABQ)*qabq + read_sensor(VS_ZVP)*vp
-           + read_sensor(VS_MASS)*(uq - vp + Zgp*(pp + qq) - Xgp*pr - Ygp*qr)
+           + mass*(uq - vp + Zgp*(pp + qq) - Xgp*pr - Ygp*qr)
          + F1[3] + F2[3] + F3[3] + F4[3];
   
   rhs[4] = -(Zgp*Wp - Zbp*Bp)*cp5*sp4    /* ROLL MOMENTS */
            + (Ygp*Wp - Ybp*Bp)*cp5*cp4   
          + read_sensor(VS_KPABP)*pabp 
-         - (read_sensor(VS_IZZ) - read_sensor(VS_IYY))*qr 
-         + read_sensor(VS_IZX)*pq - read_sensor(VS_IXY)*pr + read_sensor(VS_IYZ)*qq -read_sensor(VS_IYZ)*rr 
-         - read_sensor(VS_MASS)*(Ygp*(vp-uq) + Zgp*(wp-ur))
+         - (izz - iyy)*qr 
+         + izx*pq - ixy*pr + iyz*qq -iyz*rr 
+         - mass*(Ygp*(vp-uq) + Zgp*(wp-ur))
          + M1[1] + M2[1] + M3[1] + M4[1] 
          + TTorque + read_sensor(VS_KVT2)*4.*vt*wt*(wt*wt-vt*vt)/(vt*vt + wt*wt + .0001) ;
   
@@ -408,9 +419,9 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
          + read_sensor(VS_MQABQ)*qabq
          + read_sensor(VS_MUW)*uw  
          + read_sensor(VS_MUQ)*uq + read_sensor(VS_MPR)*pr
-           + (read_sensor(VS_IZZ) - read_sensor(VS_IXX))*pr
-         - read_sensor(VS_IZX)*pp - read_sensor(VS_IYZ)*pq +read_sensor(VS_IXY)*qr + read_sensor(VS_IZX)*rr
-         - read_sensor(VS_MASS)*(Zgp*(wq - vr) + Xgp*(uq - vp))                     
+           + (izz - ixx)*pr
+         - izx*pp - iyz*pq + ixy*qr + izx*rr
+         - mass*(Zgp*(wq - vr) + Xgp*(uq - vp))                     
          + M1[2] + M2[2] + M3[2] + M4[2];
 
   rhs[6] = (Ygp*Wp - Ybp*Bp)*sp5          /* YAW MOMENTS */ 
@@ -418,9 +429,9 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
          + read_sensor(VS_NUV)*uv + read_sensor(VS_NRABR)*rabr 
          + read_sensor(VS_NUR)*ur + read_sensor(VS_NVABV)*vabv 
          + read_sensor(VS_NPQ)*pq
-         + (read_sensor(VS_IXX) - read_sensor(VS_IYY))*pq
-         + read_sensor(VS_IXY)*pp + read_sensor(VS_IYZ)*pr - read_sensor(VS_IXY)*qq - read_sensor(VS_IZX)*qr 
-         - read_sensor(VS_MASS)*Xgp*(ur-wp) + read_sensor(VS_MASS)*Ygp*(wq - vr)
+         + (ixx - iyy)*pq
+         + ixy*pp + iyz*pr - ixy*qq - izx*qr 
+         - mass*Xgp*(ur-wp) + mass*Ygp*(wq - vr)
                + M1[3] + M2[3] + M3[3] + M4[3];
 
   if ((debug)&&(l == 1)) {
@@ -430,8 +441,8 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
                  read_sensor(VS_NUR)*ur,
                  read_sensor(VS_NVABV)*vabv,
                  read_sensor(VS_NPQ)*pq,
-                 (read_sensor(VS_IXX) - read_sensor(VS_IYY))*pq + read_sensor(VS_IXY)*pp + read_sensor(VS_IYZ)*pr - read_sensor(VS_IXY)*qq - read_sensor(VS_IZX)*qr 
-                 - read_sensor(VS_MASS)*Xgp*(ur-wp) + read_sensor(VS_MASS)*Ygp*(wq - vr),  
+                 (ixx - iyy)*pq + ixy*pp + iyz*pr - ixx*qq - izx*qr 
+                 - mass*Xgp*(ur-wp) + mass*Ygp*(wq - vr),  
                  M1[3] + M2[3] + M3[3] + M4[3]);
   }
   
@@ -566,11 +577,15 @@ void motion(const world_state_t *world_state, double e[], double p[], double Amp
 	ctrn[6][5] =  ds4/dc5;
 	ctrn[6][6] =  dc4/dc5;
 
-	for (i=1;i<=6;i++) {	/* get pdot */
-	    for (k=1;k<=6;k++) {
-		pdot[i][l] = pdot[i][l] + ctrn[i][k] * e[k];
-	    }
-	}
+	/* Multiply only the nonzero blocks of ctrn. */
+  pdot[1][l] = ctrn[1][1]*e[1] + ctrn[1][2]*e[2] + ctrn[1][3]*e[3];
+  pdot[2][l] = ctrn[2][1]*e[1] + ctrn[2][2]*e[2] + ctrn[2][3]*e[3];
+  pdot[3][l] = ctrn[3][1]*e[1] + ctrn[3][2]*e[2] + ctrn[3][3]*e[3];
+
+  pdot[4][l] = ctrn[4][4]*e[4] + ctrn[4][5]*e[5] + ctrn[4][6]*e[6];
+  pdot[5][l] = ctrn[5][5]*e[5] + ctrn[5][6]*e[6];
+  pdot[6][l] = ctrn[6][5]*e[5] + ctrn[6][6]*e[6];
+
 				/* apply a Runge-Kutta half- or whole step */
 	if ((l == 1) || (l == 2)) {
 	    for (i=1;i<=6;i++) { 

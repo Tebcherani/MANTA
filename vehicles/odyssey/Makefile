@@ -41,7 +41,7 @@ ODYSSEY_CPPFLAGS = \
 	-Isrc/Odyssey/Vehicle/Loggers \
 	-Isrc/Odyssey/Vehicle/Navigation
 
-CFLAGS = -O2 -Wall -Wno-missing-braces -g -std=gnu89
+CFLAGS = -O3 -march=native -flto -Wall -Wno-missing-braces -std=gnu89
 LDFLAGS = -llapacke -llapack -lblas -lm
 
 # -------------------------------------------------------------------------

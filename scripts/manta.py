@@ -202,6 +202,38 @@ def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> d
     }
 
 
+def whale_service(config: dict, root: Path, log_dir: str) -> dict:
+    scenario = config["scenario"]
+    line = scenario["picket_line"]
+    whales = scenario["whales"]
+
+    params = {
+        "count": whales["count"],
+        "line_start_north": line["start"]["north"],
+        "line_start_east": line["start"]["east"],
+        "line_end_north": line["end"]["north"],
+        "line_end_east": line["end"]["east"],
+        "speed_min": whales["speed"],
+        "speed_max": whales["speed"],
+        "start_distance": whales["start_distance"],
+        "depth": whales["depth"],
+    }
+
+    args = " ".join(f'-p "{name}:={value}"' for name, value in params.items())
+
+    return {
+        "image": "odyssey_sim_dev",
+        "environment": {"ROS_DOMAIN_ID": "1", "ROS_LOG_DIR": log_dir},
+        "volumes": [{"type": "bind", "source": str(root), "target": "/odyssey"}],
+        "command": [
+            "/bin/bash", "-lc",
+            "source /opt/ros/jazzy/setup.bash\n"
+            "source /odyssey/ros_ws/install/setup.bash\n"
+            f"ros2 run whale_sim whale_node --ros-args {args}",
+        ],
+    }
+
+
 def write_runtime_compose(config: dict, root: Path) -> Path:
     generated = root / "generated"
     generated.mkdir(exist_ok=True)
@@ -210,11 +242,15 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
     data_dir = container_path(root, config["output"]["data_directory"])
     log_dir = container_path(root, config["output"]["log_directory"])
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
+    simulation = config["simulation"]
 
     services = {
         vehicle["id"]: vehicle_service(vehicle, root, data_dir, log_dir)
         for vehicle in config["vehicles"]
     }
+
+    if config.get("scenario", {}).get("type") == "picket_line":
+        services["whale_sim"] = whale_service(config, root, log_dir)
 
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
 
@@ -232,7 +268,11 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
             "ros2 run sim_orchestrator sim_orchestrator_node "
-            f'--ros-args -p "vehicle_ids:={vehicle_list}"',
+            f'--ros-args -p "vehicle_ids:={vehicle_list}" '
+            f'-p "timestep:={simulation["timestep"]}" '
+            f'-p "control_period:={simulation["control_period"]}" '
+            f'-p "max_cycles:={simulation["max_cycles"]}" '
+            f'-p "steps_per_message:={simulation.get("steps_per_message", 1)}"',
         ],
     }
 
@@ -334,6 +374,26 @@ def main() -> int:
 
         if args.command == "generate":
             return 0
+
+        if args.command == "build":
+            result = subprocess.run(commands["build"], cwd=root, check=False)
+            if result.returncode != 0:
+                return result.returncode
+
+            build_inside_container = [
+                "docker", "compose",
+                "--env-file", str(env_path),
+                "-f", str(root / "compose.dev.yaml"),
+                "run", "--rm", "dev",
+                "/bin/bash", "-lc",
+                "source /opt/ros/jazzy/setup.bash && "
+                "cd /odyssey/vehicles/odyssey && make libraries && "
+                "cd /odyssey/ros_ws && "
+                "colcon build "
+                "--cmake-args -DCMAKE_BUILD_TYPE=Release",
+            ]
+
+            return subprocess.run(build_inside_container, cwd=root, check=False).returncode
 
         return subprocess.run(commands[args.command], cwd=root, check=False).returncode
 

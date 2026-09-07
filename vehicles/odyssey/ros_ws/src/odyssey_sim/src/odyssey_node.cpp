@@ -69,36 +69,39 @@ class OdysseyNode : public rclcpp::Node {
                 }
             });
 
-            sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
-                "/sim/step", step_qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
-                    manta_interfaces::msg::SimStepResult result;
-                    world_state_t world_state;
+            sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", step_qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
+                manta_interfaces::msg::SimStepResult result;
+                world_state_t world_state;
 
-                    // Prepare the result returned to the orchestrator and the native world structure required by the existing Odyssey C simulator.
-                    result.vehicle_id = vehicle_id_;
-                    result.completed_cycle = msg->current_cycle;
-                    result.status = manta_interfaces::msg::SimStepResult::RUNNING;
-                    result.detail = "";
+                // Prepare the result returned to the orchestrator and the native world structure required by the existing Odyssey C simulator.
+                result.vehicle_id = vehicle_id_;
+                result.completed_cycle = msg->current_cycle;
+                result.status = manta_interfaces::msg::SimStepResult::RUNNING;
+                result.detail = "";
 
-                    // A vehicle whose mission has finished no longer participates in subsequent simulation cycles.
-                    if (mission_finished_) return;
+                // A vehicle whose mission has finished no longer participates in subsequent simulation cycles.
+                if (mission_finished_) return;
 
-                    // Convert the ROS world snapshot into the native world structure required by the existing Odyssey C simulator.                    
-                    world_state.gravity = msg->world.gravity;
-                    world_state.magnetic_north = msg->world.magnetic_north;
-                    world_state.magnetic_east = msg->world.magnetic_east;
-                    world_state.magnetic_down = msg->world.magnetic_down;
-                    world_state.seawater_density = msg->world.seawater_density;
+                // Convert the ROS world snapshot into the native world structure required by the existing Odyssey C simulator.                    
+                world_state.gravity = msg->world.gravity;
+                world_state.magnetic_north = msg->world.magnetic_north;
+                world_state.magnetic_east = msg->world.magnetic_east;
+                world_state.magnetic_down = msg->world.magnetic_down;
+                world_state.seawater_density = msg->world.seawater_density;
 
-                    // Validate the control period before using it in the modulo operation.
-                    if (msg->control_period == 0) {
-                        result.status = manta_interfaces::msg::SimStepResult::ERROR;
-                        result.detail = "Simulation control period cannot be zero.";
-                        step_result_pub_->publish(result);
-                        return;
-                    }
+                // Validate the control period before using it in the modulo operation.
+                if (msg->control_period == 0) {
+                    result.status = manta_interfaces::msg::SimStepResult::ERROR;
+                    result.detail = "Simulation control period cannot be zero.";
+                    step_result_pub_->publish(result);
+                    return;
+                }
 
-                    // Stop processing this vehicle if its mission requested an abort.
+                    // Run every native Odyssey cycle contained in this ROS batch.
+                    for (uint32_t offset = 0; offset < msg->step_count; ++offset) {
+                        const uint64_t cycle = msg->current_cycle + offset;
+                        result.completed_cycle = cycle;
+
                     if (odyssey_abort_requested()) {
                         mission_finished_ = true;
                         result.status = manta_interfaces::msg::SimStepResult::ABORTED;
@@ -107,7 +110,7 @@ class OdysseyNode : public rclcpp::Node {
                         return;
                     }
 
-                    // Advance the vehicle dynamics by one simulation timestep. This runs on every simulation cycle.
+                    // Dynamics still run at the original timestep.
                     if (!update_odyssey_sim_state(&world_state, msg->timestep)) {
                         result.status = manta_interfaces::msg::SimStepResult::ERROR;
                         result.detail = "Failed to update Odyssey simulation state.";
@@ -115,9 +118,8 @@ class OdysseyNode : public rclcpp::Node {
                         return;
                     }
 
-                    // Run sensors, navigation, control, and mission logic only on control cycles. The control timestep spans all simulation steps
-                    // since the previous control update.
-                    if (msg->current_cycle % msg->control_period == 0) {
+                    // Sensors, navigation, control, and mission logic retain their original control-cycle timing.
+                    if (cycle % msg->control_period == 0) {
                         const double control_timestep = static_cast<double>(msg->control_period) * msg->timestep;
                         const odyssey_update_status_t cycle_status = update_odyssey_sim_cycle(&world_state, control_timestep);
 
@@ -137,17 +139,19 @@ class OdysseyNode : public rclcpp::Node {
                         }
                     }
 
-                    // Update Odyssey's internal clock only after the dynamics and control work for this cycle completed successfully.
-                    const double next_sim_time = msg->sim_time + msg->timestep;
+                    const double next_sim_time = msg->sim_time + static_cast<double>(offset + 1) * msg->timestep;
+
                     if (!update_odyssey_sim_time(next_sim_time)) {
                         result.status = manta_interfaces::msg::SimStepResult::ERROR;
                         result.detail = "Failed to update Odyssey simulation time.";
                         step_result_pub_->publish(result);
                         return;
                     }
+                }
 
-                    // Report successful completion of this cycle to the orchestrator.
-                    step_result_pub_->publish(result);
+                // Report the final cycle completed by this batch.
+                result.completed_cycle = msg->current_cycle + msg->step_count - 1;
+                step_result_pub_->publish(result);
             });
 
             sim_time_sub_ = create_subscription<std_msgs::msg::Float64>(
