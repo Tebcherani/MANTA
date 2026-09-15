@@ -167,7 +167,7 @@ class SimOrchestratorNode : public rclcpp::Node {
         }
 
     private:
-        void request_next_whale_call() {
+        void request_next_whale_call(double after_time) {
             if (!next_whale_call_client_->wait_for_service(std::chrono::seconds(5))) {
                 RCLCPP_ERROR(get_logger(), "Whale-call scheduling service is unavailable.");
                 request_simulation_shutdown(true);
@@ -175,14 +175,39 @@ class SimOrchestratorNode : public rclcpp::Node {
             }
 
             auto request = std::make_shared<manta_interfaces::srv::GetNextWhaleCall::Request>();
-            request->after_time = sim_state_.sim_time;
 
-            next_whale_call_client_->async_send_request(request,[this](rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {
+            // Request the first call strictly after the event we just handled.
+            request->after_time = after_time;
+
+            next_whale_call_client_->async_send_request(request, [this](rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {
                     const auto response = future.get();
-                    next_whale_call_available_ = response->available;
-                    if (response->available) next_whale_call_ = response->call;
+
+                    if (!response->available) {
+                        next_whale_call_available_ = false;
+                        publish_current_step();
+                        return;
+                    }
+
+                    next_whale_call_ = response->call;
+                    next_whale_call_available_ = true;
+
+                    // More than one call can occur during one physics timestep.
+                    // Vehicles have already reached the end of that timestep, so publish any remaining calls from it before advancing again.
+                    if (next_whale_call_.sim_time <= sim_state_.sim_time) {
+                        next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<uint64_t>(sim_state_.current_cycle - 1) : 0;
+
+                        const double handled_call_time = next_whale_call_.sim_time;
+
+                        whale_call_pub_->publish(next_whale_call_);
+                        next_whale_call_available_ = false;
+
+                        request_next_whale_call(handled_call_time);
+                        return;
+                    }
+
                     publish_current_step();
-            });
+                }
+            );
         }
 
         void check_all_vehicles_initialized() {
@@ -195,7 +220,7 @@ class SimOrchestratorNode : public rclcpp::Node {
 
             simulation_started_ = true;
             RCLCPP_INFO(get_logger(), "All %zu vehicles are initialized.", vehicle_states_.size());
-            request_next_whale_call();
+            request_next_whale_call(sim_state_.sim_time);
         }
 
         void publish_current_step() {
@@ -287,14 +312,16 @@ class SimOrchestratorNode : public rclcpp::Node {
 
             // A shortened batch has now brought every vehicle to the pending whale-call event. Publish the call before starting another batch.
             if (current_batch_reaches_whale_call_) {
-                next_whale_call_.cycle = static_cast<uint64_t>( sim_state_.current_cycle - 1);                
+                next_whale_call_.cycle = static_cast<uint64_t>(sim_state_.current_cycle - 1);
+                const double handled_call_time = next_whale_call_.sim_time;
+
                 whale_call_pub_->publish(next_whale_call_);
 
                 next_whale_call_available_ = false;
                 current_batch_reaches_whale_call_ = false;
 
-                // Ask the whale simulator for the event following this call.
-                request_next_whale_call();
+                // Search from the exact call time so another call occurring within this same physics timestep is not accidentally skipped.
+                request_next_whale_call(handled_call_time);
                 return;
             }
 
