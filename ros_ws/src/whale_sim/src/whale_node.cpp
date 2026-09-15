@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <limits>
 #include <memory>
 #include <random>
@@ -35,6 +37,12 @@ public:
         whale_depth_ = declare_parameter<double>("depth", 20.0);
         mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
         call_rate_per_hour_ = declare_parameter<double>("call_rate_per_hour", 6.4);
+        const std::string data_directory = declare_parameter<std::string>("data_directory", "/odyssey/output/Data");
+
+        std::filesystem::create_directories(data_directory);
+        whale_log_.open(data_directory + "/whales.csv", std::ios::out | std::ios::trunc);
+        if (!whale_log_.is_open()) throw std::runtime_error("Failed to open whale trajectory log.");
+        whale_log_ << "cycle,sim_time,whale_id,north,east,depth\n";
 
         initialize_whales();
 
@@ -229,8 +237,17 @@ private:
             state.velocity_down = 0.0;
 
             message.whales.push_back(state);
+
+            whale_log_
+                << completed_cycle << ','
+                << batch_end_time << ','
+                << whale.id << ','
+                << whale.north << ','
+                << whale.east << ','
+                << whale.depth << '\n';
         }
 
+        whale_log_.flush();
         whale_states_pub_->publish(message);
     }
 
@@ -248,6 +265,7 @@ private:
 
     std::mt19937 generator_;
     std::vector<Whale> whales_;
+    std::ofstream whale_log_;
 
     rclcpp::Publisher<manta_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
 
