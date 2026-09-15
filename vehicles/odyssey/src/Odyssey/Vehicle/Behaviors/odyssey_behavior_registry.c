@@ -22,6 +22,7 @@ extern int waypoint_2d(struct behavior *, int, int);
 extern int wiggle(struct behavior *, int, int);
 extern int launch(struct behavior *, int, int);
 extern int yo_yo(struct behavior *, int, int);
+extern int picket_line_patrol(struct behavior *, int, int);
 
 int assign_behavior_fcn_ptr(const char *name, struct behavior *b)
 {
@@ -50,6 +51,7 @@ int assign_behavior_fcn_ptr(const char *name, struct behavior *b)
     if (strcmp("wiggle", name) == 0) b->fcn = wiggle;
     if (strcmp("launch", name) == 0) b->fcn = launch;
     if (strcmp("yo_yo", name) == 0) b->fcn = yo_yo;
+    if (strcmp("picket_line_patrol", name) == 0) b->fcn = picket_line_patrol;
 
     if (b->fcn == NULL)
         return -1;

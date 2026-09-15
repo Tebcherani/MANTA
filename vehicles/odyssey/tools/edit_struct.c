@@ -633,6 +633,16 @@ behavior: yo_yo
   b_arg:                min_altitude(m) 0.0
   b_arg:                    cycles(int) 0.0
   b_arg:                    max_time(s) 0.0
+
+behavior: picket_line_patrol
+  b_arg:                     start_n(m) 0
+  b_arg:                     start_e(m) 0
+  b_arg:                       end_n(m) 0
+  b_arg:                       end_e(m) 0
+  b_arg:                       depth(m) 0
+  b_arg:                     speed(m/s) 0
+  b_arg:                     capture(m) 5
+  
 END
  *----------------------------------------------------------------------*/
 

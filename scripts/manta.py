@@ -344,6 +344,27 @@ def main() -> int:
     try:
         config_path = Path(args.config).resolve()
         config = load_config(config_path)
+
+        # Generate scenario-specific vehicle missions before validating their paths.
+        scenario = config.get("scenario", {})
+
+        if scenario.get("type") == "picket_line":
+            generator = (
+                root
+                / "missions"
+                / "picket_line"
+                / "generate_picket_line_mission.py"
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(generator), str(config_path)],
+                cwd=root,
+                check=False,
+            )
+
+            if result.returncode != 0:
+                raise ValueError("Failed to generate picket-line missions.")
+
         validate_config(config, root)
         print_summary(config, config_path)
 
@@ -387,7 +408,9 @@ def main() -> int:
                 "run", "--rm", "dev",
                 "/bin/bash", "-lc",
                 "source /opt/ros/jazzy/setup.bash && "
-                "cd /odyssey/vehicles/odyssey && make libraries && "
+                "cd /odyssey/vehicles/odyssey && "
+                "make generate_odyssey && "
+                "make libraries && "
                 "cd /odyssey/ros_ws && "
                 "colcon build "
                 "--cmake-args -DCMAKE_BUILD_TYPE=Release",

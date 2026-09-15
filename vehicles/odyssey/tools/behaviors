@@ -218,6 +218,17 @@ const struct behavior bTemplate[] = {
         "", 0,
         "", 0,
         "", 0,
+        "", 0,
+    "picket_line_patrol", 0, -1., 0., 0,
+        "start_n(m)", 0,
+        "start_e(m)", 0,
+        "end_n(m)", 0,
+        "end_e(m)", 0,
+        "depth(m)", 0,
+        "speed(m/s)", 0,
+        "capture(m)", 5,
+        "", 0,
+        "", 0,
         "", 0
 };
 

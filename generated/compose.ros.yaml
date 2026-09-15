@@ -83,5 +83,5 @@ services:
       source /odyssey/ros_ws/install/setup.bash
 
       ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[odyssey_1,
-      odyssey_2]" -p "timestep:=0.02" -p "control_period:=10" -p "max_cycles:=8640000"
+      odyssey_2]" -p "timestep:=0.02" -p "control_period:=10" -p "max_cycles:=12960000"
       -p "steps_per_message:=10000"'

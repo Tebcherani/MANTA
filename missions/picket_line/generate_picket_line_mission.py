@@ -2,12 +2,14 @@
 
 import math
 import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 def main() -> int:
     root = Path(__file__).resolve().parents[2]
+
     if len(sys.argv) > 2:
         print(f"Usage: {sys.argv[0]} [configuration-file]")
         return 2
@@ -26,47 +28,60 @@ def main() -> int:
     line = scenario["picket_line"]
     patrol = scenario["patrol"]
 
-    start_n = float(line["start"]["north"])
-    start_e = float(line["start"]["east"])
-    end_n = float(line["end"]["north"])
-    end_e = float(line["end"]["east"])
+    line_start_n = float(line["start"]["north"])
+    line_start_e = float(line["start"]["east"])
+    line_end_n = float(line["end"]["north"])
+    line_end_e = float(line["end"]["east"])
+
     duration = float(scenario["duration"])
     speed = float(patrol["speed"])
     depth = float(patrol["depth"])
+    capture = float(patrol.get("capture", 25.0))
 
-    delta_n = end_n - start_n
-    delta_e = end_e - start_e
+    delta_n = line_end_n - line_start_n
+    delta_e = line_end_e - line_start_e
     line_length = math.hypot(delta_n, delta_e)
 
-    if line_length <= 0:
+    if not vehicles:
+        raise ValueError("At least one vehicle is required.")
+
+    if line_length <= 0.0:
         raise ValueError("Picket line must have nonzero length.")
 
-    if speed <= 0:
+    if duration <= 0.0:
+        raise ValueError("Scenario duration must be greater than zero.")
+
+    if speed <= 0.0:
         raise ValueError("Patrol speed must be greater than zero.")
 
-    segment_length = line_length / len(vehicles)
-    leg_time = segment_length / speed
-    cycles = math.ceil(duration / (2 * leg_time))
-    heading = math.atan2(delta_e, delta_n) % (2 * math.pi)
+    if capture <= 0.0:
+        raise ValueError("Patrol capture distance must be greater than zero.")
 
     output = root / "generated" / "missions"
     output.mkdir(parents=True, exist_ok=True)
 
+    vehicle_count = len(vehicles)
+
     for index, vehicle in enumerate(vehicles):
-        fraction = index / len(vehicles)
-        initial_n = start_n + fraction * delta_n
-        initial_e = start_e + fraction * delta_e
+        start_fraction = index / vehicle_count
+        end_fraction = (index + 1) / vehicle_count
+
+        segment_start_n = line_start_n + start_fraction * delta_n
+        segment_start_e = line_start_e + start_fraction * delta_e
+        segment_end_n = line_start_n + end_fraction * delta_n
+        segment_end_e = line_start_e + end_fraction * delta_e
+
         vehicle_id = vehicle["id"]
 
         mission = f"""# Generated MANTA picket-line mission for {vehicle_id}
 UseSim 1
 
 # Start at the beginning of this vehicle's assigned segment.
-sensor: m_pos_n(m) {initial_n:.6f}
-sensor: m_pos_e(m) {initial_e:.6f}
+sensor: m_pos_n(m) {segment_start_n:.6f}
+sensor: m_pos_e(m) {segment_start_e:.6f}
 sensor: m_depth(m) {depth:.6f}
-sensor: real_x(m) {initial_n:.6f}
-sensor: real_y(m) {initial_e:.6f}
+sensor: real_x(m) {segment_start_n:.6f}
+sensor: real_y(m) {segment_start_e:.6f}
 sensor: real_z(m) {depth:.6f}
 
 state: picket_line
@@ -84,23 +99,20 @@ behavior: depth_envelope 2
   b_arg: depth_cutoff_active(bool) 0
   b_arg: cutoff_depth(m) {depth + 25.0:.6f}
 
-# Patrol back and forth along this vehicle's segment.
-behavior: survey_dead_reckon 3
-  b_arg: trans_heading(rad) {heading:.9f}
-  b_arg: trans_time(s) 0.0
-  b_arg: heading_leg1(rad) {heading:.9f}
-  b_arg: time_leg1(s) {leg_time:.6f}
-  b_arg: heading_leg2(rad) {heading:.9f}
-  b_arg: time_leg2(s) 0.0
-  b_arg: cycles(#) {cycles}
+# Patrol using measured position instead of estimated travel time.
+behavior: picket_line_patrol 3
+  b_arg: start_n(m) {segment_start_n:.6f}
+  b_arg: start_e(m) {segment_start_e:.6f}
+  b_arg: end_n(m) {segment_end_n:.6f}
+  b_arg: end_e(m) {segment_end_e:.6f}
   b_arg: depth(m) {depth:.6f}
-  b_arg: transit_speed(m/s) {speed:.6f}
-  b_arg: survey_speed(m/s) {speed:.6f}
+  b_arg: speed(m/s) {speed:.6f}
+  b_arg: capture(m) {capture:.6f}
 """
 
-        path = output / f"picket_line_{vehicle_id}.mi"
-        path.write_text(mission, encoding="utf-8")
-        print(f"Generated {path.relative_to(root)}")
+        mission_path = output / f"picket_line_{vehicle_id}.mi"
+        mission_path.write_text(mission, encoding="utf-8")
+        print(f"Generated {mission_path.relative_to(root)}")
 
     return 0
 

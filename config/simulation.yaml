@@ -38,6 +38,7 @@ scenario:
   patrol:
     speed: 1.5 # varied during fleet-size analysis
     depth: 50.0
+    capture: 5.0
 
   detection:
     radius: 11000.0 # meters
