@@ -130,13 +130,16 @@ private:
         // Poisson calls have exponentially distributed interarrival times. The configured rate is converted from calls/hour to calls/second.
         std::exponential_distribution<double> call_interval(call_rate_per_hour_ / 3600.0);
 
+        // Give every whale an independent 50% chance of approaching from either side of the picket line.
+        std::bernoulli_distribution starting_side(0.5);
+
         for (int index = 0; index < whale_count_; ++index) {
             const double crossing_distance = along_line(generator_);
             const double crossing_north = line_start_north_ + along_north * crossing_distance;
             const double crossing_east = line_start_east_ + along_east * crossing_distance;
 
-            // Alternate starting sides so the scenario contains whales crossing the picket line in both directions.
-            const double side = index % 2 == 0 ? 1.0 : -1.0;
+            // Randomize starting sides so the scenario contains whales crossing the picket line in both directions.
+            const double side = starting_side(generator_) ? 1.0 : -1.0;
 
             const double whale_speed = speed(generator_);
 

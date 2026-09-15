@@ -217,6 +217,12 @@ def whale_service(config: dict, root: Path, log_dir: str) -> dict:
         "speed_max": whales["speed"],
         "start_distance": whales["start_distance"],
         "depth": whales["depth"],
+        "mission_duration": scenario["duration"],
+        "call_rate_per_hour": whales["call_rate"],
+        "data_directory": container_path(
+            root,
+            config["output"]["data_directory"],
+        ),
     }
 
     args = " ".join(f'-p "{name}:={value}"' for name, value in params.items())
@@ -268,6 +274,7 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
             "ros2 run sim_orchestrator sim_orchestrator_node "
+            f'-p "data_directory:={data_dir}" '
             f'--ros-args -p "vehicle_ids:={vehicle_list}" '
             f'-p "timestep:={simulation["timestep"]}" '
             f'-p "control_period:={simulation["control_period"]}" '

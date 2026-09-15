@@ -64,7 +64,8 @@ services:
 
       ros2 run whale_sim whale_node --ros-args -p "count:=46" -p "line_start_north:=0.0"
       -p "line_start_east:=-63000.0" -p "line_end_north:=0.0" -p "line_end_east:=63000.0"
-      -p "speed_min:=1.5" -p "speed_max:=1.5" -p "start_distance:=11000.0" -p "depth:=20.0"'
+      -p "speed_min:=1.5" -p "speed_max:=1.5" -p "start_distance:=11000.0" -p "depth:=20.0"
+      -p "mission_duration:=259200.0" -p "call_rate_per_hour:=0.14" -p "data_directory:=/odyssey/output/Data"'
   sim_orchestrator:
     image: odyssey_sim_dev
     environment:
@@ -82,6 +83,6 @@ services:
 
       source /odyssey/ros_ws/install/setup.bash
 
-      ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[odyssey_1,
-      odyssey_2]" -p "timestep:=0.02" -p "control_period:=10" -p "max_cycles:=12960000"
-      -p "steps_per_message:=10000"'
+      ros2 run sim_orchestrator sim_orchestrator_node -p "data_directory:=/odyssey/output/Data"
+      --ros-args -p "vehicle_ids:=[odyssey_1, odyssey_2]" -p "timestep:=0.02" -p "control_period:=10"
+      -p "max_cycles:=12960000" -p "steps_per_message:=10000"'

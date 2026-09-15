@@ -3,6 +3,9 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -49,6 +52,13 @@ class SimOrchestratorNode : public rclcpp::Node {
             }
 
             RCLCPP_INFO(get_logger(), "Configured %zu simulation vehicles.", vehicle_ids_.size());
+
+            // Open the standard results file containing every published whale call.
+            const std::string data_directory = declare_parameter<std::string>("data_directory", "/odyssey/output/Data");
+            std::filesystem::create_directories(data_directory);
+            whale_call_log_.open(data_directory + "/whale_calls.csv", std::ios::out | std::ios::trunc);
+            if (!whale_call_log_.is_open()) throw std::runtime_error("Failed to open whale call results file.");
+            whale_call_log_ << "cycle,sim_time,whale_id,north,east,depth\n";
 
             // ----------------------------------------------------------------- 
             // QoS 
@@ -198,7 +208,7 @@ class SimOrchestratorNode : public rclcpp::Node {
 
                         const double handled_call_time = next_whale_call_.sim_time;
 
-                        whale_call_pub_->publish(next_whale_call_);
+                        publish_whale_call(next_whale_call_);
                         next_whale_call_available_ = false;
 
                         request_next_whale_call(handled_call_time);
@@ -208,6 +218,22 @@ class SimOrchestratorNode : public rclcpp::Node {
                     publish_current_step();
                 }
             );
+        }
+
+        void publish_whale_call(const manta_interfaces::msg::WhaleCall &call) {
+            // Publish the event for acoustic sensors and autonomy nodes.
+            whale_call_pub_->publish(call);
+
+            // Save the exact published event for the review plot.
+            whale_call_log_
+                << call.cycle << ','
+                << std::setprecision(17) << call.sim_time << ','
+                << call.whale_id << ','
+                << call.north << ','
+                << call.east << ','
+                << call.depth << '\n';
+
+            whale_call_log_.flush();
         }
 
         void check_all_vehicles_initialized() {
@@ -315,7 +341,7 @@ class SimOrchestratorNode : public rclcpp::Node {
                 next_whale_call_.cycle = static_cast<uint64_t>(sim_state_.current_cycle - 1);
                 const double handled_call_time = next_whale_call_.sim_time;
 
-                whale_call_pub_->publish(next_whale_call_);
+                publish_whale_call(next_whale_call_);
 
                 next_whale_call_available_ = false;
                 current_batch_reaches_whale_call_ = false;
@@ -434,6 +460,7 @@ class SimOrchestratorNode : public rclcpp::Node {
         int steps_per_message_ = 1;
         int current_batch_steps_ = 0;
         manta_interfaces::msg::WhaleCall next_whale_call_;
+        std::ofstream whale_call_log_;
 
         rclcpp::TimerBase::SharedPtr shutdown_timer_;
 
