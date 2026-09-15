@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <random>
 #include <stdexcept>
@@ -7,14 +9,21 @@
 #include <vector>
 
 #include "manta_interfaces/msg/sim_step.hpp"
+#include "manta_interfaces/msg/whale_call.hpp"
 #include "manta_interfaces/msg/whale_state.hpp"
 #include "manta_interfaces/msg/whale_state_array.hpp"
+#include "manta_interfaces/srv/get_next_whale_call.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 
 class WhaleNode : public rclcpp::Node {
 public:
     WhaleNode() : Node("whale_node"), generator_(42) {
+        // ----------------------------------------------------------------- 
+        // Initializations
+        // -----------------------------------------------------------------
+        
+        // Scenario geometry and whale behavior are supplied by MANTA's generated Compose file from config/simulation.yaml.
         whale_count_ = declare_parameter<int>("count", 5);
         line_start_north_ = declare_parameter<double>("line_start_north", 0.0);
         line_start_east_ = declare_parameter<double>("line_start_east", -1000.0);
@@ -29,17 +38,39 @@ public:
 
         initialize_whales();
 
+        // ----------------------------------------------------------------- 
+        // Create publishers 
+        // -----------------------------------------------------------------
+        
+        // Ground truth is intended for simulation infrastructure and review, not as information directly available to vehicle autonomy.
         whale_states_pub_ = create_publisher<manta_interfaces::msg::WhaleStateArray>("/sim/whales/ground_truth", 10);
 
+        // ----------------------------------------------------------------- 
+        // Create subscribers 
+        // -----------------------------------------------------------------
+
+        // Advance whale positions whenever the orchestrator advances the shared simulation clock.
         step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {
             update_whales(*step);
         });
-        
+
         shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {
             if (!message->data) return;
             RCLCPP_INFO(get_logger(), "Shutting down whale node.");
             rclcpp::shutdown();
         });
+
+        // ----------------------------------------------------------------- 
+        // Create services
+        // -----------------------------------------------------------------
+
+        // Return the first scheduled whale call after a requested simulation time. The orchestrator uses this time to shorten its next batch.
+        next_call_service_ = create_service<manta_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call", [this](
+            const std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Request> request,
+            std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Response> response) {
+            handle_get_next_call(*request, *response);
+        }
+    );
 
         RCLCPP_INFO(get_logger(), "Initialized %d whales.", whale_count_);
     }
@@ -47,11 +78,24 @@ public:
 private:
     struct Whale {
         std::string id;
+
+        // Immutable position at the whale's activation time. These values allow an exact position to be calculated for any future call.
+        double initial_north;
+        double initial_east;
+
+        // Current position at the end of the most recently processed batch.
         double north;
-        double east;
+        double east; 
+
         double depth;
         double velocity_north;
         double velocity_east;
+
+        // The whale remains stationary before this simulation time.
+        double start_time;
+
+        // Next event in this whale's Poisson call process.
+        double next_call_time;
     };
 
     void initialize_whales() {
@@ -59,37 +103,89 @@ private:
         const double line_east = line_end_east_ - line_start_east_;
         const double line_length = std::hypot(line_north, line_east);
 
-        if (line_length <= 0.0) {
-            throw std::runtime_error("Picket line must have nonzero length.");
-        }
+        if (line_length <= 0.0) throw std::runtime_error("Picket line must have nonzero length.");
+        if (mission_duration_ <= 0.0) throw std::runtime_error("Mission duration must be greater than zero.");
+        if (call_rate_per_hour_ <= 0.0) throw std::runtime_error("Whale call rate must be greater than zero.");
 
+        // Create unit vectors along the picket line and 90 degrees across it.
+        // These let whales start at random locations along the line and travel perpendicularly through it. 
         const double along_north = line_north / line_length;
         const double along_east = line_east / line_length;
         const double perpendicular_north = -along_east;
         const double perpendicular_east = along_north;
 
+        // Crossing locations and activation times are uniformly distributed.
         std::uniform_real_distribution<double> along_line(0.0, line_length);
         std::uniform_real_distribution<double> speed(speed_min_, speed_max_);
+        std::uniform_real_distribution<double> start_time(0.0, mission_duration_);
+
+        // Poisson calls have exponentially distributed interarrival times. The configured rate is converted from calls/hour to calls/second.
+        std::exponential_distribution<double> call_interval(call_rate_per_hour_ / 3600.0);
 
         for (int index = 0; index < whale_count_; ++index) {
             const double crossing_distance = along_line(generator_);
-            const double crossing_north =
-                line_start_north_ + along_north * crossing_distance;
-            const double crossing_east =
-                line_start_east_ + along_east * crossing_distance;
+            const double crossing_north = line_start_north_ + along_north * crossing_distance;
+            const double crossing_east = line_start_east_ + along_east * crossing_distance;
 
+            // Alternate starting sides so the scenario contains whales crossing the picket line in both directions.
             const double side = index % 2 == 0 ? 1.0 : -1.0;
+
             const double whale_speed = speed(generator_);
+
+            const double whale_start_time = start_time(generator_);
+            const double first_call_time = whale_start_time + call_interval(generator_);
+
+            const double initial_north = crossing_north + side * perpendicular_north * start_distance_;
+            const double initial_east = crossing_east + side * perpendicular_east * start_distance_;
 
             whales_.push_back({
                 "whale_" + std::to_string(index + 1),
-                crossing_north + side * perpendicular_north * start_distance_,
-                crossing_east + side * perpendicular_east * start_distance_,
+                initial_north,
+                initial_east,
+                initial_north,
+                initial_east,
                 whale_depth_,
                 -side * perpendicular_north * whale_speed,
-                -side * perpendicular_east * whale_speed
+                -side * perpendicular_east * whale_speed,
+                whale_start_time,
+                first_call_time
             });
         }
+    }
+
+    void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response) {
+        std::exponential_distribution<double> call_interval(call_rate_per_hour_ / 3600.0);
+
+        Whale *next_whale = nullptr;
+        double next_time = std::numeric_limits<double>::infinity();
+
+        for (auto &whale : whales_) {
+            // Advance this whale's call schedule past events the orchestrator has already handled.
+            while (whale.next_call_time <= request.after_time) whale.next_call_time += call_interval(generator_);
+
+            // Keep the earliest valid call across all whales. Calls scheduled after the mission ends are ignored.
+            if (whale.next_call_time <= mission_duration_ && whale.next_call_time < next_time) {
+                next_time = whale.next_call_time;
+                next_whale = &whale;
+            }
+        }
+
+        // No calls remain within the configured mission duration.
+        if (next_whale == nullptr) {
+            response.available = false;
+            return;
+        }
+
+        response.available = true;
+        response.call.whale_id = next_whale->id;
+        response.call.cycle = 0;
+        response.call.sim_time = next_time;
+
+        // Whale motion is constant, so its position at the call time can be calculated exactly without advancing through every physics step.
+        const double movement_duration = next_time - next_whale->start_time;
+        response.call.north = next_whale->initial_north + next_whale->velocity_north * movement_duration;
+        response.call.east = next_whale->initial_east + next_whale->velocity_east * movement_duration;
+        response.call.depth = next_whale->depth;
     }
 
     void update_whales(const manta_interfaces::msg::SimStep &step) {
@@ -98,21 +194,31 @@ private:
             return;
         }
 
-        // Constant whale velocity makes this exactly equivalent to advancing one timestep at a time.
-        const double batch_timestep = static_cast<double>(step.step_count) * step.timestep;
+        // Determine the simulated time covered by this batch.
+        const double batch_start_time = step.sim_time;
+        const double batch_end_time = batch_start_time + static_cast<double>(step.step_count) * step.timestep;
 
-        for (auto &whale : whales_) {
-            whale.north += whale.velocity_north * batch_timestep;
-            whale.east += whale.velocity_east * batch_timestep;
-        }
-
+        // Calculates the number of the final cycle processed in the batch.
         const uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
 
+        // Whales remain stationary until their individual start times.
+        // If a whale activates during this batch, only advance it for the portion of the batch after activation.
+        for (auto &whale : whales_) {
+            const double movement_start = std::max(batch_start_time, whale.start_time);
+            if (batch_end_time <= movement_start) continue;
+
+            const double movement_duration = batch_end_time - movement_start;
+            whale.north += whale.velocity_north * movement_duration;
+            whale.east += whale.velocity_east * movement_duration;
+        }
+
+        // Publish whale ground truth at the end of the completed batch.
         manta_interfaces::msg::WhaleStateArray message;
         message.cycle = completed_cycle;
 
         for (const auto &whale : whales_) {
             manta_interfaces::msg::WhaleState state;
+
             state.whale_id = whale.id;
             state.cycle = completed_cycle;
             state.north = whale.north;
@@ -121,6 +227,7 @@ private:
             state.velocity_north = whale.velocity_north;
             state.velocity_east = whale.velocity_east;
             state.velocity_down = 0.0;
+
             message.whales.push_back(state);
         }
 
@@ -143,8 +250,11 @@ private:
     std::vector<Whale> whales_;
 
     rclcpp::Publisher<manta_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
+
     rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr step_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
+
+    rclcpp::Service<manta_interfaces::srv::GetNextWhaleCall>::SharedPtr next_call_service_;
 };
 
 int main(int argc, char **argv) {

@@ -16,6 +16,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/WhaleStateArray.msg"
   "msg/WhaleCall.msg"
   "msg/WorldState.msg"
+  "srv/GetNextWhaleCall.srv"
 )
 
 if(BUILD_TESTING)
