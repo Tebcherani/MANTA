@@ -44,6 +44,9 @@ public:
         if (!whale_log_.is_open()) throw std::runtime_error("Failed to open whale trajectory log.");
         whale_log_ << "cycle,sim_time,whale_id,north,east,depth\n";
 
+        const int64_t random_seed = declare_parameter<int64_t>("random_seed", 42);
+        generator_.seed(static_cast<std::mt19937::result_type>(random_seed));
+
         initialize_whales();
 
         // ----------------------------------------------------------------- 
@@ -250,7 +253,6 @@ private:
                 << whale.depth << '\n';
         }
 
-        whale_log_.flush();
         whale_states_pub_->publish(message);
     }
 

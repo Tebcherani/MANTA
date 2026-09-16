@@ -255,8 +255,6 @@ class SimOrchestratorNode : public rclcpp::Node {
                 << call.north << ','
                 << call.east << ','
                 << call.depth << '\n';
-
-            whale_call_log_.flush();
         }
 
         void check_all_vehicles_initialized() {

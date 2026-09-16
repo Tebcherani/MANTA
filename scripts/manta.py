@@ -223,6 +223,7 @@ def whale_service(config: dict, root: Path, log_dir: str) -> dict:
     scenario = config["scenario"]
     line = scenario["picket_line"]
     whales = scenario["whales"]
+    monte_carlo = scenario.get("monte_carlo", {})
 
     params = {
         "count": whales["count"],
@@ -237,6 +238,7 @@ def whale_service(config: dict, root: Path, log_dir: str) -> dict:
         "mission_duration": scenario["duration"],
         "call_rate_per_hour": whales["call_rate"],
         "data_directory": container_path(root, config["output"]["data_directory"]),
+        "random_seed": monte_carlo.get("random_seed", 42),
     }
 
     arguments = " ".join(

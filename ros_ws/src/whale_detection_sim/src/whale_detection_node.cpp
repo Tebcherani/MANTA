@@ -133,7 +133,6 @@ class WhaleDetectionNode : public rclcpp::Node {
                     << detection.whale_east << ','
                     << detection.whale_depth << ','
                     << detection.distance << '\n';
-                detection_log_.flush();
 
                 RCLCPP_INFO(get_logger(), "Vehicle %s detected %s at %.1f m.", vehicle_id.c_str(), pending_call_.whale_id.c_str(), distance);
             }
