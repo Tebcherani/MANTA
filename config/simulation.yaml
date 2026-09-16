@@ -36,7 +36,7 @@ scenario:
       east: 63000.0
 
   patrol:
-    speed: 1.5 # varied during fleet-size analysis
+    speed: 5.0 # varied during fleet-size analysis
     depth: 50.0
     capture: 5.0
 
@@ -46,7 +46,7 @@ scenario:
   whales:
     count: 46
     speed: 1.5
-    call_rate: 0.14 # 6.4 calls/h / 46 whales
+    call_rate: 6.4
     start_distance: 11000.0
     depth: 20.0
 

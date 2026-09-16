@@ -50,6 +50,28 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> int:
             print(f"Skipping {name}: {error}")
             continue
 
+        if all(variable in dataset for variable in ("real_u", "real_v", "real_w")):
+            forward = np.asarray(dataset["real_u"].values, dtype=float)
+            lateral = np.asarray(dataset["real_v"].values, dtype=float)
+            vertical = np.asarray(dataset["real_w"].values, dtype=float)
+
+            speed = np.sqrt(
+                forward * forward
+                + lateral * lateral
+                + vertical * vertical
+            )
+
+            speed = speed[np.isfinite(speed)]
+
+            if speed.size:
+                print(
+                    f"  Actual speed: "
+                    f"median={np.median(speed):.2f} m/s, "
+                    f"mean={np.mean(speed):.2f} m/s, "
+                    f"95th={np.percentile(speed, 95):.2f} m/s, "
+                    f"max={np.max(speed):.2f} m/s"
+                )
+
         if "real_x" in dataset and "real_y" in dataset:
             north = dataset["real_x"].values
             east = dataset["real_y"].values

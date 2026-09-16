@@ -65,7 +65,7 @@ services:
       ros2 run whale_sim whale_node --ros-args -p "count:=46" -p "line_start_north:=0.0"
       -p "line_start_east:=-63000.0" -p "line_end_north:=0.0" -p "line_end_east:=63000.0"
       -p "speed_min:=1.5" -p "speed_max:=1.5" -p "start_distance:=11000.0" -p "depth:=20.0"
-      -p "mission_duration:=259200.0" -p "call_rate_per_hour:=0.14" -p "data_directory:=/odyssey/output/Data"'
+      -p "mission_duration:=259200.0" -p "call_rate_per_hour:=6.4" -p "data_directory:=/odyssey/output/Data"'
   whale_detection_sim:
     image: odyssey_sim_dev
     environment:
