@@ -21,4 +21,8 @@ odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *, double);
 int update_odyssey_sim_time(double);
 int end_odyssey_sim(const char *);
 
+double get_odyssey_sim_north(void);
+double get_odyssey_sim_east(void);
+double get_odyssey_sim_depth(void);
+
 #endif /* ODYSSEY_SIM_H */

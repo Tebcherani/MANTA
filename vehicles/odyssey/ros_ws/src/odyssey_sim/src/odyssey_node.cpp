@@ -11,6 +11,7 @@
 
 #include "manta_interfaces/msg/sim_step.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
+#include "manta_interfaces/msg/vehicle_state.hpp"
 
 extern "C" {
     #include "odyssey.h"
@@ -48,6 +49,7 @@ class OdysseyNode : public rclcpp::Node {
             // -----------------------------------------------------------------
             ready_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", startup_qos);
             step_result_pub_ = create_publisher<manta_interfaces::msg::SimStepResult>("/" + vehicle_id_ + "/step_result", step_qos);
+            vehicle_state_pub_ = create_publisher<manta_interfaces::msg::VehicleState>("/" + vehicle_id_ + "/state", step_qos);
 
             // ----------------------------------------------------------------- 
             // Create subscribers
@@ -149,8 +151,12 @@ class OdysseyNode : public rclcpp::Node {
                     }
                 }
 
-                // Report the final cycle completed by this batch.
+                // Report the vehicle state at the end of this completed batch.
                 result.completed_cycle = msg->current_cycle + msg->step_count - 1;
+                const double completed_sim_time = msg->sim_time + static_cast<double>(msg->step_count) * msg->timestep;
+                publish_vehicle_state(result.completed_cycle, completed_sim_time);
+
+                // Publish the state before acknowledging the completed batch.
                 step_result_pub_->publish(result);
             });
 
@@ -183,6 +189,20 @@ class OdysseyNode : public rclcpp::Node {
         }
 
     private:
+        void publish_vehicle_state(uint64_t completed_cycle, double completed_sim_time) {
+            manta_interfaces::msg::VehicleState state;
+
+            state.vehicle_id = vehicle_id_;
+            state.cycle = completed_cycle;
+            state.sim_time = completed_sim_time;
+
+            state.north = get_odyssey_sim_north();
+            state.east = get_odyssey_sim_east();
+            state.depth = get_odyssey_sim_depth();
+
+            vehicle_state_pub_->publish(state);
+        }
+
         void try_finish_init() {
             if (!odyssey_initialized_) return;
             if (!sim_time_received_) return;
@@ -215,6 +235,7 @@ class OdysseyNode : public rclcpp::Node {
 
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
         rclcpp::Publisher<manta_interfaces::msg::SimStepResult>::SharedPtr step_result_pub_;
+        rclcpp::Publisher<manta_interfaces::msg::VehicleState>::SharedPtr vehicle_state_pub_;
 
         rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr calendar_start_time_sub_;
         rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;

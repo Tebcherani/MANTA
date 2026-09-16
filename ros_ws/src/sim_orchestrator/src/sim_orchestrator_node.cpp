@@ -21,6 +21,7 @@
 #include "manta_interfaces/msg/sim_step_result.hpp"
 #include "manta_interfaces/msg/whale_call.hpp"
 #include "manta_interfaces/srv/get_next_whale_call.hpp"
+#include "manta_interfaces/msg/whale_call_processed.hpp"
 
 extern "C" {
     #include "sim_config.h"
@@ -106,6 +107,31 @@ class SimOrchestratorNode : public rclcpp::Node {
                 });
                 step_result_subs_.push_back(subscription);
             }
+
+            whale_call_processed_sub_ = create_subscription<manta_interfaces::msg::WhaleCallProcessed>("/sim/whales/call_processed", 100,
+                [this](const manta_interfaces::msg::WhaleCallProcessed::SharedPtr message) {
+                    if (!waiting_for_whale_call_processing_) {
+                        RCLCPP_WARN(get_logger(), "Ignored unexpected whale-call acknowledgement.");
+                        return;
+                    }
+
+                    if (
+                        message->whale_id != next_whale_call_.whale_id ||
+                        message->cycle != next_whale_call_.cycle ||
+                        std::fabs(message->sim_time - next_whale_call_.sim_time) > 1.0e-9
+                    ) {
+                        RCLCPP_WARN(get_logger(), "Ignored acknowledgement for unexpected whale call %s at cycle %llu.",
+                            message->whale_id.c_str(), static_cast<unsigned long long>(message->cycle)
+                        );
+                        return;
+                    }
+
+                    waiting_for_whale_call_processing_ = false;
+
+                    // Only search for the next call after every vehicle has evaluated this one.
+                    request_next_whale_call(message->sim_time);
+                }
+            );
 
             // ----------------------------------------------------------------- 
             // Create clients
@@ -206,12 +232,9 @@ class SimOrchestratorNode : public rclcpp::Node {
                     if (next_whale_call_.sim_time <= sim_state_.sim_time) {
                         next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<uint64_t>(sim_state_.current_cycle - 1) : 0;
 
-                        const double handled_call_time = next_whale_call_.sim_time;
-
                         publish_whale_call(next_whale_call_);
                         next_whale_call_available_ = false;
-
-                        request_next_whale_call(handled_call_time);
+                        waiting_for_whale_call_processing_ = true;
                         return;
                     }
 
@@ -339,15 +362,12 @@ class SimOrchestratorNode : public rclcpp::Node {
             // A shortened batch has now brought every vehicle to the pending whale-call event. Publish the call before starting another batch.
             if (current_batch_reaches_whale_call_) {
                 next_whale_call_.cycle = static_cast<uint64_t>(sim_state_.current_cycle - 1);
-                const double handled_call_time = next_whale_call_.sim_time;
 
                 publish_whale_call(next_whale_call_);
 
                 next_whale_call_available_ = false;
                 current_batch_reaches_whale_call_ = false;
-
-                // Search from the exact call time so another call occurring within this same physics timestep is not accidentally skipped.
-                request_next_whale_call(handled_call_time);
+                waiting_for_whale_call_processing_ = true;
                 return;
             }
 
@@ -451,6 +471,7 @@ class SimOrchestratorNode : public rclcpp::Node {
         bool simulation_failed_ = false;
         bool next_whale_call_available_ = false;
         bool current_batch_reaches_whale_call_ = false;
+        bool waiting_for_whale_call_processing_ = false;
 
         std::vector<std::string> vehicle_ids_;
         std::unordered_map<std::string, VehicleState> vehicle_states_;
@@ -473,6 +494,7 @@ class SimOrchestratorNode : public rclcpp::Node {
         
         std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
         std::vector<rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr> step_result_subs_;
+        rclcpp::Subscription<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;
 
         rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedPtr next_whale_call_client_;
 };

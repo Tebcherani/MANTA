@@ -93,3 +93,15 @@ int update_odyssey_sim_time(double sim_time) {
 int end_odyssey_sim(const char *behavior_dump_file) {
     return end_odyssey(behavior_dump_file, config.data_dir);
 }
+
+double get_odyssey_sim_north(void) {
+    return read_sensor(REAL_X);
+}
+
+double get_odyssey_sim_east(void) {
+    return read_sensor(REAL_Y);
+}
+
+double get_odyssey_sim_depth(void) {
+    return read_sensor(REAL_Z);
+}

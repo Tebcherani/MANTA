@@ -27,6 +27,7 @@ def load_config(path: Path) -> dict:
 
 def load_plugin(root: Path, plugin_id: str) -> dict:
     """Load and validate a MANTA vehicle plugin manifest."""
+
     path = root / "vehicles" / plugin_id / "manta_plugin.yaml"
 
     if not path.is_file():
@@ -39,7 +40,9 @@ def load_plugin(root: Path, plugin_id: str) -> dict:
         raise ValueError(f"Plugin '{plugin_id}' has no 'plugin' section.")
 
     if plugin.get("id") != plugin_id:
-        raise ValueError( f"Plugin manifest ID '{plugin.get('id')}' does not match configured type '{plugin_id}'.")
+        raise ValueError(
+            f"Plugin manifest ID '{plugin.get('id')}' does not match configured type '{plugin_id}'."
+        )
 
     if plugin.get("kind") != "vehicle":
         raise ValueError(f"Plugin '{plugin_id}' is not a vehicle plugin.")
@@ -143,7 +146,10 @@ def write_runtime_env(config: dict, root: Path) -> Path:
     ]
 
     for vehicle in config["vehicles"]:
-        prefix = "".join(char.upper() if char.isalnum() else "_" for char in vehicle["id"])
+        prefix = "".join(
+            character.upper() if character.isalnum() else "_"
+            for character in vehicle["id"]
+        )
 
         lines.extend([
             f"{prefix}_TYPE={vehicle['type']}",
@@ -158,6 +164,7 @@ def write_runtime_env(config: dict, root: Path) -> Path:
 
 def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> dict:
     """Generate a Compose service from a vehicle plugin manifest."""
+
     vehicle_id = vehicle["id"]
     vehicle_type = vehicle["type"]
     manifest = load_plugin(root, vehicle_type)
@@ -174,7 +181,9 @@ def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> d
         log_dir_env = environment_names["log_directory"]
         simulation_log_env = environment_names["simulation_log"]
     except KeyError as error:
-        raise ValueError(f"Plugin '{vehicle_type}' is missing runtime setting: {error.args[0]}") from error
+        raise ValueError(
+            f"Plugin '{vehicle_type}' is missing runtime setting: {error.args[0]}"
+        ) from error
 
     environment = {
         "ROS_DOMAIN_ID": "1",
@@ -191,7 +200,13 @@ def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> d
     return {
         "image": image,
         "environment": environment,
-        "volumes": [{"type": "bind", "source": str(root), "target": "/odyssey"}],
+        "volumes": [
+            {
+                "type": "bind",
+                "source": str(root),
+                "target": "/odyssey",
+            }
+        ],
         "command": [
             "/bin/bash",
             "-lc",
@@ -203,6 +218,8 @@ def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> d
 
 
 def whale_service(config: dict, root: Path, log_dir: str) -> dict:
+    """Create the whale simulation service."""
+
     scenario = config["scenario"]
     line = scenario["picket_line"]
     whales = scenario["whales"]
@@ -219,23 +236,72 @@ def whale_service(config: dict, root: Path, log_dir: str) -> dict:
         "depth": whales["depth"],
         "mission_duration": scenario["duration"],
         "call_rate_per_hour": whales["call_rate"],
-        "data_directory": container_path(
-            root,
-            config["output"]["data_directory"],
-        ),
+        "data_directory": container_path(root, config["output"]["data_directory"]),
     }
 
-    args = " ".join(f'-p "{name}:={value}"' for name, value in params.items())
+    arguments = " ".join(
+        f'-p "{name}:={value}"'
+        for name, value in params.items()
+    )
 
     return {
         "image": "odyssey_sim_dev",
-        "environment": {"ROS_DOMAIN_ID": "1", "ROS_LOG_DIR": log_dir},
-        "volumes": [{"type": "bind", "source": str(root), "target": "/odyssey"}],
+        "environment": {
+            "ROS_DOMAIN_ID": "1",
+            "ROS_LOG_DIR": log_dir,
+        },
+        "volumes": [
+            {
+                "type": "bind",
+                "source": str(root),
+                "target": "/odyssey",
+            }
+        ],
         "command": [
-            "/bin/bash", "-lc",
+            "/bin/bash",
+            "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
-            f"ros2 run whale_sim whale_node --ros-args {args}",
+            f"ros2 run whale_sim whale_node --ros-args {arguments}",
+        ],
+    }
+
+
+def whale_detection_service(config: dict, root: Path, log_dir: str) -> dict:
+    """Create the whale-call detection service."""
+
+    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
+    vehicle_list = f"[{', '.join(vehicle_ids)}]"
+    detection_range = config["scenario"]["detection"]["radius"]
+
+    data_directory = container_path(
+        root,
+        config["output"]["data_directory"],
+    )
+
+    return {
+        "image": "odyssey_sim_dev",
+        "environment": {
+            "ROS_DOMAIN_ID": "1",
+            "ROS_LOG_DIR": log_dir,
+        },
+        "volumes": [
+            {
+                "type": "bind",
+                "source": str(root),
+                "target": "/odyssey",
+            }
+        ],
+        "command": [
+            "/bin/bash",
+            "-lc",
+            "source /opt/ros/jazzy/setup.bash\n"
+            "source /odyssey/ros_ws/install/setup.bash\n"
+            "ros2 run whale_detection_sim whale_detection_node "
+            f'--ros-args -p "vehicle_ids:={vehicle_list}" '
+            f'-p "detection_range:={detection_range}"',
+            f'-p "detection_range:={detection_range}" '
+            f'-p "data_directory:={data_directory}"',
         ],
     }
 
@@ -257,6 +323,11 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
 
     if config.get("scenario", {}).get("type") == "picket_line":
         services["whale_sim"] = whale_service(config, root, log_dir)
+        services["whale_detection_sim"] = whale_detection_service(
+            config,
+            root,
+            log_dir,
+        )
 
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
 
@@ -267,15 +338,21 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
             "ROS_LOG_DIR": log_dir,
             "SIM_LOG_PATH": f"{log_dir}/sim_orchestrator.log",
         },
-        "volumes": [{"type": "bind", "source": str(root), "target": "/odyssey"}],
+        "volumes": [
+            {
+                "type": "bind",
+                "source": str(root),
+                "target": "/odyssey",
+            }
+        ],
         "command": [
             "/bin/bash",
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
             "ros2 run sim_orchestrator sim_orchestrator_node "
-            f'-p "data_directory:={data_dir}" '
             f'--ros-args -p "vehicle_ids:={vehicle_list}" '
+            f'-p "data_directory:={data_dir}" '
             f'-p "timestep:={simulation["timestep"]}" '
             f'-p "control_period:={simulation["control_period"]}" '
             f'-p "max_cycles:={simulation["max_cycles"]}" '
@@ -284,7 +361,13 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
     }
 
     path.write_text(
-        yaml.safe_dump({"name": "manta", "services": services}, sort_keys=False),
+        yaml.safe_dump(
+            {
+                "name": "manta",
+                "services": services,
+            },
+            sort_keys=False,
+        ),
         encoding="utf-8",
     )
 
@@ -300,14 +383,24 @@ def parse_args(root: Path) -> argparse.Namespace:
         "command",
         nargs="?",
         default="generate",
-        choices=("generate", "build", "dev", "run", "down", "review"),
+        choices=(
+            "generate",
+            "build",
+            "dev",
+            "run",
+            "down",
+            "review",
+        ),
     )
 
     parser.add_argument(
         "plot",
         nargs="?",
         default="tracks",
-        choices=("tracks", "energy"),
+        choices=(
+            "tracks",
+            "energy",
+        ),
         help="Plot to show with the review command.",
     )
 
@@ -364,13 +457,19 @@ def main() -> int:
             )
 
             result = subprocess.run(
-                [sys.executable, str(generator), str(config_path)],
+                [
+                    sys.executable,
+                    str(generator),
+                    str(config_path),
+                ],
                 cwd=root,
                 check=False,
             )
 
             if result.returncode != 0:
-                raise ValueError("Failed to generate picket-line missions.")
+                raise ValueError(
+                    "Failed to generate picket-line missions."
+                )
 
         validate_config(config, root)
         print_summary(config, config_path)
@@ -383,20 +482,40 @@ def main() -> int:
 
         commands = {
             "build": [
-                "docker", "compose", "--env-file", str(env_path),
-                "-f", str(root / "compose.dev.yaml"), "build",
+                "docker",
+                "compose",
+                "--env-file",
+                str(env_path),
+                "-f",
+                str(root / "compose.dev.yaml"),
+                "build",
             ],
             "dev": [
-                "docker", "compose", "--env-file", str(env_path),
-                "-f", str(root / "compose.dev.yaml"), "run", "--rm", "dev",
+                "docker",
+                "compose",
+                "--env-file",
+                str(env_path),
+                "-f",
+                str(root / "compose.dev.yaml"),
+                "run",
+                "--rm",
+                "dev",
             ],
             "run": [
-                "docker", "compose", "-f", str(compose_path),
-                "up", "--remove-orphans",
+                "docker",
+                "compose",
+                "-f",
+                str(compose_path),
+                "up",
+                "--remove-orphans",
             ],
             "down": [
-                "docker", "compose", "-f", str(compose_path),
-                "down", "--remove-orphans",
+                "docker",
+                "compose",
+                "-f",
+                str(compose_path),
+                "down",
+                "--remove-orphans",
             ],
         }
 
@@ -404,16 +523,27 @@ def main() -> int:
             return 0
 
         if args.command == "build":
-            result = subprocess.run(commands["build"], cwd=root, check=False)
+            result = subprocess.run(
+                commands["build"],
+                cwd=root,
+                check=False,
+            )
+
             if result.returncode != 0:
                 return result.returncode
 
             build_inside_container = [
-                "docker", "compose",
-                "--env-file", str(env_path),
-                "-f", str(root / "compose.dev.yaml"),
-                "run", "--rm", "dev",
-                "/bin/bash", "-lc",
+                "docker",
+                "compose",
+                "--env-file",
+                str(env_path),
+                "-f",
+                str(root / "compose.dev.yaml"),
+                "run",
+                "--rm",
+                "dev",
+                "/bin/bash",
+                "-lc",
                 "source /opt/ros/jazzy/setup.bash && "
                 "cd /odyssey/vehicles/odyssey && "
                 "make generate_odyssey && "
@@ -423,16 +553,30 @@ def main() -> int:
                 "--cmake-args -DCMAKE_BUILD_TYPE=Release",
             ]
 
-            return subprocess.run(build_inside_container, cwd=root, check=False).returncode
+            return subprocess.run(
+                build_inside_container,
+                cwd=root,
+                check=False,
+            ).returncode
 
-        return subprocess.run(commands[args.command], cwd=root, check=False).returncode
+        return subprocess.run(
+            commands[args.command],
+            cwd=root,
+            check=False,
+        ).returncode
 
     except ValueError as error:
-        print(f"MANTA configuration error: {error}", file=sys.stderr)
+        print(
+            f"MANTA configuration error: {error}",
+            file=sys.stderr,
+        )
         return 1
 
     except FileNotFoundError as error:
-        print(f"Required command was not found: {error.filename}", file=sys.stderr)
+        print(
+            f"Required command was not found: {error.filename}",
+            file=sys.stderr,
+        )
         return 1
 
 
