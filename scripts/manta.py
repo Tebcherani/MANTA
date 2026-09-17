@@ -238,6 +238,7 @@ def whale_service(config: dict, root: Path, log_dir: str) -> dict:
         "call_rate_per_hour": whales["call_rate"],
         "data_directory": container_path(root, config["output"]["data_directory"]),
         "random_seed": monte_carlo.get("random_seed", 42),
+        "sample_period": config["output"].get("whale_sample_period", 60.0),
     }
 
     arguments = " ".join(
@@ -316,7 +317,7 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
     log_dir = container_path(root, config["output"]["log_directory"])
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
     simulation = config["simulation"]
-    sample_period = float(config["output"].get("sample_period", 2.0))
+    sample_period = float(config["output"].get("auv_sample_period", 2.0))
 
     services = {
         vehicle["id"]: vehicle_service(vehicle, root, data_dir, log_dir, sample_period)

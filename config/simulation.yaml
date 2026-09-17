@@ -18,7 +18,8 @@ simulation:
 output:
   data_directory: ./output/Data
   log_directory: ./output/Logs
-  sample_period: 5.0
+  auv_sample_period: 5.0
+  whale_sample_period: 60.0
 
 #--------------------------------------------------
 # Mission

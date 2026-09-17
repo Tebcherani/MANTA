@@ -38,6 +38,9 @@ public:
         mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
         call_rate_per_hour_ = declare_parameter<double>("call_rate_per_hour", 6.4);
         const std::string data_directory = declare_parameter<std::string>("data_directory", "/odyssey/output/Data");
+        whale_sample_period_ = declare_parameter<double>("sample_period", 60.0);
+        
+        if (whale_sample_period_ <= 0.0) throw std::runtime_error("Whale sample period must be greater than zero.");
 
         std::filesystem::create_directories(data_directory);
         whale_log_.open(data_directory + "/whales.csv", std::ios::out | std::ios::trunc);
@@ -212,6 +215,9 @@ private:
         const double batch_start_time = step.sim_time;
         const double batch_end_time = batch_start_time + static_cast<double>(step.step_count) * step.timestep;
 
+        // Trajectory files are only for review, so they can be sampled less often than live whale ground truth is published.
+        const bool write_trajectory = batch_end_time >= next_whale_log_time_;
+
         // Calculates the number of the final cycle processed in the batch.
         const uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
 
@@ -244,14 +250,18 @@ private:
 
             message.whales.push_back(state);
 
-            whale_log_
-                << completed_cycle << ','
-                << batch_end_time << ','
-                << whale.id << ','
-                << whale.north << ','
-                << whale.east << ','
-                << whale.depth << '\n';
+            if (write_trajectory) {
+                whale_log_
+                    << completed_cycle << ','
+                    << batch_end_time << ','
+                    << whale.id << ','
+                    << whale.north << ','
+                    << whale.east << ','
+                    << whale.depth << '\n';
+            }
         }
+
+        if (write_trajectory) next_whale_log_time_ = batch_end_time + whale_sample_period_;
 
         whale_states_pub_->publish(message);
     }
@@ -267,6 +277,8 @@ private:
     double whale_depth_;
     double mission_duration_;
     double call_rate_per_hour_;
+    double whale_sample_period_ = 60.0;
+    double next_whale_log_time_ = 0.0;
 
     std::mt19937 generator_;
     std::vector<Whale> whales_;

@@ -97,17 +97,6 @@ double read_sensor(int sensor_name) {
 void update_sensor(int index, double val) {
     vvp->s[index].x = val; 
     vvp->s[index].time = vvp->s[M_PRESENT_TIME].time;
-
-	// Increase hit counter
-    (vvp->s[index].numHits)++;
-
-	// Recursive forms for 1st & 2nd moments
-    vvp->s[index].m1 += (val - vvp->s[index].m1)/vvp->s[index].numHits;
-    vvp->s[index].m2 += (val*val - vvp->s[index].m2)/vvp->s[index].numHits;
-
-	// Store minimum & maximum values
-    if ( val < vvp->s[index].min ) vvp->s[index].min = val;
-    if ( val > vvp->s[index].max ) vvp->s[index].max = val;
 }
 
 void add_to_sensor(int index, double value) {
