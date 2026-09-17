@@ -16,7 +16,7 @@
 
 static double act_model(double, double, double);
 static void fins(const world_state_t *, double *, double, double);
-static void hydro(const world_state_t *, double *, double *, double, double, double, double);
+static void hydro(const world_state_t *, double *, double *, double, double, double, double, double, double, double, double);
 static double hysteresis(double, double, double, double, double);
 static void motion(const world_state_t *,double *, double *, double, double, double, double dt);
 
@@ -216,11 +216,11 @@ static void fins(const world_state_t *world_state, double *e, double rud_ang, do
   Subroutine hydro() gets the right-hand sides of the dynamic equations.
 ------------------------------------------------------------------------- */
 
-static void hydro(const world_state_t *world_state, double *e, double *p, double Amps, double Del13, double Del24, double dt )
-{
+static void hydro(const world_state_t *world_state, double *e, double *p, double Amps, double Del13, double Del24, double dt,
+    double cp4, double sp4, double cp5, double sp5) {
   static double Xgp, Ygp, Zgp, Xbp, Ybp, Zbp, Wp, Bp;
   double pp,qq,rr,pr,pq,qr,uv,uw,uq,ur,vv,ww;
-  double vp,vr,wp,wq,cp4,cp5,sp4,sp5;
+  double vp,vr,wp,wq;
   double wabw,vabv,uabu,pabp,qabq,rabr;
   double real_amps;
   double rud_ang, elev_ang, TForce, TTorque, TVolt;
@@ -285,10 +285,6 @@ static void hydro(const world_state_t *world_state, double *e, double *p, double
   pabp = e[4] * fabs(e[4]);
   qabq = e[5] * fabs(e[5]);
   rabr = e[6] * fabs(e[6]);
-  cp4 = cos(p[4]);  
-  cp5 = cos(p[5]);
-  sp4 = sin(p[4]);
-  sp5 = sin(p[5]);  
   
   mass = read_sensor(VS_MASS);
   ixx = read_sensor(VS_IXX);
@@ -511,105 +507,103 @@ static double hysteresis( double x, double x_last, double y_last, double wide, d
  *-----------------------------------------------------------------------*/
 
 void motion(const world_state_t *world_state, double e[], double p[], double Amps, double Del13,
-	     double Del24, double dt ) 
-{
-    double eo[7],pdot[7][5], edot[7][5];
+	     double Del24, double dt) {
+    double eo[7], pdot[7][5], edot[7][5];
     double po[7];
-    double ds4,dc4,ds5,dc5,ds6,dc6,dt5,ds5dc6,ds5ds6;
+    double ds4, dc4, ds5, dc5, ds6, dc6, dt5, ds5dc6, ds5ds6;
     int i,j,k;
     double dto2, dto6;
 
     dto2  = 0.5*dt;
     dto6  = dt/6.0;
 
-    for (i=1;i<=6;i++)
-    {
-	eo[i]=e[i];
-	po[i]=p[i];
-	for (j=1;j<=4;j++)
-	{
-	    edot[i][j]=0.0;
-	    pdot[i][j]=0.0;
-	}
+    for (i=1; i<=6; i++) {
+      eo[i]=e[i];
+      po[i]=p[i];
+	    for (j=1;j<=4;j++) {
+	      edot[i][j]=0.0;
+	      pdot[i][j]=0.0;
+	    }
     }
-				/* start 4th order runga kutta integration */
-    for (l=1;l<=4;l++)
-    {				/* get forces and moments: rhs[1] to rhs[6] */
-	hydro(world_state, e, p, Amps, Del13, Del24, dt);
-				/* multiply by inverse of inertial matrix */
-	for (i=1;i<=6;i++)
-	    for (k=1;k<=6;k++)
-		edot[i][l] = edot[i][l] +  ainv[i][k] * rhs[k];
+		
+    /* start 4th order runga kutta integration */
+    for (l=1;l<=4;l++) {				
+      ds4 = sin(p[4]);
+      dc4 = cos(p[4]);
+      ds5 = sin(p[5]);
+      dc5 = cos(p[5]);
 
-				/* ctrn takes e to pdot */
-	ds4 = sin(p[4]);
-	dc4 = cos(p[4]);
-	ds5 = sin(p[5]);
-	dc5 = cos(p[5]);
-	ds6 = sin(p[6]);
-	dc6 = cos(p[6]);
-	dt5 = tan(p[5]);
-	ds5dc6 = ds5 * dc6;
-	ds5ds6 = ds5 * ds6;
+      /* get forces and moments: rhs[1] to rhs[6] */
+	    hydro(world_state, e, p, Amps, Del13, Del24, dt, dc4, ds4, dc5, ds5);
+			/* multiply by inverse of inertial matrix */
+	    for (i=1;i<=6;i++)
+	      for (k=1;k<=6;k++)
+		      edot[i][l] = edot[i][l] +  ainv[i][k] * rhs[k];
+
+          /* ctrn takes e to pdot */
+          ds6 = sin(p[6]);
+          dc6 = cos(p[6]);
+          dt5 = tan(p[5]);
+          ds5dc6 = ds5 * dc6;
+          ds5ds6 = ds5 * ds6;
+
 				/* this first 3x3 block is just 3-axis
 				   rotation */
-	ctrn[1][1] =  dc5 * dc6;
-	ctrn[1][2] = -dc4 * ds6 + ds4 * ds5dc6;
-	ctrn[1][3] =  ds4 * ds6 + dc4 * ds5dc6;
+          ctrn[1][1] =  dc5 * dc6;
+          ctrn[1][2] = -dc4 * ds6 + ds4 * ds5dc6;
+          ctrn[1][3] =  ds4 * ds6 + dc4 * ds5dc6;
 
-	ctrn[2][1] =  dc5 * ds6;
-	ctrn[2][2] =  dc4 * dc6 + ds4 * ds5ds6;
-	ctrn[2][3] = -ds4 * dc6 + dc4 * ds5ds6;
+          ctrn[2][1] =  dc5 * ds6;
+          ctrn[2][2] =  dc4 * dc6 + ds4 * ds5ds6;
+          ctrn[2][3] = -ds4 * dc6 + dc4 * ds5ds6;
 
-	ctrn[3][1] = -ds5;
-	ctrn[3][2] =  dc5 * ds4;
-	ctrn[3][3] =  dc5 * dc4;
-				/* this 3x3 block relates body attitude
+          ctrn[3][1] = -ds5;
+          ctrn[3][2] =  dc5 * ds4;
+          ctrn[3][3] =  dc5 * dc4;
+				
+          /* this 3x3 block relates body attitude
 				   rates to Euler angle rates of change */
-	ctrn[4][4] =  1.0;
-	ctrn[4][5] =  ds4 * dt5;
-	ctrn[4][6] =  dc4 * dt5;
+          ctrn[4][4] =  1.0;
+          ctrn[4][5] =  ds4 * dt5;
+          ctrn[4][6] =  dc4 * dt5;
 
-	ctrn[5][4] =  0.0;
-	ctrn[5][5] =  dc4;
-	ctrn[5][6] = -ds4;
+          ctrn[5][4] =  0.0;
+          ctrn[5][5] =  dc4;
+          ctrn[5][6] = -ds4;
 
-	ctrn[6][4] =  0.0;
-	ctrn[6][5] =  ds4/dc5;
-	ctrn[6][6] =  dc4/dc5;
+          ctrn[6][4] =  0.0;
+          ctrn[6][5] =  ds4/dc5;
+          ctrn[6][6] =  dc4/dc5;
 
-	/* Multiply only the nonzero blocks of ctrn. */
-  pdot[1][l] = ctrn[1][1]*e[1] + ctrn[1][2]*e[2] + ctrn[1][3]*e[3];
-  pdot[2][l] = ctrn[2][1]*e[1] + ctrn[2][2]*e[2] + ctrn[2][3]*e[3];
-  pdot[3][l] = ctrn[3][1]*e[1] + ctrn[3][2]*e[2] + ctrn[3][3]*e[3];
+          /* Multiply only the nonzero blocks of ctrn. */
+          pdot[1][l] = ctrn[1][1]*e[1] + ctrn[1][2]*e[2] + ctrn[1][3]*e[3];
+          pdot[2][l] = ctrn[2][1]*e[1] + ctrn[2][2]*e[2] + ctrn[2][3]*e[3];
+          pdot[3][l] = ctrn[3][1]*e[1] + ctrn[3][2]*e[2] + ctrn[3][3]*e[3];
 
-  pdot[4][l] = ctrn[4][4]*e[4] + ctrn[4][5]*e[5] + ctrn[4][6]*e[6];
-  pdot[5][l] = ctrn[5][5]*e[5] + ctrn[5][6]*e[6];
-  pdot[6][l] = ctrn[6][5]*e[5] + ctrn[6][6]*e[6];
+          pdot[4][l] = ctrn[4][4]*e[4] + ctrn[4][5]*e[5] + ctrn[4][6]*e[6];
+          pdot[5][l] = ctrn[5][5]*e[5] + ctrn[5][6]*e[6];
+          pdot[6][l] = ctrn[6][5]*e[5] + ctrn[6][6]*e[6];
 
 				/* apply a Runge-Kutta half- or whole step */
-	if ((l == 1) || (l == 2)) {
-	    for (i=1;i<=6;i++) { 
-		e[i] = eo[i] + edot[i][l] * dto2;
-		p[i] = po[i] + pdot[i][l] * dto2;
-	    }
-	}
-	else {
-	    for (i=1;i<=6;i++) 
-	    {
-		e[i] = eo[i] + edot[i][l] * dt;
-		p[i] = po[i] + pdot[i][l] * dt;
-	    }
-	}
+	        if ((l == 1) || (l == 2)) {
+	          for (i=1;i<=6;i++) { 
+		          e[i] = eo[i] + edot[i][l] * dto2;
+		          p[i] = po[i] + pdot[i][l] * dto2;
+	          }
+          }
+          else {
+              for (i=1;i<=6;i++) {
+                e[i] = eo[i] + edot[i][l] * dt;
+                p[i] = po[i] + pdot[i][l] * dt;
+              }
+          }
     } /* for (l=1;l<=4;l++)  loop ends */
 
 
     for (i=1;i<=6;i++)		/* compute the weighted sum */ 
     {
-	e[i] = eo[i] + (edot[i][1] + 2. * (edot[i][2] + edot[i][3]) + 
-			edot[i][4]) * dto6;
-	p[i] = po[i] + (pdot[i][1] + 2. * (pdot[i][2] + pdot[i][3]) + 
-			pdot[i][4]) * dto6;
+	    e[i] = eo[i] + (edot[i][1] + 2. * (edot[i][2] + edot[i][3]) + edot[i][4]) * dto6;
+	    p[i] = po[i] + (pdot[i][1] + 2. * (pdot[i][2] + pdot[i][3]) + pdot[i][4]) * dto6;
     }
 
 				/* add in effects of steady current... */ 

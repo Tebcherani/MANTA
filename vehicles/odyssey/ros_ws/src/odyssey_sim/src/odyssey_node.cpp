@@ -45,8 +45,9 @@ class OdysseyNode : public rclcpp::Node {
             startup_qos.transient_local();
             startup_qos.reliable();
 
-            // Simulation steps should not be retained/replayed.
+            // Retain the current step or result until its subscriber has discovered the publisher.
             rclcpp::QoS step_qos(1);
+            step_qos.transient_local();
             step_qos.reliable();
 
             // ----------------------------------------------------------------- 

@@ -84,8 +84,7 @@ services:
       source /odyssey/ros_ws/install/setup.bash
 
       ros2 run whale_detection_sim whale_detection_node --ros-args -p "vehicle_ids:=[odyssey_1,
-      odyssey_2]" -p "detection_range:=11000.0"'
-    - -p "detection_range:=11000.0" -p "data_directory:=/odyssey/output/Data"
+      odyssey_2]" -p "detection_range:=11000.0" -p "data_directory:=/odyssey/output/Data"'
   sim_orchestrator:
     image: odyssey_sim_dev
     environment:
