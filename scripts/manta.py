@@ -5,13 +5,38 @@ import copy
 import csv
 import math
 import os
+import signal
 import subprocess
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from statistics import NormalDist, mean, stdev
 
 import yaml
+
+
+stop_requested = threading.Event()
+
+
+def handle_interrupt(signal_number, frame) -> None:
+    """Stop every active Monte Carlo project and suppress retries."""
+
+    if stop_requested.is_set():
+        return
+
+    print("\nStopping MANTA Monte Carlo...", file=sys.stderr)
+    stop_requested.set()
+
+    cleanup_script = (
+        Path(__file__).resolve().parent
+        / "cleanup_monte_carlo.sh"
+    )
+
+    subprocess.run(
+        ["bash", str(cleanup_script)],
+        check=False,
+    )
 
 
 def load_config(path: Path) -> dict:
@@ -185,7 +210,7 @@ def validate_monte_carlo_config(config: dict) -> dict:
             "'scenario.monte_carlo.workers' must be a positive integer."
         )
 
-    realization_timeout = monte_carlo.get("realization_timeout", 180)
+    realization_timeout = monte_carlo.get("realization_timeout", 60)
     max_retries = monte_carlo.get("max_retries", 2)
 
     if not isinstance(realization_timeout, int) or realization_timeout < 1:
@@ -654,7 +679,7 @@ def run_monte_carlo_realization(
     monte_carlo = validate_monte_carlo_config(config)
     seed = monte_carlo["random_seed"] + realization - 1
 
-    timeout = int(monte_carlo.get("realization_timeout", 180))
+    timeout = int(monte_carlo.get("realization_timeout", 60))
     max_retries = int(monte_carlo.get("max_retries", 2))
 
     (
@@ -717,6 +742,11 @@ def run_monte_carlo_realization(
     last_error = "unknown failure"
 
     for attempt in range(1, max_retries + 2):
+        if stop_requested.is_set():
+            raise InterruptedError(
+                "Monte Carlo was stopped by the user."
+            )
+
         console_log = run_directory / f"console_attempt_{attempt}.log"
         detections_path = data_directory / "whale_detections.csv"
 
@@ -737,6 +767,11 @@ def run_monte_carlo_realization(
                     stderr=subprocess.STDOUT,
                     timeout=timeout,
                     check=False,
+                )
+
+            if stop_requested.is_set():
+                raise InterruptedError(
+                    "Monte Carlo was stopped by the user."
                 )
 
             if result.returncode != 0:
@@ -782,6 +817,11 @@ def run_monte_carlo_realization(
                 )
             except subprocess.TimeoutExpired:
                 last_error += "; Docker cleanup also timed out"
+
+        if stop_requested.is_set():
+            raise InterruptedError(
+                "Monte Carlo was stopped by the user."
+            )
 
         if attempt <= max_retries:
             print(
@@ -910,6 +950,10 @@ def monte_carlo_convergence(
 
 
 def run_monte_carlo(config: dict, root: Path) -> int:
+    stop_requested.clear()
+    signal.signal(signal.SIGINT, handle_interrupt)
+    signal.signal(signal.SIGTERM, handle_interrupt)
+
     monte_carlo = validate_monte_carlo_config(config)
     min_realizations = monte_carlo["min_realizations"]
     max_realizations = monte_carlo["max_realizations"]
@@ -990,19 +1034,12 @@ def run_monte_carlo(config: dict, root: Path) -> int:
         next_realization += 1
 
     while len(completed) < max_realizations:
-        # Run only enough realizations to reach the next batch checkpoint.
+        # Stop precisely at the next batch-size checkpoint. For example,
+        # resuming with 50 completed runs and batch_size=25 schedules only
+        # runs 51-75; resuming with 74 schedules only run 75.
         remainder = len(completed) % batch_size
-
-        runs_needed = (
-            batch_size
-            if remainder == 0
-            else batch_size - remainder
-        )
-
-        runs_needed = min(
-            runs_needed,
-            max_realizations - len(completed),
-        )
+        runs_needed = batch_size if remainder == 0 else batch_size - remainder
+        runs_needed = min(runs_needed, max_realizations - len(completed))
 
         batch = []
         candidate = next_realization
@@ -1017,6 +1054,11 @@ def run_monte_carlo(config: dict, root: Path) -> int:
 
         if not batch:
             break
+
+        print(
+            f"Running {len(batch)} realization(s) to reach checkpoint "
+            f"{len(completed) + len(batch)}."
+        )
 
         failures = []
         with ThreadPoolExecutor(max_workers=workers) as executor:
@@ -1035,6 +1077,8 @@ def run_monte_carlo(config: dict, root: Path) -> int:
 
                 try:
                     row = future.result()
+                except InterruptedError:
+                    continue
                 except Exception as error:
                     failures.append(
                         f"Realization {realization} failed: {error}"
@@ -1047,6 +1091,10 @@ def run_monte_carlo(config: dict, root: Path) -> int:
                     for index in sorted(completed)
                 ]
                 write_monte_carlo_summary(summary_path, rows)
+
+        if stop_requested.is_set():
+            print("Monte Carlo stopped.")
+            return 130
 
         if failures:
             raise ValueError("\n".join(failures))
