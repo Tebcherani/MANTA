@@ -2,6 +2,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -26,6 +29,7 @@ class OdysseyNode : public rclcpp::Node {
     public:
         OdysseyNode() : Node("odyssey_sim") {
             const char *vehicle_id_env;
+            const char *data_directory_env;
 
             // ----------------------------------------------------------------- 
             // Initializations
@@ -33,6 +37,10 @@ class OdysseyNode : public rclcpp::Node {
             vehicle_id_env = std::getenv("ODYSSEY_VEHICLE_ID");
             if (vehicle_id_env == nullptr || vehicle_id_env[0] == '\0') throw std::runtime_error("ODYSSEY_VEHICLE_ID is not set.");
             vehicle_id_ = vehicle_id_env;
+
+            data_directory_env = std::getenv("ODYSSEY_DATA_DIR");
+            if (data_directory_env == nullptr || data_directory_env[0] == '\0') throw std::runtime_error("ODYSSEY_DATA_DIR is not set.");
+            data_directory_ = data_directory_env;
 
             output_sample_period_ = declare_parameter<double>("output_sample_period", 2.0);
             if (output_sample_period_ <= 0.0) throw std::runtime_error("output_sample_period must be greater than zero.");
@@ -202,12 +210,55 @@ class OdysseyNode : public rclcpp::Node {
             RCLCPP_INFO(get_logger(), "Shutting down vehicle '%s'.", vehicle_id_.c_str());
             
             // Flush and close Odyssey's mission data file if the simulator successfully reached its started state.
-            if (odyssey_sim_started_ && !end_odyssey_sim(nullptr)) {
-                RCLCPP_ERROR(get_logger(), "Failed to cleanly end simulator for vehicle '%s'.", vehicle_id_.c_str());
+            if (odyssey_sim_started_) {
+                if (!write_final_metrics()) RCLCPP_ERROR(get_logger(), "Failed to write final metrics for vehicle '%s'.", vehicle_id_.c_str());
+                if (!end_odyssey_sim(nullptr)) RCLCPP_ERROR(get_logger(), "Failed to cleanly end simulator for vehicle '%s'.", vehicle_id_.c_str());
             }
         }
 
     private:
+        bool write_final_metrics() {
+            odyssey_metrics_t metrics;
+
+            if (metrics_written_) return true;
+            if (!get_odyssey_metrics(&metrics)) return false;
+
+            const std::filesystem::path directory(data_directory_);
+            const std::filesystem::path final_path = directory / (vehicle_id_ + "_metrics.csv");
+            const std::filesystem::path temporary_path = directory / (vehicle_id_ + "_metrics.csv.tmp");
+
+            std::error_code error;
+            std::filesystem::create_directories(directory, error);
+            if (error) return false;
+
+            std::ofstream file(temporary_path, std::ios::out | std::ios::trunc);
+            if (!file.is_open()) return false;
+
+            file
+                << "vehicle_id,mass_kg,"
+                << "energy_consumed_wh,mean_speed_mps\n";
+
+            file
+                << vehicle_id_ << ","
+                << std::setprecision(15)
+                << metrics.mass_kg << ","
+                << metrics.energy_consumed_wh << ","
+                << metrics.mean_speed_mps << "\n";
+
+            file.close();
+            if (!file) return false;
+
+            std::filesystem::remove(final_path, error);
+            error.clear();
+            std::filesystem::rename(temporary_path, final_path, error);
+            if (error) return false;
+
+            metrics_written_ = true;
+            RCLCPP_INFO(get_logger(), "Saved final vehicle metrics: %s", final_path.string().c_str());
+
+            return true;
+        }
+
         void publish_vehicle_state(uint64_t completed_cycle, double completed_sim_time) {
             manta_interfaces::msg::VehicleState state;
 
@@ -270,11 +321,13 @@ class OdysseyNode : public rclcpp::Node {
         bool odyssey_sim_started_ = false;
         bool mission_finished_ = false;
         bool log_decimation_configured_ = false;
+        bool metrics_written_ = false;
 
         time_t calendar_start_time_ = 0;
         double sim_time_ = 0.0;
-        std::string vehicle_id_;
         double output_sample_period_ = 2.0;
+        std::string vehicle_id_;
+        std::string data_directory_;
 }; 
 
 int main(int argc, char *argv[]) {

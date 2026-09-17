@@ -57,12 +57,20 @@ scenario:
     max_realizations: 500
     batch_size: 25
     workers: 8
+
     realization_timeout: 60
     max_retries: 1
+    recovery_cycles: 3
+
     confidence_level: 0.95
     target_half_width: 0.03
     stability_tolerance: 0.01
     random_seed: 42
+
+    sweep:
+      min_vehicles: 1
+      max_vehicles: 10
+
 
 #--------------------------------------------------
 # Vehicles
@@ -74,9 +82,9 @@ vehicles:
     model: ./config/vehicles/Borealis.vd
     fault: ""
 
+vehicles:
   - id: odyssey_2
     type: odyssey
     mission: ./generated/missions/picket_line_odyssey_2.mi
     model: ./config/vehicles/Borealis.vd
     fault: ""
-

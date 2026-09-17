@@ -4,4 +4,4 @@ set -e
 
 MANTA_ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-exec python3 "$MANTA_ROOT/scripts/manta.py" "$@"
+exec python3 "$MANTA_ROOT/scripts/manta_runner.py" "$@"

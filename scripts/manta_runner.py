@@ -39,6 +39,28 @@ def handle_interrupt(signal_number, frame) -> None:
     )
 
 
+def cleanup_monte_carlo_projects(root: Path) -> None:
+    """Remove all MANTA Monte Carlo containers and networks."""
+
+    cleanup_script = root / "scripts" / "cleanup_monte_carlo.sh"
+
+    if not cleanup_script.is_file():
+        raise ValueError(
+            f"Monte Carlo cleanup script is missing: {cleanup_script}"
+        )
+
+    result = subprocess.run(
+        ["bash", str(cleanup_script)],
+        cwd=root,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        raise ValueError(
+            "Failed to clean up MANTA Monte Carlo Docker projects."
+        )
+
+
 def load_config(path: Path) -> dict:
     if not path.is_file():
         raise ValueError(f"Configuration file does not exist: {path}")
@@ -634,6 +656,85 @@ def summarize_realization(
     return unique_count, detection_fraction
 
 
+def summarize_vehicle_metrics(
+    data_directory: Path,
+    vehicle_ids: list[str],
+) -> tuple[float, float, float]:
+    """Combine final metrics written by every vehicle in one realization."""
+
+    total_mass_kg = 0.0
+    total_energy_wh = 0.0
+    vehicle_speeds = []
+    required = {
+        "vehicle_id",
+        "mass_kg",
+        "energy_consumed_wh",
+        "mean_speed_mps",
+    }
+
+    for vehicle_id in vehicle_ids:
+        path = data_directory / f"{vehicle_id}_metrics.csv"
+
+        if not path.is_file():
+            raise ValueError(f"Vehicle metrics were not created: {path}")
+
+        with path.open("r", encoding="utf-8", newline="") as file:
+            reader = csv.DictReader(file)
+
+            if not reader.fieldnames or not required.issubset(
+                reader.fieldnames
+            ):
+                raise ValueError(
+                    f"Vehicle metrics have an invalid header: {path}"
+                )
+
+            row = next(reader, None)
+
+        if row is None:
+            raise ValueError(f"Vehicle metrics contain no data row: {path}")
+
+        if row["vehicle_id"] != vehicle_id:
+            raise ValueError(
+                f"Expected metrics for '{vehicle_id}', but {path} "
+                f"contains '{row['vehicle_id']}'."
+            )
+
+        try:
+            mass_kg = float(row["mass_kg"])
+            energy_wh = float(row["energy_consumed_wh"])
+            speed_mps = float(row["mean_speed_mps"])
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"Vehicle metrics contain invalid numbers: {path}"
+            ) from error
+
+        values = (mass_kg, energy_wh, speed_mps)
+
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError(
+                f"Vehicle metrics contain non-finite values: {path}"
+            )
+
+        if mass_kg <= 0.0:
+            raise ValueError(f"Vehicle mass must be positive: {path}")
+
+        if energy_wh < 0.0 or speed_mps < 0.0:
+            raise ValueError(
+                f"Vehicle energy and speed cannot be negative: {path}"
+            )
+
+        total_mass_kg += mass_kg
+        total_energy_wh += energy_wh
+        vehicle_speeds.append(speed_mps)
+
+    if not vehicle_speeds:
+        raise ValueError(
+            "A realization must contain at least one vehicle metric."
+        )
+
+    return total_mass_kg, total_energy_wh, mean(vehicle_speeds)
+
+
 def calculate_monte_carlo_statistics(
     detection_fractions: list[float],
     confidence_level: float,
@@ -658,11 +759,11 @@ def calculate_monte_carlo_statistics(
 
 
 def monte_carlo_paths(
-    root: Path,
+    output_directory: Path,
     realization: int,
 ) -> tuple[Path, Path, Path, Path]:
     run_name = f"realization_{realization:04d}"
-    run_directory = root / "output" / "monte_carlo" / run_name
+    run_directory = output_directory / run_name
     data_directory = run_directory / "Data"
     log_directory = run_directory / "Logs"
     console_log = run_directory / "console.log"
@@ -674,6 +775,8 @@ def run_monte_carlo_realization(
     base_config: dict,
     root: Path,
     realization: int,
+    output_directory: Path,
+    project_offset: int = 0,
 ) -> dict:
     config = copy.deepcopy(base_config)
     monte_carlo = validate_monte_carlo_config(config)
@@ -687,7 +790,7 @@ def run_monte_carlo_realization(
         data_directory,
         log_directory,
         _,
-    ) = monte_carlo_paths(root, realization)
+    ) = monte_carlo_paths(output_directory, realization)
 
     data_directory.mkdir(parents=True, exist_ok=True)
     log_directory.mkdir(parents=True, exist_ok=True)
@@ -700,12 +803,12 @@ def run_monte_carlo_realization(
         log_directory.relative_to(root)
     )
 
-    project_name = f"manta-mc-{realization:04d}"
+    project_name = f"manta-mc-{project_offset + realization:06d}"
     ros_domain_id = 10 + ((realization - 1) % 200)
     compose_path = (
         root
         / "generated"
-        / "monte_carlo"
+        / output_directory.relative_to(root / "output")
         / f"compose_{realization:04d}.yaml"
     )
 
@@ -740,6 +843,7 @@ def run_monte_carlo_realization(
     ]
 
     last_error = "unknown failure"
+    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
 
     for attempt in range(1, max_retries + 2):
         if stop_requested.is_set():
@@ -752,6 +856,14 @@ def run_monte_carlo_realization(
 
         # Never allow a retry to accept a partial or stale result file.
         detections_path.unlink(missing_ok=True)
+
+        for vehicle_id in vehicle_ids:
+            (data_directory / f"{vehicle_id}_metrics.csv").unlink(
+                missing_ok=True
+            )
+            (data_directory / f"{vehicle_id}_metrics.csv.tmp").unlink(
+                missing_ok=True
+            )
 
         print(
             f"Starting realization {realization}, attempt {attempt} "
@@ -784,6 +896,11 @@ def run_monte_carlo_realization(
                 data_directory,
                 whale_count,
             )
+            (
+                total_mass_kg,
+                total_energy_wh,
+                mean_vehicle_speed_mps,
+            ) = summarize_vehicle_metrics(data_directory, vehicle_ids)
 
             print(
                 f"Completed realization {realization}: "
@@ -797,6 +914,9 @@ def run_monte_carlo_realization(
                 "detected_whales": detected_count,
                 "whale_count": whale_count,
                 "detection_fraction": detection_fraction,
+                "total_mass_kg": total_mass_kg,
+                "total_energy_wh": total_energy_wh,
+                "mean_vehicle_speed_mps": mean_vehicle_speed_mps,
             }
 
         except subprocess.TimeoutExpired:
@@ -851,6 +971,9 @@ def load_monte_carlo_summary(path: Path, base_seed: int) -> list[dict]:
             "detected_whales",
             "whale_count",
             "detection_fraction",
+            "total_mass_kg",
+            "total_energy_wh",
+            "mean_vehicle_speed_mps",
         }
 
         if not reader.fieldnames or not required.issubset(
@@ -880,6 +1003,11 @@ def load_monte_carlo_summary(path: Path, base_seed: int) -> list[dict]:
                     "detection_fraction": float(
                         row["detection_fraction"]
                     ),
+                    "total_mass_kg": float(row["total_mass_kg"]),
+                    "total_energy_wh": float(row["total_energy_wh"]),
+                    "mean_vehicle_speed_mps": float(
+                        row["mean_vehicle_speed_mps"]
+                    ),
                 }
             )
 
@@ -899,6 +1027,9 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
                 "detected_whales",
                 "whale_count",
                 "detection_fraction",
+                "total_mass_kg",
+                "total_energy_wh",
+                "mean_vehicle_speed_mps",
             ),
         )
         writer.writeheader()
@@ -949,7 +1080,12 @@ def monte_carlo_convergence(
     return converged, sample_mean, half_width, mean_change
 
 
-def run_monte_carlo(config: dict, root: Path) -> int:
+def run_monte_carlo(
+    config: dict,
+    root: Path,
+    output_directory: Path | None = None,
+    project_offset: int = 0,
+) -> int:
     stop_requested.clear()
     signal.signal(signal.SIGINT, handle_interrupt)
     signal.signal(signal.SIGTERM, handle_interrupt)
@@ -964,6 +1100,12 @@ def run_monte_carlo(config: dict, root: Path) -> int:
         monte_carlo["stability_tolerance"]
     )
     base_seed = monte_carlo["random_seed"]
+    recovery_cycles = int(monte_carlo.get("recovery_cycles", 3))
+
+    if recovery_cycles < 0:
+        raise ValueError(
+            "'scenario.monte_carlo.recovery_cycles' cannot be negative."
+        )
 
     cpu_count = os.cpu_count() or 1
     vehicle_count = len(config["vehicles"])
@@ -974,9 +1116,16 @@ def run_monte_carlo(config: dict, root: Path) -> int:
             min(batch_size, default_workers),
         )
     )
-    workers = max(1, min(workers, batch_size, 200))
+    # A realization contains one CPU-heavy Odyssey process per vehicle.
+    # Reduce parallel realizations as the fleet grows to avoid oversubscribing
+    # the machine and triggering Docker exit code 137.
+    workers = max(
+        1,
+        min(workers, batch_size, default_workers, 200),
+    )
 
-    output_directory = root / "output" / "monte_carlo"
+    if output_directory is None:
+        output_directory = root / "output" / "monte_carlo"
     summary_path = output_directory / "summary.csv"
     rows = load_monte_carlo_summary(summary_path, base_seed)
 
@@ -1033,6 +1182,8 @@ def run_monte_carlo(config: dict, root: Path) -> int:
     while next_realization in completed:
         next_realization += 1
 
+    consecutive_recoveries = 0
+
     while len(completed) < max_realizations:
         # Stop precisely at the next batch-size checkpoint. For example,
         # resuming with 50 completed runs and batch_size=25 schedules only
@@ -1068,6 +1219,8 @@ def run_monte_carlo(config: dict, root: Path) -> int:
                     config,
                     root,
                     realization,
+                    output_directory,
+                    project_offset,
                 ): realization
                 for realization in batch
             }
@@ -1097,7 +1250,41 @@ def run_monte_carlo(config: dict, root: Path) -> int:
             return 130
 
         if failures:
-            raise ValueError("\n".join(failures))
+            consecutive_recoveries += 1
+
+            print(
+                "One or more realizations exhausted their local retries:",
+                file=sys.stderr,
+            )
+
+            for failure in failures:
+                print(f"  {failure}", file=sys.stderr)
+
+            if consecutive_recoveries > recovery_cycles:
+                raise ValueError(
+                    "Monte Carlo exceeded the configured global recovery "
+                    f"limit of {recovery_cycles}.\n"
+                    + "\n".join(failures)
+                )
+
+            print(
+                "Stopping all MANTA Monte Carlo Docker projects before "
+                f"recovery {consecutive_recoveries}/{recovery_cycles}...",
+                file=sys.stderr,
+            )
+            cleanup_monte_carlo_projects(root)
+
+            # Successful results from this batch are already in summary.csv.
+            # Begin again at the first missing realization so only failed or
+            # unfinished samples are rerun with their original seeds.
+            next_realization = 1
+
+            while next_realization in completed:
+                next_realization += 1
+
+            continue
+
+        consecutive_recoveries = 0
 
         fractions = [
             completed[index]["detection_fraction"]
@@ -1158,6 +1345,233 @@ def run_monte_carlo(config: dict, root: Path) -> int:
     return 0
 
 
+def make_sweep_config(
+    base_config: dict,
+    vehicle_count: int,
+) -> dict:
+    """Create one fleet configuration by cloning the first vehicle plugin."""
+
+    if not base_config.get("vehicles"):
+        raise ValueError("The sweep requires at least one vehicle template.")
+
+    config = copy.deepcopy(base_config)
+    template = copy.deepcopy(base_config["vehicles"][0])
+    vehicles = []
+
+    for index in range(1, vehicle_count + 1):
+        vehicle = copy.deepcopy(template)
+        vehicle["id"] = f"odyssey_{index}"
+        vehicle["mission"] = (
+            f"./generated/missions/picket_line_odyssey_{index}.mi"
+        )
+        vehicles.append(vehicle)
+
+    config["vehicles"] = vehicles
+    return config
+
+
+def write_sweep_summary(path: Path, rows: list[dict]) -> None:
+    """Save fleet-level means and confidence intervals."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=(
+                "vehicle_count",
+                "realizations",
+                "whale_count",
+                "mean_detected_whales",
+                "mean_detection",
+                "ci_lower",
+                "ci_upper",
+                "ci_half_width",
+                "confidence_level",
+                "mean_total_mass_kg",
+                "mass_ci_lower_kg",
+                "mass_ci_upper_kg",
+                "mass_ci_half_width_kg",
+                "mean_total_energy_wh",
+                "energy_ci_lower_wh",
+                "energy_ci_upper_wh",
+                "energy_ci_half_width_wh",
+                "mean_vehicle_speed_mps",
+                "speed_ci_lower_mps",
+                "speed_ci_upper_mps",
+                "speed_ci_half_width_mps",
+            ),
+        )
+        writer.writeheader()
+        writer.writerows(sorted(rows, key=lambda row: row["vehicle_count"]))
+
+
+def plot_sweep_results(root: Path, summary_path: Path, plot_path: Path) -> None:
+    """Generate the saved fleet-size confidence-interval plot."""
+
+    python = root / "review" / ".venv" / "bin" / "python"
+    script = (
+        root
+        / "review"
+        / "manta_review"
+        / "plot_sweep_metrics.py"
+    )
+
+    if not python.is_file():
+        raise ValueError(f"Review Python is missing: {python}")
+
+    if not script.is_file():
+        raise ValueError(f"Sweep plotting script is missing: {script}")
+
+    result = subprocess.run(
+        [str(python), str(script), str(summary_path), str(plot_path)],
+        cwd=root,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        raise ValueError("Failed to plot Monte Carlo sweep results.")
+
+
+def run_monte_carlo_sweep(
+    base_config: dict,
+    config_path: Path,
+    root: Path,
+    minimum_vehicles: int = 1,
+    maximum_vehicles: int = 10,
+) -> int:
+    """Run adaptive Monte Carlo experiments for each fleet size."""
+
+    sweep_directory = root / "output" / "monte_carlo_sweep"
+    generated_directory = root / "generated" / "monte_carlo_sweep"
+    summary_path = sweep_directory / "sweep_summary.csv"
+    generated_directory.mkdir(parents=True, exist_ok=True)
+
+    sweep_rows = []
+
+    if summary_path.is_file():
+        with summary_path.open("r", encoding="utf-8", newline="") as file:
+            sweep_rows = list(csv.DictReader(file))
+
+        for row in sweep_rows:
+            row["vehicle_count"] = int(row["vehicle_count"])
+            row["realizations"] = int(row["realizations"])
+
+    completed_counts = {
+        int(row["vehicle_count"]): row
+        for row in sweep_rows
+    }
+
+    for vehicle_count in range(minimum_vehicles, maximum_vehicles + 1):
+        if stop_requested.is_set():
+            return 130
+
+        print(
+            f"\n=== Monte Carlo fleet sweep: "
+            f"{vehicle_count} vehicle(s) ==="
+        )
+
+        config = make_sweep_config(base_config, vehicle_count)
+        fleet_config_path = (
+            generated_directory
+            / f"simulation_vehicles_{vehicle_count:02d}.yaml"
+        )
+        fleet_config_path.write_text(
+            yaml.safe_dump(config, sort_keys=False),
+            encoding="utf-8",
+        )
+
+        generate_scenario_missions(
+            config,
+            fleet_config_path,
+            root,
+        )
+        validate_config(config, root)
+
+        fleet_directory = (
+            sweep_directory
+            / f"vehicles_{vehicle_count:02d}"
+        )
+        result = run_monte_carlo(
+            config,
+            root,
+            output_directory=fleet_directory,
+            project_offset=vehicle_count * 10000,
+        )
+
+        if result != 0:
+            return result
+
+        monte_carlo = validate_monte_carlo_config(config)
+        rows = load_monte_carlo_summary(
+            fleet_directory / "summary.csv",
+            monte_carlo["random_seed"],
+        )
+        fractions = [row["detection_fraction"] for row in rows]
+        masses = [row["total_mass_kg"] for row in rows]
+        energies = [row["total_energy_wh"] for row in rows]
+        speeds = [row["mean_vehicle_speed_mps"] for row in rows]
+        whale_count = int(config["scenario"]["whales"]["count"])
+        confidence_level = float(monte_carlo["confidence_level"])
+        sample_mean, half_width = calculate_monte_carlo_statistics(
+            fractions,
+            confidence_level,
+        )
+        mean_mass, mass_half_width = calculate_monte_carlo_statistics(
+            masses,
+            confidence_level,
+        )
+        mean_energy, energy_half_width = calculate_monte_carlo_statistics(
+            energies,
+            confidence_level,
+        )
+        mean_speed, speed_half_width = calculate_monte_carlo_statistics(
+            speeds,
+            confidence_level,
+        )
+
+        completed_counts[vehicle_count] = {
+            "vehicle_count": vehicle_count,
+            "realizations": len(rows),
+            "whale_count": whale_count,
+            "mean_detected_whales": sample_mean * whale_count,
+            "mean_detection": sample_mean,
+            "ci_lower": max(0.0, sample_mean - half_width),
+            "ci_upper": min(1.0, sample_mean + half_width),
+            "ci_half_width": half_width,
+            "confidence_level": monte_carlo["confidence_level"],
+            "mean_total_mass_kg": mean_mass,
+            "mass_ci_lower_kg": max(0.0, mean_mass - mass_half_width),
+            "mass_ci_upper_kg": mean_mass + mass_half_width,
+            "mass_ci_half_width_kg": mass_half_width,
+            "mean_total_energy_wh": mean_energy,
+            "energy_ci_lower_wh": max(
+                0.0,
+                mean_energy - energy_half_width,
+            ),
+            "energy_ci_upper_wh": mean_energy + energy_half_width,
+            "energy_ci_half_width_wh": energy_half_width,
+            "mean_vehicle_speed_mps": mean_speed,
+            "speed_ci_lower_mps": max(
+                0.0,
+                mean_speed - speed_half_width,
+            ),
+            "speed_ci_upper_mps": mean_speed + speed_half_width,
+            "speed_ci_half_width_mps": speed_half_width,
+        }
+        sweep_rows = list(completed_counts.values())
+        write_sweep_summary(summary_path, sweep_rows)
+
+        print(
+            f"Fleet size {vehicle_count}: mean {sample_mean:.2%}, "
+            f"CI half-width {half_width:.2%} from {len(rows)} runs."
+        )
+
+    print(f"Sweep data: {summary_path}")
+    print("Run './manta review sweep' to generate the sweep plots.")
+    return 0
+
+
 def parse_args(root: Path) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build, run, review, and analyze MANTA simulations."
@@ -1175,6 +1589,7 @@ def parse_args(root: Path) -> argparse.Namespace:
             "down",
             "review",
             "monte-carlo",
+            "monte-carlo-sweep",
         ),
     )
 
@@ -1185,6 +1600,7 @@ def parse_args(root: Path) -> argparse.Namespace:
         choices=(
             "tracks",
             "energy",
+            "sweep",
         ),
         help="Plot to show with the review command.",
     )
@@ -1203,6 +1619,7 @@ def run_review(root: Path, plot: str) -> int:
     scripts = {
         "tracks": "plot_tracks.py",
         "energy": "plot_energy.py",
+        "sweep": "plot_sweep_metrics.py",
     }
 
     python = root / "review" / ".venv" / "bin" / "python"
@@ -1216,8 +1633,26 @@ def run_review(root: Path, plot: str) -> int:
         print(f"Review script is missing: {script}", file=sys.stderr)
         return 1
 
+    command = [str(python), str(script)]
+
+    if plot == "sweep":
+        sweep_directory = root / "output" / "monte_carlo_sweep"
+        summary_path = sweep_directory / "sweep_summary.csv"
+        output_path = sweep_directory / "detection_vs_fleet_size.png"
+
+        if not summary_path.is_file():
+            print(
+                f"Monte Carlo sweep summary is missing: {summary_path}",
+                file=sys.stderr,
+            )
+            return 1
+
+        command.extend(
+            [str(summary_path), str(output_path), "--show"]
+        )
+
     return subprocess.run(
-        [str(python), str(script)],
+        command,
         cwd=script.parent,
         check=False,
     ).returncode
@@ -1284,6 +1719,67 @@ def main() -> int:
         config_path = Path(args.config).resolve()
         config = load_config(config_path)
 
+        if args.command == "down":
+            compose_path = root / "generated" / "compose.ros.yaml"
+
+            if not compose_path.is_file():
+                print("No generated MANTA Compose file exists.")
+                return 0
+
+            return subprocess.run(
+                [
+                    "docker",
+                    "compose",
+                    "-f",
+                    str(compose_path),
+                    "down",
+                    "--remove-orphans",
+                ],
+                cwd=root,
+                check=False,
+            ).returncode
+
+        if args.command == "monte-carlo-sweep":
+            validate_config(config, root)
+            print_summary(config, config_path)
+
+            monte_carlo = validate_monte_carlo_config(config)
+            sweep = monte_carlo.get("sweep", {})
+
+            if not isinstance(sweep, dict):
+                raise ValueError(
+                    "'scenario.monte_carlo.sweep' must be a YAML mapping."
+                )
+
+            minimum_vehicles = sweep.get("min_vehicles", 1)
+            maximum_vehicles = sweep.get("max_vehicles", 10)
+
+            if (
+                not isinstance(minimum_vehicles, int)
+                or minimum_vehicles < 1
+            ):
+                raise ValueError(
+                    "'scenario.monte_carlo.sweep.min_vehicles' "
+                    "must be an integer of at least 1."
+                )
+
+            if (
+                not isinstance(maximum_vehicles, int)
+                or maximum_vehicles < minimum_vehicles
+            ):
+                raise ValueError(
+                    "'scenario.monte_carlo.sweep.max_vehicles' must be "
+                    "an integer greater than or equal to min_vehicles."
+                )
+
+            return run_monte_carlo_sweep(
+                config,
+                config_path,
+                root,
+                minimum_vehicles=minimum_vehicles,
+                maximum_vehicles=maximum_vehicles,
+            )
+
         generate_scenario_missions(config, config_path, root)
         validate_config(config, root)
         print_summary(config, config_path)
@@ -1321,14 +1817,6 @@ def main() -> int:
                 "-f",
                 str(compose_path),
                 "up",
-                "--remove-orphans",
-            ],
-            "down": [
-                "docker",
-                "compose",
-                "-f",
-                str(compose_path),
-                "down",
                 "--remove-orphans",
             ],
         }

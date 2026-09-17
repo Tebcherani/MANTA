@@ -10,8 +10,15 @@ typedef enum {
 } odyssey_update_status_t;
 
 typedef struct {
+    double gravity;
     double seawater_density;
 } odyssey_environment_t;
+
+typedef struct {
+    double mass_kg;
+    double energy_consumed_wh;
+    double mean_speed_mps;
+} odyssey_metrics_t;
 
 int init_odyssey(void);
 int start_odyssey(const char *, const char *, const char *, const char *, time_t);
@@ -20,6 +27,7 @@ int end_odyssey(const char *, const char *);
 
 int odyssey_abort_requested(void);
 const char *get_odyssey_data_file_name(void);
+int get_odyssey_metrics(odyssey_metrics_t *);
 
 // odyssey_data_struct
 double read_sensor(int);
@@ -28,7 +36,6 @@ void update_sensor(int, double);
 // odyssey_behavior_logger
 void capture_behavior_activity(void);
 void dump_behavior_log_json(const char *file_name);
-
 void set_odyssey_log_decimation(unsigned int decimation);
 
 #endif
