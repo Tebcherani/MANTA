@@ -84,7 +84,8 @@ odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *world_stat
 }
 
 int update_odyssey_sim_time(double sim_time) {
-    update_sensor(M_PRESENT_TIME, sim_time);
+    //update_sensor(M_PRESENT_TIME, sim_time);
+    vvp->s[M_PRESENT_TIME].x = sim_time;
     sensor_time(M_PRESENT_TIME) = (long)(1000.0 * sim_time);
 
     return 1;

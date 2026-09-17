@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <memory>
@@ -26,11 +28,14 @@ class OdysseyNode : public rclcpp::Node {
             const char *vehicle_id_env;
 
             // ----------------------------------------------------------------- 
-            // Get vehicle ID 
+            // Initializations
             // -----------------------------------------------------------------
             vehicle_id_env = std::getenv("ODYSSEY_VEHICLE_ID");
             if (vehicle_id_env == nullptr || vehicle_id_env[0] == '\0') throw std::runtime_error("ODYSSEY_VEHICLE_ID is not set.");
             vehicle_id_ = vehicle_id_env;
+
+            output_sample_period_ = declare_parameter<double>("output_sample_period", 2.0);
+            if (output_sample_period_ <= 0.0) throw std::runtime_error("output_sample_period must be greater than zero.");
 
             // ----------------------------------------------------------------- 
             // Startup/ready QoS 
@@ -99,10 +104,23 @@ class OdysseyNode : public rclcpp::Node {
                     return;
                 }
 
-                    // Run every native Odyssey cycle contained in this ROS batch.
-                    for (uint32_t offset = 0; offset < msg->step_count; ++offset) {
-                        const uint64_t cycle = msg->current_cycle + offset;
-                        result.completed_cycle = cycle;
+                // Convert the requested output period in simulated seconds into a whole number of Odyssey control updates.
+                if (!log_decimation_configured_) {
+                    const double control_interval = static_cast<double>(msg->control_period) * msg->timestep;
+                    const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_ / control_interval)));
+
+                    set_odyssey_log_decimation(log_decimation);
+                    log_decimation_configured_ = true;
+
+                    RCLCPP_INFO(get_logger(), "Vehicle '%s' will record output every %.3f simulated seconds (%u control updates).",
+                        vehicle_id_.c_str(), static_cast<double>(log_decimation) * control_interval, log_decimation
+                    );
+                }
+
+                // Run every native Odyssey cycle contained in this ROS batch.
+                for (uint32_t offset = 0; offset < msg->step_count; ++offset) {
+                    const uint64_t cycle = msg->current_cycle + offset;
+                    result.completed_cycle = cycle;
 
                     if (odyssey_abort_requested()) {
                         mission_finished_ = true;
@@ -250,10 +268,12 @@ class OdysseyNode : public rclcpp::Node {
         bool sim_time_received_ = false;
         bool odyssey_sim_started_ = false;
         bool mission_finished_ = false;
+        bool log_decimation_configured_ = false;
 
         time_t calendar_start_time_ = 0;
         double sim_time_ = 0.0;
         std::string vehicle_id_;
+        double output_sample_period_ = 2.0;
 }; 
 
 int main(int argc, char *argv[]) {

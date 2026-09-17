@@ -29,4 +29,6 @@ void update_sensor(int, double);
 void capture_behavior_activity(void);
 void dump_behavior_log_json(const char *file_name);
 
+void set_odyssey_log_decimation(unsigned int decimation);
+
 #endif

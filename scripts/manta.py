@@ -162,7 +162,7 @@ def write_runtime_env(config: dict, root: Path) -> Path:
     return path
 
 
-def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> dict:
+def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str, sample_period: float) -> dict:
     """Generate a Compose service from a vehicle plugin manifest."""
 
     vehicle_id = vehicle["id"]
@@ -212,8 +212,7 @@ def vehicle_service(vehicle: dict, root: Path, data_dir: str, log_dir: str) -> d
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
-            f"ros2 run {ros_package} {executable}",
-        ],
+            f"ros2 run {ros_package} {executable} --ros-args -p output_sample_period:={sample_period}",        ],
     }
 
 
@@ -317,9 +316,10 @@ def write_runtime_compose(config: dict, root: Path) -> Path:
     log_dir = container_path(root, config["output"]["log_directory"])
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
     simulation = config["simulation"]
+    sample_period = float(config["output"].get("sample_period", 2.0))
 
     services = {
-        vehicle["id"]: vehicle_service(vehicle, root, data_dir, log_dir)
+        vehicle["id"]: vehicle_service(vehicle, root, data_dir, log_dir, sample_period)
         for vehicle in config["vehicles"]
     }
 

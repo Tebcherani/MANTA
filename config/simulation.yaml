@@ -18,6 +18,7 @@ simulation:
 output:
   data_directory: ./output/Data
   log_directory: ./output/Logs
+  sample_period: 5.0
 
 #--------------------------------------------------
 # Mission

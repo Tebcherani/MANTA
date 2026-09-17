@@ -22,7 +22,7 @@ services:
 
       source /odyssey/ros_ws/install/setup.bash
 
-      ros2 run odyssey_sim odyssey_node'
+      ros2 run odyssey_sim odyssey_node --ros-args -p output_sample_period:=5.0'
   odyssey_2:
     image: odyssey_sim_dev
     environment:
@@ -45,7 +45,7 @@ services:
 
       source /odyssey/ros_ws/install/setup.bash
 
-      ros2 run odyssey_sim odyssey_node'
+      ros2 run odyssey_sim odyssey_node --ros-args -p output_sample_period:=5.0'
   whale_sim:
     image: odyssey_sim_dev
     environment:
@@ -104,5 +104,5 @@ services:
       source /odyssey/ros_ws/install/setup.bash
 
       ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[odyssey_1,
-      odyssey_2]" -p "data_directory:=/odyssey/output/Data" -p "timestep:=0.04" -p
-      "control_period:=5" -p "max_cycles:=6480000" -p "steps_per_message:=10000"'
+      odyssey_2]" -p "data_directory:=/odyssey/output/Data" -p "timestep:=0.02" -p
+      "control_period:=10" -p "max_cycles:=12960000" -p "steps_per_message:=10000"'

@@ -1,13 +1,17 @@
 #include <stdio.h>
 
 #include "odyssey.h"
+#include "odyssey_data_logger.h"
 #include "odyssey_data_struct.h"
 #include "odyssey_mission.h"
 #include "odyssey_nav.h"
 #include "odyssey_control.h"
 #include "ody_var.h"
+#include "sim_log.h"
 
 static FILE *datafile = NULL;
+static unsigned int data_log_decimation = 1U;
+static unsigned int data_log_counter = 0U;
 
 int init_odyssey(void) {
     if (!init_odyssey_data_structure()) return 0;
@@ -23,13 +27,19 @@ int start_odyssey(const char *vehicle_id, const char *mission_path, const char *
     return 1;
 }
 
-odyssey_update_status_t update_odyssey(double seawater_density, double control_dt) {
+void set_odyssey_log_decimation(unsigned int decimation) {
+    data_log_decimation = decimation > 0U ? decimation : 1U;
+    data_log_counter = 0U;
+}
+
+odyssey_update_status_t update_odyssey(double seawater_density, double control_dt) {    
     if (!update_odyssey_nav()) return ODYSSEY_UPDATE_ERROR;
     if (!update_odyssey_control(seawater_density, control_dt)) return ODYSSEY_UPDATE_ERROR;
     if (update_odyssey_mission() != 0) return ODYSSEY_UPDATE_MISSION_COMPLETE;
 
     capture_behavior_activity();
-	log_data(datafile);
+
+    if (data_log_counter++ % data_log_decimation == 0U) log_data(datafile);
 
     return ODYSSEY_UPDATE_OK;
 }
