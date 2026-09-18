@@ -148,6 +148,11 @@ private:
         double east;
         double velocity_north;
         double velocity_east;
+
+        // Lifecycle status
+        bool active;
+        bool complete;
+        double starting_side;
     };
 
     std::vector<TrajectoryPoint> generate_trajectory(
@@ -156,6 +161,8 @@ private:
         double crossing_heading,
         double speed,
         double start_time,
+        double perpendicular_north,
+        double perpendicular_east,
         const WhaleGroup &group
     ) {
         std::vector<TrajectoryPoint> trajectory;
@@ -233,6 +240,38 @@ private:
             north += velocity_north * duration;
             east += velocity_east * duration;
             time = next_time;
+
+            /*
+            * Measure signed perpendicular distance from the picket line. Multiplying
+            * by the group's starting side makes the initial distance positive. Once
+            * it reaches -start_distance_, the whale has crossed the line and exited
+            * the monitored corridor on the opposite side.
+            */
+            const double relative_north =
+                north - line_start_north_;
+
+            const double relative_east =
+                east - line_start_east_;
+
+            const double signed_distance =
+                relative_north * perpendicular_north
+                + relative_east * perpendicular_east;
+
+            if (group.side * signed_distance <= -start_distance_) {
+                /*
+                * Store one final point at the exit boundary. Zero velocity marks
+                * that this whale is no longer active in the study region.
+                */
+                trajectory.push_back({
+                    time,
+                    north,
+                    east,
+                    0.0,
+                    0.0,
+                });
+
+                break;
+            }
 
             if (time >= mission_duration_) {
                 trajectory.push_back({
@@ -434,6 +473,7 @@ private:
 
     std::vector<double> generate_call_times(
         double start_time,
+        double end_time,
         double call_rate_per_hour,
         const WhaleGroup &group
     ) {
@@ -443,10 +483,16 @@ private:
             );
         }
 
+        if (end_time < start_time) {
+            throw std::runtime_error(
+                "Whale call interval ends before its start time."
+            );
+        }
+
         std::vector<double> call_times;
         double interval_start = start_time;
 
-        while (interval_start < mission_duration_) {
+        while (interval_start < end_time) {
             const std::size_t activity_index = std::min(
                 static_cast<std::size_t>(
                     std::floor(
@@ -467,7 +513,7 @@ private:
 
             const double interval_end = std::min(
                 next_activity_boundary,
-                mission_duration_
+                end_time
             );
 
             const double duration =
@@ -652,17 +698,40 @@ private:
             whale.depth = whale_depth_;
             whale.start_time = whale_start_time;
             whale.call_rate_per_hour = whale_call_rate;
-            whale.call_times = generate_call_times(whale_start_time, whale_call_rate, group);
-            whale.next_call_index = 0;
+            whale.active = false;
+            whale.complete = false;
+            whale.starting_side = group.side;
 
+            /*
+            * Generate movement first so its final timestamp determines when the whale
+            * leaves the monitored corridor.
+            */
             whale.trajectory = generate_trajectory(
                 initial_north,
                 initial_east,
                 crossing_heading,
                 whale_speed,
                 whale_start_time,
+                perpendicular_north,
+                perpendicular_east,
                 group
             );
+
+            const double whale_end_time =
+                whale.trajectory.back().time;
+
+            /*
+            * Calls are produced only while the whale is active within the monitored
+            * corridor.
+            */
+            whale.call_times = generate_call_times(
+                whale_start_time,
+                whale_end_time,
+                whale_call_rate,
+                group
+            );
+
+            whale.next_call_index = 0;
 
             const TrajectoryPoint &initial =
                 whale.trajectory.front();
