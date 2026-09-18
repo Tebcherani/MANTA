@@ -62,89 +62,6 @@ def cleanup_monte_carlo_projects(root: Path) -> None:
         )
 
 
-def validate_config(config: dict, root: Path) -> None:
-    vehicles = config.get("vehicles")
-    output = config.get("output")
-
-    if not isinstance(vehicles, list) or not vehicles:
-        raise ValueError("'vehicles' must be a nonempty YAML list.")
-
-    if not isinstance(output, dict):
-        raise ValueError("'output' must be a YAML mapping.")
-
-    for field in ("data_directory", "log_directory"):
-        if not isinstance(output.get(field), str) or not output[field]:
-            raise ValueError(f"'output.{field}' must be a nonempty string.")
-
-    for field in ("auv_sample_period", "whale_sample_period"):
-        value = output.get(field)
-
-        if value is not None and (
-            not isinstance(value, (int, float)) or value <= 0
-        ):
-            raise ValueError(f"'output.{field}' must be greater than zero.")
-
-    vehicle_ids = set()
-
-    for vehicle in vehicles:
-        if not isinstance(vehicle, dict):
-            raise ValueError("Every vehicle must be a YAML mapping.")
-
-        vehicle_id = vehicle.get("id")
-        vehicle_type = vehicle.get("type")
-
-        if not isinstance(vehicle_id, str) or not vehicle_id:
-            raise ValueError("Every vehicle must have a nonempty string 'id'.")
-
-        if vehicle_id in vehicle_ids:
-            raise ValueError(f"Duplicate vehicle ID: {vehicle_id}")
-
-        vehicle_ids.add(vehicle_id)
-
-        if not isinstance(vehicle_type, str) or not vehicle_type:
-            raise ValueError(
-                f"Vehicle '{vehicle_id}' must have a nonempty string 'type'."
-            )
-
-        manifest = load_plugin(vehicle_type)
-        plugin_config = manifest.get("configuration", {})
-        required_fields = plugin_config.get("required", [])
-        optional_fields = plugin_config.get("optional", [])
-
-        if not isinstance(required_fields, list) or not isinstance(
-            optional_fields, list
-        ):
-            raise ValueError(
-                f"Plugin '{vehicle_type}' configuration fields must be YAML lists."
-            )
-
-        for field in required_fields:
-            value = vehicle.get(field)
-
-            if not isinstance(value, str) or not value:
-                raise ValueError(
-                    f"Vehicle '{vehicle_id}' must define a nonempty "
-                    f"'{field}' path."
-                )
-
-        for field in required_fields + optional_fields:
-            value = vehicle.get(field, "")
-
-            if not isinstance(value, str):
-                raise ValueError(
-                    f"Vehicle '{vehicle_id}' field '{field}' must be a string."
-                )
-
-            if value:
-                path = (root / value).resolve()
-
-                if not path.is_file():
-                    raise ValueError(
-                        f"Vehicle '{vehicle_id}' {field} file does not exist: "
-                        f"{path}"
-                    )
-
-
 def validate_monte_carlo_config(config: dict) -> dict:
     monte_carlo = config.get("monte_carlo", {})
 
@@ -240,14 +157,6 @@ def validate_monte_carlo_config(config: dict) -> dict:
     return monte_carlo
 
 
-def print_summary(config: dict, path: Path) -> None:
-    print(f"Loaded configuration: {path}")
-    print(f"Configured vehicles: {len(config['vehicles'])}")
-
-    for vehicle in config["vehicles"]:
-        print(f"  - {vehicle['id']} ({vehicle['type']})")
-
-
 def container_path(root: Path, configured_path: str) -> str:
     host_path = (root / configured_path).resolve()
 
@@ -257,29 +166,6 @@ def container_path(root: Path, configured_path: str) -> str:
         raise ValueError(f"Path must remain inside MANTA: {host_path}") from error
 
     return f"/odyssey/{relative_path.as_posix()}"
-
-
-def generate_scenario_missions(config: dict, config_path: Path, root: Path) -> None:
-    scenario = config.get("scenario", {})
-
-    if scenario.get("type") != "picket_line":
-        return
-
-    generator = (
-        root
-        / "missions"
-        / "picket_line"
-        / "generate_picket_line_mission.py"
-    )
-
-    result = subprocess.run(
-        [sys.executable, str(generator), str(config_path)],
-        cwd=root,
-        check=False,
-    )
-
-    if result.returncode != 0:
-        raise ValueError("Failed to generate picket-line missions.")
 
 
 def write_runtime_env(
@@ -1074,8 +960,8 @@ def run_monte_carlo(
         )
 
     cpu_count = os.cpu_count() or 1
-    vehicle_count = len(config["vehicles"])
-    default_workers = max(1, cpu_count // max(1, vehicle_count))
+    fleet_size = len(config["vehicles"])
+    default_workers = max(1, cpu_count // max(1, fleet_size))
     workers = int(
         monte_carlo.get(
             "workers",
@@ -1311,31 +1197,6 @@ def run_monte_carlo(
     return 0
 
 
-def make_sweep_config(
-    base_config: dict,
-    vehicle_count: int,
-) -> dict:
-    """Create one fleet configuration by cloning the first vehicle plugin."""
-
-    if not base_config.get("vehicles"):
-        raise ValueError("The sweep requires at least one vehicle template.")
-
-    config = copy.deepcopy(base_config)
-    template = copy.deepcopy(base_config["vehicles"][0])
-    vehicles = []
-
-    for index in range(1, vehicle_count + 1):
-        vehicle = copy.deepcopy(template)
-        vehicle["id"] = f"odyssey_{index}"
-        vehicle["mission"] = (
-            f"./generated/missions/picket_line_odyssey_{index}.mi"
-        )
-        vehicles.append(vehicle)
-
-    config["vehicles"] = vehicles
-    return config
-
-
 def write_sweep_summary(path: Path, rows: list[dict]) -> None:
     """Save fleet-level means and confidence intervals."""
 
@@ -1345,7 +1206,7 @@ def write_sweep_summary(path: Path, rows: list[dict]) -> None:
         writer = csv.DictWriter(
             file,
             fieldnames=(
-                "vehicle_count",
+                "fleet_size",
                 "realizations",
                 "whale_count",
                 "mean_detected_whales",
@@ -1369,7 +1230,7 @@ def write_sweep_summary(path: Path, rows: list[dict]) -> None:
             ),
         )
         writer.writeheader()
-        writer.writerows(sorted(rows, key=lambda row: row["vehicle_count"]))
+        writer.writerows(sorted(rows, key=lambda row: row["fleet_size"]))
 
 
 def plot_sweep_results(root: Path, summary_path: Path, plot_path: Path) -> None:

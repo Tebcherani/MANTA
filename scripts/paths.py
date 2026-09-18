@@ -8,8 +8,15 @@ ROOT = Path(__file__).resolve().parent.parent
 # ----------------------------------------------------------------- 
 # Directories
 # -----------------------------------------------------------------
+# Code
 REVIEW_DIR = ROOT / "review" / "manta_review"
 VEHICLE_DIR = ROOT / "vehicles"
+
+# Generated
+SWEEP_GENERATED_DIR = ROOT / "generated" / "monte_carlo_sweep"
+
+# Output
+SWEEP_OUTPUT_DIR = ROOT / "output" / "monte_carlo_sweep"
 
 # ----------------------------------------------------------------- 
 # Executables
@@ -25,4 +32,7 @@ DOCKER_COMPOSE_PATH = ROOT / "generated" / "compose.ros.yaml"
 CONFIG_PATH = ROOT / "config" / "simulation.yaml"
 
 # .csv
-SWEEP_SUMMARY_PATH = ROOT / "output" / "monte_carlo_sweep" / "sweep_summary.csv"
+SWEEP_SUMMARY_PATH = SWEEP_OUTPUT_DIR / "sweep_summary.csv"
+
+# .py
+MISSION_GENERATOR_PATH = ROOT / "missions" / "picket_line" / "generate_picket_line_mission.py"

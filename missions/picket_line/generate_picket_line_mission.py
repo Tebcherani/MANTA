@@ -52,20 +52,20 @@ class MissionConfig:
         return math.hypot(self.delta_n, self.delta_e)
 
     @property
-    def vehicle_count(self) -> int:
+    def fleet_size(self) -> int:
         return len(self.vehicles)
 
     def __post_init__(self) -> None:
         """Validate the configuration immediately after construction."""
 
-        if self.vehicle_count == 0:
+        if self.fleet_size == 0:
             raise ValueError("At least one vehicle is required.")
         
         vehicle_ids = [vehicle.get("id") for vehicle in self.vehicles]
-        
+
         if any(not vehicle_id for vehicle_id in vehicle_ids):
             raise ValueError("Every vehicle must have a nonempty ID.")
-        if len(set(vehicle_ids)) != self.vehicle_count:
+        if len(set(vehicle_ids)) != self.fleet_size:
             raise ValueError("Vehicle IDs must be unique.")
         if self.line_length <= 0.0:
             raise ValueError("Picket line must have nonzero length.")
@@ -92,11 +92,11 @@ class LineSegment:
 def compute_vehicle_segment(config: MissionConfig, vehicle_index: int) -> LineSegment:
     """Calculate the picket-line segment assigned to one vehicle."""
 
-    if vehicle_index < 0 or vehicle_index >= config.vehicle_count:
+    if vehicle_index < 0 or vehicle_index >= config.fleet_size:
         raise ValueError("Vehicle index is outside the fleet.")
 
-    start_fraction = vehicle_index / config.vehicle_count
-    end_fraction = (vehicle_index + 1) / config.vehicle_count
+    start_fraction = vehicle_index / config.fleet_size
+    end_fraction = (vehicle_index + 1) / config.fleet_size
 
     return LineSegment(
         start_n = config.line_start_n + start_fraction * config.delta_n,

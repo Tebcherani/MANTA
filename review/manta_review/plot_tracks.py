@@ -269,12 +269,12 @@ def main() -> int:
     latest = find_latest_vehicle_results()
 
     fig, ax = plt.subplots(figsize=(10, 8))
-    vehicle_count = plot_vehicle_tracks(ax, latest)
+    fleet_size = plot_vehicle_tracks(ax, latest)
     whale_count = plot_whale_tracks(ax, detected_whales)
     call_count = plot_whale_calls(ax)
     detection_count = plot_detection_locations(ax, detection_north, detection_east)
 
-    if (vehicle_count == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
+    if (fleet_size == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
         print("No simulation results found in output/Data.")
         plt.close(fig)
         return 1

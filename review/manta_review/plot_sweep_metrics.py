@@ -56,7 +56,7 @@ METRICS = (
 def get_required_summary_columns() -> set[str]:
     """Return every sweep-summary CSV column required by the plots."""
 
-    columns = {"vehicle_count"}
+    columns = {"fleet_size"}
     for metric in METRICS:
         columns.update((metric["mean"], metric["lower"], metric["upper"]))
 
@@ -64,7 +64,7 @@ def get_required_summary_columns() -> set[str]:
 
 
 def plot_metric(ax, rows: list[dict[str, float]], metric: dict) -> None:
-    vehicles = [row["vehicle_count"] for row in rows]
+    vehicles = [row["fleet_size"] for row in rows]
     means = [row[metric["mean"]] for row in rows]
     lower_errors = [row[metric["mean"]] - row[metric["lower"]] for row in rows]
     upper_errors = [row[metric["upper"]] - row[metric["mean"]] for row in rows]
@@ -79,7 +79,7 @@ def plot_metric(ax, rows: list[dict[str, float]], metric: dict) -> None:
     if metric["percent"]:
         ax.set_ylim(0.0, 1.0)
         ax.yaxis.set_major_formatter(PercentFormatter(1.0))
-        
+
 
 def read_summary() -> list[dict[str, float]]:
     """Read already-aggregated fleet statistics from sweep_summary.csv."""
@@ -101,7 +101,7 @@ def read_summary() -> list[dict[str, float]]:
 
         for line_number, source in enumerate(reader, start=2):
             try:
-                row = {"vehicle_count": int(source["vehicle_count"])}
+                row = {"fleet_size": int(source["fleet_size"])}
 
                 for metric in METRICS:
                     row[metric["mean"]] = float(source[metric["mean"]])
@@ -110,9 +110,9 @@ def read_summary() -> list[dict[str, float]]:
             except (TypeError, ValueError) as error:
                 raise ValueError(f"Invalid numeric value on line {line_number} of {SUMMARY_PATH}.") from error
 
-            values = [value for name, value in row.items() if name != "vehicle_count"]
+            values = [value for name, value in row.items() if name != "fleet_size"]
 
-            if row["vehicle_count"] < 1:
+            if row["fleet_size"] < 1:
                 raise ValueError(f"Vehicle count must be positive on line {line_number}.")
 
             if not all(math.isfinite(value) for value in values):
@@ -131,10 +131,10 @@ def read_summary() -> list[dict[str, float]]:
     if not rows:
         raise ValueError(f"Sweep summary contains no results: {SUMMARY_PATH}")
 
-    rows.sort(key=lambda row: row["vehicle_count"])
+    rows.sort(key=lambda row: row["fleet_size"])
 
-    vehicle_counts = [row["vehicle_count"] for row in rows]
-    if len(vehicle_counts) != len(set(vehicle_counts)):
+    fleet_sizes = [row["fleet_size"] for row in rows]
+    if len(fleet_sizes) != len(set(fleet_sizes)):
         raise ValueError("Sweep summary contains duplicate vehicle counts.")
 
     return rows
