@@ -66,12 +66,12 @@ scenario:
 
   whales:
     count: 46
-    speed_min: 1.0  # original fixed speed was 1.5m/s
-    speed_max: 2.0
     start_distance: 11000.0
     depth: 20.0
 
     movement:
+      speed_min: 1.0  # original fixed speed was 1.5m/s
+      speed_max: 2.0
       turn_interval: 60.0
       heading_correlation: 0.95
       heading_std_degrees: 15.0
