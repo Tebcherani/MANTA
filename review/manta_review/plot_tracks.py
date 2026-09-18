@@ -12,11 +12,7 @@ from parse_obd import read_obd
 
 def vehicle_id(path: Path) -> str | None:
     """Extract the vehicle ID from an Odyssey result filename."""
-
-    if "_S" not in path.stem:
-        return None
-
-    return path.stem.rsplit("_S", 1)[0]
+    return path.stem
 
 
 def find_latest_vehicle_results(data_directory: Path) -> dict[str, Path]:

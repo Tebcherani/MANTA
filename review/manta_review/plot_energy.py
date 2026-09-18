@@ -9,7 +9,7 @@ from parse_obd import read_obd
 def vehicle_id(path: Path) -> str | None:
     if "_S" not in path.stem:
         return None
-    return path.stem.rsplit("_S", 1)[0]
+    return path.stem
 
 
 def latest_results(directory: Path) -> dict[str, Path]:
