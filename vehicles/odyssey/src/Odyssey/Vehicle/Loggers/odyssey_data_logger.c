@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "load_fault.h"
 #include "odyssey_data_logger.h"
@@ -14,12 +13,11 @@
 #include "vehicle.h"
 
 static void write_fault_header(FILE *, const char *);
-static void write_mission_header(FILE **, const char *);
+static void write_mission_header(FILE *, const char *);
 
 static void write_fault_header(FILE *datafile, const char *fault_path)
 {
     FILE       *ffd;
-    char        fd_path[256];
     char        line[256];
     int         n_lines = 0;
 
@@ -31,7 +29,7 @@ static void write_fault_header(FILE *datafile, const char *fault_path)
     } else {
         if ( (ffd = fopen(fault_path, "r")) == NULL ) {
             fprintf( datafile,
-                "# WARNING: could not open %s for embedding\xa", fd_path );
+                "# WARNING: could not open %s for embedding\xa", fault_path );
         } else {
             while ( fgets(line, sizeof(line), ffd) ) {
                 line[ strcspn(line, "\r\n") ] = '\0';
@@ -47,7 +45,7 @@ static void write_fault_header(FILE *datafile, const char *fault_path)
         "# ===== FAULT_FILE_END ==================================\xa" );
 }
 
-static void write_mission_header(FILE **datafile, const char *mission_path) {
+static void write_mission_header(FILE *datafile, const char *mission_path) {
     FILE *fmi;
     char line[MAX_LINE];
     size_t path_size;
@@ -74,14 +72,13 @@ static void write_mission_header(FILE **datafile, const char *mission_path) {
     fprintf(datafile, "# ===== MISSION_FILE_END ================================\xa");
 }
 
-init_odyssey_data_logger(FILE **datafile, const char *vehicle_id, const char *data_dir, const char *mission_path, const char *fault_path) {
+int init_odyssey_data_logger(FILE **datafile, const char *vehicle_id, const char *data_dir, const char *mission_path, const char *fault_path) {
     int i = 0;
-    int j, beh_id, offset, run_number;
+    int j, beh_id, offset;
     int path_length;
 
     char *data_file_name;
     char time_string[30];
-    char fname_string[32];
 
     time_t t;
     struct tm *tp;
@@ -94,33 +91,51 @@ init_odyssey_data_logger(FILE **datafile, const char *vehicle_id, const char *da
         return 0;
     }
 
-    if (strftime(fname_string, sizeof(fname_string), "%y%j", tp) == 0) {
-        write_to_sim_log("[odyssey_data_logger] Failed to create data file timestamp.\n");
+    data_file_name = NULL;
+
+        path_length = snprintf(
+        NULL,
+        0,
+        "%s/%s.obd",
+        data_dir,
+        vehicle_id
+    );
+
+    if (path_length < 0) {
+        write_to_sim_log(
+            "[odyssey_data_logger] Failed to calculate data file path.\n"
+        );
         return 0;
     }
 
-    run_number = 0;
-    data_file_name = NULL;
+    data_file_name = malloc((size_t)path_length + 1);
 
-    do {
-        ++run_number;
+    if (data_file_name == NULL) {
+        write_to_sim_log(
+            "[odyssey_data_logger] Failed to allocate data file path.\n"
+        );
+        return 0;
+    }
 
-        free(data_file_name);
+    snprintf(
+        data_file_name,
+        (size_t)path_length + 1,
+        "%s/%s.obd",
+        data_dir,
+        vehicle_id
+    );
 
-        path_length = snprintf(NULL, 0, "%s/%s.obd", data_dir, vehicle_id, PREFIX_CHAR, fname_string, run_number);        
-        if (path_length < 0)
-            return 0;
-
-        data_file_name = malloc((size_t)path_length + 1);
-        if (data_file_name == NULL)
-            return 0;
-
-        snprintf(data_file_name, (size_t)path_length + 1, "%s/%s.obd", data_dir, vehicle_id, PREFIX_CHAR, fname_string, run_number);    
-    } while (access(data_file_name, F_OK) != -1);
-
+    /*
+     * Replace the previous result for this vehicle. Monte Carlo
+     * realizations use separate data directories, so their outputs
+     * remain isolated.
+     */
     *datafile = fopen(data_file_name, "wb");
+
     if (*datafile == NULL) {
-        write_to_sim_log("[odyssey_data_logger] Failed to open data file.\n");
+        write_to_sim_log(
+            "[odyssey_data_logger] Failed to open data file.\n"
+        );
         free(data_file_name);
         return 0;
     }
