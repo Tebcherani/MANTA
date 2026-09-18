@@ -49,8 +49,6 @@ scenario:
     count: 46
     speed_min: 1.0  # original fixed speed was 1.5m/s
     speed_max: 2.0
-    call_rate_min: 4.8  # original fixed value was 6.4 calls/h
-    call_rate_max: 8.0
     start_distance: 11000.0
     depth: 20.0
 
@@ -64,6 +62,13 @@ scenario:
       position_std: 1000.0
       start_time_std: 600.0
       shared_heading_fraction: 0.75
+    
+    calling:
+      call_rate_min: 4.8  # original fixed value was 6.4 calls/h
+      call_rate_max: 8.0
+      activity_interval: 600.0
+      activity_correlation: 0.90
+      group_log_rate_std: 0.50
 
   monte_carlo:
     min_realizations: 100

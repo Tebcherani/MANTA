@@ -39,6 +39,9 @@ public:
         mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
         call_rate_min_ = declare_parameter<double>("call_rate_min", 4.8);
         call_rate_max_ = declare_parameter<double>("call_rate_max", 8.0);
+        call_activity_interval_ = declare_parameter<double>("call_activity_interval", 600.0);
+        call_activity_correlation_ = declare_parameter<double>("call_activity_correlation", 0.90);
+        group_log_rate_std_ = declare_parameter<double>("group_log_rate_std", 0.50);
         turn_interval_ = declare_parameter<double>("turn_interval", 60.0);
         heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);
         heading_std_degrees_ = declare_parameter<double>("heading_std_degrees", 15.0);
@@ -59,6 +62,9 @@ public:
         if (group_position_std_ < 0.0) throw std::runtime_error("group_position_std cannot be negative.");
         if (group_start_time_std_ < 0.0) throw std::runtime_error("group_start_time_std cannot be negative.");
         if (shared_heading_fraction_ < 0.0 || shared_heading_fraction_ > 1.0) throw std::runtime_error("shared_heading_fraction must be in [0, 1].");
+        if (call_activity_interval_ <= 0.0) throw std::runtime_error("call_activity_interval must be greater than zero.");
+        if (call_activity_correlation_ < 0.0 || call_activity_correlation_ >= 1.0) throw std::runtime_error("call_activity_correlation must be in [0, 1).");
+        if (group_log_rate_std_ < 0.0) throw std::runtime_error("group_log_rate_std cannot be negative.");
 
         std::filesystem::create_directories(data_directory);
         whale_log_.open(data_directory + "/whales.csv", std::ios::out | std::ios::trunc);
@@ -121,6 +127,7 @@ private:
         double side;
         double start_time;
         std::vector<double> heading_errors;
+        std::vector<double> call_rate_multipliers;
     };
 
     struct Whale {
@@ -129,8 +136,10 @@ private:
 
         double depth;
         double start_time;
-        double next_call_time;
         double call_rate_per_hour;
+
+        std::vector<double> call_times;
+        std::size_t next_call_index = 0;
 
         std::vector<TrajectoryPoint> trajectory;
 
@@ -151,9 +160,7 @@ private:
     ) {
         std::vector<TrajectoryPoint> trajectory;
 
-        const double heading_std_radians =
-            heading_std_degrees_ * std::acos(-1.0) / 180.0;
-
+        const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
         const double innovation_scale =
             heading_std_radians
             * std::sqrt(
@@ -163,11 +170,8 @@ private:
 
         // Weight the shared and individual processes so their combined
         // variance remains equal to the configured heading variance.
-        const double group_weight =
-            std::sqrt(shared_heading_fraction_);
-
-        const double individual_weight =
-            std::sqrt(1.0 - shared_heading_fraction_);
+        const double group_weight = std::sqrt(shared_heading_fraction_);
+        const double individual_weight = std::sqrt(1.0 - shared_heading_fraction_);
 
         std::normal_distribution<double> standard_normal(0.0, 1.0);
 
@@ -328,6 +332,14 @@ private:
             static_cast<std::size_t>(
                 std::ceil(mission_duration_ / turn_interval_)
             ) + 1;
+        
+        const std::size_t call_activity_count =
+            static_cast<std::size_t>(
+                std::ceil(
+                    mission_duration_
+                    / call_activity_interval_
+                )
+            ) + 1;
 
         const double heading_std_radians =
             heading_std_degrees_ * std::acos(-1.0) / 180.0;
@@ -372,10 +384,130 @@ private:
                 group.heading_errors.push_back(heading_error);
             }
 
+            group.call_rate_multipliers.reserve(
+                call_activity_count
+            );
+
+            // Start in the stationary distribution so the beginning of the
+            // simulation is not artificially quieter than the remainder.
+            double group_call_activity =
+                standard_normal(generator_);
+
+            const double call_innovation_scale =
+                std::sqrt(
+                    1.0
+                    - call_activity_correlation_
+                        * call_activity_correlation_
+                );
+
+            for (
+                std::size_t activity_index = 0;
+                activity_index < call_activity_count;
+                ++activity_index
+            ) {
+                if (activity_index > 0) {
+                    group_call_activity =
+                        call_activity_correlation_
+                            * group_call_activity
+                        + call_innovation_scale
+                            * standard_normal(generator_);
+                }
+
+                // Converting the Gaussian activity process to a lognormal
+                // multiplier keeps rates positive. Subtracting sigma²/2 makes
+                // the expected multiplier equal to one.
+                const double multiplier = std::exp(
+                    group_log_rate_std_ * group_call_activity
+                    - 0.5
+                        * group_log_rate_std_
+                        * group_log_rate_std_
+                );
+
+                group.call_rate_multipliers.push_back(multiplier);
+            }
+
             whale_groups_.push_back(std::move(group));
         }
 
         RCLCPP_INFO(get_logger(), "Initialized %zu whale groups for %d whales.", whale_groups_.size(), whale_count_);
+    }
+
+    std::vector<double> generate_call_times(
+        double start_time,
+        double call_rate_per_hour,
+        const WhaleGroup &group
+    ) {
+        if (group.call_rate_multipliers.empty()) {
+            throw std::runtime_error(
+                "Whale group contains no call-rate multipliers."
+            );
+        }
+
+        std::vector<double> call_times;
+        double interval_start = start_time;
+
+        while (interval_start < mission_duration_) {
+            const std::size_t activity_index = std::min(
+                static_cast<std::size_t>(
+                    std::floor(
+                        interval_start
+                        / call_activity_interval_
+                    )
+                ),
+                group.call_rate_multipliers.size() - 1
+            );
+
+            const double next_activity_boundary =
+                (
+                    std::floor(
+                        interval_start
+                        / call_activity_interval_
+                    ) + 1.0
+                ) * call_activity_interval_;
+
+            const double interval_end = std::min(
+                next_activity_boundary,
+                mission_duration_
+            );
+
+            const double duration =
+                interval_end - interval_start;
+
+            const double calls_per_second =
+                (
+                    call_rate_per_hour
+                    * group.call_rate_multipliers[activity_index]
+                ) / 3600.0;
+
+            // A piecewise-constant Poisson process produces a Poisson-
+            // distributed count within each activity interval.
+            std::poisson_distribution<int> call_count(
+                calls_per_second * duration
+            );
+
+            const int count = call_count(generator_);
+
+            if (count > 0) {
+                std::uniform_real_distribution<double> call_time(
+                    interval_start,
+                    interval_end
+                );
+
+                for (int index = 0; index < count; ++index) {
+                    call_times.push_back(
+                        call_time(generator_)
+                    );
+                }
+            }
+
+            interval_start = interval_end;
+        }
+
+        // Calls from separate intervals are ordered, but calls sampled
+        // within an interval are not necessarily ordered.
+        std::sort(call_times.begin(), call_times.end());
+
+        return call_times;
     }
 
     void initialize_whales() {
@@ -495,13 +627,6 @@ private:
             const double whale_call_rate =
                 call_rate(generator_);
 
-            std::exponential_distribution<double> call_interval(
-                whale_call_rate / 3600.0
-            );
-
-            const double first_call_time =
-                whale_start_time + call_interval(generator_);
-
             const double crossing_velocity_north =
                 -group.side
                 * perpendicular_north
@@ -526,8 +651,9 @@ private:
             whale.group_index = group_index;
             whale.depth = whale_depth_;
             whale.start_time = whale_start_time;
-            whale.next_call_time = first_call_time;
             whale.call_rate_per_hour = whale_call_rate;
+            whale.call_times = generate_call_times(whale_start_time, whale_call_rate, group);
+            whale.next_call_index = 0;
 
             whale.trajectory = generate_trajectory(
                 initial_north,
@@ -550,66 +676,31 @@ private:
         }
     }
 
-    void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response) {
-        Whale *next_whale = nullptr;
-        double next_time = std::numeric_limits<double>::infinity();
-
-        for (auto &whale : whales_) {
-            std::exponential_distribution<double> call_interval(whale.call_rate_per_hour / 3600.0);
-
-            // Advance this whale's schedule past every call the orchestrator
-            // has already handled.
-            while (whale.next_call_time <= request.after_time) {
-                whale.next_call_time += call_interval(generator_);
-            }
-
-            // Select the earliest remaining call across all whales.
-            if (whale.next_call_time <= mission_duration_ && whale.next_call_time < next_time) {
-                next_time = whale.next_call_time;
-                next_whale = &whale;
-            }
-        }
-
-        // No calls remain within the configured mission duration.
-        if (next_whale == nullptr) {
-            response.available = false;
-            return;
-        }
-
-        response.available = true;
-        response.call.whale_id = next_whale->id;
-        response.call.cycle = 0;
-        response.call.sim_time = next_time;
-
-        // Obtain the position from the same precomputed correlated trajectory
-        // used for ground-truth state publication.
-        const TrajectoryPoint call_position = trajectory_at_time(*next_whale, next_time);
-
-        response.call.north = call_position.north;
-        response.call.east = call_position.east;
-        response.call.depth = next_whale->depth;
-    }
-
-    void update_whales(const manta_interfaces::msg::SimStep &step) {
+    void update_whales(
+        const manta_interfaces::msg::SimStep &step
+    ) {
         if (step.step_count == 0) {
-            RCLCPP_ERROR(get_logger(), "Received a simulation batch with zero steps.");
+            RCLCPP_ERROR(
+                get_logger(),
+                "Received a simulation batch with zero steps."
+            );
             return;
         }
 
-        // Determine the simulated time covered by this batch.
-        const double batch_start_time = step.sim_time;
-        const double batch_end_time = batch_start_time + static_cast<double>(step.step_count) * step.timestep;
+        const double batch_end_time =
+            step.sim_time
+            + static_cast<double>(step.step_count)
+                * step.timestep;
 
-        // Trajectory files are only for review, so they can be sampled less often than live whale ground truth is published.
-        const bool write_trajectory = batch_end_time >= next_whale_log_time_;
+        const uint64_t completed_cycle =
+            step.current_cycle + step.step_count - 1;
 
-        // Calculates the number of the final cycle processed in the batch.
-        const uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
-
-        // Query each whale's precomputed correlated trajectory at the end of
-        // this batch. This produces the same position regardless of ROS batch size.
+        // Update current whale states from the precomputed trajectories.
+        // Looking up absolute simulated time makes motion independent of
+        // the number of native cycles placed in each ROS batch.
         for (auto &whale : whales_) {
-            const TrajectoryPoint position = trajectory_at_time(whale, batch_end_time);
+            const TrajectoryPoint position =
+                trajectory_at_time(whale, batch_end_time);
 
             whale.north = position.north;
             whale.east = position.east;
@@ -617,7 +708,7 @@ private:
             whale.velocity_east = position.velocity_east;
         }
 
-        // Publish whale ground truth at the end of the completed batch.
+        // Publish ground truth at the completed batch time.
         manta_interfaces::msg::WhaleStateArray message;
         message.cycle = completed_cycle;
 
@@ -634,22 +725,111 @@ private:
             state.velocity_down = 0.0;
 
             message.whales.push_back(state);
+        }
 
-            if (write_trajectory) {
+        whale_states_pub_->publish(message);
+
+        // Write every scheduled trajectory sample crossed by this batch.
+        // This preserves the requested output interval even when one ROS
+        // message advances through many seconds of simulated time.
+        while (
+            next_whale_log_time_
+            <= batch_end_time + 1.0e-9
+        ) {
+            // Ignore any stale logging boundary preceding this batch.
+            if (next_whale_log_time_ < step.sim_time) {
+                next_whale_log_time_ += whale_sample_period_;
+                continue;
+            }
+
+            const double cycle_offset =
+                (
+                    next_whale_log_time_ - step.sim_time
+                ) / step.timestep;
+
+            const uint64_t sample_offset = std::min<uint64_t>(
+                step.step_count - 1,
+                static_cast<uint64_t>(
+                    std::max(0.0, std::floor(cycle_offset))
+                )
+            );
+
+            const uint64_t sample_cycle =
+                step.current_cycle + sample_offset;
+
+            for (const auto &whale : whales_) {
+                const TrajectoryPoint sample =
+                    trajectory_at_time(
+                        whale,
+                        next_whale_log_time_
+                    );
+
                 whale_log_
-                    << completed_cycle << ','
-                    << batch_end_time << ','
+                    << sample_cycle << ','
+                    << next_whale_log_time_ << ','
                     << whale.id << ','
                     << whale.group_index + 1 << ','
-                    << whale.north << ','
-                    << whale.east << ','
+                    << sample.north << ','
+                    << sample.east << ','
                     << whale.depth << '\n';
+            }
+
+            next_whale_log_time_ += whale_sample_period_;
+        }
+    }
+
+    void handle_get_next_call(
+        const manta_interfaces::srv::GetNextWhaleCall::Request &request,
+        manta_interfaces::srv::GetNextWhaleCall::Response &response
+    ) {
+        Whale *next_whale = nullptr;
+        double next_time =
+            std::numeric_limits<double>::infinity();
+
+        for (auto &whale : whales_) {
+            // Discard every call the orchestrator has already processed.
+            while (
+                whale.next_call_index < whale.call_times.size()
+                && whale.call_times[whale.next_call_index]
+                    <= request.after_time
+            ) {
+                ++whale.next_call_index;
+            }
+
+            // This whale has no calls remaining during the mission.
+            if (
+                whale.next_call_index
+                >= whale.call_times.size()
+            ) {
+                continue;
+            }
+
+            const double candidate_time =
+                whale.call_times[whale.next_call_index];
+
+            if (candidate_time < next_time) {
+                next_time = candidate_time;
+                next_whale = &whale;
             }
         }
 
-        if (write_trajectory) next_whale_log_time_ = batch_end_time + whale_sample_period_;
+        // No whale calls remain.
+        if (next_whale == nullptr) {
+            response.available = false;
+            return;
+        }
 
-        whale_states_pub_->publish(message);
+        response.available = true;
+        response.call.whale_id = next_whale->id;
+        response.call.cycle = 0;
+        response.call.sim_time = next_time;
+
+        const TrajectoryPoint call_position =
+            trajectory_at_time(*next_whale, next_time);
+
+        response.call.north = call_position.north;
+        response.call.east = call_position.east;
+        response.call.depth = next_whale->depth;
     }
 
     int whale_count_;
@@ -664,6 +844,9 @@ private:
     double mission_duration_;
     double call_rate_min_;
     double call_rate_max_;
+    double call_activity_interval_;
+    double call_activity_correlation_;
+    double group_log_rate_std_;
     double whale_sample_period_ = 60.0;
     double next_whale_log_time_ = 0.0;
     double turn_interval_;

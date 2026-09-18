@@ -43,6 +43,7 @@ services:
       -p "line_start_east:=-63000.0" -p "line_end_north:=0.0" -p "line_end_east:=63000.0"
       -p "speed_min:=1.0" -p "speed_max:=2.0" -p "start_distance:=11000.0" -p "depth:=20.0"
       -p "mission_duration:=259200.0" -p "call_rate_min:=4.8" -p "call_rate_max:=8.0"
+      -p "call_activity_interval:=600.0" -p "call_activity_correlation:=0.9" -p "group_log_rate_std:=0.5"
       -p "turn_interval:=60.0" -p "heading_correlation:=0.95" -p "heading_std_degrees:=15.0"
       -p "group_mean_size:=3.0" -p "group_position_std:=1000.0" -p "group_start_time_std:=600.0"
       -p "shared_heading_fraction:=0.75" -p "data_directory:=/odyssey/output/Data"

@@ -432,6 +432,7 @@ def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) ->
     whales = scenario["whales"]
     movement = whales["movement"]
     grouping = whales["grouping"]
+    calling = whales["calling"]
     monte_carlo = scenario.get("monte_carlo", {})
 
     params = {
@@ -445,8 +446,11 @@ def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) ->
         "start_distance": whales["start_distance"],
         "depth": whales["depth"],
         "mission_duration": scenario["duration"],
-        "call_rate_min": whales["call_rate_min"],
-        "call_rate_max": whales["call_rate_max"],
+        "call_rate_min": calling["call_rate_min"],
+        "call_rate_max": calling["call_rate_max"],
+        "call_activity_interval": calling["activity_interval"],
+        "call_activity_correlation": calling["activity_correlation"],
+        "group_log_rate_std": calling["group_log_rate_std"],
         "turn_interval": movement["turn_interval"],
         "heading_correlation": movement["heading_correlation"],
         "heading_std_degrees": movement["heading_std_degrees"],
