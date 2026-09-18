@@ -431,6 +431,7 @@ def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) ->
     line = scenario["picket_line"]
     whales = scenario["whales"]
     movement = whales["movement"]
+    grouping = whales["grouping"]
     monte_carlo = scenario.get("monte_carlo", {})
 
     params = {
@@ -449,6 +450,10 @@ def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) ->
         "turn_interval": movement["turn_interval"],
         "heading_correlation": movement["heading_correlation"],
         "heading_std_degrees": movement["heading_std_degrees"],
+        "group_mean_size": grouping["mean_group_size"],
+        "group_position_std": grouping["position_std"],
+        "group_start_time_std": grouping["start_time_std"],
+        "shared_heading_fraction": grouping["shared_heading_fraction"],
         "data_directory": container_path(root, config["output"]["data_directory"]),
         "random_seed": monte_carlo.get("random_seed", 42),
         "sample_period": config["output"].get("whale_sample_period", 60.0),

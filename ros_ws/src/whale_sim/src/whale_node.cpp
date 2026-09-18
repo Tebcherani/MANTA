@@ -42,6 +42,10 @@ public:
         turn_interval_ = declare_parameter<double>("turn_interval", 60.0);
         heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);
         heading_std_degrees_ = declare_parameter<double>("heading_std_degrees", 15.0);
+        group_mean_size_ = declare_parameter<double>("group_mean_size", 3.0);
+        group_position_std_ = declare_parameter<double>("group_position_std", 1000.0);
+        group_start_time_std_ = declare_parameter<double>("group_start_time_std", 600.0);
+        shared_heading_fraction_ = declare_parameter<double>("shared_heading_fraction", 0.75);
         const std::string data_directory = declare_parameter<std::string>("data_directory", "/odyssey/output/Data");
         whale_sample_period_ = declare_parameter<double>("sample_period", 60.0);
         
@@ -51,11 +55,16 @@ public:
         if (turn_interval_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");
         if (heading_correlation_ < 0.0 || heading_correlation_ >= 1.0) throw std::runtime_error("heading_correlation must be in [0, 1).");
         if (heading_std_degrees_ < 0.0) throw std::runtime_error("heading_std_degrees cannot be negative.");
+        if (group_mean_size_ < 1.0) throw std::runtime_error("group_mean_size must be at least one.");
+        if (group_position_std_ < 0.0) throw std::runtime_error("group_position_std cannot be negative.");
+        if (group_start_time_std_ < 0.0) throw std::runtime_error("group_start_time_std cannot be negative.");
+        if (shared_heading_fraction_ < 0.0 || shared_heading_fraction_ > 1.0) throw std::runtime_error("shared_heading_fraction must be in [0, 1].");
 
         std::filesystem::create_directories(data_directory);
         whale_log_.open(data_directory + "/whales.csv", std::ios::out | std::ios::trunc);
         if (!whale_log_.is_open()) throw std::runtime_error("Failed to open whale trajectory log.");
-        whale_log_ << "cycle,sim_time,whale_id,north,east,depth\n";
+        whale_log_ << "cycle,sim_time,whale_id,group_id,"
+            << "north,east,depth\n";
 
         const int64_t random_seed = declare_parameter<int64_t>("random_seed", 42);
         generator_.seed(static_cast<std::mt19937::result_type>(random_seed));
@@ -93,8 +102,7 @@ public:
             const std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Request> request,
             std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Response> response) {
             handle_get_next_call(*request, *response);
-        }
-    );
+        });
 
         RCLCPP_INFO(get_logger(), "Initialized %d whales.", whale_count_);
     }
@@ -108,8 +116,17 @@ private:
         double velocity_east;
     };
 
+    struct WhaleGroup {
+        double crossing_distance;
+        double side;
+        double start_time;
+        std::vector<double> heading_errors;
+    };
+
     struct Whale {
         std::string id;
+        int group_index;
+
         double depth;
         double start_time;
         double next_call_time;
@@ -124,29 +141,94 @@ private:
         double velocity_east;
     };
 
-    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time) {
+    std::vector<TrajectoryPoint> generate_trajectory(
+        double initial_north,
+        double initial_east,
+        double crossing_heading,
+        double speed,
+        double start_time,
+        const WhaleGroup &group
+    ) {
         std::vector<TrajectoryPoint> trajectory;
 
-        // heading_std_degrees describes the long-term standard deviation
-        // around the whale's original direction toward the picket line.
-        const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
-        const double innovation_scale = heading_std_radians * std::sqrt(1.0 - heading_correlation_ * heading_correlation_);
+        const double heading_std_radians =
+            heading_std_degrees_ * std::acos(-1.0) / 180.0;
+
+        const double innovation_scale =
+            heading_std_radians
+            * std::sqrt(
+                1.0
+                - heading_correlation_ * heading_correlation_
+            );
+
+        // Weight the shared and individual processes so their combined
+        // variance remains equal to the configured heading variance.
+        const double group_weight =
+            std::sqrt(shared_heading_fraction_);
+
+        const double individual_weight =
+            std::sqrt(1.0 - shared_heading_fraction_);
 
         std::normal_distribution<double> standard_normal(0.0, 1.0);
 
         double time = start_time;
         double north = initial_north;
         double east = initial_east;
-        double heading_error = 0.0;
+        double individual_heading_error = 0.0;
 
         while (true) {
-            const double heading = crossing_heading + heading_error;
-            const double velocity_north = speed * std::cos(heading);
-            const double velocity_east = speed * std::sin(heading);
+            const std::size_t group_heading_index = std::min(
+                static_cast<std::size_t>(
+                    std::floor(time / turn_interval_)
+                ),
+                group.heading_errors.size() - 1
+            );
 
-            // Each point marks the beginning of a straight trajectory
-            // segment. The stored velocity remains active until the next point.
-            trajectory.push_back({time, north, east, velocity_north, velocity_east,});
+            const double combined_heading_error =
+                group_weight
+                    * group.heading_errors[group_heading_index]
+                + individual_weight
+                    * individual_heading_error;
+
+            const double heading =
+                crossing_heading + combined_heading_error;
+
+            const double velocity_north =
+                speed * std::cos(heading);
+
+            const double velocity_east =
+                speed * std::sin(heading);
+
+            trajectory.push_back({
+                time,
+                north,
+                east,
+                velocity_north,
+                velocity_east,
+            });
+
+            if (time >= mission_duration_) {
+                break;
+            }
+
+            // End the current segment at the next global movement boundary.
+            // All members therefore respond to group heading changes at the
+            // same simulated time, even if their activation times differ.
+            const double next_turn_time =
+                (
+                    std::floor(time / turn_interval_) + 1.0
+                ) * turn_interval_;
+
+            const double next_time = std::min(
+                next_turn_time,
+                mission_duration_
+            );
+
+            const double duration = next_time - time;
+
+            north += velocity_north * duration;
+            east += velocity_east * duration;
+            time = next_time;
 
             if (time >= mission_duration_) {
                 trajectory.push_back({
@@ -159,26 +241,9 @@ private:
                 break;
             }
 
-            const double next_time = std::min(
-                time + turn_interval_,
-                mission_duration_
-            );
-
-            const double duration = next_time - time;
-
-            north += velocity_north * duration;
-            east += velocity_east * duration;
-            time = next_time;
-
-            if (time >= mission_duration_) {
-                // Add one final endpoint during the next loop iteration.
-                continue;
-            }
-
-            // This autoregressive update produces correlated headings.
-            // Correlation keeps consecutive directions similar, while the
-            // random innovation prevents the trajectory from being straight.
-            heading_error = heading_correlation_ * heading_error + innovation_scale * standard_normal(generator_);
+            individual_heading_error =
+                heading_correlation_ * individual_heading_error
+                + innovation_scale * standard_normal(generator_);
         }
 
         return trajectory;
@@ -248,13 +313,86 @@ private:
         };
     }
 
+    void initialize_whale_groups(double line_length) {
+        const int group_count = std::max(
+            1,
+            static_cast<int>(
+                std::ceil(
+                    static_cast<double>(whale_count_)
+                    / group_mean_size_
+                )
+            )
+        );
+
+        const std::size_t heading_count =
+            static_cast<std::size_t>(
+                std::ceil(mission_duration_ / turn_interval_)
+            ) + 1;
+
+        const double heading_std_radians =
+            heading_std_degrees_ * std::acos(-1.0) / 180.0;
+
+        const double innovation_scale =
+            heading_std_radians
+            * std::sqrt(
+                1.0
+                - heading_correlation_ * heading_correlation_
+            );
+
+        std::uniform_real_distribution<double> crossing_distance(
+            0.0,
+            line_length
+        );
+
+        std::uniform_real_distribution<double> start_time(
+            0.0,
+            mission_duration_
+        );
+
+        std::bernoulli_distribution starting_side(0.5);
+        std::normal_distribution<double> standard_normal(0.0, 1.0);
+
+        whale_groups_.clear();
+        whale_groups_.reserve(group_count);
+
+        for (int index = 0; index < group_count; ++index) {
+            WhaleGroup group;
+
+            group.crossing_distance = crossing_distance(generator_);
+            group.side = starting_side(generator_) ? 1.0 : -1.0;
+            group.start_time = start_time(generator_);
+            group.heading_errors.reserve(heading_count);
+
+            // Groups initially travel directly toward their crossing location.
+            double heading_error = 0.0;
+            group.heading_errors.push_back(heading_error);
+
+            for (std::size_t heading_index = 1; heading_index < heading_count; ++heading_index) {
+                heading_error = heading_correlation_ * heading_error + innovation_scale * standard_normal(generator_);
+                group.heading_errors.push_back(heading_error);
+            }
+
+            whale_groups_.push_back(std::move(group));
+        }
+
+        RCLCPP_INFO(get_logger(), "Initialized %zu whale groups for %d whales.", whale_groups_.size(), whale_count_);
+    }
+
     void initialize_whales() {
         const double line_north = line_end_north_ - line_start_north_;
         const double line_east = line_end_east_ - line_start_east_;
         const double line_length = std::hypot(line_north, line_east);
 
-        if (line_length <= 0.0) throw std::runtime_error("Picket line must have nonzero length.");
-        if (mission_duration_ <= 0.0) throw std::runtime_error("Mission duration must be greater than zero.");
+        if (line_length <= 0.0) {
+            throw std::runtime_error(
+                "Picket line must have nonzero length."
+            );
+        }
+        if (mission_duration_ <= 0.0) {
+            throw std::runtime_error(
+                "Mission duration must be greater than zero."
+            );
+        }
         if (call_rate_min_ <= 0.0) {
             throw std::runtime_error(
                 "call_rate_min must be greater than zero."
@@ -266,63 +404,142 @@ private:
             );
         }
 
-        // Create unit vectors along the picket line and 90 degrees across it.
-        // These let whales start at random locations along the line and travel perpendicularly through it. 
+        initialize_whale_groups(line_length);
+
+        // Unit vectors parallel and perpendicular to the picket line.
         const double along_north = line_north / line_length;
         const double along_east = line_east / line_length;
         const double perpendicular_north = -along_east;
         const double perpendicular_east = along_north;
 
-        // Crossing locations and activation times are uniformly distributed.
-        std::uniform_real_distribution<double> along_line(0.0, line_length);
-        std::uniform_real_distribution<double> speed(speed_min_, speed_max_);
-        std::uniform_real_distribution<double> start_time(0.0, mission_duration_);
+        std::uniform_real_distribution<double> speed(
+            speed_min_,
+            speed_max_
+        );
 
-        // Each whale receives a fixed individual calling rate. The rate is
-        // uniformly distributed around the 6.4 calls/hour literature value.
         std::uniform_real_distribution<double> call_rate(
             call_rate_min_,
             call_rate_max_
         );
 
-        // Give every whale an independent 50% chance of approaching from either side of the picket line.
-        std::bernoulli_distribution starting_side(0.5);
+        std::normal_distribution<double> position_offset(
+            0.0,
+            group_position_std_
+        );
+
+        std::normal_distribution<double> start_time_offset(
+            0.0,
+            group_start_time_std_
+        );
+
+        whales_.clear();
+        whales_.reserve(whale_count_);
 
         for (int index = 0; index < whale_count_; ++index) {
-            const double crossing_distance = along_line(generator_);
-            const double crossing_north = line_start_north_ + along_north * crossing_distance;
-            const double crossing_east = line_start_east_ + along_east * crossing_distance;
+            // Round-robin assignment keeps group sizes balanced. With 46
+            // whales and 16 groups, groups contain either two or three whales.
+            const int group_index =
+                index % static_cast<int>(whale_groups_.size());
 
-            // Randomize starting sides so the scenario contains whales crossing the picket line in both directions.
-            const double side = starting_side(generator_) ? 1.0 : -1.0;
+            const WhaleGroup &group =
+                whale_groups_[group_index];
 
-            const double whale_speed = speed(generator_);
-            const double whale_call_rate = call_rate(generator_);
-            const double whale_start_time = start_time(generator_);
+            // Draw a member crossing location around the group center.
+            // Resampling avoids creating artificial piles at the line ends.
+            double crossing_distance;
 
-            // Conditional on this whale's individual rate, calls form a Poisson
-            // process with exponentially distributed interarrival times.
-            std::exponential_distribution<double> call_interval(whale_call_rate / 3600.0);
-            const double first_call_time = whale_start_time + call_interval(generator_);
+            do {
+                crossing_distance =
+                    group.crossing_distance
+                    + position_offset(generator_);
+            } while (
+                crossing_distance < 0.0
+                || crossing_distance > line_length
+            );
 
-            const double initial_north = crossing_north + side * perpendicular_north * start_distance_;
-            const double initial_east = crossing_east + side * perpendicular_east * start_distance_;
+            // Draw an activation time around the group's nominal time.
+            double whale_start_time;
 
-            // the whale's randomly selected crossing location.
-            const double crossing_velocity_north = -side * perpendicular_north * whale_speed;
-            const double crossing_velocity_east = -side * perpendicular_east * whale_speed;
-            const double crossing_heading = std::atan2(crossing_velocity_east, crossing_velocity_north);
+            do {
+                whale_start_time =
+                    group.start_time
+                    + start_time_offset(generator_);
+            } while (
+                whale_start_time < 0.0
+                || whale_start_time > mission_duration_
+            );
+
+            const double crossing_north =
+                line_start_north_
+                + along_north * crossing_distance;
+
+            const double crossing_east =
+                line_start_east_
+                + along_east * crossing_distance;
+
+            const double initial_north =
+                crossing_north
+                + group.side
+                    * perpendicular_north
+                    * start_distance_;
+
+            const double initial_east =
+                crossing_east
+                + group.side
+                    * perpendicular_east
+                    * start_distance_;
+
+            const double whale_speed =
+                speed(generator_);
+
+            const double whale_call_rate =
+                call_rate(generator_);
+
+            std::exponential_distribution<double> call_interval(
+                whale_call_rate / 3600.0
+            );
+
+            const double first_call_time =
+                whale_start_time + call_interval(generator_);
+
+            const double crossing_velocity_north =
+                -group.side
+                * perpendicular_north
+                * whale_speed;
+
+            const double crossing_velocity_east =
+                -group.side
+                * perpendicular_east
+                * whale_speed;
+
+            const double crossing_heading =
+                std::atan2(
+                    crossing_velocity_east,
+                    crossing_velocity_north
+                );
 
             Whale whale;
 
-            whale.id = "whale_" + std::to_string(index + 1);
+            whale.id =
+                "whale_" + std::to_string(index + 1);
+
+            whale.group_index = group_index;
             whale.depth = whale_depth_;
             whale.start_time = whale_start_time;
             whale.next_call_time = first_call_time;
             whale.call_rate_per_hour = whale_call_rate;
 
-            whale.trajectory = generate_trajectory(initial_north, initial_east, crossing_heading, whale_speed, whale_start_time);
-            const TrajectoryPoint &initial = whale.trajectory.front();
+            whale.trajectory = generate_trajectory(
+                initial_north,
+                initial_east,
+                crossing_heading,
+                whale_speed,
+                whale_start_time,
+                group
+            );
+
+            const TrajectoryPoint &initial =
+                whale.trajectory.front();
 
             whale.north = initial.north;
             whale.east = initial.east;
@@ -338,9 +555,7 @@ private:
         double next_time = std::numeric_limits<double>::infinity();
 
         for (auto &whale : whales_) {
-            std::exponential_distribution<double> call_interval(
-                whale.call_rate_per_hour / 3600.0
-            );
+            std::exponential_distribution<double> call_interval(whale.call_rate_per_hour / 3600.0);
 
             // Advance this whale's schedule past every call the orchestrator
             // has already handled.
@@ -349,10 +564,7 @@ private:
             }
 
             // Select the earliest remaining call across all whales.
-            if (
-                whale.next_call_time <= mission_duration_
-                && whale.next_call_time < next_time
-            ) {
+            if (whale.next_call_time <= mission_duration_ && whale.next_call_time < next_time) {
                 next_time = whale.next_call_time;
                 next_whale = &whale;
             }
@@ -397,8 +609,7 @@ private:
         // Query each whale's precomputed correlated trajectory at the end of
         // this batch. This produces the same position regardless of ROS batch size.
         for (auto &whale : whales_) {
-            const TrajectoryPoint position =
-                trajectory_at_time(whale, batch_end_time);
+            const TrajectoryPoint position = trajectory_at_time(whale, batch_end_time);
 
             whale.north = position.north;
             whale.east = position.east;
@@ -429,6 +640,7 @@ private:
                     << completed_cycle << ','
                     << batch_end_time << ','
                     << whale.id << ','
+                    << whale.group_index + 1 << ','
                     << whale.north << ','
                     << whale.east << ','
                     << whale.depth << '\n';
@@ -457,8 +669,13 @@ private:
     double turn_interval_;
     double heading_correlation_;
     double heading_std_degrees_;
+    double group_mean_size_;
+    double group_position_std_;
+    double group_start_time_std_;
+    double shared_heading_fraction_;
 
     std::mt19937 generator_;
+    std::vector<WhaleGroup> whale_groups_;
     std::vector<Whale> whales_;
     std::ofstream whale_log_;
 

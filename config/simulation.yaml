@@ -59,6 +59,12 @@ scenario:
       heading_correlation: 0.95
       heading_std_degrees: 15.0
 
+    grouping:
+      mean_group_size: 3.0
+      position_std: 1000.0
+      start_time_std: 600.0
+      shared_heading_fraction: 0.75
+
   monte_carlo:
     min_realizations: 100
     max_realizations: 500
