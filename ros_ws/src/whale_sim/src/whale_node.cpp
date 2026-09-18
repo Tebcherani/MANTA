@@ -45,6 +45,16 @@ public:
         whale_sample_period_ = declare_parameter<double>("sample_period", 60.0);
         
         if (whale_sample_period_ <= 0.0) throw std::runtime_error("Whale sample period must be greater than zero.");
+        if (speed_min_ <= 0.0) {
+            throw std::runtime_error(
+                "speed_min must be greater than zero."
+            );
+        }
+        if (speed_max_ < speed_min_) {
+            throw std::runtime_error(
+                "speed_max must be greater than or equal to speed_min."
+            );
+        }
         if (turn_interval_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");
         if (heading_correlation_ < 0.0 || heading_correlation_ >= 1.0) throw std::runtime_error("heading_correlation must be in [0, 1).");
         if (heading_std_degrees_ < 0.0) throw std::runtime_error("heading_std_degrees cannot be negative.");

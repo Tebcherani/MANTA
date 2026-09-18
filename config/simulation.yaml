@@ -47,7 +47,8 @@ scenario:
 
   whales:
     count: 46
-    speed: 1.5
+    speed_min: 1.0  # original fixed speed was 1.5m/s
+    speed_max: 2.0
     call_rate: 6.4
     start_distance: 11000.0
     depth: 20.0
