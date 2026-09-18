@@ -185,10 +185,10 @@ def validate_config(config: dict, root: Path) -> None:
 
 
 def validate_monte_carlo_config(config: dict) -> dict:
-    monte_carlo = config.get("scenario", {}).get("monte_carlo")
+    monte_carlo = config.get("monte_carlo", {})
 
     if not isinstance(monte_carlo, dict):
-        raise ValueError("'scenario.monte_carlo' must be a YAML mapping.")
+        raise ValueError("'monte_carlo' must be a YAML mapping.")
 
     integer_fields = (
         "min_realizations",
@@ -200,7 +200,7 @@ def validate_monte_carlo_config(config: dict) -> dict:
     for field in integer_fields:
         if not isinstance(monte_carlo.get(field), int):
             raise ValueError(
-                f"'scenario.monte_carlo.{field}' must be an integer."
+                f"'monte_carlo.{field}' must be an integer."
             )
 
     min_realizations = monte_carlo["min_realizations"]
@@ -209,18 +209,18 @@ def validate_monte_carlo_config(config: dict) -> dict:
 
     if min_realizations < 2:
         raise ValueError(
-            "'scenario.monte_carlo.min_realizations' must be at least 2."
+            "'monte_carlo.min_realizations' must be at least 2."
         )
 
     if max_realizations < min_realizations:
         raise ValueError(
-            "'scenario.monte_carlo.max_realizations' must be greater than "
+            "'monte_carlo.max_realizations' must be greater than "
             "or equal to min_realizations."
         )
 
     if batch_size < 1:
         raise ValueError(
-            "'scenario.monte_carlo.batch_size' must be at least 1."
+            "'monte_carlo.batch_size' must be at least 1."
         )
 
     workers = monte_carlo.get("workers")
@@ -229,7 +229,7 @@ def validate_monte_carlo_config(config: dict) -> dict:
         not isinstance(workers, int) or workers < 1
     ):
         raise ValueError(
-            "'scenario.monte_carlo.workers' must be a positive integer."
+            "'monte_carlo.workers' must be a positive integer."
         )
 
     realization_timeout = monte_carlo.get("realization_timeout", 60)
@@ -237,12 +237,12 @@ def validate_monte_carlo_config(config: dict) -> dict:
 
     if not isinstance(realization_timeout, int) or realization_timeout < 1:
         raise ValueError(
-            "'scenario.monte_carlo.realization_timeout' must be a positive integer."
+            "'monte_carlo.realization_timeout' must be a positive integer."
         )
 
     if not isinstance(max_retries, int) or max_retries < 0:
         raise ValueError(
-            "'scenario.monte_carlo.max_retries' cannot be negative."
+            "'monte_carlo.max_retries' cannot be negative."
         )
 
     numeric_fields = (
@@ -254,7 +254,7 @@ def validate_monte_carlo_config(config: dict) -> dict:
     for field in numeric_fields:
         if not isinstance(monte_carlo.get(field), (int, float)):
             raise ValueError(
-                f"'scenario.monte_carlo.{field}' must be numeric."
+                f"'monte_carlo.{field}' must be numeric."
             )
 
     confidence_level = float(monte_carlo["confidence_level"])
@@ -263,17 +263,17 @@ def validate_monte_carlo_config(config: dict) -> dict:
 
     if not 0.0 < confidence_level < 1.0:
         raise ValueError(
-            "'scenario.monte_carlo.confidence_level' must be between 0 and 1."
+            "'monte_carlo.confidence_level' must be between 0 and 1."
         )
 
     if target_half_width <= 0.0:
         raise ValueError(
-            "'scenario.monte_carlo.target_half_width' must be greater than zero."
+            "'monte_carlo.target_half_width' must be greater than zero."
         )
 
     if stability_tolerance < 0.0:
         raise ValueError(
-            "'scenario.monte_carlo.stability_tolerance' cannot be negative."
+            "'monte_carlo.stability_tolerance' cannot be negative."
         )
 
     return monte_carlo
@@ -800,7 +800,7 @@ def run_monte_carlo_realization(
     data_directory.mkdir(parents=True, exist_ok=True)
     log_directory.mkdir(parents=True, exist_ok=True)
 
-    config["scenario"]["monte_carlo"]["random_seed"] = seed
+    config["monte_carlo"]["random_seed"] = seed
     config["output"]["data_directory"] = str(
         data_directory.relative_to(root)
     )
@@ -1109,7 +1109,7 @@ def run_monte_carlo(
 
     if recovery_cycles < 0:
         raise ValueError(
-            "'scenario.monte_carlo.recovery_cycles' cannot be negative."
+            "'monte_carlo.recovery_cycles' cannot be negative."
         )
 
     cpu_count = os.cpu_count() or 1
@@ -1749,11 +1749,11 @@ def main() -> int:
             print_summary(config, config_path)
 
             monte_carlo = validate_monte_carlo_config(config)
-            sweep = monte_carlo.get("sweep", {})
+            sweep = config.get("sweep", {})
 
             if not isinstance(sweep, dict):
                 raise ValueError(
-                    "'scenario.monte_carlo.sweep' must be a YAML mapping."
+                    "'sweep' must be a YAML mapping."
                 )
 
             minimum_vehicles = sweep.get("min_vehicles", 1)
@@ -1764,7 +1764,7 @@ def main() -> int:
                 or minimum_vehicles < 1
             ):
                 raise ValueError(
-                    "'scenario.monte_carlo.sweep.min_vehicles' "
+                    "'sweep.min_vehicles' "
                     "must be an integer of at least 1."
                 )
 
@@ -1773,7 +1773,7 @@ def main() -> int:
                 or maximum_vehicles < minimum_vehicles
             ):
                 raise ValueError(
-                    "'scenario.monte_carlo.sweep.max_vehicles' must be "
+                    "'sweep.max_vehicles' must be "
                     "an integer greater than or equal to min_vehicles."
                 )
 
