@@ -52,6 +52,11 @@ scenario:
     start_distance: 11000.0
     depth: 20.0
 
+    movement:
+      turn_interval: 60.0
+      heading_correlation: 0.95
+      heading_std_degrees: 15.0
+
   monte_carlo:
     min_realizations: 100
     max_realizations: 500

@@ -8,6 +8,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "manta_interfaces/msg/sim_step.hpp"
@@ -37,10 +38,16 @@ public:
         whale_depth_ = declare_parameter<double>("depth", 20.0);
         mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
         call_rate_per_hour_ = declare_parameter<double>("call_rate_per_hour", 6.4);
+        turn_interval_ = declare_parameter<double>("turn_interval", 60.0);
+        heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);
+        heading_std_degrees_ = declare_parameter<double>("heading_std_degrees", 15.0);
         const std::string data_directory = declare_parameter<std::string>("data_directory", "/odyssey/output/Data");
         whale_sample_period_ = declare_parameter<double>("sample_period", 60.0);
         
         if (whale_sample_period_ <= 0.0) throw std::runtime_error("Whale sample period must be greater than zero.");
+        if (turn_interval_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");
+        if (heading_correlation_ < 0.0 || heading_correlation_ >= 1.0) throw std::runtime_error("heading_correlation must be in [0, 1).");
+        if (heading_std_degrees_ < 0.0) throw std::runtime_error("heading_std_degrees cannot be negative.");
 
         std::filesystem::create_directories(data_directory);
         whale_log_.open(data_directory + "/whales.csv", std::ios::out | std::ios::trunc);
@@ -90,27 +97,152 @@ public:
     }
 
 private:
-    struct Whale {
-        std::string id;
-
-        // Immutable position at the whale's activation time. These values allow an exact position to be calculated for any future call.
-        double initial_north;
-        double initial_east;
-
-        // Current position at the end of the most recently processed batch.
+    struct TrajectoryPoint {
+        double time;
         double north;
-        double east; 
-
-        double depth;
+        double east;
         double velocity_north;
         double velocity_east;
-
-        // The whale remains stationary before this simulation time.
-        double start_time;
-
-        // Next event in this whale's Poisson call process.
-        double next_call_time;
     };
+
+    struct Whale {
+        std::string id;
+        double depth;
+        double start_time;
+        double next_call_time;
+
+        std::vector<TrajectoryPoint> trajectory;
+
+        // Current values published in WhaleState messages and written to CSV.
+        double north;
+        double east;
+        double velocity_north;
+        double velocity_east;
+    };
+
+    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time) {
+        std::vector<TrajectoryPoint> trajectory;
+
+        // heading_std_degrees describes the long-term standard deviation
+        // around the whale's original direction toward the picket line.
+        const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
+        const double innovation_scale = heading_std_radians * std::sqrt(1.0 - heading_correlation_ * heading_correlation_);
+
+        std::normal_distribution<double> standard_normal(0.0, 1.0);
+
+        double time = start_time;
+        double north = initial_north;
+        double east = initial_east;
+        double heading_error = 0.0;
+
+        while (true) {
+            const double heading = crossing_heading + heading_error;
+            const double velocity_north = speed * std::cos(heading);
+            const double velocity_east = speed * std::sin(heading);
+
+            // Each point marks the beginning of a straight trajectory
+            // segment. The stored velocity remains active until the next point.
+            trajectory.push_back({time, north, east, velocity_north, velocity_east,});
+
+            if (time >= mission_duration_) {
+                trajectory.push_back({
+                    time,
+                    north,
+                    east,
+                    velocity_north,
+                    velocity_east,
+                });
+                break;
+            }
+
+            const double next_time = std::min(
+                time + turn_interval_,
+                mission_duration_
+            );
+
+            const double duration = next_time - time;
+
+            north += velocity_north * duration;
+            east += velocity_east * duration;
+            time = next_time;
+
+            if (time >= mission_duration_) {
+                // Add one final endpoint during the next loop iteration.
+                continue;
+            }
+
+            // This autoregressive update produces correlated headings.
+            // Correlation keeps consecutive directions similar, while the
+            // random innovation prevents the trajectory from being straight.
+            heading_error = heading_correlation_ * heading_error + innovation_scale * standard_normal(generator_);
+        }
+
+        return trajectory;
+    }
+
+    TrajectoryPoint trajectory_at_time(
+        const Whale &whale,
+        double time
+    ) const {
+        if (whale.trajectory.empty()) {
+            throw std::runtime_error(
+                "Whale trajectory contains no points."
+            );
+        }
+
+        const TrajectoryPoint &first = whale.trajectory.front();
+        const TrajectoryPoint &last = whale.trajectory.back();
+
+        // Before its randomized activation time, the whale remains at its
+        // starting location and has not begun moving.
+        if (time < first.time) {
+            return {
+                time,
+                first.north,
+                first.east,
+                0.0,
+                0.0,
+            };
+        }
+
+        // Do not extrapolate beyond the generated mission trajectory.
+        if (time >= last.time) {
+            return {
+                time,
+                last.north,
+                last.east,
+                0.0,
+                0.0,
+            };
+        }
+
+        // Find the first trajectory segment that starts after the requested
+        // time. The preceding point defines the active segment.
+        const auto next = std::upper_bound(
+            whale.trajectory.begin(),
+            whale.trajectory.end(),
+            time,
+            [](
+                double requested_time,
+                const TrajectoryPoint &point
+            ) {
+                return requested_time < point.time;
+            }
+        );
+
+        const TrajectoryPoint &segment = *(next - 1);
+        const double elapsed = time - segment.time;
+
+        return {
+            time,
+            segment.north
+                + segment.velocity_north * elapsed,
+            segment.east
+                + segment.velocity_east * elapsed,
+            segment.velocity_north,
+            segment.velocity_east,
+        };
+    }
 
     void initialize_whales() {
         const double line_north = line_end_north_ - line_start_north_;
@@ -155,18 +287,34 @@ private:
             const double initial_north = crossing_north + side * perpendicular_north * start_distance_;
             const double initial_east = crossing_east + side * perpendicular_east * start_distance_;
 
-            whales_.push_back({
-                "whale_" + std::to_string(index + 1),
+            // the whale's randomly selected crossing location.
+            const double crossing_velocity_north = -side * perpendicular_north * whale_speed;
+            const double crossing_velocity_east = -side * perpendicular_east * whale_speed;
+            const double crossing_heading = std::atan2(crossing_velocity_east, crossing_velocity_north);
+
+            Whale whale;
+
+            whale.id = "whale_" + std::to_string(index + 1);
+            whale.depth = whale_depth_;
+            whale.start_time = whale_start_time;
+            whale.next_call_time = first_call_time;
+
+            whale.trajectory = generate_trajectory(
                 initial_north,
                 initial_east,
-                initial_north,
-                initial_east,
-                whale_depth_,
-                -side * perpendicular_north * whale_speed,
-                -side * perpendicular_east * whale_speed,
-                whale_start_time,
-                first_call_time
-            });
+                crossing_heading,
+                whale_speed,
+                whale_start_time
+            );
+
+            const TrajectoryPoint &initial = whale.trajectory.front();
+
+            whale.north = initial.north;
+            whale.east = initial.east;
+            whale.velocity_north = initial.velocity_north;
+            whale.velocity_east = initial.velocity_east;
+
+            whales_.push_back(std::move(whale));
         }
     }
 
@@ -198,10 +346,12 @@ private:
         response.call.cycle = 0;
         response.call.sim_time = next_time;
 
-        // Whale motion is constant, so its position at the call time can be calculated exactly without advancing through every physics step.
-        const double movement_duration = next_time - next_whale->start_time;
-        response.call.north = next_whale->initial_north + next_whale->velocity_north * movement_duration;
-        response.call.east = next_whale->initial_east + next_whale->velocity_east * movement_duration;
+        // Obtain the position from the same precomputed correlated trajectory
+        // used for ground-truth state publication.
+        const TrajectoryPoint call_position = trajectory_at_time(*next_whale, next_time);
+
+        response.call.north = call_position.north;
+        response.call.east = call_position.east;
         response.call.depth = next_whale->depth;
     }
 
@@ -221,15 +371,16 @@ private:
         // Calculates the number of the final cycle processed in the batch.
         const uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
 
-        // Whales remain stationary until their individual start times.
-        // If a whale activates during this batch, only advance it for the portion of the batch after activation.
+        // Query each whale's precomputed correlated trajectory at the end of
+        // this batch. This produces the same position regardless of ROS batch size.
         for (auto &whale : whales_) {
-            const double movement_start = std::max(batch_start_time, whale.start_time);
-            if (batch_end_time <= movement_start) continue;
+            const TrajectoryPoint position =
+                trajectory_at_time(whale, batch_end_time);
 
-            const double movement_duration = batch_end_time - movement_start;
-            whale.north += whale.velocity_north * movement_duration;
-            whale.east += whale.velocity_east * movement_duration;
+            whale.north = position.north;
+            whale.east = position.east;
+            whale.velocity_north = position.velocity_north;
+            whale.velocity_east = position.velocity_east;
         }
 
         // Publish whale ground truth at the end of the completed batch.
@@ -279,6 +430,9 @@ private:
     double call_rate_per_hour_;
     double whale_sample_period_ = 60.0;
     double next_whale_log_time_ = 0.0;
+    double turn_interval_;
+    double heading_correlation_;
+    double heading_std_degrees_;
 
     std::mt19937 generator_;
     std::vector<Whale> whales_;

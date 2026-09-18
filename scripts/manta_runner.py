@@ -435,6 +435,7 @@ def whale_service(
     scenario = config["scenario"]
     line = scenario["picket_line"]
     whales = scenario["whales"]
+    movement = whales["movement"]
     monte_carlo = scenario.get("monte_carlo", {})
 
     params = {
@@ -449,13 +450,12 @@ def whale_service(
         "depth": whales["depth"],
         "mission_duration": scenario["duration"],
         "call_rate_per_hour": whales["call_rate"],
-        "data_directory": container_path(
-            root, config["output"]["data_directory"]
-        ),
+        "turn_interval": movement["turn_interval"],
+        "heading_correlation": movement["heading_correlation"],
+        "heading_std_degrees": movement["heading_std_degrees"],
+        "data_directory": container_path(root, config["output"]["data_directory"]),
         "random_seed": monte_carlo.get("random_seed", 42),
-        "sample_period": config["output"].get(
-            "whale_sample_period", 60.0
-        ),
+        "sample_period": config["output"].get("whale_sample_period", 60.0),
     }
 
     arguments = " ".join(
