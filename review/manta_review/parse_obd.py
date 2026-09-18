@@ -19,12 +19,11 @@ Because sensor names are embedded in the file, parsing is forward- and
 backward-compatible across changes to vehicle.h.
 """
 from __future__ import annotations
+from dataclasses import dataclass
 
 import re
-from dataclasses import dataclass
-from pathlib import Path
-
 import numpy as np
+from pathlib import Path
 import xarray as xr
 
 CYCLE_FLAG = np.int16(10001)
@@ -194,11 +193,7 @@ def _decode_binary(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
     )
 
 
-def _reconstruct_table(
-    indices: np.ndarray,
-    values: np.ndarray,
-    sensors: list[_SensorDef],
-) -> tuple[np.ndarray, list[_SensorDef]]:
+def _reconstruct_table(indices: np.ndarray, values: np.ndarray, sensors: list[_SensorDef]) -> tuple[np.ndarray, list[_SensorDef]]:
     """Rebuild the per-cycle (n_cycles, n_sensors) table.
 
     Sensor values are sticky: a column carries the last logged value forward

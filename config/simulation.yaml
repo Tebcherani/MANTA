@@ -118,3 +118,9 @@ vehicles:
     mission: ./generated/missions/picket_line_auv_3.mi
     model: ./config/vehicles/Borealis.vd
     fault: ""
+  
+  - id: auv_4
+    type: odyssey
+    mission: ./generated/missions/picket_line_auv_4.mi
+    model: ./config/vehicles/Borealis.vd
+    fault: ""

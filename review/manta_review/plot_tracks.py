@@ -1,32 +1,29 @@
 #!/usr/bin/env python3
 
 import csv
-from collections import defaultdict
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
 
+from collections import defaultdict
+from pathlib import Path
 from parse_obd import read_obd
 
 
-def vehicle_id(path: Path) -> str | None:
-    """Extract the vehicle ID from an Odyssey result filename."""
-    return path.stem
+ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = ROOT / "output" / "Data"
+WHALE_CALLS_PATH = DATA_DIR / "whale_calls.csv"
+WHALE_DETECTIONS_PATH = DATA_DIR / "whale_detections.csv"
+WHALE_TRAJECTORY_PATH = DATA_DIR / "whales.csv"
 
 
-def find_latest_vehicle_results(data_directory: Path) -> dict[str, Path]:
+def find_latest_vehicle_results() -> dict[str, Path]:
     """Find the newest Odyssey result for each vehicle."""
 
     latest = {}
 
-    for path in data_directory.rglob("*.obd"):
+    for path in DATA_DIR.rglob("*.obd"):
         name = vehicle_id(path)
-
-        if name and (
-            name not in latest
-            or path.stat().st_mtime > latest[name].stat().st_mtime
-        ):
+        if name and (name not in latest or path.stat().st_mtime > latest[name].stat().st_mtime):
             latest[name] = path
 
     return latest
@@ -51,14 +48,8 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> int:
             lateral = np.asarray(dataset["real_v"].values, dtype=float)
             vertical = np.asarray(dataset["real_w"].values, dtype=float)
 
-            speed = np.sqrt(
-                forward * forward
-                + lateral * lateral
-                + vertical * vertical
-            )
-
+            speed = np.sqrt(forward * forward + lateral * lateral + vertical * vertical)
             speed = speed[np.isfinite(speed)]
-
             if speed.size:
                 print(
                     f"  Actual speed: "
@@ -88,16 +79,53 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> int:
 
         line, = ax.plot(east, north, linewidth=1.5, label=name, zorder=4)
         color = line.get_color()
-
-        # Circle: vehicle starting position.
-        ax.scatter(east[0], north[0], color=color, marker="o", s=40, zorder=6)
-
-        # Square: vehicle ending position.
-        ax.scatter(east[-1], north[-1], color=color, marker="s", s=40, zorder=6)
+        ax.scatter(east[0], north[0], color=color, marker="o", s=40, zorder=6)  # Vehicle starting position
+        ax.scatter(east[-1], north[-1], color=color, marker="s", s=40, zorder=6)    # Vehicle ending position
 
         plotted += 1
 
     return plotted
+
+
+def read_whale_detections() -> tuple[set[str], list[float], list[float]]:
+    """Read detected whale IDs and detection locations."""
+
+    detected_whales = set()
+    detection_north = []
+    detection_east = []
+
+    if not WHALE_DETECTIONS_PATH.is_file():
+        print(f"No whale detection file found: {WHALE_DETECTIONS_PATH}")
+        return detected_whales, detection_north, detection_east
+
+    try:
+        with WHALE_DETECTIONS_PATH.open("r", encoding="utf-8", newline="") as file:
+            reader = csv.DictReader(file)
+            required = {"whale_id", "whale_north", "whale_east"}
+
+            if not reader.fieldnames or not required.issubset(reader.fieldnames):
+                raise ValueError("whale_detections.csv must contain whale_id, whale_north, and whale_east columns.")
+
+            for row in reader:
+                whale_id = row.get("whale_id", "")
+
+                try:
+                    north = float(row["whale_north"])
+                    east = float(row["whale_east"])
+                except (TypeError, ValueError):
+                    continue
+
+                if not whale_id or not np.isfinite(north) or not np.isfinite(east):
+                    continue
+
+                detected_whales.add(whale_id)
+                detection_north.append(north)
+                detection_east.append(east)
+
+    except (OSError, ValueError) as error:
+        print(f"Could not read whale detections: {error}")
+
+    return detected_whales, detection_north, detection_east
 
 
 def read_whale_tracks(path: Path) -> dict[str, tuple[list[float], list[float]]]:
@@ -129,58 +157,20 @@ def read_whale_tracks(path: Path) -> dict[str, tuple[list[float], list[float]]]:
     return tracks
 
 
-def read_whale_detections(path: Path) -> tuple[set[str], list[float], list[float]]:
-    """Read detected whale IDs and detection locations."""
-
-    detected_whales = set()
-    detection_north = []
-    detection_east = []
-
-    if not path.is_file():
-        print(f"No whale detection file found: {path}")
-        return detected_whales, detection_north, detection_east
-
-    try:
-        with path.open("r", encoding="utf-8", newline="") as file:
-            reader = csv.DictReader(file)
-            required = {"whale_id", "whale_north", "whale_east"}
-
-            if not reader.fieldnames or not required.issubset(reader.fieldnames):
-                raise ValueError(
-                    "whale_detections.csv must contain whale_id, whale_north, and whale_east columns."
-                )
-
-            for row in reader:
-                whale_id = row.get("whale_id", "")
-
-                try:
-                    north = float(row["whale_north"])
-                    east = float(row["whale_east"])
-                except (TypeError, ValueError):
-                    continue
-
-                if not whale_id or not np.isfinite(north) or not np.isfinite(east):
-                    continue
-
-                detected_whales.add(whale_id)
-                detection_north.append(north)
-                detection_east.append(east)
-
-    except (OSError, ValueError) as error:
-        print(f"Could not read whale detections: {error}")
-
-    return detected_whales, detection_north, detection_east
+def vehicle_id(path: Path) -> str | None:
+    """Extract the vehicle ID from an Odyssey result filename."""
+    return path.stem
 
 
-def plot_whale_tracks(ax, path: Path, detected_whales: set[str]) -> int:
+def plot_whale_tracks(ax, detected_whales: set[str]) -> int:
     """Plot detected whales in blue and undetected whales in gray."""
 
-    if not path.is_file():
-        print(f"No whale trajectory file found: {path}")
+    if not WHALE_TRAJECTORY_PATH.is_file():
+        print(f"No whale trajectory file found: {WHALE_TRAJECTORY_PATH}")
         return 0
 
     try:
-        tracks = read_whale_tracks(path)
+        tracks = read_whale_tracks(WHALE_TRAJECTORY_PATH)
     except (OSError, ValueError) as error:
         print(f"Could not read whale trajectories: {error}")
         return 0
@@ -211,57 +201,25 @@ def plot_whale_tracks(ax, path: Path, detected_whales: set[str]) -> int:
             undetected_label_used = True
 
         print(f"Plotting whale {whale_id}: {'detected' if detected else 'undetected'}")
-
-        ax.plot(
-            east,
-            north,
-            color=color,
-            linestyle="--",
-            linewidth=linewidth,
-            alpha=alpha,
-            label=label,
-            zorder=zorder,
-        )
-
-        # Triangle: whale starting position.
-        ax.scatter(
-            east[0],
-            north[0],
-            color=color,
-            marker="^",
-            s=25,
-            alpha=alpha,
-            zorder=zorder + 1,
-        )
-
-        # X: whale ending position.
-        ax.scatter(
-            east[-1],
-            north[-1],
-            color=color,
-            marker="x",
-            s=30,
-            alpha=alpha,
-            zorder=zorder + 1,
-        )
-
+        ax.plot(east, north, color=color, linestyle="--", linewidth=linewidth, alpha=alpha, label=label, zorder=zorder)
+        ax.scatter(east[0], north[0], color=color, marker="x", s=25, alpha=alpha, zorder=zorder + 1)   # Whale starting position
         plotted += 1
 
     return plotted
 
 
-def plot_whale_calls(ax, path: Path) -> int:
+def plot_whale_calls(ax) -> int:
     """Plot every generated whale call as a red dot."""
 
-    if not path.is_file():
-        print(f"No whale call file found: {path}")
+    if not WHALE_CALLS_PATH.is_file():
+        print(f"No whale call file found: {WHALE_CALLS_PATH}")
         return 0
 
     north = []
     east = []
 
     try:
-        with path.open("r", encoding="utf-8", newline="") as file:
+        with WHALE_CALLS_PATH.open("r", encoding="utf-8", newline="") as file:
             reader = csv.DictReader(file)
             required = {"north", "east"}
 
@@ -287,18 +245,9 @@ def plot_whale_calls(ax, path: Path) -> int:
         print("No valid whale calls found.")
         return 0
 
-    ax.scatter(
-        east,
-        north,
-        color="tab:red",
-        marker=".",
-        s=12,
-        alpha=0.5,
-        label="Whale calls",
-        zorder=5,
-    )
-
     print(f"Plotting {len(north)} whale calls.")
+    ax.scatter(east, north, color="tab:red", marker=".", s=12, alpha=0.5, label="Whale calls", zorder=5)
+
     return len(north)
 
 
@@ -309,73 +258,35 @@ def plot_detection_locations(ax, north: list[float], east: list[float]) -> int:
         print("No whale detections found.")
         return 0
 
-    ax.scatter(
-        east,
-        north,
-        color="tab:blue",
-        edgecolors="white",
-        marker="D",
-        s=35,
-        linewidths=0.6,
-        label="Detections",
-        zorder=7,
-    )
-
     print(f"Plotting {len(north)} whale detections.")
+    ax.scatter(east, north, color="tab:blue", edgecolors="white", marker="D", s=35, linewidths=0.6, label="Detections", zorder=7)
+
     return len(north)
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[2]
-    data_directory = root / "output" / "Data"
-
-    detected_whales, detection_north, detection_east = read_whale_detections(
-        data_directory / "whale_detections.csv"
-    )
+    detected_whales, detection_north, detection_east = read_whale_detections()
+    latest = find_latest_vehicle_results()
 
     fig, ax = plt.subplots(figsize=(10, 8))
-
-    latest = find_latest_vehicle_results(data_directory)
     vehicle_count = plot_vehicle_tracks(ax, latest)
+    whale_count = plot_whale_tracks(ax, detected_whales)
+    call_count = plot_whale_calls(ax)
+    detection_count = plot_detection_locations(ax, detection_north, detection_east)
 
-    whale_count = plot_whale_tracks(
-        ax,
-        data_directory / "whales.csv",
-        detected_whales,
-    )
-
-    call_count = plot_whale_calls(
-        ax,
-        data_directory / "whale_calls.csv",
-    )
-
-    detection_count = plot_detection_locations(
-        ax,
-        detection_north,
-        detection_east,
-    )
-
-    if (
-        vehicle_count == 0
-        and whale_count == 0
-        and call_count == 0
-        and detection_count == 0
-    ):
+    if (vehicle_count == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
         print("No simulation results found in output/Data.")
         plt.close(fig)
         return 1
 
     print(f"Detected {len(detected_whales)} unique whales.")
 
-    ax.set_title(
-        f"Vehicle and Whale Tracks — {len(detected_whales)} Whales Detected"
-    )
+    ax.set_title(f"Vehicle and Whale Tracks — {len(detected_whales)} Whales Detected")
     ax.set_xlabel("East (m)")
     ax.set_ylabel("North (m)")
     ax.set_aspect("equal", adjustable="datalim")
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize="small", ncols=2)
-
     fig.tight_layout()
     plt.show()
 

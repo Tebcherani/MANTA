@@ -69,6 +69,29 @@ services:
       source /odyssey/ros_ws/install/setup.bash
 
       ros2 run odyssey_sim odyssey_node --ros-args -p output_sample_period:=5.0'
+  auv_4:
+    image: odyssey_sim_dev
+    environment:
+      ROS_DOMAIN_ID: '1'
+      ODYSSEY_VEHICLE_ID: auv_4
+      ODYSSEY_DATA_DIR: /odyssey/output/Data
+      ROS_LOG_DIR: /odyssey/output/Logs
+      SIM_LOG_PATH: /odyssey/output/Logs/auv_4.log
+      MISSION_PATH: /odyssey/generated/missions/picket_line_auv_4.mi
+      VEHICLE_PATH: /odyssey/config/vehicles/Borealis.vd
+      FAULT_PATH: ''
+    volumes:
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
+    command:
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
+
+      source /odyssey/ros_ws/install/setup.bash
+
+      ros2 run odyssey_sim odyssey_node --ros-args -p output_sample_period:=5.0'
   whale_sim:
     image: odyssey_sim_dev
     environment:
@@ -111,7 +134,7 @@ services:
       source /odyssey/ros_ws/install/setup.bash
 
       ros2 run whale_detection_sim whale_detection_node --ros-args -p "vehicle_ids:=[auv_1,
-      auv_2, auv_3]" -p "detection_range:=11000.0" -p "data_directory:=/odyssey/output/Data"'
+      auv_2, auv_3, auv_4]" -p "detection_range:=11000.0" -p "data_directory:=/odyssey/output/Data"'
   sim_orchestrator:
     image: odyssey_sim_dev
     environment:
@@ -130,5 +153,5 @@ services:
       source /odyssey/ros_ws/install/setup.bash
 
       ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[auv_1,
-      auv_2, auv_3]" -p "data_directory:=/odyssey/output/Data" -p "timestep:=0.02"
+      auv_2, auv_3, auv_4]" -p "data_directory:=/odyssey/output/Data" -p "timestep:=0.02"
       -p "control_period:=10" -p "max_cycles:=12960000" -p "steps_per_message:=10000"'

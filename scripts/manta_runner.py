@@ -1623,7 +1623,6 @@ def parse_args(root: Path) -> argparse.Namespace:
 def run_review(root: Path, plot: str) -> int:
     scripts = {
         "tracks": "plot_tracks.py",
-        "energy": "plot_energy.py",
         "sweep": "plot_sweep_metrics.py",
     }
 
