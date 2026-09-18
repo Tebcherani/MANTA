@@ -37,7 +37,8 @@ public:
         start_distance_ = declare_parameter<double>("start_distance", 2000.0);
         whale_depth_ = declare_parameter<double>("depth", 20.0);
         mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
-        call_rate_per_hour_ = declare_parameter<double>("call_rate_per_hour", 6.4);
+        call_rate_min_ = declare_parameter<double>("call_rate_min", 4.8);
+        call_rate_max_ = declare_parameter<double>("call_rate_max", 8.0);
         turn_interval_ = declare_parameter<double>("turn_interval", 60.0);
         heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);
         heading_std_degrees_ = declare_parameter<double>("heading_std_degrees", 15.0);
@@ -45,16 +46,8 @@ public:
         whale_sample_period_ = declare_parameter<double>("sample_period", 60.0);
         
         if (whale_sample_period_ <= 0.0) throw std::runtime_error("Whale sample period must be greater than zero.");
-        if (speed_min_ <= 0.0) {
-            throw std::runtime_error(
-                "speed_min must be greater than zero."
-            );
-        }
-        if (speed_max_ < speed_min_) {
-            throw std::runtime_error(
-                "speed_max must be greater than or equal to speed_min."
-            );
-        }
+        if (speed_min_ <= 0.0) throw std::runtime_error("speed_min must be greater than zero.");
+        if (speed_max_ < speed_min_) throw std::runtime_error("speed_max must be greater than or equal to speed_min.");
         if (turn_interval_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");
         if (heading_correlation_ < 0.0 || heading_correlation_ >= 1.0) throw std::runtime_error("heading_correlation must be in [0, 1).");
         if (heading_std_degrees_ < 0.0) throw std::runtime_error("heading_std_degrees cannot be negative.");
@@ -120,6 +113,7 @@ private:
         double depth;
         double start_time;
         double next_call_time;
+        double call_rate_per_hour;
 
         std::vector<TrajectoryPoint> trajectory;
 
@@ -261,7 +255,16 @@ private:
 
         if (line_length <= 0.0) throw std::runtime_error("Picket line must have nonzero length.");
         if (mission_duration_ <= 0.0) throw std::runtime_error("Mission duration must be greater than zero.");
-        if (call_rate_per_hour_ <= 0.0) throw std::runtime_error("Whale call rate must be greater than zero.");
+        if (call_rate_min_ <= 0.0) {
+            throw std::runtime_error(
+                "call_rate_min must be greater than zero."
+            );
+        }
+        if (call_rate_max_ < call_rate_min_) {
+            throw std::runtime_error(
+                "call_rate_max must be greater than or equal to call_rate_min."
+            );
+        }
 
         // Create unit vectors along the picket line and 90 degrees across it.
         // These let whales start at random locations along the line and travel perpendicularly through it. 
@@ -275,8 +278,12 @@ private:
         std::uniform_real_distribution<double> speed(speed_min_, speed_max_);
         std::uniform_real_distribution<double> start_time(0.0, mission_duration_);
 
-        // Poisson calls have exponentially distributed interarrival times. The configured rate is converted from calls/hour to calls/second.
-        std::exponential_distribution<double> call_interval(call_rate_per_hour_ / 3600.0);
+        // Each whale receives a fixed individual calling rate. The rate is
+        // uniformly distributed around the 6.4 calls/hour literature value.
+        std::uniform_real_distribution<double> call_rate(
+            call_rate_min_,
+            call_rate_max_
+        );
 
         // Give every whale an independent 50% chance of approaching from either side of the picket line.
         std::bernoulli_distribution starting_side(0.5);
@@ -290,8 +297,12 @@ private:
             const double side = starting_side(generator_) ? 1.0 : -1.0;
 
             const double whale_speed = speed(generator_);
-
+            const double whale_call_rate = call_rate(generator_);
             const double whale_start_time = start_time(generator_);
+
+            // Conditional on this whale's individual rate, calls form a Poisson
+            // process with exponentially distributed interarrival times.
+            std::exponential_distribution<double> call_interval(whale_call_rate / 3600.0);
             const double first_call_time = whale_start_time + call_interval(generator_);
 
             const double initial_north = crossing_north + side * perpendicular_north * start_distance_;
@@ -308,15 +319,9 @@ private:
             whale.depth = whale_depth_;
             whale.start_time = whale_start_time;
             whale.next_call_time = first_call_time;
+            whale.call_rate_per_hour = whale_call_rate;
 
-            whale.trajectory = generate_trajectory(
-                initial_north,
-                initial_east,
-                crossing_heading,
-                whale_speed,
-                whale_start_time
-            );
-
+            whale.trajectory = generate_trajectory(initial_north, initial_east, crossing_heading, whale_speed, whale_start_time);
             const TrajectoryPoint &initial = whale.trajectory.front();
 
             whale.north = initial.north;
@@ -329,17 +334,25 @@ private:
     }
 
     void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response) {
-        std::exponential_distribution<double> call_interval(call_rate_per_hour_ / 3600.0);
-
         Whale *next_whale = nullptr;
         double next_time = std::numeric_limits<double>::infinity();
 
         for (auto &whale : whales_) {
-            // Advance this whale's call schedule past events the orchestrator has already handled.
-            while (whale.next_call_time <= request.after_time) whale.next_call_time += call_interval(generator_);
+            std::exponential_distribution<double> call_interval(
+                whale.call_rate_per_hour / 3600.0
+            );
 
-            // Keep the earliest valid call across all whales. Calls scheduled after the mission ends are ignored.
-            if (whale.next_call_time <= mission_duration_ && whale.next_call_time < next_time) {
+            // Advance this whale's schedule past every call the orchestrator
+            // has already handled.
+            while (whale.next_call_time <= request.after_time) {
+                whale.next_call_time += call_interval(generator_);
+            }
+
+            // Select the earliest remaining call across all whales.
+            if (
+                whale.next_call_time <= mission_duration_
+                && whale.next_call_time < next_time
+            ) {
                 next_time = whale.next_call_time;
                 next_whale = &whale;
             }
@@ -437,7 +450,8 @@ private:
     double start_distance_;
     double whale_depth_;
     double mission_duration_;
-    double call_rate_per_hour_;
+    double call_rate_min_;
+    double call_rate_max_;
     double whale_sample_period_ = 60.0;
     double next_whale_log_time_ = 0.0;
     double turn_interval_;

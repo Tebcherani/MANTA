@@ -426,12 +426,7 @@ def vehicle_service(
     }
 
 
-def whale_service(
-    config: dict,
-    root: Path,
-    log_dir: str,
-    ros_domain_id: int,
-) -> dict:
+def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) -> dict:
     scenario = config["scenario"]
     line = scenario["picket_line"]
     whales = scenario["whales"]
@@ -449,7 +444,8 @@ def whale_service(
         "start_distance": whales["start_distance"],
         "depth": whales["depth"],
         "mission_duration": scenario["duration"],
-        "call_rate_per_hour": whales["call_rate"],
+        "call_rate_min": whales["call_rate_min"],
+        "call_rate_max": whales["call_rate_max"],
         "turn_interval": movement["turn_interval"],
         "heading_correlation": movement["heading_correlation"],
         "heading_std_degrees": movement["heading_std_degrees"],

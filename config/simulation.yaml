@@ -49,7 +49,8 @@ scenario:
     count: 46
     speed_min: 1.0  # original fixed speed was 1.5m/s
     speed_max: 2.0
-    call_rate: 6.4
+    call_rate_min: 4.8  # original fixed value was 6.4 calls/h
+    call_rate_max: 8.0
     start_distance: 11000.0
     depth: 20.0
 
