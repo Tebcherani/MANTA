@@ -4,12 +4,13 @@ import sys
 from manta_core.manta_config import load_yaml, parse_args
 from manta_core.manta_down import run_down
 from manta_core.manta_review import run_review
+from manta_core.manta_sweep import run_monte_carlo_sweep
 from paths import ROOT, CONFIG_PATH
 
-from manta_runner_old import validate_monte_carlo_config, run_monte_carlo_sweep, generate_scenario_missions
-from manta_runner_old import write_runtime_compose, write_runtime_env, print_summary
+from manta_runner_old import validate_monte_carlo_config, generate_scenario_missions
+from manta_runner_old import write_runtime_compose, write_runtime_env
 from manta_runner_old import run_monte_carlo, run_build
-
+from manta_runner_old import stop_requested, print_summary
 
 def main() -> int:
     args = parse_args()
@@ -40,7 +41,7 @@ def main() -> int:
             if not isinstance(maximum_vehicles, int) or maximum_vehicles < minimum_vehicles:
                 raise ValueError("'sweep.max_vehicles' must be an integer greater than or equal to min_vehicles.")
 
-            return run_monte_carlo_sweep(config, CONFIG_PATH, ROOT, minimum_vehicles=minimum_vehicles, maximum_vehicles=maximum_vehicles)
+            return run_monte_carlo_sweep(config=config, minimum_vehicles=minimum_vehicles, maximum_vehicles=maximum_vehicles, stop_requested=stop_requested)
 
         generate_scenario_missions(config, CONFIG_PATH, ROOT)
         #validate_vehicle_files(config, ROOT)
