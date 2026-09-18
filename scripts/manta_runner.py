@@ -3,38 +3,40 @@ import sys
 
 from pathlib import Path
 
-from manta_runner_old import parse_args, run_review, load_config, print_summary
+from manta_core.manta_config import parse_args
+
+from manta_runner_old import run_review, load_config, print_summary
 from manta_runner_old import validate_monte_carlo_config, run_monte_carlo_sweep, generate_scenario_missions
 from manta_runner_old import write_runtime_compose, write_runtime_env
 from manta_runner_old import run_monte_carlo, run_build
 
 
-def main() -> int:
-    """Parse the command and run the requested MANTA operation."""
+ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = ROOT / "config" / "simulation.yaml"
 
-    root = Path(__file__).resolve().parent.parent
-    args = parse_args(root)
+
+def main() -> int:
+    args = parse_args(ROOT)
 
     if args.command == "review":
-        return run_review(root, args.plot)
+        return run_review(ROOT, args.plot)
 
     try:
-        config_path = Path(args.config).resolve()
-        config = load_config(config_path)
+        config = load_config(CONFIG_PATH)
 
         if args.command == "down":
-            compose_path = root / "generated" / "compose.ros.yaml"
+            compose_path = ROOT / "generated" / "compose.ros.yaml"
 
             if not compose_path.is_file():
                 print("No generated MANTA Compose file exists.")
                 return 0
 
             command = ["docker", "compose", "-f", str(compose_path), "down", "--remove-orphans"]
-            return subprocess.run(command, cwd=root, check=False).returncode
+            return subprocess.run(command, cwd=ROOT, check=False).returncode
 
         if args.command == "monte-carlo-sweep":
-            #validate_vehicle_files(config, root)
-            print_summary(config, config_path)
+            #validate_vehicle_files(config, ROOT)
+            print_summary(config, CONFIG_PATH)
 
             validate_monte_carlo_config(config)
             sweep = config.sweep
@@ -51,14 +53,14 @@ def main() -> int:
             if not isinstance(maximum_vehicles, int) or maximum_vehicles < minimum_vehicles:
                 raise ValueError("'sweep.max_vehicles' must be an integer greater than or equal to min_vehicles.")
 
-            return run_monte_carlo_sweep(config, config_path, root, minimum_vehicles=minimum_vehicles, maximum_vehicles=maximum_vehicles)
+            return run_monte_carlo_sweep(config, CONFIG_PATH, ROOT, minimum_vehicles=minimum_vehicles, maximum_vehicles=maximum_vehicles)
 
-        generate_scenario_missions(config, config_path, root)
-        #validate_vehicle_files(config, root)
-        print_summary(config, config_path)
+        generate_scenario_missions(config, CONFIG_PATH, ROOT)
+        #validate_vehicle_files(config, ROOT)
+        print_summary(config, CONFIG_PATH)
 
-        env_path = write_runtime_env(config, root)
-        compose_path = write_runtime_compose(config, root)
+        env_path = write_runtime_env(config, ROOT)
+        compose_path = write_runtime_compose(config, ROOT)
 
         print(f"Generated environment: {env_path}")
         print(f"Generated Compose file: {compose_path}")
@@ -67,17 +69,17 @@ def main() -> int:
             return 0
 
         if args.command == "build":
-            return run_build(root, env_path)
+            return run_build(ROOT, env_path)
 
         if args.command == "monte-carlo":
-            return run_monte_carlo(config, root)
+            return run_monte_carlo(config, ROOT)
 
         commands = {
-            "dev": ["docker", "compose", "--env-file", str(env_path), "-f", str(root / "compose.dev.yaml"), "run", "--rm", "dev"],
+            "dev": ["docker", "compose", "--env-file", str(env_path), "-f", str(ROOT / "compose.dev.yaml"), "run", "--rm", "dev"],
             "run": ["docker", "compose", "-f", str(compose_path), "up", "--remove-orphans"],
         }
 
-        return subprocess.run(commands[args.command], cwd=root, check=False).returncode
+        return subprocess.run(commands[args.command], cwd=ROOT, check=False).returncode
 
     except ValueError as error:
         print(f"MANTA configuration error: {error}", file=sys.stderr)
