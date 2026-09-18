@@ -1,38 +1,25 @@
 import subprocess
 import sys
 
-from pathlib import Path
+from manta_core.manta_config import load_yaml, parse_args
+from manta_core.manta_down import run_down
+from manta_core.manta_review import run_review
+from paths import ROOT, CONFIG_PATH
 
-from manta_core.manta_config import parse_args
-
-from manta_runner_old import run_review, load_config, print_summary
 from manta_runner_old import validate_monte_carlo_config, run_monte_carlo_sweep, generate_scenario_missions
-from manta_runner_old import write_runtime_compose, write_runtime_env
+from manta_runner_old import write_runtime_compose, write_runtime_env, print_summary
 from manta_runner_old import run_monte_carlo, run_build
 
 
-ROOT = Path(__file__).resolve().parent.parent
-CONFIG_PATH = ROOT / "config" / "simulation.yaml"
-
-
 def main() -> int:
-    args = parse_args(ROOT)
+    args = parse_args()
 
-    if args.command == "review":
-        return run_review(ROOT, args.plot)
+    if args.command == "review": return run_review(plot=args.plot)
 
     try:
-        config = load_config(CONFIG_PATH)
+        config = load_yaml(CONFIG_PATH)
 
-        if args.command == "down":
-            compose_path = ROOT / "generated" / "compose.ros.yaml"
-
-            if not compose_path.is_file():
-                print("No generated MANTA Compose file exists.")
-                return 0
-
-            command = ["docker", "compose", "-f", str(compose_path), "down", "--remove-orphans"]
-            return subprocess.run(command, cwd=ROOT, check=False).returncode
+        if args.command == "down": run_down()
 
         if args.command == "monte-carlo-sweep":
             #validate_vehicle_files(config, ROOT)

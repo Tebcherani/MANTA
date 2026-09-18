@@ -10,6 +10,7 @@ import sys
 import threading
 import yaml
 
+from manta_core.manta_config import load_plugin
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -61,46 +62,6 @@ def cleanup_monte_carlo_projects(root: Path) -> None:
         )
 
 
-def load_config(path: Path) -> dict:
-    if not path.is_file():
-        raise ValueError(f"Configuration file does not exist: {path}")
-
-    try:
-        with path.open("r", encoding="utf-8") as file:
-            config = yaml.safe_load(file)
-    except yaml.YAMLError as error:
-        raise ValueError(f"Invalid YAML in {path}: {error}") from error
-
-    if not isinstance(config, dict):
-        raise ValueError("The configuration must contain a YAML mapping.")
-
-    return config
-
-
-def load_plugin(root: Path, plugin_id: str) -> dict:
-    path = root / "vehicles" / plugin_id / "manta_plugin.yaml"
-
-    if not path.is_file():
-        raise ValueError(f"Vehicle plugin '{plugin_id}' was not found: {path}")
-
-    manifest = load_config(path)
-    plugin = manifest.get("plugin")
-
-    if not isinstance(plugin, dict):
-        raise ValueError(f"Plugin '{plugin_id}' has no 'plugin' section.")
-
-    if plugin.get("id") != plugin_id:
-        raise ValueError(
-            f"Plugin manifest ID '{plugin.get('id')}' does not match "
-            f"configured type '{plugin_id}'."
-        )
-
-    if plugin.get("kind") != "vehicle":
-        raise ValueError(f"Plugin '{plugin_id}' is not a vehicle plugin.")
-
-    return manifest
-
-
 def validate_config(config: dict, root: Path) -> None:
     vehicles = config.get("vehicles")
     output = config.get("output")
@@ -145,7 +106,7 @@ def validate_config(config: dict, root: Path) -> None:
                 f"Vehicle '{vehicle_id}' must have a nonempty string 'type'."
             )
 
-        manifest = load_plugin(root, vehicle_type)
+        manifest = load_plugin(vehicle_type)
         plugin_config = manifest.get("configuration", {})
         required_fields = plugin_config.get("required", [])
         optional_fields = plugin_config.get("optional", [])
@@ -372,7 +333,7 @@ def vehicle_service(
 ) -> dict:
     vehicle_id = vehicle["id"]
     vehicle_type = vehicle["type"]
-    manifest = load_plugin(root, vehicle_type)
+    manifest = load_plugin(vehicle_type)
     runtime = manifest.get("runtime", {})
     environment_names = runtime.get("environment", {})
     config_environment = runtime.get("configuration_environment", {})
@@ -1575,48 +1536,6 @@ def run_monte_carlo_sweep(
     print(f"Sweep data: {summary_path}")
     print("Run './manta review sweep' to generate the sweep plots.")
     return 0
-
-
-def run_review(root: Path, plot: str) -> int:
-    scripts = {
-        "tracks": "plot_tracks.py",
-        "sweep": "plot_sweep_metrics.py",
-    }
-
-    python = root / "review" / ".venv" / "bin" / "python"
-    script = root / "review" / "manta_review" / scripts[plot]
-
-    if not python.is_file():
-        print(f"Review Python is missing: {python}", file=sys.stderr)
-        return 1
-
-    if not script.is_file():
-        print(f"Review script is missing: {script}", file=sys.stderr)
-        return 1
-
-    command = [str(python), str(script)]
-
-    if plot == "sweep":
-        sweep_directory = root / "output" / "monte_carlo_sweep"
-        summary_path = sweep_directory / "sweep_summary.csv"
-        output_path = sweep_directory / "detection_vs_fleet_size.png"
-
-        if not summary_path.is_file():
-            print(
-                f"Monte Carlo sweep summary is missing: {summary_path}",
-                file=sys.stderr,
-            )
-            return 1
-
-        command.extend(
-            [str(summary_path), str(output_path), "--show"]
-        )
-
-    return subprocess.run(
-        command,
-        cwd=script.parent,
-        check=False,
-    ).returncode
 
 
 def run_build(
