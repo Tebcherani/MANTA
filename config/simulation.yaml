@@ -3,14 +3,6 @@
 #--------------------------------------------------
 version: 1
 
-#--------------------------------------------------
-# Simulation parameters
-#--------------------------------------------------
-simulation:
-  timestep: 0.02
-  control_period: 10
-  max_cycles: 12960000  
-  steps_per_message: 10000
 
 #--------------------------------------------------
 # Output directories
@@ -23,21 +15,36 @@ output:
 
 
 #--------------------------------------------------
-# Vehicles
+# Simulation parameters
 #--------------------------------------------------
-vehicles:
-  - id: odyssey_1
-    type: odyssey
-    mission: ./generated/missions/picket_line_odyssey_1.mi
-    model: ./config/vehicles/Borealis.vd
-    fault: ""
+simulation:
+  timestep: 0.02
+  control_period: 10
+  max_cycles: 12960000  
+  steps_per_message: 10000
 
-vehicles:
-  - id: odyssey_2
-    type: odyssey
-    mission: ./generated/missions/picket_line_odyssey_2.mi
-    model: ./config/vehicles/Borealis.vd
-    fault: ""
+
+#--------------------------------------------------
+# Analysis
+#--------------------------------------------------
+monte_carlo:
+  min_realizations: 100
+  max_realizations: 500
+  batch_size: 25
+  workers: 8
+
+  realization_timeout: 60
+  max_retries: 1
+  recovery_cycles: 3
+
+  confidence_level: 0.95
+  target_half_width: 0.03
+  stability_tolerance: 0.01
+  random_seed: 42
+
+sweep:
+  min_vehicles: 1
+  max_vehicles: 10
 
 
 #--------------------------------------------------
@@ -89,24 +96,25 @@ scenario:
       activity_correlation: 0.90
       group_log_rate_std: 0.50
 
+
 #--------------------------------------------------
-# Analysis
+# Vehicles
 #--------------------------------------------------
-monte_carlo:
-  min_realizations: 100
-  max_realizations: 500
-  batch_size: 25
-  workers: 8
+vehicles:
+  - id: auv_1
+    type: odyssey
+    mission: ./generated/missions/picket_line_auv_1.mi
+    model: ./config/vehicles/Borealis.vd
+    fault: ""
 
-  realization_timeout: 60
-  max_retries: 1
-  recovery_cycles: 3
-
-  confidence_level: 0.95
-  target_half_width: 0.03
-  stability_tolerance: 0.01
-  random_seed: 42
-
-sweep:
-  min_vehicles: 1
-  max_vehicles: 10
+  - id: auv_2
+    type: odyssey
+    mission: ./generated/missions/picket_line_auv_2.mi
+    model: ./config/vehicles/Borealis.vd
+    fault: ""
+  
+  - id: auv_3
+    type: odyssey
+    mission: ./generated/missions/picket_line_auv_3.mi
+    model: ./config/vehicles/Borealis.vd
+    fault: ""
