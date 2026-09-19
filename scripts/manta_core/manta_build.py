@@ -2,10 +2,11 @@ import subprocess
 
 from paths import ROOT, DOCKER_COMPOSE_PATH
 from pathlib import Path
+from paths import ENV_PATH
 
 
-def run_build(env_path: Path) -> int:
-    build_image = ["docker", "compose", "--env-file", str(env_path), "-f", str(DOCKER_COMPOSE_PATH), "build"]
+def run_build() -> int:
+    build_image = ["docker", "compose", "--env-file", str(ENV_PATH), "-f", str(DOCKER_COMPOSE_PATH), "build"]
 
     result = subprocess.run(build_image, cwd=ROOT, check=False)
     if result.returncode != 0: return result.returncode
@@ -14,7 +15,7 @@ def run_build(env_path: Path) -> int:
         "docker",
         "compose",
         "--env-file",
-        str(env_path),
+        str(ENV_PATH),
         "-f",
         str(DOCKER_COMPOSE_PATH),
         "run",
