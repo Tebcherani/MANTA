@@ -235,15 +235,15 @@ class OdysseyNode : public rclcpp::Node {
             if (!file.is_open()) return false;
 
             file
-                << "vehicle_id,mass_kg,"
-                << "energy_consumed_wh,mean_speed_mps\n";
+                << "vehicle_id,mass,"
+                << "energy_consumed,mean_speed\n";
 
             file
                 << vehicle_id_ << ","
                 << std::setprecision(15)
-                << metrics.mass_kg << ","
-                << metrics.energy_consumed_wh << ","
-                << metrics.mean_speed_mps << "\n";
+                << metrics.mass << ","
+                << metrics.energy_consumed << ","
+                << metrics.mean_speed << "\n";
 
             file.close();
             if (!file) return false;

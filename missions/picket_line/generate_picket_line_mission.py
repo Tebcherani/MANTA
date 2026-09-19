@@ -10,6 +10,7 @@ between the endpoints of its assigned segment using the Odyssey
 
 
 import math
+import sys
 import yaml
 
 from dataclasses import dataclass
@@ -18,7 +19,7 @@ from textwrap import dedent
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG_PATH = ROOT / "config" / "simulation.yaml"
+config_path = Path(sys.argv[1]).resolve() if len(sys.argv) == 2 else CONFIG_PATH
 OUTPUT_DIR = ROOT / "generated" / "missions"
 
 
@@ -159,7 +160,7 @@ def load_mission_config() -> MissionConfig:
     """Load the picket-line mission settings from the MANTA YAML file."""
 
     # Load configuration file
-    with CONFIG_PATH.open("r", encoding="utf-8") as file:
+    with config_path.open("r", encoding="utf-8") as file:
         config = yaml.safe_load(file)
 
     # Load top-level sections

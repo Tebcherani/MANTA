@@ -400,14 +400,14 @@ def summarize_vehicle_metrics(
 ) -> tuple[float, float, float]:
     """Combine final metrics written by every vehicle in one realization."""
 
-    total_mass_kg = 0.0
-    total_energy_wh = 0.0
+    total_mass = 0.0
+    total_energy = 0.0
     vehicle_speeds = []
     required = {
         "vehicle_id",
-        "mass_kg",
-        "energy_consumed_wh",
-        "mean_speed_mps",
+        "mass",
+        "energy_consumed",
+        "mean_speed",
     }
 
     for vehicle_id in vehicle_ids:
@@ -438,39 +438,39 @@ def summarize_vehicle_metrics(
             )
 
         try:
-            mass_kg = float(row["mass_kg"])
-            energy_wh = float(row["energy_consumed_wh"])
-            speed_mps = float(row["mean_speed_mps"])
+            mass = float(row["mass"])
+            energy = float(row["energy_consumed"])
+            speed = float(row["mean_speed"])
         except (TypeError, ValueError) as error:
             raise ValueError(
                 f"Vehicle metrics contain invalid numbers: {path}"
             ) from error
 
-        values = (mass_kg, energy_wh, speed_mps)
+        values = (mass, energy, speed)
 
         if not all(math.isfinite(value) for value in values):
             raise ValueError(
                 f"Vehicle metrics contain non-finite values: {path}"
             )
 
-        if mass_kg <= 0.0:
+        if mass <= 0.0:
             raise ValueError(f"Vehicle mass must be positive: {path}")
 
-        if energy_wh < 0.0 or speed_mps < 0.0:
+        if energy < 0.0 or speed < 0.0:
             raise ValueError(
                 f"Vehicle energy and speed cannot be negative: {path}"
             )
 
-        total_mass_kg += mass_kg
-        total_energy_wh += energy_wh
-        vehicle_speeds.append(speed_mps)
+        total_mass += mass
+        total_energy += energy
+        vehicle_speeds.append(speed)
 
     if not vehicle_speeds:
         raise ValueError(
             "A realization must contain at least one vehicle metric."
         )
 
-    return total_mass_kg, total_energy_wh, mean(vehicle_speeds)
+    return total_mass, total_energy, mean(vehicle_speeds)
 
 
 def monte_carlo_paths(
@@ -612,9 +612,9 @@ def run_monte_carlo_realization(
                 whale_count,
             )
             (
-                total_mass_kg,
-                total_energy_wh,
-                mean_vehicle_speed_mps,
+                total_mass,
+                total_energy,
+                mean_vehicle_speed,
             ) = summarize_vehicle_metrics(data_directory, vehicle_ids)
 
             print(
@@ -629,9 +629,9 @@ def run_monte_carlo_realization(
                 "detected_whales": detected_count,
                 "whale_count": whale_count,
                 "detection_fraction": detection_fraction,
-                "total_mass_kg": total_mass_kg,
-                "total_energy_wh": total_energy_wh,
-                "mean_vehicle_speed_mps": mean_vehicle_speed_mps,
+                "total_mass": total_mass,
+                "total_energy": total_energy,
+                "mean_vehicle_speed": mean_vehicle_speed,
             }
 
         except subprocess.TimeoutExpired:
@@ -671,32 +671,6 @@ def run_monte_carlo_realization(
     )
 
 
-def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    with path.open("w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(
-            file,
-            fieldnames=(
-                "realization",
-                "seed",
-                "detected_whales",
-                "whale_count",
-                "detection_fraction",
-                "total_mass_kg",
-                "total_energy_wh",
-                "mean_vehicle_speed_mps",
-            ),
-        )
-        writer.writeheader()
-
-        for row in sorted(
-            rows,
-            key=lambda item: item["realization"],
-        ):
-            writer.writerow(row)
-
-
 def write_sweep_summary(path: Path, rows: list[dict]) -> None:
     """Save fleet-level means and confidence intervals."""
 
@@ -715,18 +689,18 @@ def write_sweep_summary(path: Path, rows: list[dict]) -> None:
                 "ci_upper",
                 "ci_half_width",
                 "confidence_level",
-                "mean_total_mass_kg",
-                "mass_ci_lower_kg",
-                "mass_ci_upper_kg",
-                "mass_ci_half_width_kg",
-                "mean_total_energy_wh",
-                "energy_ci_lower_wh",
-                "energy_ci_upper_wh",
-                "energy_ci_half_width_wh",
-                "mean_vehicle_speed_mps",
-                "speed_ci_lower_mps",
-                "speed_ci_upper_mps",
-                "speed_ci_half_width_mps",
+                "mean_total_mass",
+                "mass_ci_lower",
+                "mass_ci_upper",
+                "mass_ci_half_width",
+                "mean_total_energy",
+                "energy_ci_lower",
+                "energy_ci_upper",
+                "energy_ci_half_width",
+                "mean_vehicle_speed",
+                "speed_ci_lower",
+                "speed_ci_upper",
+                "speed_ci_half_width",
             ),
         )
         writer.writeheader()

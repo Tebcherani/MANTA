@@ -24,9 +24,9 @@ METRICS = (
         "percent": True,
     },
     {   # Fleet mass plot
-        "mean": "mean_total_mass_kg",
-        "lower": "mass_ci_lower_kg",
-        "upper": "mass_ci_upper_kg",
+        "mean": "mean_total_mass",
+        "lower": "mass_ci_lower",
+        "upper": "mass_ci_upper",
         "title": "Total Fleet Mass",
         "ylabel": "Mass (kg)",
         "color": "tab:green",

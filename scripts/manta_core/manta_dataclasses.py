@@ -93,9 +93,9 @@ class MonteCarloResult:
             detected_whales=int(row["detected_whales"]),
             whale_count=int(row["whale_count"]),
             detection_fraction=float(row["detection_fraction"]),
-            total_mass=float(row["total_mass_kg"]),
-            total_energy=float(row["total_energy_wh"]),
-            mean_vehicle_speed=float(row["mean_vehicle_speed_mps"]),
+            total_mass=float(row["total_mass"]),
+            total_energy=float(row["total_energy"]),
+            mean_vehicle_speed=float(row["mean_vehicle_speed"]),
         )
 
 
