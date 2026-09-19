@@ -3,8 +3,8 @@ import csv
 import yaml
 
 from dataclasses import asdict
-from manta_core.manta_dataclasses import MonteCarloConfig, SweepConfig, SweepResult
-from manta_core.manta_monte_carlo import calculate_monte_carlo_statistics, load_monte_carlo_summary, run_monte_carlo
+from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult, SweepConfig, SweepResult
+from manta_core.manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
 from manta_core.manta_run import generate_missions
 from pathlib import Path
 from paths import ROOT, SWEEP_GENERATED_DIR, SWEEP_SUMMARY_PATH, SWEEP_OUTPUT_DIR
@@ -78,8 +78,8 @@ def prepare_monte_carlo_sweep(sim_config: dict) -> tuple[SweepConfig, MonteCarlo
 def record_fleet_result(fleet_size: int, fleet_dir: Path, monte_carlo_config: MonteCarloConfig, completed_results: dict[int, SweepResult]) -> SweepResult:
     """Summarize one completed fleet experiment and update the sweep summary."""
 
-    rows = load_monte_carlo_summary(fleet_dir / "summary.csv", monte_carlo_config.random_seed)  # summary.csv for the given fleet
-    sweep_result = summarize_fleet_results(fleet_size, rows, monte_carlo_config.confidence_level)
+    experiment_results = list(load_completed_results(fleet_dir / "summary.csv", monte_carlo_config.random_seed).values()) 
+    sweep_result = summarize_fleet_results(fleet_size, experiment_results, monte_carlo_config.confidence_level)
     completed_results[fleet_size] = sweep_result
     sweep_rows = [asdict(result) for result in completed_results.values()]
     write_sweep_summary(SWEEP_SUMMARY_PATH, sweep_rows)
@@ -87,19 +87,19 @@ def record_fleet_result(fleet_size: int, fleet_dir: Path, monte_carlo_config: Mo
     return sweep_result
 
 
-def summarize_fleet_results(fleet_size: int, rows: list[dict], confidence_level: float) -> SweepResult:
+def summarize_fleet_results(fleet_size: int, results: list[MonteCarloResult], confidence_level: float) -> SweepResult:
     """Calculate aggregate statistics for one fleet-size experiment."""
 
-    if not rows: raise ValueError(f"Fleet size {fleet_size} has no Monte Carlo results.")
+    if not results: raise ValueError(f"Fleet size {fleet_size} has no Monte Carlo results.")
 
-    whale_count = rows[0]["whale_count"]
-    if any(row["whale_count"] != whale_count for row in rows[1:]):
+    whale_count = results[0].whale_count
+    if any(result.whale_count != whale_count for result in results[1:]):
         raise ValueError(f"Fleet size {fleet_size} contains inconsistent whale counts.")
 
-    fractions = [row["detection_fraction"] for row in rows]
-    masses = [row["total_mass_kg"] for row in rows]
-    energies = [row["total_energy_wh"] for row in rows]
-    speeds = [row["mean_vehicle_speed_mps"] for row in rows]
+    fractions = [result.detection_fraction for result in results]
+    masses = [result.total_mass for result in results]
+    energies = [result.total_energy for result in results]
+    speeds = [result.mean_vehicle_speed for result in results]
 
     mean_detection, detection_half_width = calculate_monte_carlo_statistics(fractions, confidence_level)
     mean_mass, mass_half_width = calculate_monte_carlo_statistics(masses, confidence_level)
@@ -108,7 +108,7 @@ def summarize_fleet_results(fleet_size: int, rows: list[dict], confidence_level:
 
     return SweepResult(
         fleet_size=fleet_size,
-        realizations=len(rows),
+        realizations=len(results),
         whale_count=whale_count,
         mean_detected_whales=mean_detection * whale_count,
         mean_detection=mean_detection,

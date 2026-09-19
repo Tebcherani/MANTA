@@ -64,6 +64,42 @@ class MonteCarloConfig:
 
 
 @dataclass(frozen=True)
+class MonteCarloResult:
+    """Results from one Monte Carlo realization."""
+
+    realization: int
+    seed: int
+    detected_whales: int
+    whale_count: int
+    detection_fraction: float
+    total_mass: float
+    total_energy: float
+    mean_vehicle_speed: float
+
+    @classmethod
+    def from_csv_row(cls, row: dict[str, str], base_seed: int) -> "MonteCarloResult":
+        """Convert and validate one Monte Carlo summary row."""
+
+        realization = int(row["realization"])
+        seed = int(row["seed"])
+        expected_seed = base_seed + realization - 1
+
+        if seed != expected_seed:
+            raise ValueError(f"Existing realization {realization} uses seed {seed}, but the current configuration expects {expected_seed}.")
+
+        return cls(
+            realization=realization,
+            seed=seed,
+            detected_whales=int(row["detected_whales"]),
+            whale_count=int(row["whale_count"]),
+            detection_fraction=float(row["detection_fraction"]),
+            total_mass=float(row["total_mass_kg"]),
+            total_energy=float(row["total_energy_wh"]),
+            mean_vehicle_speed=float(row["mean_vehicle_speed_mps"]),
+        )
+
+
+@dataclass(frozen=True)
 class SweepConfig:
     """Fleet sizes evaluated by the Monte Carlo sweep."""
 
