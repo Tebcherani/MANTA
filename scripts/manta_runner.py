@@ -6,11 +6,9 @@ from manta_core.manta_config import load_yaml, parse_args
 from manta_core.manta_down import run_down
 from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_review import run_review
-from manta_core.manta_run import generate_missions, print_config_summary
+from manta_core.manta_run import generate_missions, prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
 from paths import ROOT, CONFIG_PATH
-
-from manta_runner_old import write_runtime_compose, write_runtime_env
 
 def main() -> int:
     args = parse_args()
@@ -22,13 +20,7 @@ def main() -> int:
         config = load_yaml(CONFIG_PATH)
         if args.command == "monte-carlo-sweep": return run_monte_carlo_sweep(config)
 
-        generate_missions(config, CONFIG_PATH)
-        print_config_summary(config, CONFIG_PATH)
-        env_path = write_runtime_env(config, ROOT)
-        compose_path = write_runtime_compose(config, ROOT)
-        print(f"Generated environment: {env_path}")
-        print(f"Generated Compose file: {compose_path}")
-
+        env_path, compose_path = prepare_runtime(config)
         if args.command == "generate": return 0
         if args.command == "build": return run_build(env_path)
         if args.command == "monte-carlo": return run_monte_carlo(config, ROOT)
