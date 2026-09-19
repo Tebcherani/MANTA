@@ -15,6 +15,7 @@ class MonteCarloConfig:
     workers: int | None = None
     realization_timeout: int = 60
     max_retries: int = 2
+    recovery_cycles: int = 3
 
     def __post_init__(self) -> None:
         """Validate Monte Carlo settings immediately after loading."""
@@ -37,6 +38,8 @@ class MonteCarloConfig:
             raise ValueError("'monte_carlo.target_half_width' must be greater than zero.")
         if self.stability_tolerance < 0.0:
             raise ValueError("'monte_carlo.stability_tolerance' cannot be negative.")
+        if self.recovery_cycles < 0:
+            raise ValueError("'monte_carlo.recovery_cycles' cannot be negative.")
 
     @classmethod
     def from_dict(cls, data: dict) -> "MonteCarloConfig":
@@ -56,6 +59,7 @@ class MonteCarloConfig:
             workers = int(data["workers"]) if data.get("workers") is not None else None,
             realization_timeout = int(data.get("realization_timeout", 60)),
             max_retries = int(data.get("max_retries", 2)),
+            recovery_cycles=int(data.get("recovery_cycles", 3)),
         )
 
 

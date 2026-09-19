@@ -3,13 +3,14 @@ import csv
 import yaml
 
 from manta_core.manta_dataclasses import MonteCarloConfig, SweepConfig
+from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_run import generate_missions
 from pathlib import Path
 from paths import ROOT, SWEEP_GENERATED_DIR, SWEEP_SUMMARY_PATH, SWEEP_OUTPUT_DIR
 from threading import Event
 
 from manta_runner_old import write_sweep_summary
-from manta_runner_old import run_monte_carlo, load_monte_carlo_summary, calculate_monte_carlo_statistics
+from manta_runner_old import load_monte_carlo_summary, calculate_monte_carlo_statistics
     
 
 def generate_fleet_config(sim_config: dict, fleet_size: int) -> tuple[dict, Path]:
@@ -61,29 +62,17 @@ def run_monte_carlo_sweep(config: dict) -> int:
 
     for fleet_size in range(sweep.min_vehicles, sweep.max_vehicles+1):
         if stop_requested.is_set(): return 130
-
         if fleet_size in completed_sweep_results:
             print(f"Skipping {fleet_size} vehicle(s); sweep results already exist.")
             continue
 
-        print(
-            f"\n=== Monte Carlo fleet sweep: "
-            f"{fleet_size} vehicle(s) ==="
-        )
+        print(f"\n=== Monte Carlo fleet sweep: {fleet_size} vehicle(s) ===")
 
         fleet_config, fleet_config_path = generate_fleet_config(config, fleet_size)
         generate_missions(fleet_config, fleet_config_path)
 
-        fleet_directory = (
-            SWEEP_OUTPUT_DIR
-            / f"vehicles_{fleet_size:02d}"
-        )
-        result = run_monte_carlo(
-            fleet_config,
-            ROOT,
-            output_directory=fleet_directory,
-            project_offset=fleet_size * 10000,
-        )
+        fleet_directory = SWEEP_OUTPUT_DIR / f"vehicles_{fleet_size:02d}"
+        result = run_monte_carlo(fleet_config, output_directory=fleet_directory, project_offset=fleet_size*10000)
 
         if result != 0:
             return result

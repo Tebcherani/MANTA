@@ -33,6 +33,10 @@ CONFIG_PATH = ROOT / "config" / "simulation.yaml"
 
 # .csv
 SWEEP_SUMMARY_PATH = SWEEP_OUTPUT_DIR / "sweep_summary.csv"
+MONTE_CARLO_SUMMARY_PATH = ROOT / "output" / "monte_carlo" / "summary.csv"
 
 # .py
 MISSION_GENERATOR_PATH = ROOT / "missions" / "picket_line" / "generate_picket_line_mission.py"
+
+# .sh
+CLEANUP_PATH = ROOT / "scripts" / "cleanup_monte_carlo.sh"

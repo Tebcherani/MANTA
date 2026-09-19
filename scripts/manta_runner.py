@@ -3,13 +3,14 @@ import sys
 
 from manta_core.manta_config import load_yaml, parse_args
 from manta_core.manta_down import run_down
+from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_review import run_review
 from manta_core.manta_run import generate_missions, print_config_summary
 from manta_core.manta_sweep import run_monte_carlo_sweep
 from paths import ROOT, CONFIG_PATH
 
 from manta_runner_old import write_runtime_compose, write_runtime_env
-from manta_runner_old import run_monte_carlo, run_build
+from manta_runner_old import run_build
 
 def main() -> int:
     args = parse_args()
