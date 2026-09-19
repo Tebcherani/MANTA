@@ -2,6 +2,7 @@ import copy
 import csv
 import yaml
 
+from dataclasses import asdict
 from manta_core.manta_dataclasses import MonteCarloConfig, SweepConfig, SweepResult
 from manta_core.manta_monte_carlo import calculate_monte_carlo_statistics, load_monte_carlo_summary, run_monte_carlo
 from manta_core.manta_run import generate_missions
@@ -74,6 +75,18 @@ def prepare_monte_carlo_sweep(sim_config: dict) -> tuple[SweepConfig, MonteCarlo
     return sweep_config, monte_carlo_config, completed_results
 
 
+def record_fleet_result(fleet_size: int, fleet_dir: Path, monte_carlo_config: MonteCarloConfig, completed_results: dict[int, SweepResult]) -> SweepResult:
+    """Summarize one completed fleet experiment and update the sweep summary."""
+
+    rows = load_monte_carlo_summary(fleet_dir / "summary.csv", monte_carlo_config.random_seed)  # summary.csv for the given fleet
+    sweep_result = summarize_fleet_results(fleet_size, rows, monte_carlo_config.confidence_level)
+    completed_results[fleet_size] = sweep_result
+    sweep_rows = [asdict(result) for result in completed_results.values()]
+    write_sweep_summary(SWEEP_SUMMARY_PATH, sweep_rows)
+
+    return sweep_result
+
+
 def summarize_fleet_results(fleet_size: int, rows: list[dict], confidence_level: float) -> SweepResult:
     """Calculate aggregate statistics for one fleet-size experiment."""
 
@@ -140,20 +153,14 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
             continue
 
         # Run monte carlo experiment for one fleet size
-        fleet_config, fleet_directory = prepare_fleet_experiment(sim_config, fleet_size)
-        result = run_monte_carlo(fleet_config, output_directory=fleet_directory, project_offset=fleet_size*10000)
+        fleet_config, fleet_dir = prepare_fleet_experiment(sim_config, fleet_size)
+        result = run_monte_carlo(fleet_config, output_directory=fleet_dir, project_offset=fleet_size*10000)
         if result != 0: return result
 
         # Write fleet results to the sweep_summary.csv
-        rows = load_monte_carlo_summary(fleet_directory / "summary.csv", monte_carlo_config.random_seed)
-        sweep_result = summarize_fleet_results(fleet_size, rows, monte_carlo_config.confidence_level)
-
-        completed_results[fleet_size] = sweep_result
-        sweep_rows = list(completed_results.values())
-        write_sweep_summary(SWEEP_SUMMARY_PATH, sweep_rows)
-
+        sweep_result = record_fleet_result(fleet_size, fleet_dir, monte_carlo_config, completed_results)
         print(f"Fleet size {fleet_size}: mean {sweep_result.mean_detection:.2%}, CI half-width {sweep_result.ci_half_width:.2%} from {sweep_result.realizations} runs.")
 
-    print(f"Sweep data: {SWEEP_SUMMARY_PATH}")
-    print("Run './manta review sweep' to generate the sweep plots.")
+    print(f"Sweep data: {SWEEP_SUMMARY_PATH}\nRun './manta review sweep' to generate the sweep plots.")
+
     return 0
