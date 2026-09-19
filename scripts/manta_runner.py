@@ -8,7 +8,7 @@ from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_review import run_review
 from manta_core.manta_run import generate_missions, prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
-from paths import ROOT, CONFIG_PATH, ENV_PATH
+from paths import ROOT, CONFIG_PATH, DOCKER_COMPOSE_PATH, ENV_PATH
 
 def main() -> int:
     args = parse_args()
@@ -20,14 +20,14 @@ def main() -> int:
         config = load_yaml(CONFIG_PATH)
         if args.command == "monte-carlo-sweep": return run_monte_carlo_sweep(config)
 
-        compose_path = prepare_runtime(config)
+        prepare_runtime(config)
         if args.command == "generate": return 0
         if args.command == "build": return run_build(ENV_PATH)
         if args.command == "monte-carlo": return run_monte_carlo(config, ROOT)
 
         commands = {
             "dev": ["docker", "compose", "--env-file", str(ENV_PATH), "-f", str(ROOT / "compose.dev.yaml"), "run", "--rm", "dev"],
-            "run": ["docker", "compose", "-f", str(compose_path), "up", "--remove-orphans"],
+            "run": ["docker", "compose", "-f", str(DOCKER_COMPOSE_PATH), "up", "--remove-orphans"],
         }
 
         return subprocess.run(commands[args.command], cwd=ROOT, check=False).returncode

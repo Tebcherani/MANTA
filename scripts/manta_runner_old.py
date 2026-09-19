@@ -12,6 +12,7 @@ import yaml
 
 from manta_core.manta_config import load_plugin
 from manta_core.manta_dataclasses import MonteCarloConfig
+from manta_core.manta_run import write_runtime_compose
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -193,8 +194,7 @@ def run_monte_carlo_realization(
 
     write_runtime_compose(
         config,
-        root,
-        path=compose_path,
+        compose_path=compose_path,
         project_name=project_name,
         ros_domain_id=ros_domain_id,
     )

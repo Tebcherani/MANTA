@@ -5,7 +5,7 @@ import yaml
 
 from manta_core.manta_config import load_plugin
 from pathlib import Path
-from paths import ROOT, CONFIG_PATH, ENV_PATH, MISSION_GENERATOR_PATH
+from paths import ROOT, CONFIG_PATH, DOCKER_COMPOSE_PATH, ENV_PATH, MISSION_GENERATOR_PATH
 
 
 def container_path(configured_path: str) -> str:
@@ -35,7 +35,7 @@ def prepare_runtime(sim_config: dict) -> tuple[Path, Path]:
     print_config_summary(sim_config)
 
     write_runtime_env(sim_config)
-    compose_path = write_runtime_compose(sim_config)
+    compose_path = write_runtime_compose(sim_config, DOCKER_COMPOSE_PATH)
 
     print(f"Generated environment: {ENV_PATH}")
     print(f"Generated Compose file: {compose_path}")
@@ -51,14 +51,11 @@ def print_config_summary(config: dict) -> None:
         print(f"  - {vehicle['id']} ({vehicle['type']})")
 
 
-def vehicle_service(
-    vehicle: dict,
-    root: Path,
-    data_dir: str,
-    log_dir: str,
-    sample_period: float,
-    ros_domain_id: int,
-) -> dict:
+#-------------------------------------------------------
+# Compose file generation
+#-------------------------------------------------------
+
+def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int) -> dict:
     vehicle_id = vehicle["id"]
     vehicle_type = vehicle["type"]
     manifest = load_plugin(vehicle_type)
@@ -90,9 +87,7 @@ def vehicle_service(
 
     for field, environment_name in config_environment.items():
         value = vehicle.get(field, "")
-        environment[environment_name] = (
-            container_path(value) if value else ""
-        )
+        environment[environment_name] = (container_path(value) if value else "")
 
     return {
         "image": image,
@@ -100,7 +95,7 @@ def vehicle_service(
         "volumes": [
             {
                 "type": "bind",
-                "source": str(root),
+                "source": str(ROOT),
                 "target": "/odyssey",
             }
         ],
@@ -115,7 +110,7 @@ def vehicle_service(
     }
 
 
-def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) -> dict:
+def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
     scenario = config["scenario"]
     line = scenario["picket_line"]
     whales = scenario["whales"]
@@ -152,9 +147,7 @@ def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) ->
         "sample_period": config["output"].get("whale_sample_period", 60.0),
     }
 
-    arguments = " ".join(
-        f'-p "{name}:={value}"' for name, value in params.items()
-    )
+    arguments = " ".join(f'-p "{name}:={value}"' for name, value in params.items())
 
     return {
         "image": "odyssey_sim_dev",
@@ -165,7 +158,7 @@ def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) ->
         "volumes": [
             {
                 "type": "bind",
-                "source": str(root),
+                "source": str(ROOT),
                 "target": "/odyssey",
             }
         ],
@@ -179,12 +172,7 @@ def whale_service(config: dict, root: Path, log_dir: str, ros_domain_id: int) ->
     }
 
 
-def whale_detection_service(
-    config: dict,
-    root: Path,
-    log_dir: str,
-    ros_domain_id: int,
-) -> dict:
+def whale_detection_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
     detection_range = config["scenario"]["detection"]["radius"]
@@ -199,7 +187,7 @@ def whale_detection_service(
         "volumes": [
             {
                 "type": "bind",
-                "source": str(root),
+                "source": str(ROOT),
                 "target": "/odyssey",
             }
         ],
@@ -216,15 +204,9 @@ def whale_detection_service(
     }
 
 
-def write_runtime_compose(config: dict,
-    path: Path | None = None,
-    project_name: str = "manta",
-    ros_domain_id: int = 1,
-) -> Path:
-    if path is None:
-        path = ROOT / "generated" / "compose.ros.yaml"
-
-    path.parent.mkdir(parents=True, exist_ok=True)
+def write_runtime_compose(config: dict, compose_path: Path | None = None, project_name: str = "manta", ros_domain_id: int = 1) -> Path:
+    if compose_path is None: compose_path = DOCKER_COMPOSE_PATH
+    compose_path.parent.mkdir(parents=True, exist_ok=True)
 
     data_dir = container_path(config["output"]["data_directory"])
     log_dir = container_path(config["output"]["log_directory"])
@@ -233,30 +215,13 @@ def write_runtime_compose(config: dict,
     sample_period = float(config["output"].get("auv_sample_period", 2.0))
 
     services = {
-        vehicle["id"]: vehicle_service(
-            vehicle,
-            ROOT,
-            data_dir,
-            log_dir,
-            sample_period,
-            ros_domain_id,
-        )
+        vehicle["id"]: vehicle_service(vehicle, data_dir, log_dir, sample_period, ros_domain_id)
         for vehicle in config["vehicles"]
     }
 
     if config.get("scenario", {}).get("type") == "picket_line":
-        services["whale_sim"] = whale_service(
-            config,
-            ROOT,
-            log_dir,
-            ros_domain_id,
-        )
-        services["whale_detection_sim"] = whale_detection_service(
-            config,
-            ROOT,
-            log_dir,
-            ros_domain_id,
-        )
+        services["whale_sim"] = whale_service(config, log_dir, ros_domain_id)
+        services["whale_detection_sim"] = whale_detection_service(config, log_dir, ros_domain_id)
 
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
 
@@ -295,13 +260,12 @@ def write_runtime_compose(config: dict,
         "services": services,
     }
 
-    path.write_text(
-        yaml.safe_dump(document, sort_keys=False),
-        encoding="utf-8",
-    )
+    DOCKER_COMPOSE_PATH.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
 
-    return path
 
+#-------------------------------------------------------
+# Environment file generation
+#-------------------------------------------------------
 
 def write_runtime_env(config: dict) -> None:
     """Write Docker Compose environment variables for the configured MANTA fleet."""

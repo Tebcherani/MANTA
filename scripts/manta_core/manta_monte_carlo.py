@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import asdict
 from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult
 from pathlib import Path
 from paths import ROOT, CLEANUP_PATH
@@ -247,8 +248,8 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
         writer.writeheader()
 
         # Write rows
-        for row in sorted(rows, key=lambda item: item["realization"]): writer.writerow(row)
-
+        for result in sorted(rows, key=lambda item: item.realization): 
+            writer.writerow(asdict(result))
 
 # -----------------------------------------------------
 # Main monte carlo experiment function
