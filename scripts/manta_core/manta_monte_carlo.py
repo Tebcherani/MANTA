@@ -70,6 +70,31 @@ def compute_monte_carlo_statistics(detection_fractions: list[float], confidence_
     return sample_mean, half_width
 
 
+def compute_runs_to_next_checkpoint(completed_count: int, monte_carlo_config: MonteCarloConfig) -> int:
+    """Return the number of realizations needed to reach the next checkpoint."""
+
+    remaining_runs = monte_carlo_config.max_realizations - completed_count
+    if remaining_runs <= 0: return 0
+
+    remainder = completed_count % monte_carlo_config.batch_size
+    checkpoint_runs = monte_carlo_config.batch_size if remainder == 0 else monte_carlo_config.batch_size - remainder
+
+    return min(checkpoint_runs, remaining_runs)
+
+
+def get_next_batch(next_realization: int, runs_needed: int, completed_results: dict, max_realizations: int) -> list[int]:
+    """Return the next incomplete realization numbers to run."""
+
+    batch = []
+    candidate = next_realization
+
+    while len(batch) < runs_needed and candidate <= max_realizations:
+        if candidate not in completed_results: batch.append(candidate)
+        candidate += 1
+
+    return batch
+
+
 def get_worker_count(sim_config: dict, monte_carlo_config: MonteCarloConfig) -> int:
     """Choose a safe number of parallel realizations for the fleet size."""
 
@@ -128,6 +153,34 @@ def prepare_monte_carlo_experiment(sim_config: dict, output_dir: Path) -> tuple[
     return monte_carlo_config, workers, completed_results, next_realization
 
 
+def run_batch(sim_config: dict, batch: list[int], workers: int, output_dir: Path, project_offset: int, completed_results: dict[int, dict]) -> list[str]:
+    """Run one batch of simulations concurrently and save successful results."""
+
+    failures = []
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(run_monte_carlo_realization, sim_config, ROOT, simulation, output_dir, project_offset): simulation
+            for simulation in batch
+        }
+    
+        for future in as_completed(futures):
+            simulation = futures[future]
+    
+            try:
+                row = future.result()
+            except InterruptedError:
+                continue
+            except Exception as error:
+                failures.append(f"Realization {simulation} failed: {error}")
+                continue
+    
+            completed_results[simulation] = row
+            rows = [completed_results[index] for index in sorted(completed_results)]
+            write_monte_carlo_summary(MONTE_CARLO_SUMMARY_PATH, rows)
+
+    return failures
+
+
 # -----------------------------------------------------
 # Main monte carlo experiment function
 # -----------------------------------------------------
@@ -138,68 +191,22 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
     signal.signal(signal.SIGINT, handle_interrupt)
     signal.signal(signal.SIGTERM, handle_interrupt)
 
-    monte_carlo, workers, completed_results, next_realization = prepare_monte_carlo_experiment(sim_config, output_dir)
+    monte_carlo_config, workers, completed_results, next_realization = prepare_monte_carlo_experiment(sim_config, output_dir)
 
     consecutive_recoveries = 0
+    while len(completed_results) < monte_carlo_config.max_realizations:
+        # Compute the number of runs needed before the next checkpoint
+        runs_needed = compute_runs_to_next_checkpoint(len(completed_results), monte_carlo_config)
 
-    while len(completed_results) < monte_carlo.max_realizations:
-        remainder = len(completed_results) % monte_carlo.batch_size
-        runs_needed = monte_carlo.batch_size if remainder == 0 else monte_carlo.batch_size - remainder
-        runs_needed = min(runs_needed, monte_carlo.max_realizations - len(completed_results))
+        # Get next batch
+        batch = get_next_batch(next_realization, runs_needed, completed_results, monte_carlo_config.max_realizations)
+        if not batch: break
+        print(f"Running {len(batch)} realization(s) to reach checkpoint {len(completed_results) + len(batch)}.")
 
-        batch = []
-        candidate = next_realization
+        # Run the batch
+        failures = run_batch(sim_config, batch, workers, output_dir, project_offset, completed_results)
 
-        while (
-            len(batch) < runs_needed
-            and candidate <= monte_carlo.max_realizations
-        ):
-            if candidate not in completed_results:
-                batch.append(candidate)
-            candidate += 1
-
-        if not batch:
-            break
-
-        print(
-            f"Running {len(batch)} realization(s) to reach checkpoint "
-            f"{len(completed_results) + len(batch)}."
-        )
-
-        failures = []
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {
-                executor.submit(
-                    run_monte_carlo_realization,
-                    sim_config,
-                    ROOT,
-                    realization,
-                    output_dir,
-                    project_offset,
-                ): realization
-                for realization in batch
-            }
-
-            for future in as_completed(futures):
-                realization = futures[future]
-
-                try:
-                    row = future.result()
-                except InterruptedError:
-                    continue
-                except Exception as error:
-                    failures.append(
-                        f"Realization {realization} failed: {error}"
-                    )
-                    continue
-
-                completed_results[realization] = row
-                rows = [
-                    completed_results[index]
-                    for index in sorted(completed_results)
-                ]
-                write_monte_carlo_summary(MONTE_CARLO_SUMMARY_PATH, rows)
-
+        # Handle ctrl+c interrupts
         if stop_requested.is_set():
             print("Monte Carlo stopped.")
             return 130
@@ -207,24 +214,19 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
         if failures:
             consecutive_recoveries += 1
 
-            print(
-                "One or more realizations exhausted their local retries:",
-                file=sys.stderr,
-            )
+            print("One or more realizations exhausted their local retries:", file=sys.stderr)
+            for failure in failures: print(f"  {failure}", file=sys.stderr)
 
-            for failure in failures:
-                print(f"  {failure}", file=sys.stderr)
-
-            if consecutive_recoveries > monte_carlo.recovery_cycles:
+            if consecutive_recoveries > monte_carlo_config.recovery_cycles:
                 raise ValueError(
                     "Monte Carlo exceeded the configured global recovery "
-                    f"limit of {monte_carlo.recovery_cycles}.\n"
+                    f"limit of {monte_carlo_config.recovery_cycles}.\n"
                     + "\n".join(failures)
                 )
 
             print(
                 "Stopping all MANTA Monte Carlo Docker projects before "
-                f"recovery {consecutive_recoveries}/{monte_carlo.recovery_cycles}...",
+                f"recovery {consecutive_recoveries}/{monte_carlo_config.recovery_cycles}...",
                 file=sys.stderr,
             )
             cleanup_monte_carlo_projects(ROOT)
@@ -238,33 +240,13 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
 
         consecutive_recoveries = 0
 
-        fractions = [
-            completed_results[index]["detection_fraction"]
-            for index in sorted(completed_results)
-        ]
-
-        converged, sample_mean, half_width, mean_change = (
-            check_monte_carlo_convergence(
-                fractions,
-                monte_carlo,
-            )
-        )
-
-        confidence_percent = 100.0 * monte_carlo.confidence_level
-
-        print(
-            f"After {len(fractions)} realizations: "
-            f"mean detection {sample_mean:.2%}, "
-            f"{confidence_percent:.1f}% CI half-width "
-            f"{half_width:.2%}, "
-            f"mean change {mean_change:.2%}."
-        )
+        fractions = [completed_results[index]["detection_fraction"] for index in sorted(completed_results)]
+        converged, sample_mean, half_width, mean_change = check_monte_carlo_convergence(fractions, monte_carlo_config)
+        confidence_percent = 100.0 * monte_carlo_config.confidence_level
+        print(f"After {len(fractions)} realizations: mean detection {sample_mean:.2%}, {confidence_percent:.1f}% CI half-width {half_width:.2%}, mean change {mean_change:.2%}.")
 
         if converged:
-            print(
-                f"Monte Carlo convergence reached after "
-                f"{len(fractions)} realizations."
-            )
+            print(f"Monte Carlo convergence reached after {len(fractions)} realizations.")
             print(f"Summary: {MONTE_CARLO_SUMMARY_PATH}")
             return 0
 
@@ -273,15 +255,8 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
         while next_realization in completed_results:
             next_realization += 1
 
-    fractions = [
-        completed_results[index]["detection_fraction"]
-        for index in sorted(completed_results)
-    ]
-
-    sample_mean, half_width = compute_monte_carlo_statistics(
-        fractions,
-        monte_carlo.confidence_level,
-    )
+    fractions = [completed_results[index]["detection_fraction"] for index in sorted(completed_results)]
+    sample_mean, half_width = compute_monte_carlo_statistics(fractions, monte_carlo_config.confidence_level,)
 
     print(
         f"Reached maximum of {len(fractions)} realizations. "
