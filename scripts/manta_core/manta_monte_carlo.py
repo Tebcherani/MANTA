@@ -9,10 +9,9 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult
+from manta_core.manta_realization import stop_requested, run_monte_carlo_realization
 from pathlib import Path
 from paths import ROOT, CLEANUP_PATH
-
-from manta_runner_old import stop_requested, run_monte_carlo_realization
 
 
 # -----------------------------------------------------

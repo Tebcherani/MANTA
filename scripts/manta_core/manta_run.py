@@ -260,7 +260,7 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
         "services": services,
     }
 
-    DOCKER_COMPOSE_PATH.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
+    compose_path.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
 
 
 #-------------------------------------------------------
