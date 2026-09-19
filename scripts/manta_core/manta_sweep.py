@@ -10,8 +10,6 @@ from pathlib import Path
 from paths import ROOT, SWEEP_GENERATED_DIR, SWEEP_SUMMARY_PATH, SWEEP_OUTPUT_DIR
 from threading import Event
 
-from manta_runner_old import write_sweep_summary
-
 
 # -----------------------------------------------------
 # Helper functions
@@ -101,10 +99,10 @@ def summarize_fleet_results(fleet_size: int, results: list[MonteCarloResult], co
     energies = [result.total_energy for result in results]
     speeds = [result.mean_vehicle_speed for result in results]
 
-    mean_detection, detection_half_width = calculate_monte_carlo_statistics(fractions, confidence_level)
-    mean_mass, mass_half_width = calculate_monte_carlo_statistics(masses, confidence_level)
-    mean_energy, energy_half_width = calculate_monte_carlo_statistics(energies, confidence_level)
-    mean_speed, speed_half_width = calculate_monte_carlo_statistics(speeds, confidence_level)
+    mean_detection, detection_half_width = compute_monte_carlo_statistics(fractions, confidence_level)
+    mean_mass, mass_half_width = compute_monte_carlo_statistics(masses, confidence_level)
+    mean_energy, energy_half_width = compute_monte_carlo_statistics(energies, confidence_level)
+    mean_speed, speed_half_width = compute_monte_carlo_statistics(speeds, confidence_level)
 
     return SweepResult(
         fleet_size=fleet_size,
@@ -129,6 +127,43 @@ def summarize_fleet_results(fleet_size: int, results: list[MonteCarloResult], co
         speed_ci_upper=mean_speed + speed_half_width,
         speed_ci_half_width=speed_half_width,
     )
+
+
+def write_sweep_summary(path: Path, rows: list[dict]) -> None:
+    """Save fleet-level means and confidence intervals."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=(
+                "fleet_size",
+                "realizations",
+                "whale_count",
+                "mean_detected_whales",
+                "mean_detection",
+                "ci_lower",
+                "ci_upper",
+                "ci_half_width",
+                "confidence_level",
+                "mean_total_mass",
+                "mass_ci_lower",
+                "mass_ci_upper",
+                "mass_ci_half_width",
+                "mean_total_energy",
+                "energy_ci_lower",
+                "energy_ci_upper",
+                "energy_ci_half_width",
+                "mean_vehicle_speed",
+                "speed_ci_lower",
+                "speed_ci_upper",
+                "speed_ci_half_width",
+            ),
+        )
+        writer.writeheader()
+        writer.writerows(sorted(rows, key=lambda row: row["fleet_size"]))
+
 
 # -----------------------------------------------------
 # Main monte carlo sweep function

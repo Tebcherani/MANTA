@@ -649,42 +649,6 @@ def run_monte_carlo_realization(
     )
 
 
-def write_sweep_summary(path: Path, rows: list[dict]) -> None:
-    """Save fleet-level means and confidence intervals."""
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    with path.open("w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(
-            file,
-            fieldnames=(
-                "fleet_size",
-                "realizations",
-                "whale_count",
-                "mean_detected_whales",
-                "mean_detection",
-                "ci_lower",
-                "ci_upper",
-                "ci_half_width",
-                "confidence_level",
-                "mean_total_mass",
-                "mass_ci_lower",
-                "mass_ci_upper",
-                "mass_ci_half_width",
-                "mean_total_energy",
-                "energy_ci_lower",
-                "energy_ci_upper",
-                "energy_ci_half_width",
-                "mean_vehicle_speed",
-                "speed_ci_lower",
-                "speed_ci_upper",
-                "speed_ci_half_width",
-            ),
-        )
-        writer.writeheader()
-        writer.writerows(sorted(rows, key=lambda row: row["fleet_size"]))
-
-
 def plot_sweep_results(root: Path, summary_path: Path, plot_path: Path) -> None:
     """Generate the saved fleet-size confidence-interval plot."""
 
