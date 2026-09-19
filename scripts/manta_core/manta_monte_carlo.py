@@ -87,9 +87,6 @@ def run_monte_carlo(config: dict, output_directory: Path, project_offset: int=0)
     consecutive_recoveries = 0
 
     while len(completed) < monte_carlo.max_realizations:
-        # Stop precisely at the next batch-size checkpoint. For example,
-        # resuming with 50 completed runs and batch_size=25 schedules only
-        # runs 51-75; resuming with 74 schedules only run 75.
         remainder = len(completed) % monte_carlo.batch_size
         runs_needed = monte_carlo.batch_size if remainder == 0 else monte_carlo.batch_size - remainder
         runs_needed = min(runs_needed, monte_carlo.max_realizations - len(completed))
@@ -176,9 +173,6 @@ def run_monte_carlo(config: dict, output_directory: Path, project_offset: int=0)
             )
             cleanup_monte_carlo_projects(ROOT)
 
-            # Successful results from this batch are already in summary.csv.
-            # Begin again at the first missing realization so only failed or
-            # unfinished samples are rerun with their original seeds.
             next_realization = 1
 
             while next_realization in completed:

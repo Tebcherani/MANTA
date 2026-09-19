@@ -2,7 +2,7 @@ import copy
 import csv
 import yaml
 
-from manta_core.manta_dataclasses import MonteCarloConfig, SweepConfig
+from manta_core.manta_dataclasses import MonteCarloConfig, SweepConfig, SweepResult
 from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_run import generate_missions
 from pathlib import Path
@@ -48,62 +48,72 @@ def load_completed_sweep_results() -> dict[int, dict[str, str | int]]:
     return {row["fleet_size"]: row for row in rows}
 
 
-def run_monte_carlo_sweep(config: dict) -> int:
-    """Run adaptive Monte Carlo experiments for each fleet size."""
+def prepare_fleet_experiment(sim_config: dict, fleet_size: int) -> tuple[dict, Path]:
+    """Generate the configuration, missions, and output path for one fleet size."""
 
-    stop_requested = Event()
+    fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size)
+    generate_missions(fleet_config, fleet_config_path)
+    fleet_directory = SWEEP_OUTPUT_DIR / f"vehicles_{fleet_size:02d}"
 
-    monte_carlo = MonteCarloConfig.from_dict(config.get("monte_carlo", {}))
-    sweep = SweepConfig.from_dict(config.get("sweep", {}))
+    return fleet_config, fleet_directory
+
+
+def prepare_monte_carlo_sweep(sim_config: dict) -> tuple[SweepConfig, MonteCarloConfig, dict[int, SweepResult]]:
+    """Validate sweep settings, prepare output directories, and load completed results."""
 
     SWEEP_GENERATED_DIR.mkdir(parents=True, exist_ok=True)
     SWEEP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    completed_sweep_results = load_completed_sweep_results()
 
-    for fleet_size in range(sweep.min_vehicles, sweep.max_vehicles+1):
+    sweep_config = SweepConfig.from_dict(sim_config.get("sweep", {}))
+    monte_carlo_config = MonteCarloConfig.from_dict(sim_config.get("monte_carlo", {}))
+    completed_results = load_completed_sweep_results()
+
+    return sweep_config, monte_carlo_config, completed_results
+
+
+def run_monte_carlo_sweep(sim_config: dict) -> int:
+    """Run adaptive Monte Carlo experiments for each fleet size."""
+
+    stop_requested = Event()
+    sweep_config, monte_carlo_config, completed_results = prepare_monte_carlo_sweep(sim_config)
+
+    for fleet_size in range(sweep_config.min_vehicles, sweep_config.max_vehicles+1):
         if stop_requested.is_set(): return 130
-        if fleet_size in completed_sweep_results:
-            print(f"Skipping {fleet_size} vehicle(s); sweep results already exist.")
-            continue
 
         print(f"\n=== Monte Carlo fleet sweep: {fleet_size} vehicle(s) ===")
 
-        fleet_config, fleet_config_path = generate_fleet_config(config, fleet_size)
-        generate_missions(fleet_config, fleet_config_path)
+        if fleet_size in completed_results:
+            print(f"Skipping {fleet_size} vehicle(s); sweep results already exist.")
+            continue
 
-        fleet_directory = SWEEP_OUTPUT_DIR / f"vehicles_{fleet_size:02d}"
+        fleet_config, fleet_directory = prepare_fleet_experiment(sim_config, fleet_size)
         result = run_monte_carlo(fleet_config, output_directory=fleet_directory, project_offset=fleet_size*10000)
+        if result != 0: return result
 
-        if result != 0:
-            return result
-
-        rows = load_monte_carlo_summary(
-            fleet_directory / "summary.csv",
-            monte_carlo.random_seed,
-        )
+        rows = load_monte_carlo_summary(fleet_directory / "summary.csv", monte_carlo_config.random_seed)
         fractions = [row["detection_fraction"] for row in rows]
         masses = [row["total_mass_kg"] for row in rows]
         energies = [row["total_energy_wh"] for row in rows]
         speeds = [row["mean_vehicle_speed_mps"] for row in rows]
-        whale_count = int(config["scenario"]["whales"]["count"])
+        whale_count = int(sim_config["scenario"]["whales"]["count"])
         sample_mean, half_width = calculate_monte_carlo_statistics(
             fractions,
-            monte_carlo.confidence_level,
+            monte_carlo_config.confidence_level,
         )
         mean_mass, mass_half_width = calculate_monte_carlo_statistics(
             masses,
-            monte_carlo.confidence_level,
+            monte_carlo_config.confidence_level,
         )
         mean_energy, energy_half_width = calculate_monte_carlo_statistics(
             energies,
-            monte_carlo.confidence_level,
+            monte_carlo_config.confidence_level,
         )
         mean_speed, speed_half_width = calculate_monte_carlo_statistics(
             speeds,
-            monte_carlo.confidence_level,
+            monte_carlo_config.confidence_level,
         )
 
-        completed_sweep_results[fleet_size] = {
+        completed_results[fleet_size] = {
             "fleet_size": fleet_size,
             "realizations": len(rows),
             "whale_count": whale_count,
@@ -112,7 +122,7 @@ def run_monte_carlo_sweep(config: dict) -> int:
             "ci_lower": max(0.0, sample_mean - half_width),
             "ci_upper": min(1.0, sample_mean + half_width),
             "ci_half_width": half_width,
-            "confidence_level": monte_carlo.confidence_level,
+            "confidence_level": monte_carlo_config.confidence_level,
             "mean_total_mass_kg": mean_mass,
             "mass_ci_lower_kg": max(0.0, mean_mass - mass_half_width),
             "mass_ci_upper_kg": mean_mass + mass_half_width,
@@ -132,7 +142,7 @@ def run_monte_carlo_sweep(config: dict) -> int:
             "speed_ci_upper_mps": mean_speed + speed_half_width,
             "speed_ci_half_width_mps": speed_half_width,
         }
-        sweep_rows = list(completed_sweep_results.values())
+        sweep_rows = list(completed_results.values())
         write_sweep_summary(SWEEP_SUMMARY_PATH, sweep_rows)
 
         print(
