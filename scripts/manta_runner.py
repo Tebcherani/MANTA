@@ -1,6 +1,7 @@
 import subprocess
 import sys
 
+from manta_core.manta_build import run_build
 from manta_core.manta_config import load_yaml, parse_args
 from manta_core.manta_down import run_down
 from manta_core.manta_monte_carlo import run_monte_carlo
@@ -10,7 +11,6 @@ from manta_core.manta_sweep import run_monte_carlo_sweep
 from paths import ROOT, CONFIG_PATH
 
 from manta_runner_old import write_runtime_compose, write_runtime_env
-from manta_runner_old import run_build
 
 def main() -> int:
     args = parse_args()
@@ -30,7 +30,7 @@ def main() -> int:
         print(f"Generated Compose file: {compose_path}")
 
         if args.command == "generate": return 0
-        if args.command == "build": return run_build(ROOT, env_path)
+        if args.command == "build": return run_build(env_path)
         if args.command == "monte-carlo": return run_monte_carlo(config, ROOT)
 
         commands = {
