@@ -43,11 +43,9 @@ def main() -> int:
     except ValueError as error:
         print(f"MANTA configuration error: {error}", file=sys.stderr)
         return 1
-
     except FileNotFoundError as error:
         print(f"Required command was not found: {error.filename}", file=sys.stderr)
         return 1
-
     except KeyboardInterrupt:
         print("\nMANTA command interrupted.", file=sys.stderr)
         return 130

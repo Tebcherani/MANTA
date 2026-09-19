@@ -67,16 +67,6 @@ def calculate_monte_carlo_statistics(detection_fractions: list[float], confidenc
 
     return sample_mean, half_width
 
-def calculate_worker_count(config: dict, monte_carlo: MonteCarloConfig) -> int:
-    """Choose a safe number of parallel realizations for the fleet size."""
-
-    cpu_count = os.cpu_count() or 1
-    fleet_size = len(config["vehicles"])
-    default_workers = max(1, cpu_count // max(1, fleet_size))
-    requested_workers = monte_carlo.workers if monte_carlo.workers is not None else default_workers
-
-    return max(1, min(requested_workers, monte_carlo.batch_size, default_workers, 200))
-
 
 def handle_interrupt(signal_number, frame) -> None:
     """Stop every active Monte Carlo project and suppress retries."""
@@ -145,25 +135,51 @@ def load_monte_carlo_summary(path: Path, base_seed: int) -> list[dict]:
     rows.sort(key=lambda row: row["realization"])
     return rows
 
+# -----------------------------------------------------
+# Helper functions
+# -----------------------------------------------------
 
-def run_monte_carlo(config: dict, output_directory: Path, project_offset: int=0) -> int:
-    stop_requested.clear()
-    signal.signal(signal.SIGINT, handle_interrupt)
-    signal.signal(signal.SIGTERM, handle_interrupt)
+def get_worker_count(sim_config: dict, monte_carlo_config: MonteCarloConfig) -> int:
+    """Choose a safe number of parallel realizations for the fleet size."""
 
-    monte_carlo = MonteCarloConfig.from_dict(config.get("monte_carlo", {}))
-    workers = calculate_worker_count(config, monte_carlo)
+    cpu_count = os.cpu_count() or 1
+    default_workers = max(1, cpu_count // max(1, len(sim_config["vehicles"])))
+    requested_workers = monte_carlo_config.workers if monte_carlo_config.workers is not None else default_workers
+    return max(1, min(requested_workers, monte_carlo_config.batch_size, default_workers, 200))
 
-    rows = load_monte_carlo_summary(MONTE_CARLO_SUMMARY_PATH, monte_carlo.random_seed)
 
+def prepare_monte_carlo_experiment(sim_config: dict, output_dir: Path) -> tuple[MonteCarloConfig, int, dict[int, dict]]:
+    """Load Monte Carlo settings, select workers, and restore completed realizations."""
+
+    monte_carlo = MonteCarloConfig.from_dict(sim_config.get("monte_carlo", {}))
+    workers = get_worker_count(sim_config, monte_carlo)
+    rows = load_monte_carlo_summary(output_dir / "summary.csv", monte_carlo.random_seed)
     completed = {row["realization"]: row for row in rows}
-    if rows: print(f"Resuming Monte Carlo experiment with {len(rows)} completed realizations.")
+
+    if rows:
+        print(f"Resuming Monte Carlo experiment with {len(rows)} completed realizations.")
 
     print(
         f"Monte Carlo settings: minimum {monte_carlo.min_realizations}, "
         f"maximum {monte_carlo.max_realizations}, batch size {monte_carlo.batch_size}, "
         f"workers {workers}."
     )
+
+    return monte_carlo, workers, completed
+
+
+# -----------------------------------------------------
+# Main monte carlo experiment function
+# -----------------------------------------------------
+
+def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -> int:
+    # Handle ctrl+c interrupt
+    stop_requested.clear()
+    signal.signal(signal.SIGINT, handle_interrupt)
+    signal.signal(signal.SIGTERM, handle_interrupt)
+
+    monte_carlo, workers, completed = prepare_monte_carlo_experiment(sim_config, output_dir)
+
 
     fractions = [completed[index]["detection_fraction"] for index in sorted(completed)]
 
@@ -229,10 +245,10 @@ def run_monte_carlo(config: dict, output_directory: Path, project_offset: int=0)
             futures = {
                 executor.submit(
                     run_monte_carlo_realization,
-                    config,
+                    sim_config,
                     ROOT,
                     realization,
-                    output_directory,
+                    output_dir,
                     project_offset,
                 ): realization
                 for realization in batch

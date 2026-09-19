@@ -154,7 +154,7 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
 
         # Run monte carlo experiment for one fleet size
         fleet_config, fleet_dir = prepare_fleet_experiment(sim_config, fleet_size)
-        result = run_monte_carlo(fleet_config, output_directory=fleet_dir, project_offset=fleet_size*10000)
+        result = run_monte_carlo(sim_config=fleet_config, output_dir=fleet_dir, project_offset=fleet_size*10000)
         if result != 0: return result
 
         # Write fleet results to the sweep_summary.csv
