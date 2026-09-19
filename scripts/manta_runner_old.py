@@ -21,28 +21,6 @@ from statistics import NormalDist, mean, stdev
 stop_requested = threading.Event()
 
 
-def cleanup_monte_carlo_projects(root: Path) -> None:
-    """Remove all MANTA Monte Carlo containers and networks."""
-
-    cleanup_script = root / "scripts" / "cleanup_monte_carlo.sh"
-
-    if not cleanup_script.is_file():
-        raise ValueError(
-            f"Monte Carlo cleanup script is missing: {cleanup_script}"
-        )
-
-    result = subprocess.run(
-        ["bash", str(cleanup_script)],
-        cwd=root,
-        check=False,
-    )
-
-    if result.returncode != 0:
-        raise ValueError(
-            "Failed to clean up MANTA Monte Carlo Docker projects."
-        )
-
-
 def container_path(root: Path, configured_path: str) -> str:
     host_path = (root / configured_path).resolve()
 

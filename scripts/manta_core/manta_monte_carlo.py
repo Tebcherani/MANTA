@@ -11,7 +11,7 @@ from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult
 from pathlib import Path
 from paths import ROOT, CLEANUP_PATH
 
-from manta_runner_old import stop_requested, run_monte_carlo_realization, cleanup_monte_carlo_projects
+from manta_runner_old import stop_requested, run_monte_carlo_realization
 
 
 # -----------------------------------------------------
@@ -41,7 +41,7 @@ def check_saved_result_convergence(completed: dict[int, dict], monte_carlo_confi
     """Report whether previously completed realizations already satisfy convergence."""
 
     # Get detection fractions for all monte carlo runs
-    detection_fractions = [completed[index]["detection_fraction"] for index in sorted(completed)]
+    detection_fractions = [completed[index].detection_fraction for index in sorted(completed)]
     if not detection_fractions: return False
 
     # Check if the confidence intervals have converged
@@ -54,6 +54,14 @@ def check_saved_result_convergence(completed: dict[int, dict], monte_carlo_confi
 
     return converged
 
+
+def cleanup_monte_carlo_projects() -> None:
+    """Remove all MANTA Monte Carlo containers and networks."""
+
+    if not CLEANUP_PATH.is_file(): raise ValueError(f"Monte Carlo cleanup script is missing: {CLEANUP_PATH}")
+    result = subprocess.run(["bash", str(CLEANUP_PATH)], cwd=ROOT, check=False)
+    if result.returncode != 0: raise ValueError("Failed to clean up MANTA Monte Carlo Docker projects.")
+    
 
 def compute_monte_carlo_statistics(detection_fractions: list[float], confidence_level: float) -> tuple[float, float]:
     """Return the sample mean and normal-approximation confidence-interval half-width."""
@@ -167,7 +175,7 @@ def recover_failed_batch(failures: list[str], consecutive_recoveries: int, monte
         raise ValueError(f"Monte Carlo exceeded the configured global recovery limit of {monte_carlo_config.recovery_cycles}.\n" + "\n".join(failures))
     
     print(f"Stopping all MANTA Monte Carlo Docker projects before recovery {consecutive_recoveries}/{monte_carlo_config.recovery_cycles}...", file=sys.stderr)
-    cleanup_monte_carlo_projects(ROOT)
+    cleanup_monte_carlo_projects()
     
     next_realization = 1
     
