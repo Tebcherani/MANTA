@@ -1,5 +1,8 @@
+import csv
 import os
+import math
 import signal
+import statistics
 import subprocess
 import sys
 
@@ -8,9 +11,61 @@ from manta_core.manta_dataclasses import MonteCarloConfig
 from pathlib import Path
 from paths import ROOT, CLEANUP_PATH, MONTE_CARLO_SUMMARY_PATH
 
-from manta_runner_old import stop_requested, load_monte_carlo_summary, calculate_monte_carlo_statistics
-from manta_runner_old import monte_carlo_convergence, run_monte_carlo_realization, write_monte_carlo_summary, cleanup_monte_carlo_projects
+from manta_runner_old import stop_requested, run_monte_carlo_realization, write_monte_carlo_summary, cleanup_monte_carlo_projects
 
+
+def monte_carlo_convergence(
+    fractions: list[float],
+    batch_size: int,
+    min_realizations: int,
+    confidence_level: float,
+    target_half_width: float,
+    stability_tolerance: float,
+) -> tuple[bool, float, float, float]:
+    """Calculate convergence using the current and preceding cumulative means."""
+
+    if not fractions:
+        return False, math.nan, math.inf, math.inf
+
+    sample_mean, half_width = calculate_monte_carlo_statistics(
+        fractions,
+        confidence_level,
+    )
+
+    previous_count = len(fractions) - batch_size
+    previous_mean = (
+        statistics.mean(fractions[:previous_count])
+        if previous_count > 0
+        else None
+    )
+    mean_change = (
+        abs(sample_mean - previous_mean)
+        if previous_mean is not None
+        else math.inf
+    )
+
+    converged = (
+        len(fractions) >= min_realizations
+        and half_width <= target_half_width
+        and mean_change <= stability_tolerance
+    )
+
+    return converged, sample_mean, half_width, mean_change
+
+
+def calculate_monte_carlo_statistics(detection_fractions: list[float], confidence_level: float) -> tuple[float, float]:
+    """Return the sample mean and normal-approximation confidence-interval half-width."""
+
+    if not detection_fractions: raise ValueError("At least one realization is required.")
+
+    sample_mean = statistics.mean(detection_fractions)
+    if len(detection_fractions) < 2: return sample_mean, math.inf
+
+    standard_error = statistics.stdev(detection_fractions) / math.sqrt(len(detection_fractions))
+    z_score = statistics.NormalDist().inv_cdf(0.5 + confidence_level / 2.0)
+    half_width = z_score * standard_error
+
+    return sample_mean, half_width
 
 def calculate_worker_count(config: dict, monte_carlo: MonteCarloConfig) -> int:
     """Choose a safe number of parallel realizations for the fleet size."""
@@ -30,6 +85,65 @@ def handle_interrupt(signal_number, frame) -> None:
     print("\nStopping MANTA Monte Carlo...", file=sys.stderr)
     stop_requested.set()
     subprocess.run(["bash", str(CLEANUP_PATH)], check=False)
+
+
+def load_monte_carlo_summary(path: Path, base_seed: int) -> list[dict]:
+    if not path.is_file():
+        return []
+
+    rows = []
+
+    with path.open("r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+
+        required = {
+            "realization",
+            "seed",
+            "detected_whales",
+            "whale_count",
+            "detection_fraction",
+            "total_mass_kg",
+            "total_energy_wh",
+            "mean_vehicle_speed_mps",
+        }
+
+        if not reader.fieldnames or not required.issubset(
+            reader.fieldnames
+        ):
+            raise ValueError(
+                f"Monte Carlo summary has an invalid header: {path}"
+            )
+
+        for row in reader:
+            realization = int(row["realization"])
+            seed = int(row["seed"])
+            expected_seed = base_seed + realization - 1
+
+            if seed != expected_seed:
+                raise ValueError(
+                    f"Existing realization {realization} uses seed {seed}, "
+                    f"but the current configuration expects {expected_seed}."
+                )
+
+            rows.append(
+                {
+                    "realization": realization,
+                    "seed": seed,
+                    "detected_whales": int(row["detected_whales"]),
+                    "whale_count": int(row["whale_count"]),
+                    "detection_fraction": float(
+                        row["detection_fraction"]
+                    ),
+                    "total_mass_kg": float(row["total_mass_kg"]),
+                    "total_energy_wh": float(row["total_energy_wh"]),
+                    "mean_vehicle_speed_mps": float(
+                        row["mean_vehicle_speed_mps"]
+                    ),
+                }
+            )
+
+    rows.sort(key=lambda row: row["realization"])
+    return rows
 
 
 def run_monte_carlo(config: dict, output_directory: Path, project_offset: int=0) -> int:

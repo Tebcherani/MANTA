@@ -3,15 +3,18 @@ import csv
 import yaml
 
 from manta_core.manta_dataclasses import MonteCarloConfig, SweepConfig, SweepResult
-from manta_core.manta_monte_carlo import run_monte_carlo
+from manta_core.manta_monte_carlo import calculate_monte_carlo_statistics, load_monte_carlo_summary, run_monte_carlo
 from manta_core.manta_run import generate_missions
 from pathlib import Path
 from paths import ROOT, SWEEP_GENERATED_DIR, SWEEP_SUMMARY_PATH, SWEEP_OUTPUT_DIR
 from threading import Event
 
 from manta_runner_old import write_sweep_summary
-from manta_runner_old import load_monte_carlo_summary, calculate_monte_carlo_statistics
-    
+
+
+# -----------------------------------------------------
+# Helper functions
+# -----------------------------------------------------
 
 def generate_fleet_config(sim_config: dict, fleet_size: int) -> tuple[dict, Path]:
     """Create one fleet configuration by cloning the first vehicle plugin."""
@@ -71,84 +74,85 @@ def prepare_monte_carlo_sweep(sim_config: dict) -> tuple[SweepConfig, MonteCarlo
     return sweep_config, monte_carlo_config, completed_results
 
 
+def summarize_fleet_results(fleet_size: int, rows: list[dict], confidence_level: float) -> SweepResult:
+    """Calculate aggregate statistics for one fleet-size experiment."""
+
+    if not rows: raise ValueError(f"Fleet size {fleet_size} has no Monte Carlo results.")
+
+    whale_count = rows[0]["whale_count"]
+    if any(row["whale_count"] != whale_count for row in rows[1:]):
+        raise ValueError(f"Fleet size {fleet_size} contains inconsistent whale counts.")
+
+    fractions = [row["detection_fraction"] for row in rows]
+    masses = [row["total_mass_kg"] for row in rows]
+    energies = [row["total_energy_wh"] for row in rows]
+    speeds = [row["mean_vehicle_speed_mps"] for row in rows]
+
+    mean_detection, detection_half_width = calculate_monte_carlo_statistics(fractions, confidence_level)
+    mean_mass, mass_half_width = calculate_monte_carlo_statistics(masses, confidence_level)
+    mean_energy, energy_half_width = calculate_monte_carlo_statistics(energies, confidence_level)
+    mean_speed, speed_half_width = calculate_monte_carlo_statistics(speeds, confidence_level)
+
+    return SweepResult(
+        fleet_size=fleet_size,
+        realizations=len(rows),
+        whale_count=whale_count,
+        mean_detected_whales=mean_detection * whale_count,
+        mean_detection=mean_detection,
+        ci_lower=max(0.0, mean_detection - detection_half_width),
+        ci_upper=min(1.0, mean_detection + detection_half_width),
+        ci_half_width=detection_half_width,
+        confidence_level=confidence_level,
+        mean_total_mass=mean_mass,
+        mass_ci_lower=max(0.0, mean_mass - mass_half_width),
+        mass_ci_upper=mean_mass + mass_half_width,
+        mass_ci_half_width=mass_half_width,
+        mean_total_energy=mean_energy,
+        energy_ci_lower=max(0.0, mean_energy - energy_half_width),
+        energy_ci_upper=mean_energy + energy_half_width,
+        energy_ci_half_width=energy_half_width,
+        mean_vehicle_speed=mean_speed,
+        speed_ci_lower=max(0.0, mean_speed - speed_half_width),
+        speed_ci_upper=mean_speed + speed_half_width,
+        speed_ci_half_width=speed_half_width,
+    )
+
+# -----------------------------------------------------
+# Main monte carlo sweep function
+# -----------------------------------------------------
+
 def run_monte_carlo_sweep(sim_config: dict) -> int:
     """Run adaptive Monte Carlo experiments for each fleet size."""
 
+    # Prepare monte carlo sweep
     stop_requested = Event()
     sweep_config, monte_carlo_config, completed_results = prepare_monte_carlo_sweep(sim_config)
 
+    # Loop through all fleet sizes
     for fleet_size in range(sweep_config.min_vehicles, sweep_config.max_vehicles+1):
         if stop_requested.is_set(): return 130
 
         print(f"\n=== Monte Carlo fleet sweep: {fleet_size} vehicle(s) ===")
 
+        # Skip sweep results that already exist
         if fleet_size in completed_results:
             print(f"Skipping {fleet_size} vehicle(s); sweep results already exist.")
             continue
 
+        # Run monte carlo experiment for one fleet size
         fleet_config, fleet_directory = prepare_fleet_experiment(sim_config, fleet_size)
         result = run_monte_carlo(fleet_config, output_directory=fleet_directory, project_offset=fleet_size*10000)
         if result != 0: return result
 
+        # Write fleet results to the sweep_summary.csv
         rows = load_monte_carlo_summary(fleet_directory / "summary.csv", monte_carlo_config.random_seed)
-        fractions = [row["detection_fraction"] for row in rows]
-        masses = [row["total_mass_kg"] for row in rows]
-        energies = [row["total_energy_wh"] for row in rows]
-        speeds = [row["mean_vehicle_speed_mps"] for row in rows]
-        whale_count = int(sim_config["scenario"]["whales"]["count"])
-        sample_mean, half_width = calculate_monte_carlo_statistics(
-            fractions,
-            monte_carlo_config.confidence_level,
-        )
-        mean_mass, mass_half_width = calculate_monte_carlo_statistics(
-            masses,
-            monte_carlo_config.confidence_level,
-        )
-        mean_energy, energy_half_width = calculate_monte_carlo_statistics(
-            energies,
-            monte_carlo_config.confidence_level,
-        )
-        mean_speed, speed_half_width = calculate_monte_carlo_statistics(
-            speeds,
-            monte_carlo_config.confidence_level,
-        )
+        sweep_result = summarize_fleet_results(fleet_size, rows, monte_carlo_config.confidence_level)
 
-        completed_results[fleet_size] = {
-            "fleet_size": fleet_size,
-            "realizations": len(rows),
-            "whale_count": whale_count,
-            "mean_detected_whales": sample_mean * whale_count,
-            "mean_detection": sample_mean,
-            "ci_lower": max(0.0, sample_mean - half_width),
-            "ci_upper": min(1.0, sample_mean + half_width),
-            "ci_half_width": half_width,
-            "confidence_level": monte_carlo_config.confidence_level,
-            "mean_total_mass_kg": mean_mass,
-            "mass_ci_lower_kg": max(0.0, mean_mass - mass_half_width),
-            "mass_ci_upper_kg": mean_mass + mass_half_width,
-            "mass_ci_half_width_kg": mass_half_width,
-            "mean_total_energy_wh": mean_energy,
-            "energy_ci_lower_wh": max(
-                0.0,
-                mean_energy - energy_half_width,
-            ),
-            "energy_ci_upper_wh": mean_energy + energy_half_width,
-            "energy_ci_half_width_wh": energy_half_width,
-            "mean_vehicle_speed_mps": mean_speed,
-            "speed_ci_lower_mps": max(
-                0.0,
-                mean_speed - speed_half_width,
-            ),
-            "speed_ci_upper_mps": mean_speed + speed_half_width,
-            "speed_ci_half_width_mps": speed_half_width,
-        }
+        completed_results[fleet_size] = sweep_result
         sweep_rows = list(completed_results.values())
         write_sweep_summary(SWEEP_SUMMARY_PATH, sweep_rows)
 
-        print(
-            f"Fleet size {fleet_size}: mean {sample_mean:.2%}, "
-            f"CI half-width {half_width:.2%} from {len(rows)} runs."
-        )
+        print(f"Fleet size {fleet_size}: mean {sweep_result.mean_detection:.2%}, CI half-width {sweep_result.ci_half_width:.2%} from {sweep_result.realizations} runs.")
 
     print(f"Sweep data: {SWEEP_SUMMARY_PATH}")
     print("Run './manta review sweep' to generate the sweep plots.")

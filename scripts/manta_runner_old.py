@@ -10,8 +10,8 @@ import sys
 import threading
 import yaml
 
-from manta_core.manta_dataclasses import MonteCarloConfig
 from manta_core.manta_config import load_plugin
+from manta_core.manta_dataclasses import MonteCarloConfig
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -473,29 +473,6 @@ def summarize_vehicle_metrics(
     return total_mass_kg, total_energy_wh, mean(vehicle_speeds)
 
 
-def calculate_monte_carlo_statistics(
-    detection_fractions: list[float],
-    confidence_level: float,
-) -> tuple[float, float]:
-    if not detection_fractions:
-        raise ValueError("At least one realization is required.")
-
-    sample_mean = mean(detection_fractions)
-
-    if len(detection_fractions) < 2:
-        return sample_mean, math.inf
-
-    standard_error = stdev(detection_fractions) / math.sqrt(
-        len(detection_fractions)
-    )
-    z_score = NormalDist().inv_cdf(
-        0.5 + confidence_level / 2.0
-    )
-    half_width = z_score * standard_error
-
-    return sample_mean, half_width
-
-
 def monte_carlo_paths(
     output_directory: Path,
     realization: int,
@@ -694,65 +671,6 @@ def run_monte_carlo_realization(
     )
 
 
-def load_monte_carlo_summary(path: Path, base_seed: int) -> list[dict]:
-    if not path.is_file():
-        return []
-
-    rows = []
-
-    with path.open("r", encoding="utf-8", newline="") as file:
-        reader = csv.DictReader(file)
-
-        required = {
-            "realization",
-            "seed",
-            "detected_whales",
-            "whale_count",
-            "detection_fraction",
-            "total_mass_kg",
-            "total_energy_wh",
-            "mean_vehicle_speed_mps",
-        }
-
-        if not reader.fieldnames or not required.issubset(
-            reader.fieldnames
-        ):
-            raise ValueError(
-                f"Monte Carlo summary has an invalid header: {path}"
-            )
-
-        for row in reader:
-            realization = int(row["realization"])
-            seed = int(row["seed"])
-            expected_seed = base_seed + realization - 1
-
-            if seed != expected_seed:
-                raise ValueError(
-                    f"Existing realization {realization} uses seed {seed}, "
-                    f"but the current configuration expects {expected_seed}."
-                )
-
-            rows.append(
-                {
-                    "realization": realization,
-                    "seed": seed,
-                    "detected_whales": int(row["detected_whales"]),
-                    "whale_count": int(row["whale_count"]),
-                    "detection_fraction": float(
-                        row["detection_fraction"]
-                    ),
-                    "total_mass_kg": float(row["total_mass_kg"]),
-                    "total_energy_wh": float(row["total_energy_wh"]),
-                    "mean_vehicle_speed_mps": float(
-                        row["mean_vehicle_speed_mps"]
-                    ),
-                }
-            )
-
-    rows.sort(key=lambda row: row["realization"])
-    return rows
-
-
 def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -777,45 +695,6 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
             key=lambda item: item["realization"],
         ):
             writer.writerow(row)
-
-
-def monte_carlo_convergence(
-    fractions: list[float],
-    batch_size: int,
-    min_realizations: int,
-    confidence_level: float,
-    target_half_width: float,
-    stability_tolerance: float,
-) -> tuple[bool, float, float, float]:
-    """Calculate convergence using the current and preceding cumulative means."""
-
-    if not fractions:
-        return False, math.nan, math.inf, math.inf
-
-    sample_mean, half_width = calculate_monte_carlo_statistics(
-        fractions,
-        confidence_level,
-    )
-
-    previous_count = len(fractions) - batch_size
-    previous_mean = (
-        mean(fractions[:previous_count])
-        if previous_count > 0
-        else None
-    )
-    mean_change = (
-        abs(sample_mean - previous_mean)
-        if previous_mean is not None
-        else math.inf
-    )
-
-    converged = (
-        len(fractions) >= min_realizations
-        and half_width <= target_half_width
-        and mean_change <= stability_tolerance
-    )
-
-    return converged, sample_mean, half_width, mean_change
 
 
 def write_sweep_summary(path: Path, rows: list[dict]) -> None:
