@@ -24,21 +24,14 @@ def main() -> int:
 
         generate_missions(config, CONFIG_PATH)
         print_config_summary(config, CONFIG_PATH)
-
         env_path = write_runtime_env(config, ROOT)
         compose_path = write_runtime_compose(config, ROOT)
-
         print(f"Generated environment: {env_path}")
         print(f"Generated Compose file: {compose_path}")
 
-        if args.command == "generate":
-            return 0
-
-        if args.command == "build":
-            return run_build(ROOT, env_path)
-
-        if args.command == "monte-carlo":
-            return run_monte_carlo(config, ROOT)
+        if args.command == "generate": return 0
+        if args.command == "build": return run_build(ROOT, env_path)
+        if args.command == "monte-carlo": return run_monte_carlo(config, ROOT)
 
         commands = {
             "dev": ["docker", "compose", "--env-file", str(env_path), "-f", str(ROOT / "compose.dev.yaml"), "run", "--rm", "dev"],
