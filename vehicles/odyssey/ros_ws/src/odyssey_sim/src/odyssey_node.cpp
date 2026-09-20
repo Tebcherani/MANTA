@@ -63,15 +63,9 @@ OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
                 "/sim/calendar_start_time", startup_qos, [this](const std_msgs::msg::Int64::SharedPtr msg) {handle_calendar_start_time(msg);}
             );
             
-            startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                if (msg->data && !odyssey_initialized_) {
-                    if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize " + vehicle_id_ + ".");
-                    odyssey_initialized_ = true;
-                    RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
-
-                    try_finish_init();
-                }
-            });
+            startup_sub_ = create_subscription<std_msgs::msg::Bool>(
+                "/sim/startup_ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_startup(msg);}
+            );
 
             sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", step_qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
                 manta_interfaces::msg::SimStepResult result;
@@ -203,6 +197,22 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
     calendar_start_time_ = static_cast<time_t>(msg->data);  // Convert the timestamp carried by the ROS message to the native time type.
     calendar_start_time_received_ = true;                   // Record that this required startup value has been received.
     try_finish_init();                                      // Complete startup if all other required initialization data is available.
+}
+
+/**
+ * Initialize Odyssey when the orchestrator announces that startup is ready.
+ * Duplicate or false startup messages are ignored after Odyssey has already been initialized.
+ *
+ * @param msg ROS message whose value indicates whether startup may begin.
+ * 
+ * @throws std::runtime_error if the native Odyssey simulator cannot initialize.
+ */
+void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
+    if (!msg->data || odyssey_initialized_) return;                                                 // Ignore false messages and duplicate startup notifications.
+    if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize " + vehicle_id_ + "."); // Initialize the native Odyssey simulator.
+    odyssey_initialized_ = true;                                                                    // Record successful initialization.
+    RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
+    try_finish_init();                                                                              // Complete startup if the required time values have also arrived.
 }
 
         // Destructor
