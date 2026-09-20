@@ -108,7 +108,7 @@ services:
 
       source /odyssey/ros_ws/install/setup.bash
 
-      ros2 run whale_sim whale_node --ros-args -p "count:=46" -p "line_start_north:=0.0"
+      exec ros2 run whale_sim whale_node --ros-args -p "count:=46" -p "line_start_north:=0.0"
       -p "line_start_east:=-63000.0" -p "line_end_north:=0.0" -p "line_end_east:=63000.0"
       -p "speed_min:=1.0" -p "speed_max:=2.0" -p "start_distance:=11000.0" -p "depth:=20.0"
       -p "mission_duration:=259200.0" -p "call_rate_min:=4.8" -p "call_rate_max:=8.0"
@@ -117,6 +117,7 @@ services:
       -p "group_mean_size:=3.0" -p "group_position_std:=1000.0" -p "group_start_time_std:=600.0"
       -p "shared_heading_fraction:=0.75" -p "data_directory:=/odyssey/output/Data"
       -p "random_seed:=42" -p "sample_period:=60.0"'
+    stop_grace_period: 5s
   whale_detection_sim:
     image: odyssey_sim_dev
     environment:

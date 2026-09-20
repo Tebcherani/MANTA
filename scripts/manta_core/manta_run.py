@@ -167,8 +167,9 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
-            f"ros2 run whale_sim whale_node --ros-args {arguments}",
+            f"exec ros2 run whale_sim whale_node --ros-args {arguments}",
         ],
+        "stop_grace_period": "5s",
     }
 
 
