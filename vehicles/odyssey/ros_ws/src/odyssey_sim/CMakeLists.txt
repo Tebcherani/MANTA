@@ -34,6 +34,7 @@ add_executable(
 target_include_directories(
   odyssey_node
   PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     /odyssey/vehicles/odyssey/include
     /odyssey/vehicles/odyssey/src/Common
     /odyssey/vehicles/odyssey/src/World
