@@ -1,25 +1,13 @@
+#include "whale_detection_sim/whale_detection_node.hpp"
+
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <iomanip>
 #include <memory>
 #include <stdexcept>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
-#include "manta_interfaces/msg/vehicle_state.hpp"
-#include "manta_interfaces/msg/whale_call.hpp"
-#include "manta_interfaces/msg/whale_detection.hpp"
-#include "manta_interfaces/msg/whale_call_processed.hpp"
-
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/bool.hpp"
-
-class WhaleDetectionNode : public rclcpp::Node {
-    public:
-        WhaleDetectionNode() : Node("whale_detection_node") {
+WhaleDetectionNode::WhaleDetectionNode() : rclcpp::Node("whale_detection_node") {
             // ----------------------------------------------------------------- 
             // Initializations
             // -----------------------------------------------------------------
@@ -48,36 +36,26 @@ class WhaleDetectionNode : public rclcpp::Node {
             for (const std::string &vehicle_id : vehicle_ids_) {
                 const std::string topic = "/" + vehicle_id + "/state";
 
-                auto subscription = create_subscription<manta_interfaces::msg::VehicleState>(topic, 10, [this, vehicle_id](const manta_interfaces::msg::VehicleState::SharedPtr message) {
-                    latest_vehicle_states_[vehicle_id] = *message;
-                    try_process_pending_call();
-                });
+                auto subscription = create_subscription<manta_interfaces::msg::VehicleState>(
+                    topic, 10, [this, vehicle_id](const manta_interfaces::msg::VehicleState::SharedPtr message) {handle_vehicle_state(message, vehicle_id);}
+                );
 
                 vehicle_state_subs_.push_back(subscription);
             }
 
-            whale_call_sub_ = create_subscription<manta_interfaces::msg::WhaleCall>("/sim/whales/calls", 100, [this](const manta_interfaces::msg::WhaleCall::SharedPtr call) {
-                if (pending_call_available_) {
-                    RCLCPP_ERROR(get_logger(), "Received whale call %s before the previous call was processed.", call->whale_id.c_str());
-                    return;
-                }
+            whale_call_sub_ = create_subscription<manta_interfaces::msg::WhaleCall>(
+                "/sim/whales/calls", 100, [this](const manta_interfaces::msg::WhaleCall::SharedPtr call) {handle_whale_call(call);}
+            );
 
-                pending_call_ = *call;
-                pending_call_available_ = true;
-                try_process_pending_call();
-            });
-
-            shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {
-                if (!message->data) return;
-                RCLCPP_INFO(get_logger(), "Shutting down whale detector.");
-                rclcpp::shutdown();
-            });
+            shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
+                "/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {handle_shutdown(message);}
+            );
 
             RCLCPP_INFO(get_logger(), "Whale detector initialized for %zu vehicles with a %.1f m detection range.", vehicle_ids_.size(), detection_range_);
         }
 
-    private:
-        void try_process_pending_call() {
+    
+void WhaleDetectionNode::try_process_pending_call() {
             if (!pending_call_available_) return;
 
             // Wait until every vehicle has published its state for this call's cycle.
@@ -143,22 +121,6 @@ class WhaleDetectionNode : public rclcpp::Node {
             pending_call_available_ = false;
             processed_pub_->publish(processed);
         }
-
-        std::vector<std::string> vehicle_ids_;
-        double detection_range_ = 500.0;
-
-        bool pending_call_available_ = false;
-        manta_interfaces::msg::WhaleCall pending_call_;
-        std::unordered_map<std::string, manta_interfaces::msg::VehicleState> latest_vehicle_states_;
-        std::ofstream detection_log_;
-
-        rclcpp::Publisher<manta_interfaces::msg::WhaleDetection>::SharedPtr detection_pub_;
-        rclcpp::Publisher<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr processed_pub_;
-
-        rclcpp::Subscription<manta_interfaces::msg::WhaleCall>::SharedPtr whale_call_sub_;
-        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
-        std::vector<rclcpp::Subscription<manta_interfaces::msg::VehicleState>::SharedPtr> vehicle_state_subs_;
-    };
 
 int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
