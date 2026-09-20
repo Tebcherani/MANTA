@@ -249,7 +249,7 @@ bool OdysseyNode::write_final_metrics() {
             return true;
         }
 
-void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time) {
+void OdysseyNode::publish_vehicle_state(uint64_t completed_cycle, double completed_sim_time) {
             manta_interfaces::msg::VehicleState state;
 
             state.vehicle_id = vehicle_id_;
