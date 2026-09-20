@@ -22,6 +22,7 @@ class OdysseyNode : public rclcpp::Node {
 
     private:
         void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
+        void handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg);
         void handle_startup(const std_msgs::msg::Bool::SharedPtr msg);
 
         void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time);

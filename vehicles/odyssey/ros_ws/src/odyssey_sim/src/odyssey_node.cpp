@@ -170,12 +170,8 @@ OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
             });
 
             sim_time_sub_ = create_subscription<std_msgs::msg::Float64>(
-                "/sim/time", startup_qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {
-                    sim_time_ = msg->data;
-                    sim_time_received_ = true;
-
-                    try_finish_init();
-            });
+                "/sim/time", startup_qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {handle_sim_time(msg);}
+            );
 
             shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
                 "/sim/shutdown", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
@@ -189,6 +185,7 @@ OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
 
 /**
  * Store the simulation's calendar start time and continue initialization.
+ *
  * This callback runs when the orchestrator publishes the calendar timestamp used as the beginning of the simulated mission.
  * 
  *  @param msg ROS message containing the calendar start time as a Unix timestamp.
@@ -200,7 +197,21 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
 }
 
 /**
+ * Store the initial simulation time and continue Odyssey initialization.
+ *
+ * This callback receives the current simulated mission time from the orchestrator during startup.
+ *
+ * @param msg ROS message containing the current simulation time in seconds.
+ */
+void OdysseyNode::handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg) {
+    sim_time_ = msg->data;       // Store the initial simulated mission time.
+    sim_time_received_ = true;   // Record that this required startup value has arrived.
+    try_finish_init();           // Complete startup if the other required values are available.
+}
+
+/**
  * Initialize Odyssey when the orchestrator announces that startup is ready.
+ * 
  * Duplicate or false startup messages are ignored after Odyssey has already been initialized.
  *
  * @param msg ROS message whose value indicates whether startup may begin.
