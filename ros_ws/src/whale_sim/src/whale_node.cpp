@@ -1,27 +1,16 @@
+#include "whale_sim/whale_node.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <limits>
 #include <memory>
-#include <random>
 #include <stdexcept>
-#include <string>
 #include <utility>
-#include <vector>
 
-#include "manta_interfaces/msg/sim_step.hpp"
-#include "manta_interfaces/msg/whale_call.hpp"
-#include "manta_interfaces/msg/whale_state.hpp"
-#include "manta_interfaces/msg/whale_state_array.hpp"
-#include "manta_interfaces/srv/get_next_whale_call.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/bool.hpp"
-
-class WhaleNode : public rclcpp::Node {
-public:
-    WhaleNode() : Node("whale_node"), generator_(42) {
+WhaleNode::WhaleNode() : rclcpp::Node("whale_node"), generator_(42) {
         // ----------------------------------------------------------------- 
         // Initializations
         // -----------------------------------------------------------------
@@ -113,67 +102,12 @@ public:
         RCLCPP_INFO(get_logger(), "Initialized %d whales.", whale_count_);
     }
 
-private:
-    struct TrajectoryPoint {
-        double time;
-        double north;
-        double east;
-        double velocity_north;
-        double velocity_east;
-    };
-
-    struct WhaleGroup {
-        double crossing_distance;
-        double side;
-        double start_time;
-        std::vector<double> heading_errors;
-        std::vector<double> call_rate_multipliers;
-    };
-
-    struct Whale {
-        std::string id;
-        int group_index;
-
-        double depth;
-        double start_time;
-        double call_rate_per_hour;
-
-        std::vector<double> call_times;
-        std::size_t next_call_index = 0;
-
-        std::vector<TrajectoryPoint> trajectory;
-
-        // Current values published in WhaleState messages and written to CSV.
-        double north;
-        double east;
-        double velocity_north;
-        double velocity_east;
-
-        // Lifecycle status
-        bool active;
-        bool complete;
-        double starting_side;
-    };
-
-    std::vector<TrajectoryPoint> generate_trajectory(
-        double initial_north,
-        double initial_east,
-        double crossing_heading,
-        double speed,
-        double start_time,
-        double perpendicular_north,
-        double perpendicular_east,
-        const WhaleGroup &group
-    ) {
+std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double initial_north, double initial_east, double crossing_heading,
+            double speed, double start_time, double perpendicular_north, double perpendicular_east, const WhaleGroup &group) {
         std::vector<TrajectoryPoint> trajectory;
 
         const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
-        const double innovation_scale =
-            heading_std_radians
-            * std::sqrt(
-                1.0
-                - heading_correlation_ * heading_correlation_
-            );
+        const double innovation_scale = heading_std_radians * std::sqrt(1.0 - heading_correlation_ * heading_correlation_);
 
         // Weight the shared and individual processes so their combined
         // variance remains equal to the configured heading variance.
@@ -188,53 +122,19 @@ private:
         double individual_heading_error = 0.0;
 
         while (true) {
-            const std::size_t group_heading_index = std::min(
-                static_cast<std::size_t>(
-                    std::floor(time / turn_interval_)
-                ),
-                group.heading_errors.size() - 1
-            );
-
-            const double combined_heading_error =
-                group_weight
-                    * group.heading_errors[group_heading_index]
-                + individual_weight
-                    * individual_heading_error;
-
-            const double heading =
-                crossing_heading + combined_heading_error;
-
-            const double velocity_north =
-                speed * std::cos(heading);
-
-            const double velocity_east =
-                speed * std::sin(heading);
-
-            trajectory.push_back({
-                time,
-                north,
-                east,
-                velocity_north,
-                velocity_east,
-            });
-
-            if (time >= mission_duration_) {
-                break;
-            }
+            const std::size_t group_heading_index = std::min(static_cast<std::size_t>(std::floor(time / turn_interval_)), group.heading_errors.size() - 1);
+            const double combined_heading_error = group_weight * group.heading_errors[group_heading_index] + individual_weight * individual_heading_error;
+            const double heading = crossing_heading + combined_heading_error;
+            const double velocity_north = speed * std::cos(heading);
+            const double velocity_east = speed * std::sin(heading);
+            trajectory.push_back({time, north, east, velocity_north, velocity_east});
+            if (time >= mission_duration_) break;
 
             // End the current segment at the next global movement boundary.
             // All members therefore respond to group heading changes at the
             // same simulated time, even if their activation times differ.
-            const double next_turn_time =
-                (
-                    std::floor(time / turn_interval_) + 1.0
-                ) * turn_interval_;
-
-            const double next_time = std::min(
-                next_turn_time,
-                mission_duration_
-            );
-
+            const double next_turn_time = (std::floor(time / turn_interval_) + 1.0) * turn_interval_;
+            const double next_time = std::min(next_turn_time, mission_duration_);
             const double duration = next_time - time;
 
             north += velocity_north * duration;
@@ -247,75 +147,39 @@ private:
             * it reaches -start_distance_, the whale has crossed the line and exited
             * the monitored corridor on the opposite side.
             */
-            const double relative_north =
-                north - line_start_north_;
-
-            const double relative_east =
-                east - line_start_east_;
-
-            const double signed_distance =
-                relative_north * perpendicular_north
-                + relative_east * perpendicular_east;
+            const double relative_north = north - line_start_north_;
+            const double relative_east = east - line_start_east_;
+            const double signed_distance = relative_north * perpendicular_north + relative_east * perpendicular_east;
 
             if (group.side * signed_distance <= -start_distance_) {
                 /*
                 * Store one final point at the exit boundary. Zero velocity marks
                 * that this whale is no longer active in the study region.
                 */
-                trajectory.push_back({
-                    time,
-                    north,
-                    east,
-                    0.0,
-                    0.0,
-                });
-
+                trajectory.push_back({time, north, east, 0.0, 0.0});
                 break;
             }
 
             if (time >= mission_duration_) {
-                trajectory.push_back({
-                    time,
-                    north,
-                    east,
-                    velocity_north,
-                    velocity_east,
-                });
+                trajectory.push_back({time, north, east, velocity_north, velocity_east});
                 break;
             }
 
-            individual_heading_error =
-                heading_correlation_ * individual_heading_error
-                + innovation_scale * standard_normal(generator_);
+            individual_heading_error = heading_correlation_ * individual_heading_error + innovation_scale * standard_normal(generator_);
         }
 
         return trajectory;
     }
 
-    TrajectoryPoint trajectory_at_time(
-        const Whale &whale,
-        double time
-    ) const {
-        if (whale.trajectory.empty()) {
-            throw std::runtime_error(
-                "Whale trajectory contains no points."
-            );
-        }
+WhaleNode::TrajectoryPoint WhaleNode::trajectory_at_time(const Whale &whale, double time) const {
+        if (whale.trajectory.empty()) throw std::runtime_error("Whale trajectory contains no points.");
 
         const TrajectoryPoint &first = whale.trajectory.front();
         const TrajectoryPoint &last = whale.trajectory.back();
 
         // Before its randomized activation time, the whale remains at its
         // starting location and has not begun moving.
-        if (time < first.time) {
-            return {
-                time,
-                first.north,
-                first.east,
-                0.0,
-                0.0,
-            };
-        }
+        if (time < first.time) return {time, first.north, first.east, 0.0, 0.0};
 
         // Do not extrapolate beyond the generated mission trajectory.
         if (time >= last.time) {
@@ -356,7 +220,7 @@ private:
         };
     }
 
-    void initialize_whale_groups(double line_length) {
+void WhaleNode::initialize_whale_groups(double line_length) {
         const int group_count = std::max(
             1,
             static_cast<int>(
@@ -471,7 +335,7 @@ private:
         RCLCPP_INFO(get_logger(), "Initialized %zu whale groups for %d whales.", whale_groups_.size(), whale_count_);
     }
 
-    std::vector<double> generate_call_times(
+std::vector<double> WhaleNode::generate_call_times(
         double start_time,
         double end_time,
         double call_rate_per_hour,
@@ -556,7 +420,7 @@ private:
         return call_times;
     }
 
-    void initialize_whales() {
+void WhaleNode::initialize_whales() {
         const double line_north = line_end_north_ - line_start_north_;
         const double line_east = line_end_east_ - line_start_east_;
         const double line_length = std::hypot(line_north, line_east);
@@ -745,7 +609,7 @@ private:
         }
     }
 
-    void update_whales(
+void WhaleNode::update_whales(
         const manta_interfaces::msg::SimStep &step
     ) {
         if (step.step_count == 0) {
@@ -847,7 +711,7 @@ private:
         }
     }
 
-    void handle_get_next_call(
+void WhaleNode::handle_get_next_call(
         const manta_interfaces::srv::GetNextWhaleCall::Request &request,
         manta_interfaces::srv::GetNextWhaleCall::Response &response
     ) {
@@ -900,44 +764,6 @@ private:
         response.call.east = call_position.east;
         response.call.depth = next_whale->depth;
     }
-
-    int whale_count_;
-    double line_start_north_;
-    double line_start_east_;
-    double line_end_north_;
-    double line_end_east_;
-    double speed_min_;
-    double speed_max_;
-    double start_distance_;
-    double whale_depth_;
-    double mission_duration_;
-    double call_rate_min_;
-    double call_rate_max_;
-    double call_activity_interval_;
-    double call_activity_correlation_;
-    double group_log_rate_std_;
-    double whale_sample_period_ = 60.0;
-    double next_whale_log_time_ = 0.0;
-    double turn_interval_;
-    double heading_correlation_;
-    double heading_std_degrees_;
-    double group_mean_size_;
-    double group_position_std_;
-    double group_start_time_std_;
-    double shared_heading_fraction_;
-
-    std::mt19937 generator_;
-    std::vector<WhaleGroup> whale_groups_;
-    std::vector<Whale> whales_;
-    std::ofstream whale_log_;
-
-    rclcpp::Publisher<manta_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
-
-    rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr step_sub_;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
-
-    rclcpp::Service<manta_interfaces::srv::GetNextWhaleCall>::SharedPtr next_call_service_;
-};
 
 int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
