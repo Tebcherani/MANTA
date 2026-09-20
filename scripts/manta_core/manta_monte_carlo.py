@@ -150,9 +150,6 @@ def prepare_monte_carlo_experiment(sim_config: dict, output_dir: Path) -> tuple[
     completed_results = load_completed_results(summary_path, monte_carlo_config.random_seed)
     if completed_results: print(f"Resuming Monte Carlo experiment with {len(completed_results)} completed realizations.")
 
-    # Check if the existing results have already converged
-    check_saved_result_convergence(completed_results, monte_carlo_config, summary_path)
-
     # Get next realization
     next_realization = 1
     while next_realization in completed_results:
@@ -261,9 +258,11 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
     signal.signal(signal.SIGTERM, handle_interrupt)
 
     monte_carlo_config, workers, completed_results, next_realization, summary_path = prepare_monte_carlo_experiment(sim_config, output_dir)
+    if check_saved_result_convergence(completed_results, monte_carlo_config, summary_path): return 0
 
     consecutive_recoveries = 0
     while len(completed_results) < monte_carlo_config.max_realizations:
+        
         # Compute the number of runs needed before the next checkpoint
         runs_needed = compute_runs_to_next_checkpoint(len(completed_results), monte_carlo_config)
 
