@@ -1,44 +1,20 @@
+#include "sim_orchestrator/sim_orchestrator_node.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <iomanip>
 #include <memory>
 #include <stdexcept>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/bool.hpp"
-#include "std_msgs/msg/float64.hpp"
-#include "std_msgs/msg/int64.hpp"
-
-#include "manta_interfaces/msg/sim_step.hpp"
-#include "manta_interfaces/msg/sim_step_result.hpp"
-#include "manta_interfaces/msg/whale_call.hpp"
-#include "manta_interfaces/srv/get_next_whale_call.hpp"
-#include "manta_interfaces/msg/whale_call_processed.hpp"
 
 extern "C" {
-    #include "sim_config.h"
     #include "sim_log.h"
-    #include "sim_state.h"
-    #include "world_sim.h"
 }
 
-struct VehicleState {
-    bool ready = false;
-    bool active = true;
-    bool step_complete = false;
-};
-
-class SimOrchestratorNode : public rclcpp::Node {
-    public:
-        explicit SimOrchestratorNode() : Node("sim_orchestrator") {
+SimOrchestratorNode::SimOrchestratorNode() : rclcpp::Node("sim_orchestrator") {            
             std_msgs::msg::Int64 calendar_start_time_message;
             std_msgs::msg::Float64 sim_time_message;
             std_msgs::msg::Bool startup_message;
@@ -152,9 +128,9 @@ class SimOrchestratorNode : public rclcpp::Node {
             else throw std::runtime_error("Failed to initialize simulation configuration.");
 
             sim_config_.timestep = declare_parameter<double>("timestep", sim_config_.timestep);
-            sim_config_.control_period = static_cast<int>(declare_parameter<int64_t>("control_period", sim_config_.control_period));
-            sim_config_.num_cycles = static_cast<int>(declare_parameter<int64_t>("max_cycles", sim_config_.num_cycles));
-            steps_per_message_ = static_cast<int>(declare_parameter<int64_t>("steps_per_message", 1));
+            sim_config_.control_period = static_cast<int>(declare_parameter<std::int64_t>("control_period", sim_config_.control_period));
+            sim_config_.num_cycles = static_cast<int>(declare_parameter<std::int64_t>("max_cycles", sim_config_.num_cycles));
+            steps_per_message_ = static_cast<int>(declare_parameter<std::int64_t>("steps_per_message", 1));
 
             if (steps_per_message_ < 1) throw std::runtime_error("steps_per_message must be at least 1.");
 
@@ -164,7 +140,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             if (init_world_sim()) RCLCPP_INFO(get_logger(), "World simulation initialized.");
             else throw std::runtime_error("Failed to initialize world simulation.");
             world_state_ = get_world_state();
-            if (world_state_ == NULL) throw std::runtime_error("Failed to get world state.");
+            if (world_state_ == nullptr) throw std::runtime_error("Failed to get world state.");
             
             // ----------------------------------------------------------------- 
             // Init sim state
@@ -190,21 +166,20 @@ class SimOrchestratorNode : public rclcpp::Node {
             // ----------------------------------------------------------------- 
             // Publish calendar start time
             // -----------------------------------------------------------------
-            calendar_start_time_message.data = static_cast<int64_t>(sim_state_.calendar_start_time);
+            calendar_start_time_message.data = static_cast<std::int64_t>(sim_state_.calendar_start_time);
             calendar_start_time_pub_->publish(calendar_start_time_message);
         }
 
-        ~SimOrchestratorNode() {
+SimOrchestratorNode::~SimOrchestratorNode() {
             RCLCPP_INFO(get_logger(), "Shutting down simulation orchestrator.");
             if (!close_sim_log()) RCLCPP_ERROR(get_logger(), "Failed to close simulation log.");
         }
 
-        bool simulation_failed() const {
+bool SimOrchestratorNode::simulation_failed() const {
             return simulation_failed_;
         }
 
-    private:
-        void request_next_whale_call(double after_time) {
+void SimOrchestratorNode::request_next_whale_call(double after_time) {
             if (!next_whale_call_client_->wait_for_service(std::chrono::seconds(5))) {
                 RCLCPP_ERROR(get_logger(), "Whale-call scheduling service is unavailable.");
                 request_simulation_shutdown(true);
@@ -231,7 +206,7 @@ class SimOrchestratorNode : public rclcpp::Node {
                     // More than one call can occur during one physics timestep.
                     // Vehicles have already reached the end of that timestep, so publish any remaining calls from it before advancing again.
                     if (next_whale_call_.sim_time <= sim_state_.sim_time) {
-                        next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<uint64_t>(sim_state_.current_cycle - 1) : 0;
+                        next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<std::uint64_t>(sim_state_.current_cycle - 1) : 0;
 
                         publish_whale_call(next_whale_call_);
                         next_whale_call_available_ = false;
@@ -244,7 +219,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             );
         }
 
-        void publish_whale_call(const manta_interfaces::msg::WhaleCall &call) {
+void SimOrchestratorNode::publish_whale_call(const manta_interfaces::msg::WhaleCall &call) {
             // Publish the event for acoustic sensors and autonomy nodes.
             whale_call_pub_->publish(call);
 
@@ -258,7 +233,7 @@ class SimOrchestratorNode : public rclcpp::Node {
                 << call.depth << '\n';
         }
 
-        void check_all_vehicles_initialized() {
+void SimOrchestratorNode::check_all_vehicles_initialized() {
             if (simulation_started_) return;
 
             for (const auto &entry : vehicle_states_) {
@@ -271,11 +246,11 @@ class SimOrchestratorNode : public rclcpp::Node {
             request_next_whale_call(sim_state_.sim_time);
         }
 
-        void publish_current_step() {
+void SimOrchestratorNode::publish_current_step() {
             manta_interfaces::msg::SimStep step;
 
             // Describe the first cycle, starting time, and physics timestep of the batch that the vehicle simulators are about to process.
-            step.current_cycle = static_cast<uint64_t>(sim_state_.current_cycle);
+            step.current_cycle = static_cast<std::uint64_t>(sim_state_.current_cycle);
             step.sim_time = sim_state_.sim_time;
             step.timestep = sim_config_.timestep;
 
@@ -302,8 +277,8 @@ class SimOrchestratorNode : public rclcpp::Node {
 
             // Send the selected number of internal physics steps to every vehicle simulator.
             current_batch_steps_ = batch_steps;
-            step.step_count = static_cast<uint32_t>(batch_steps);
-            step.control_period = static_cast<uint64_t>(sim_config_.control_period);
+            step.step_count = static_cast<std::uint32_t>(batch_steps);
+            step.control_period = static_cast<std::uint64_t>(sim_config_.control_period);
             step.world.gravity = world_state_->gravity;
             step.world.magnetic_north = world_state_->magnetic_north;
             step.world.magnetic_east = world_state_->magnetic_east;
@@ -313,7 +288,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             sim_step_pub_->publish(step);
         }
 
-        void check_all_step_results_received() {
+void SimOrchestratorNode::check_all_step_results_received() {
             // Wait until every active vehicle has returned a result for the current simulation cycle.
             for (const auto &entry : vehicle_states_) {
                 const VehicleState &state = entry.second;
@@ -360,7 +335,7 @@ class SimOrchestratorNode : public rclcpp::Node {
 
             // A shortened batch has now brought every vehicle to the pending whale-call event. Publish the call before starting another batch.
             if (current_batch_reaches_whale_call_) {
-                next_whale_call_.cycle = static_cast<uint64_t>(sim_state_.current_cycle - 1);
+                next_whale_call_.cycle = static_cast<std::uint64_t>(sim_state_.current_cycle - 1);
 
                 publish_whale_call(next_whale_call_);
 
@@ -374,27 +349,15 @@ class SimOrchestratorNode : public rclcpp::Node {
             publish_current_step();
         }
 
-        const char *status_name(uint8_t status) const {
-            using SimStepResult = manta_interfaces::msg::SimStepResult;
-
-            switch (status) {
-                case SimStepResult::RUNNING: return "RUNNING";
-                case SimStepResult::MISSION_COMPLETE: return "MISSION_COMPLETE";
-                case SimStepResult::ABORTED: return "ABORTED";
-                case SimStepResult::ERROR: return "ERROR";
-                default: return "UNKNOWN";
-            }
-        }
-
-        void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id, bool &vehicle_active, bool &step_complete) {
+void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id, bool &vehicle_active, bool &step_complete) {
             // Error handling
             if (msg->vehicle_id != expected_vehicle_id) {
                 RCLCPP_WARN(get_logger(), "Ignored step result from unexpected vehicle '%s' on the %s topic.", msg->vehicle_id.c_str(), expected_vehicle_id.c_str());
                 return;
             }
 
-            const uint64_t first_cycle = static_cast<uint64_t>(sim_state_.current_cycle);
-            const uint64_t last_cycle = first_cycle + static_cast<uint64_t>(current_batch_steps_) - 1;
+            const std::uint64_t first_cycle = static_cast<std::uint64_t>(sim_state_.current_cycle);
+            const std::uint64_t last_cycle = first_cycle + static_cast<std::uint64_t>(current_batch_steps_) - 1;
 
             // Terminal results may occur partway through a batch.
             if (msg->completed_cycle < first_cycle || msg->completed_cycle > last_cycle) {
@@ -450,7 +413,7 @@ class SimOrchestratorNode : public rclcpp::Node {
             check_all_step_results_received();
         }
 
-        void request_simulation_shutdown(bool failed = false) {
+void SimOrchestratorNode::request_simulation_shutdown(bool failed) {            
             simulation_failed_ = failed;
             std_msgs::msg::Bool shutdown_message;
             shutdown_message.data = true;
@@ -465,38 +428,6 @@ class SimOrchestratorNode : public rclcpp::Node {
                     rclcpp::shutdown();
             });
         }
-
-        bool simulation_started_ = false;
-        bool simulation_failed_ = false;
-        bool next_whale_call_available_ = false;
-        bool current_batch_reaches_whale_call_ = false;
-        bool waiting_for_whale_call_processing_ = false;
-
-        std::vector<std::string> vehicle_ids_;
-        std::unordered_map<std::string, VehicleState> vehicle_states_;
-        sim_config_t sim_config_;
-        sim_state_t sim_state_;
-        const world_state_t *world_state_ = nullptr;
-        int steps_per_message_ = 1;
-        int current_batch_steps_ = 0;
-        manta_interfaces::msg::WhaleCall next_whale_call_;
-        std::ofstream whale_call_log_;
-
-        rclcpp::TimerBase::SharedPtr shutdown_timer_;
-
-        rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr calendar_start_time_pub_;
-        rclcpp::Publisher<manta_interfaces::msg::SimStep>::SharedPtr sim_step_pub_;
-        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr sim_time_pub_;
-        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr startup_ready_pub_;
-        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr shutdown_pub_;
-        rclcpp::Publisher<manta_interfaces::msg::WhaleCall>::SharedPtr whale_call_pub_;
-        
-        std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
-        std::vector<rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr> step_result_subs_;
-        rclcpp::Subscription<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;
-
-        rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedPtr next_whale_call_client_;
-};
 
 
 int main(int argc, char *argv[]) {    

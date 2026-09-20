@@ -21,6 +21,7 @@ find_package(manta_interfaces REQUIRED)
 add_executable(
   sim_orchestrator_node
   src/sim_orchestrator_node.cpp
+  src/sim_orchestrator_callbacks.cpp
 )
 
 # -------------------------------------------------------------------------
@@ -30,6 +31,7 @@ add_executable(
 target_include_directories(
   sim_orchestrator_node
   PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     /odyssey/vehicles/odyssey/include
     /odyssey/vehicles/odyssey/src/Common
     /odyssey/vehicles/odyssey/src/World
