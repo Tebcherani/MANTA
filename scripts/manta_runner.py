@@ -22,7 +22,7 @@ def main() -> int:
 
         prepare_runtime(config)
         if args.command == "generate": return 0
-        if args.command == "build": return run_build(ENV_PATH)
+        if args.command == "build": return run_build()
         if args.command == "monte-carlo": return run_monte_carlo(config, ROOT)
 
         commands = {

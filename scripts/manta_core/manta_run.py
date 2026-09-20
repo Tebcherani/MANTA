@@ -117,7 +117,7 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
     movement = whales["movement"]
     grouping = whales["grouping"]
     calling = whales["calling"]
-    monte_carlo = scenario.get("monte_carlo", {})
+    monte_carlo = config.get("monte_carlo", {})
 
     params = {
         "count": whales["count"],
@@ -261,6 +261,7 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
     }
 
     compose_path.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
+    return compose_path
 
 
 #-------------------------------------------------------

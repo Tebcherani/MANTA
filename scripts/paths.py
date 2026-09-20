@@ -41,5 +41,6 @@ MISSION_GENERATOR_PATH = ROOT / "missions" / "picket_line" / "generate_picket_li
 CLEANUP_PATH = ROOT / "scripts" / "cleanup_monte_carlo.sh"
 
 # .yaml
+DEV_COMPOSE_PATH = ROOT / "compose.dev.yaml"
 DOCKER_COMPOSE_PATH = ROOT / "generated" / "compose.ros.yaml"
 CONFIG_PATH = ROOT / "config" / "simulation.yaml"

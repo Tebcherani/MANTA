@@ -33,18 +33,18 @@ METRICS = (
         "percent": False,
     },
     {   # Energy plot
-        "mean": "mean_total_energy_wh",
-        "lower": "energy_ci_lower_wh",
-        "upper": "energy_ci_upper_wh",
+        "mean": "mean_total_energy",
+        "lower": "energy_ci_lower",
+        "upper": "energy_ci_upper",
         "title": "Total Fleet Energy Consumption",
         "ylabel": "Energy consumed (Wh)",
         "color": "tab:orange",
         "percent": False,
     },
     {   # Vehicle speed plot
-        "mean": "mean_vehicle_speed_mps",
-        "lower": "speed_ci_lower_mps",
-        "upper": "speed_ci_upper_mps",
+        "mean": "mean_vehicle_speed",
+        "lower": "speed_ci_lower",
+        "upper": "speed_ci_upper",
         "title": "Mean Vehicle Speed",
         "ylabel": "Speed (m/s)",
         "color": "tab:red",
@@ -64,17 +64,29 @@ def get_required_summary_columns() -> set[str]:
 
 
 def plot_metric(ax, rows: list[dict[str, float]], metric: dict) -> None:
-    vehicles = [row["fleet_size"] for row in rows]
+    """Plot one fleet metric with error bars and a shaded confidence interval."""
+
+    fleet_sizes = [row["fleet_size"] for row in rows]
     means = [row[metric["mean"]] for row in rows]
-    lower_errors = [row[metric["mean"]] - row[metric["lower"]] for row in rows]
-    upper_errors = [row[metric["upper"]] - row[metric["mean"]] for row in rows]
-    ax.errorbar(vehicles, means, yerr = [lower_errors, upper_errors],
-        color = metric["color"], marker = "o", markersize = 5, linewidth = 1.8, capsize = 4)
+    lower_bounds = [row[metric["lower"]] for row in rows]
+    upper_bounds = [row[metric["upper"]] for row in rows]
+    lower_errors = [mean_value - lower_value for mean_value, lower_value in zip(means, lower_bounds)]
+    upper_errors = [upper_value - mean_value for mean_value, upper_value in zip(means, upper_bounds)]
+
+    ax.fill_between(fleet_sizes, lower_bounds, upper_bounds, color=metric["color"], alpha=0.18, label="Confidence interval")
+    ax.errorbar(fleet_sizes, means, yerr=[lower_errors, upper_errors], fmt="-o", color=metric["color"], markersize=6, linewidth=1.8, elinewidth=2.0, capsize=6, capthick=2.0, label="Mean")
+
+    if metric["percent"]:
+        ax.yaxis.set_major_formatter(PercentFormatter(1.0))
+    else:
+        ax.ticklabel_format(axis="y", style="plain", useOffset=False)
+
     ax.set_title(metric["title"])
     ax.set_xlabel("Number of Odyssey vehicles")
     ax.set_ylabel(metric["ylabel"])
-    ax.set_xticks(vehicles)
+    ax.set_xticks(fleet_sizes)
     ax.grid(True, alpha=0.3)
+    ax.legend()
 
     if metric["percent"]:
         ax.set_ylim(0.0, 1.0)
