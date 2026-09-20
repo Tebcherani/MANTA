@@ -67,10 +67,8 @@ SimOrchestratorNode::SimOrchestratorNode() : rclcpp::Node("sim_orchestrator") {
             for (const std::string &vehicle_id : vehicle_ids_) {
                 const std::string ready_topic = "/" + vehicle_id + "/ready";
                 auto subscription = create_subscription<std_msgs::msg::Bool>(
-                    ready_topic, startup_qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {
-                        vehicle_states_.at(vehicle_id).ready = msg->data;
-                        check_all_vehicles_initialized();
-                });
+                    ready_topic, startup_qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_vehicle_ready(msg, vehicle_id);}
+                );
                 ready_subs_.push_back(subscription);
             }
 
@@ -78,36 +76,13 @@ SimOrchestratorNode::SimOrchestratorNode() : rclcpp::Node("sim_orchestrator") {
             for (const std::string &vehicle_id : vehicle_ids_) {
                 const std::string result_topic = "/" + vehicle_id + "/step_result";
                 auto subscription = create_subscription<manta_interfaces::msg::SimStepResult>(
-                    result_topic, step_qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
-                        VehicleState &state = vehicle_states_.at(vehicle_id);
-                        handle_step_result(msg, vehicle_id, state.active, state.step_complete);
-                });
+                    result_topic, step_qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {handle_step_result(msg, vehicle_id);}
+                );
                 step_result_subs_.push_back(subscription);
             }
 
-            whale_call_processed_sub_ = create_subscription<manta_interfaces::msg::WhaleCallProcessed>("/sim/whales/call_processed", 100,
-                [this](const manta_interfaces::msg::WhaleCallProcessed::SharedPtr message) {
-                    if (!waiting_for_whale_call_processing_) {
-                        RCLCPP_WARN(get_logger(), "Ignored unexpected whale-call acknowledgement.");
-                        return;
-                    }
-
-                    if (
-                        message->whale_id != next_whale_call_.whale_id ||
-                        message->cycle != next_whale_call_.cycle ||
-                        std::fabs(message->sim_time - next_whale_call_.sim_time) > 1.0e-9
-                    ) {
-                        RCLCPP_WARN(get_logger(), "Ignored acknowledgement for unexpected whale call %s at cycle %llu.",
-                            message->whale_id.c_str(), static_cast<unsigned long long>(message->cycle)
-                        );
-                        return;
-                    }
-
-                    waiting_for_whale_call_processing_ = false;
-
-                    // Only search for the next call after every vehicle has evaluated this one.
-                    request_next_whale_call(message->sim_time);
-                }
+            whale_call_processed_sub_ = create_subscription<manta_interfaces::msg::WhaleCallProcessed>(
+                "/sim/whales/call_processed", 100, [this](const manta_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {handle_whale_call_processed(msg);}
             );
 
             // ----------------------------------------------------------------- 
@@ -191,31 +166,8 @@ void SimOrchestratorNode::request_next_whale_call(double after_time) {
             // Request the first call strictly after the event we just handled.
             request->after_time = after_time;
 
-            next_whale_call_client_->async_send_request(request, [this](rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {
-                    const auto response = future.get();
-
-                    if (!response->available) {
-                        next_whale_call_available_ = false;
-                        publish_current_step();
-                        return;
-                    }
-
-                    next_whale_call_ = response->call;
-                    next_whale_call_available_ = true;
-
-                    // More than one call can occur during one physics timestep.
-                    // Vehicles have already reached the end of that timestep, so publish any remaining calls from it before advancing again.
-                    if (next_whale_call_.sim_time <= sim_state_.sim_time) {
-                        next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<std::uint64_t>(sim_state_.current_cycle - 1) : 0;
-
-                        publish_whale_call(next_whale_call_);
-                        next_whale_call_available_ = false;
-                        waiting_for_whale_call_processing_ = true;
-                        return;
-                    }
-
-                    publish_current_step();
-                }
+            next_whale_call_client_->async_send_request(
+                request, [this](rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {handle_next_whale_call_response(future);}
             );
         }
 
@@ -349,70 +301,6 @@ void SimOrchestratorNode::check_all_step_results_received() {
             publish_current_step();
         }
 
-void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id, bool &vehicle_active, bool &step_complete) {
-            // Error handling
-            if (msg->vehicle_id != expected_vehicle_id) {
-                RCLCPP_WARN(get_logger(), "Ignored step result from unexpected vehicle '%s' on the %s topic.", msg->vehicle_id.c_str(), expected_vehicle_id.c_str());
-                return;
-            }
-
-            const std::uint64_t first_cycle = static_cast<std::uint64_t>(sim_state_.current_cycle);
-            const std::uint64_t last_cycle = first_cycle + static_cast<std::uint64_t>(current_batch_steps_) - 1;
-
-            // Terminal results may occur partway through a batch.
-            if (msg->completed_cycle < first_cycle || msg->completed_cycle > last_cycle) {
-                RCLCPP_WARN(get_logger(), "Ignored result from %s for cycle %llu; expected cycle %llu through %llu.", msg->vehicle_id.c_str(),
-                    static_cast<unsigned long long>(msg->completed_cycle),
-                    static_cast<unsigned long long>(first_cycle),
-                    static_cast<unsigned long long>(last_cycle)
-                );
-                return;
-            }
-
-            // A running vehicle must have completed the entire batch.
-            if (msg->status == manta_interfaces::msg::SimStepResult::RUNNING && msg->completed_cycle != last_cycle) {
-                RCLCPP_WARN(get_logger(), "Ignored incomplete batch result from %s at cycle %llu; expected cycle %llu.", msg->vehicle_id.c_str(),
-                    static_cast<unsigned long long>(msg->completed_cycle),
-                    static_cast<unsigned long long>(last_cycle)
-                );
-                return;
-            }
-
-            if (step_complete) {
-                RCLCPP_WARN(get_logger(), "Ignored duplicate result from %s for cycle %llu.", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle));
-                return;
-            }
-
-            if (msg->status == manta_interfaces::msg::SimStepResult::ERROR) {
-                RCLCPP_ERROR(get_logger(), "Vehicle %s failed during cycle %llu: %s", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), msg->detail.c_str());
-                rclcpp::shutdown();
-                return;
-            }
-
-            // Mission status handling
-            if (msg->status == manta_interfaces::msg::SimStepResult::MISSION_COMPLETE) {
-                RCLCPP_INFO(get_logger(), "Vehicle %s completed its mission during cycle %llu.", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle));
-                vehicle_active = false;
-                step_complete = true;
-                check_all_step_results_received();
-                return;
-            }
-
-            if (msg->status == manta_interfaces::msg::SimStepResult::ABORTED) {
-                RCLCPP_WARN(get_logger(), "Vehicle %s aborted its mission during cycle %llu: %s", msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), msg->detail.c_str());                
-                vehicle_active = false;
-                step_complete = true;
-                check_all_step_results_received();
-                return;
-            }
-
-            // Step for this vehicle is complete
-            step_complete = true;
-
-            // Check if all vehicles have completed this step
-            check_all_step_results_received();
-        }
-
 void SimOrchestratorNode::request_simulation_shutdown(bool failed) {            
             simulation_failed_ = failed;
             std_msgs::msg::Bool shutdown_message;
@@ -423,10 +311,8 @@ void SimOrchestratorNode::request_simulation_shutdown(bool failed) {
 
             // Allow the reliable shutdown message time to reach the vehicle nodes before stopping the orchestrator's ROS context.
             shutdown_timer_ = create_wall_timer(
-                std::chrono::milliseconds(500), [this]() {
-                    shutdown_timer_->cancel(); 
-                    rclcpp::shutdown();
-            });
+                std::chrono::milliseconds(500), [this]() {handle_shutdown_timer();}
+            );
         }
 
 

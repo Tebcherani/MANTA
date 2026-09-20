@@ -38,17 +38,18 @@ private:
         bool step_complete = false;
     };
 
+    // Callbacks
+    void handle_next_whale_call_response(rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future);
+    void handle_shutdown_timer();
+    void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id);
+    void handle_vehicle_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
+    void handle_whale_call_processed(const manta_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
+
     void request_next_whale_call(double after_time);
     void publish_whale_call(const manta_interfaces::msg::WhaleCall &call);
     void check_all_vehicles_initialized();
     void publish_current_step();
     void check_all_step_results_received();
-    void handle_step_result(
-        const manta_interfaces::msg::SimStepResult::SharedPtr msg,
-        const std::string &expected_vehicle_id,
-        bool &vehicle_active,
-        bool &step_complete
-    );
     void request_simulation_shutdown(bool failed = false);
 
     bool simulation_started_ = false;
