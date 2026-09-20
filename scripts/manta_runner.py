@@ -13,7 +13,7 @@ from paths import ROOT, CONFIG_PATH, DOCKER_COMPOSE_PATH, ENV_PATH
 def main() -> int:
     args = parse_args()
 
-    if args.command == "down": run_down()
+    if args.command == "down": return run_down()
     if args.command == "review": return run_review(plot=args.plot)
 
     try:
