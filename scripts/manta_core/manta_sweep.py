@@ -37,17 +37,16 @@ def generate_fleet_config(sim_config: dict, fleet_size: int) -> tuple[dict, Path
     return fleet_config, fleet_config_path
 
 
-def load_completed_sweep_results() -> dict[int, dict[str, str | int]]:
-    """Load existing sweep results, keyed by completed fleet size."""
+def load_completed_sweep_results() -> dict[int, SweepResult]:
+    """Load completed fleet results as SweepResult instances."""
 
     if not SWEEP_SUMMARY_PATH.is_file(): return {}
-    with SWEEP_SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file: rows = list(csv.DictReader(file))
 
-    for row in rows:
-        row["fleet_size"] = int(row["fleet_size"])
-        row["realizations"] = int(row["realizations"])
+    with SWEEP_SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+        results = [SweepResult.from_csv_row(row) for row in reader]
 
-    return {row["fleet_size"]: row for row in rows}
+    return {result.fleet_size: result for result in results}
 
 
 def prepare_fleet_experiment(sim_config: dict, fleet_size: int) -> tuple[dict, Path]:
@@ -79,7 +78,7 @@ def record_fleet_result(fleet_size: int, fleet_dir: Path, monte_carlo_config: Mo
     experiment_results = list(load_completed_results(fleet_dir / "summary.csv", monte_carlo_config.random_seed).values()) 
     sweep_result = summarize_fleet_results(fleet_size, experiment_results, monte_carlo_config.confidence_level)
     completed_results[fleet_size] = sweep_result
-    sweep_rows = [asdict(result) for result in completed_results.values()]
+    sweep_rows = [asdict(completed_results[fleet_size]) for fleet_size in sorted(completed_results)]
     write_sweep_summary(SWEEP_SUMMARY_PATH, sweep_rows)
 
     return sweep_result
