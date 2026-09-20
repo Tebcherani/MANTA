@@ -76,17 +76,13 @@ WhaleNode::WhaleNode() : rclcpp::Node("whale_node"), generator_(42) {
         // ----------------------------------------------------------------- 
         // Create subscribers 
         // -----------------------------------------------------------------
+        step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
+            "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {handle_sim_step(step);}
+        );
 
-        // Advance whale positions whenever the orchestrator advances the shared simulation clock.
-        step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {
-            update_whales(*step);
-        });
-
-        shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {
-            if (!message->data) return;
-            RCLCPP_INFO(get_logger(), "Shutting down whale node.");
-            rclcpp::shutdown();
-        });
+        shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
+            "/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {handle_shutdown(message);}
+        );
 
         // ----------------------------------------------------------------- 
         // Create services
@@ -709,60 +705,6 @@ void WhaleNode::update_whales(
 
             next_whale_log_time_ += whale_sample_period_;
         }
-    }
-
-void WhaleNode::handle_get_next_call(
-        const manta_interfaces::srv::GetNextWhaleCall::Request &request,
-        manta_interfaces::srv::GetNextWhaleCall::Response &response
-    ) {
-        Whale *next_whale = nullptr;
-        double next_time =
-            std::numeric_limits<double>::infinity();
-
-        for (auto &whale : whales_) {
-            // Discard every call the orchestrator has already processed.
-            while (
-                whale.next_call_index < whale.call_times.size()
-                && whale.call_times[whale.next_call_index]
-                    <= request.after_time
-            ) {
-                ++whale.next_call_index;
-            }
-
-            // This whale has no calls remaining during the mission.
-            if (
-                whale.next_call_index
-                >= whale.call_times.size()
-            ) {
-                continue;
-            }
-
-            const double candidate_time =
-                whale.call_times[whale.next_call_index];
-
-            if (candidate_time < next_time) {
-                next_time = candidate_time;
-                next_whale = &whale;
-            }
-        }
-
-        // No whale calls remain.
-        if (next_whale == nullptr) {
-            response.available = false;
-            return;
-        }
-
-        response.available = true;
-        response.call.whale_id = next_whale->id;
-        response.call.cycle = 0;
-        response.call.sim_time = next_time;
-
-        const TrajectoryPoint call_position =
-            trajectory_at_time(*next_whale, next_time);
-
-        response.call.north = call_position.north;
-        response.call.east = call_position.east;
-        response.call.depth = next_whale->depth;
     }
 
 int main(int argc, char **argv) {

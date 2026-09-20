@@ -64,6 +64,11 @@ private:
         double starting_side;
     };
 
+    // Callbacks
+    void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response);
+    void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
+    void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr step);
+
     std::vector<TrajectoryPoint> generate_trajectory(
         double initial_north, double initial_east,
         double crossing_heading,
@@ -77,7 +82,6 @@ private:
     std::vector<double> generate_call_times(double start_time, double end_time, double call_rate_per_hour, const WhaleGroup &group);
     void initialize_whales();
     void update_whales(const manta_interfaces::msg::SimStep &step);
-    void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response);
 
     int whale_count_;
     double line_start_north_;
