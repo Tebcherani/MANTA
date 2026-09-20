@@ -59,12 +59,9 @@ OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
             // ----------------------------------------------------------------- 
             // Create subscribers
             // -----------------------------------------------------------------
-            calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>( "/sim/calendar_start_time", startup_qos, [this](const std_msgs::msg::Int64::SharedPtr msg) { 
-                calendar_start_time_ = static_cast<time_t>(msg->data);
-                calendar_start_time_received_ = true; 
-                
-                try_finish_init();  
-            });
+            calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>(
+                "/sim/calendar_start_time", startup_qos, [this](const std_msgs::msg::Int64::SharedPtr msg) {handle_calendar_start_time(msg);}
+            );
             
             startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", startup_qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
                 if (msg->data && !odyssey_initialized_) {
@@ -195,6 +192,18 @@ OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
 
             RCLCPP_INFO(get_logger(), "%s waiting for simulation startup data.", vehicle_id_.c_str());
         }
+
+/**
+ * Store the simulation's calendar start time and continue initialization.
+ * This callback runs when the orchestrator publishes the calendar timestamp used as the beginning of the simulated mission.
+ * 
+ *  @param msg ROS message containing the calendar start time as a Unix timestamp.
+ */
+void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg) {
+    calendar_start_time_ = static_cast<time_t>(msg->data);  // Convert the timestamp carried by the ROS message to the native time type.
+    calendar_start_time_received_ = true;                   // Record that this required startup value has been received.
+    try_finish_init();                                      // Complete startup if all other required initialization data is available.
+}
 
         // Destructor
 OdysseyNode::~OdysseyNode() {

@@ -21,6 +21,8 @@ class OdysseyNode : public rclcpp::Node {
         ~OdysseyNode() override;
 
     private:
+        void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
+
         void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time);
         void try_finish_init();
         bool write_final_metrics();
