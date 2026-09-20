@@ -21,7 +21,10 @@ class OdysseyNode : public rclcpp::Node {
         ~OdysseyNode() override;
 
     private:
+        // Callbacks
         void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
+        void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
+        void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr msg);
         void handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg);
         void handle_startup(const std_msgs::msg::Bool::SharedPtr msg);
 
