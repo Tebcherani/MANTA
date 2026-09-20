@@ -21,6 +21,10 @@ class OdysseyNode : public rclcpp::Node {
         ~OdysseyNode() override;
 
     private:
+        // Setup
+        void create_publishers(const rclcpp::QoS &startup_qos, const rclcpp::QoS &step_qos);
+        void create_subscribers(const rclcpp::QoS &startup_qos, const rclcpp::QoS &step_qos);
+    
         // Callbacks
         void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
         void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);

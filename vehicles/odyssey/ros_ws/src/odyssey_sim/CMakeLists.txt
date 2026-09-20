@@ -26,6 +26,7 @@ add_executable(
   odyssey_node
   src/odyssey_node.cpp
   src/odyssey_node_callbacks.cpp
+  src/odyssey_node_setup.cpp
 )
 
 # -------------------------------------------------------------------------
