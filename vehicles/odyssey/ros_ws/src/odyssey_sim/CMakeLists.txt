@@ -25,8 +25,10 @@ find_package(manta_interfaces REQUIRED)
 add_executable(
   odyssey_node
   src/odyssey_node.cpp
-  src/odyssey_node_callbacks.cpp
-  src/odyssey_node_setup.cpp
+  src/odyssey_callbacks.cpp
+  src/odyssey_interfaces.cpp
+  src/odyssey_output.cpp
+  src/odyssey_setup.cpp
 )
 
 # -------------------------------------------------------------------------

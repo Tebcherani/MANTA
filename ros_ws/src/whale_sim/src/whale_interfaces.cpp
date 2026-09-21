@@ -1,0 +1,47 @@
+#include "whale_sim/whale_node.hpp"
+
+#include <memory>
+
+/**
+ * Create publishers used by the whale node.
+ */
+void WhaleNode::create_publishers() {
+    // Publish whale ground-truth state for simulation infrastructure and review.
+    whale_states_pub_ = create_publisher<manta_interfaces::msg::WhaleStateArray>("/sim/whales/ground_truth", 10);
+}
+
+/**
+ * Create all publishers, subscribers, and services used by the whale node.
+ */
+void WhaleNode::create_ros_interfaces() {
+    create_publishers();
+    create_subscribers();
+    create_services();
+}
+
+/**
+ * Create subscriptions for simulation steps and shutdown requests.
+ */
+void WhaleNode::create_subscribers() {
+    // Receive simulation batches from the orchestrator.
+    step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
+        "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {handle_sim_step(step);}
+    );
+
+    // Receive the orchestrator's request to stop the simulation.
+    shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
+        "/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {handle_shutdown(message);}
+    );
+}
+
+/**
+ * Create services provided by the whale node.
+ */
+void WhaleNode::create_services() {
+    // Return the first scheduled whale call after a requested simulation time.
+    next_call_service_ = create_service<manta_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call", [this](
+        const std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Request> request,
+        std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Response> response) {
+        handle_get_next_call(*request, *response);
+    });
+}

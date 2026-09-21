@@ -1,0 +1,68 @@
+#include "sim_orchestrator/sim_orchestrator_node.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iomanip>
+
+extern "C" {
+    #include "odyssey_sim.h"
+}
+
+/**
+ * Select and publish the next batch of simulation cycles.
+ *
+ * The normal configured batch size is shortened when the mission is near completion or when a scheduled whale call occurs within the batch.
+ */
+void SimOrchestratorNode::publish_current_step() {
+    manta_interfaces::msg::SimStep step;
+
+    // Describe the first cycle, starting time, and physics timestep of the batch that the vehicle simulators are about to process.
+    step.current_cycle = static_cast<std::uint64_t>(sim_state_.current_cycle);
+    step.sim_time = sim_state_.sim_time;
+    step.timestep = sim_config_.timestep;
+
+    // Use the configured maximum batch size unless fewer simulation cycles remain.
+    const int remaining_cycles = sim_config_.num_cycles - sim_state_.current_cycle;
+    int batch_steps = std::min(steps_per_message_, remaining_cycles);
+
+    // Shorten the batch if it would pass the next scheduled whale call.
+    current_batch_reaches_whale_call_ = false;
+    if (next_whale_call_available_) {
+        // Calculate how many simulated seconds remain before the next scheduled whale call.
+        const double time_until_call = next_whale_call_.sim_time - sim_state_.sim_time;
+
+        if (time_until_call > 0.0) {
+            // Convert the remaining time to a number of physics steps. Every published batch must contain at least one step.
+            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call / sim_config_.timestep)));
+
+            // If the call occurs within the normal batch, shorten the batch so it ends at the call.
+            if (steps_until_call <= batch_steps) {
+                batch_steps = steps_until_call;
+                current_batch_reaches_whale_call_ = true;
+            }
+        }
+    }
+
+    // Send the selected number of internal physics steps to every vehicle simulator.
+    current_batch_steps_ = batch_steps;
+    step.step_count = static_cast<std::uint32_t>(batch_steps);
+    step.control_period = static_cast<std::uint64_t>(sim_config_.control_period);
+    step.world.gravity = world_state_->gravity;
+    step.world.magnetic_north = world_state_->magnetic_north;
+    step.world.magnetic_east = world_state_->magnetic_east;
+    step.world.magnetic_down = world_state_->magnetic_down;
+    step.world.seawater_density = world_state_->seawater_density;
+
+    sim_step_pub_->publish(step);
+}
+
+/**
+ * Publish a whale-call event and record the exact event in the output log.
+ *
+ * @param call Whale-call event scheduled by the whale simulator.
+ */
+void SimOrchestratorNode::publish_whale_call(const manta_interfaces::msg::WhaleCall &call) {
+    whale_call_pub_->publish(call); // Publish the event for the whale-detection node.
+    whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time << ',' << call.whale_id << ',' << call.north << ',' << call.east << ',' << call.depth << '\n';   // Record the published event for simulation analysis and review.
+}

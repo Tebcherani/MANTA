@@ -1,6 +1,11 @@
 #include "sim_orchestrator/sim_orchestrator_node.hpp"
 
+#include <chrono>
 #include <cmath>
+
+//----------------------------------------------------
+// Handle functions
+//----------------------------------------------------
 
 /**
  * Process the whale simulator's response containing the next scheduled call.
@@ -180,4 +185,154 @@ void SimOrchestratorNode::handle_whale_call_processed(const manta_interfaces::ms
 
     // Search only after every vehicle has evaluated the previous call.
     request_next_whale_call(msg->sim_time);
+}
+
+//----------------------------------------------------
+// Helper functions
+//----------------------------------------------------
+
+/**
+ * Continue simulation coordination after all active vehicles finish a batch.
+ *
+ * This method waits for every active vehicle to acknowledge the current simulation batch. Once all results have arrived, it checks for mission
+ * completion, advances the shared simulation clock, publishes any whale call reached by the batch, and otherwise publishes the next simulation batch.
+ *
+ * A vehicle marked inactive is excluded from subsequent synchronization. Simulation shutdown is requested if all vehicles finish, the configured
+ * cycle limit is reached, or the shared simulation state cannot be advanced.
+ */
+void SimOrchestratorNode::check_all_step_results_received() {
+    // Wait until every active vehicle has returned a result for the current simulation cycle.
+    for (const auto &entry : vehicle_states_) {
+        const VehicleState &state = entry.second;
+        if (state.active && !state.step_complete) return;
+    }
+
+    // Determine whether any vehicle still has an active mission.
+    bool any_vehicle_active = false;
+
+    for (const auto &entry : vehicle_states_) {
+        if (entry.second.active) {
+            any_vehicle_active = true;
+            break;
+        }
+    }
+
+    // End the simulation when every vehicle mission has completed.
+    if (!any_vehicle_active) {
+        RCLCPP_INFO(get_logger(), "All vehicle missions have completed.");
+        request_simulation_shutdown();
+        return;
+    }
+
+    // Use the actual published batch size because a whale-call event may have shortened the batch below the configured maximum.
+    const int completed_steps = current_batch_steps_;
+
+    // End the simulation when this batch reaches the configured cycle limit.
+    if (sim_state_.current_cycle + completed_steps >= sim_config_.num_cycles) {
+        RCLCPP_INFO(get_logger(), "Simulation completed all %d configured cycles.", sim_config_.num_cycles);
+        request_simulation_shutdown();
+        return;
+    }
+
+    // Clear vehicle acknowledgements before beginning the next batch.
+    for (auto &entry : vehicle_states_) entry.second.step_complete = false;
+
+    // Advance the shared clock through every completed native timestep.
+    for (int step = 0; step < completed_steps; ++step) {
+        if (!update_sim_state(&sim_state_, sim_config_.timestep)) {
+            RCLCPP_ERROR(get_logger(), "Failed to advance the simulation state.");
+            request_simulation_shutdown(true);
+            return;
+        }
+    }
+
+    // If the shortened batch reached a whale call, publish the event before allowing the simulation to continue.
+    if (current_batch_reaches_whale_call_) {
+        next_whale_call_.cycle = static_cast<std::uint64_t>(sim_state_.current_cycle - 1);
+
+        publish_whale_call(next_whale_call_);
+
+        next_whale_call_available_ = false;
+        current_batch_reaches_whale_call_ = false;
+        waiting_for_whale_call_processing_ = true;
+        return;
+    }
+
+    // The pending call was farther away than one maximum-sized batch. Continue toward the already known event without requesting it again.
+    publish_current_step();
+}
+
+/**
+ * Start coordinated simulation stepping once every vehicle is ready.
+ *
+ * This method may be called whenever a vehicle publishes a readiness update. It returns until every configured vehicle has completed initialization.
+ * Once all vehicles are ready, it marks the simulation as started and requests the first scheduled whale call.
+ */
+void SimOrchestratorNode::check_all_vehicles_initialized() {
+    // Prevent startup from being triggered more than once.
+    if (simulation_started_) return;
+
+    // Wait until every configured vehicle reports that it is ready.
+    for (const auto &entry : vehicle_states_) {
+        const VehicleState &state = entry.second;
+        if (!state.ready) return;
+    }
+
+    // Mark coordinated startup as complete.
+    simulation_started_ = true;
+    RCLCPP_INFO(get_logger(), "All %zu vehicles are initialized.", vehicle_states_.size());
+    
+    // Obtain the first whale call before selecting the first simulation batch.
+    request_next_whale_call(sim_state_.sim_time);
+}
+
+/**
+ * Request the first scheduled whale call after a given simulation time.
+ *
+ * The request is sent asynchronously so the orchestrator can continue processing ROS events while the whale node determines the next call.
+ * If the scheduling service is unavailable, the simulation is stopped with an error.
+ *
+ * @param after_time Simulation time after which the requested call must occur.
+ */
+void SimOrchestratorNode::request_next_whale_call(double after_time) {
+    // Wait briefly for the whale-call scheduling service to become available.
+    if (!next_whale_call_client_->wait_for_service(std::chrono::seconds(5))) {
+        RCLCPP_ERROR(get_logger(), "Whale-call scheduling service is unavailable.");
+        request_simulation_shutdown(true);
+        return;
+    }
+
+    // Request the first call strictly after the supplied simulation time.
+    auto request = std::make_shared<manta_interfaces::srv::GetNextWhaleCall::Request>();
+    request->after_time = after_time;
+
+    // Forward the asynchronous response to the corresponding callback.
+    next_whale_call_client_->async_send_request(
+        request, [this](rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {handle_next_whale_call_response(future);}
+    );
+}
+
+/**
+ * Request an orderly shutdown of every simulation node.
+ *
+ * The shutdown message is published before stopping the orchestrator's ROS context. A short timer gives the reliable message time to reach the vehicle,
+ * whale, and detection nodes.
+ *
+ * @param failed true if the simulation is stopping because of an error; otherwise, false.
+ */
+void SimOrchestratorNode::request_simulation_shutdown(bool failed) {            
+    // Preserve the final simulation outcome for main() to report.    
+    simulation_failed_ = failed;
+    
+    // Notify every simulation node that it should shut down.
+    std_msgs::msg::Bool shutdown_message;
+    shutdown_message.data = true;
+
+    RCLCPP_INFO(get_logger(), "Requesting shutdown of all simulation nodes.");
+    shutdown_pub_->publish(shutdown_message);
+
+    // Delay local shutdown briefly so the published message can reach all subscribers before the orchestrator stops its ROS context.    
+    shutdown_timer_ = create_wall_timer(
+        std::chrono::milliseconds(500), [this]() {handle_shutdown_timer();}
+    );
 }

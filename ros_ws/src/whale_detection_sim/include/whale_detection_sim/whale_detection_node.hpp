@@ -6,37 +6,65 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
+
 #include "manta_interfaces/msg/vehicle_state.hpp"
 #include "manta_interfaces/msg/whale_call.hpp"
 #include "manta_interfaces/msg/whale_call_processed.hpp"
 #include "manta_interfaces/msg/whale_detection.hpp"
-
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/bool.hpp"
-
 
 class WhaleDetectionNode : public rclcpp::Node {
 public:
     WhaleDetectionNode();
 
 private:
+    // ---------------------------------------------------------------------
+    // Functions
+    // ---------------------------------------------------------------------
+
+    // Setup
+    void load_config();
+    void open_detection_log();
+
+    // ROS interface setup
+    void create_ros_interfaces();
+    void create_publishers();
+    void create_subscribers();
+
+    // Callbacks
     void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
     void handle_vehicle_state(const manta_interfaces::msg::VehicleState::SharedPtr message, const std::string &vehicle_id);
     void handle_whale_call(const manta_interfaces::msg::WhaleCall::SharedPtr call);
 
+    // Detections
     void try_process_pending_call();
 
+    // ---------------------------------------------------------------------
+    // Variables
+    // ---------------------------------------------------------------------
+
+    // Configuration
     std::vector<std::string> vehicle_ids_;
     double detection_range_ = 500.0;
 
+    // Simulation
     bool pending_call_available_ = false;
-    manta_interfaces::msg::WhaleCall pending_call_;
     std::unordered_map<std::string, manta_interfaces::msg::VehicleState> latest_vehicle_states_;
+    manta_interfaces::msg::WhaleCall pending_call_;
+
+    // Output
     std::ofstream detection_log_;
 
+    // ---------------------------------------------------------------------
+    // ROS interfaces
+    // ---------------------------------------------------------------------
+
+    // Publishers
     rclcpp::Publisher<manta_interfaces::msg::WhaleDetection>::SharedPtr detection_pub_;
     rclcpp::Publisher<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr processed_pub_;
 
+    // Subscribers
     rclcpp::Subscription<manta_interfaces::msg::WhaleCall>::SharedPtr whale_call_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
     std::vector<rclcpp::Subscription<manta_interfaces::msg::VehicleState>::SharedPtr> vehicle_state_subs_;

@@ -8,6 +8,10 @@ extern "C" {
     #include "world_sim.h"
 }
 
+//----------------------------------------------------
+// Handle functions
+//----------------------------------------------------
+
 /**
  * Store the simulation's calendar start time and continue initialization.
  *
@@ -180,4 +184,47 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
     odyssey_initialized_ = true;                                                                    // Record successful initialization.
     RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
     try_finish_init();                                                                              // Complete startup if the required time values have also arrived.
+}
+
+//----------------------------------------------------
+// Helper functions
+//----------------------------------------------------
+
+/**
+ * Complete staged Odyssey initialization when all required startup data is available.
+ *
+ * Initialization occurs incrementally because the native Odyssey simulator, initial simulation time, and calendar start time arrive through separate
+ * startup operations and ROS messages. This method safely returns until the required state is available, initializes the native simulation clock, starts
+ * the Odyssey simulator, and finally notifies the orchestrator that the vehicle is ready.
+ *
+ * @throws std::runtime_error If the native simulation time cannot be initialized or the Odyssey simulator cannot be started.
+ */
+void OdysseyNode::try_finish_init() {
+    if (!odyssey_initialized_) return;
+    if (!sim_time_received_) return;
+
+    // Initialize the native Odyssey simulation clock once.
+    if (!sim_time_initialized_) {
+        if (!update_odyssey_sim_time(sim_time_)) throw std::runtime_error("Failed to initialize " + vehicle_id_ + " simulation time.");
+        sim_time_initialized_ = true;
+        RCLCPP_INFO(get_logger(), "Initialized '%s' simulation time.", vehicle_id_.c_str());
+    }
+
+    if (!calendar_start_time_received_) return;
+
+    // Start the native Odyssey simulator once all startup data is available.
+    if (!odyssey_sim_started_) {
+        if (!start_odyssey_sim(calendar_start_time_)) throw std::runtime_error("Failed to start " + vehicle_id_ + " simulator.");
+        odyssey_sim_started_ = true;
+        RCLCPP_INFO(get_logger(), "Started '%s' simulator.", vehicle_id_.c_str());
+    }
+
+    // Notify the orchestrator once the vehicle is fully initialized.
+    if (!ready_published_) {
+        std_msgs::msg::Bool ready_message;        
+        ready_message.data = true;
+        ready_pub_->publish(ready_message);
+        ready_published_ = true;
+        RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str()); 
+    }
 }

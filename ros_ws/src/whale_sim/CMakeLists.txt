@@ -21,7 +21,9 @@ find_package(std_msgs REQUIRED)
 add_executable(
   whale_node
   src/whale_node.cpp
-  src/whale_node_callbacks.cpp
+  src/whale_callbacks.cpp
+  src/whale_interfaces.cpp
+  src/whale_setup.cpp
 )
 
 # -------------------------------------------------------------------------
