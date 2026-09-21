@@ -20,11 +20,10 @@ extern "C" {
 OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
     load_config();
     create_ros_interfaces();
-    
+
     RCLCPP_INFO(get_logger(), "%s waiting for simulation startup data.", vehicle_id_.c_str());
 }
 
-        // Destructor
 OdysseyNode::~OdysseyNode() {
             RCLCPP_INFO(get_logger(), "Shutting down vehicle '%s'.", vehicle_id_.c_str());
             
