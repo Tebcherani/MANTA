@@ -68,6 +68,15 @@ private:
         double starting_side;
     };
 
+    // Geometric properties of the picket line expressed in local north-east coordinates.
+    struct LineGeometry {
+        double length;
+        double along_north;
+        double along_east;
+        double perpendicular_north;
+        double perpendicular_east;
+    };
+
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
@@ -80,6 +89,7 @@ private:
     void seed_generator();
     void validate_config() const;
 
+    LineGeometry compute_line_geometry() const;
     std::vector<TrajectoryPoint> generate_trajectory(
         double initial_north, double initial_east,
         double crossing_heading,
@@ -89,7 +99,6 @@ private:
         const WhaleGroup &group
     );
     std::vector<double> generate_call_times(double start_time, double end_time, double call_rate_per_hour, const WhaleGroup &group);
-    
 
     // ROS interfaces
     void create_ros_interfaces();

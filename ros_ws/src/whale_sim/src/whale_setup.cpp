@@ -5,6 +5,23 @@
 #include <filesystem>
 #include <stdexcept>
 
+WhaleNode::LineGeometry WhaleNode::compute_line_geometry() const {
+    // Express the picket line as a north-east displacement vector.    
+    const double line_north = line_end_north_ - line_start_north_;
+    const double line_east = line_end_east_ - line_start_east_;
+    const double line_length = std::hypot(line_north, line_east);
+
+    // A zero-length line cannot define parallel or perpendicular directions.
+    if (line_length <= 0.0) throw std::runtime_error("Picket-line start and end points must be different.");
+
+    // Normalize the displacement to obtain the direction along the line.
+    const double along_north = line_north / line_length;
+    const double along_east = line_east / line_length;
+
+    // Rotate the along-line unit vector 90 degrees counterclockwise to obtain the perpendicular unit vector in north-east coordinates.
+    return {line_length, along_north, along_east, -along_east, along_north};
+}
+
 /**
  * Generate one whale's scheduled call times while it remains active.
  */
@@ -51,8 +68,7 @@ std::vector<double> WhaleNode::generate_call_times(double start_time, double end
 }
 
 /**
- * Generate one whale's complete movement trajectory through the monitored
- * corridor.
+ * Generate one whale's complete movement trajectory through the monitored corridor.
  */
 std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(
     double initial_north, double initial_east,
@@ -205,18 +221,8 @@ void WhaleNode::initialize_whale_groups(double line_length) {
  * Initialize every whale's position, movement trajectory, and call schedule.
  */
 void WhaleNode::initialize_whales() {
-    // Calculate picket-line geometry and initialize shared whale groups.
-    const double line_north = line_end_north_ - line_start_north_;
-    const double line_east = line_end_east_ - line_start_east_;
-    const double line_length = std::hypot(line_north, line_east);
-
-    initialize_whale_groups(line_length);
-
-    // Create unit vectors parallel and perpendicular to the picket line.
-    const double along_north = line_north / line_length;
-    const double along_east = line_east / line_length;
-    const double perpendicular_north = -along_east;
-    const double perpendicular_east = along_north;
+    const LineGeometry line = compute_line_geometry();  // Calculate picket-line geometry and initialize shared whale groups.
+    initialize_whale_groups(line.length);
 
     // Create distributions used to generate individual whale properties.
     std::uniform_real_distribution<double> speed(speed_min_, speed_max_);
@@ -238,7 +244,7 @@ void WhaleNode::initialize_whales() {
 
         do {
             crossing_distance = group.crossing_distance + position_offset(generator_);
-        } while (crossing_distance < 0.0 || crossing_distance > line_length);
+        } while (crossing_distance < 0.0 || crossing_distance > line.length);
 
         // Draw an activation time near the group's start time while keeping it
         // inside the mission.
@@ -249,20 +255,20 @@ void WhaleNode::initialize_whales() {
         } while (whale_start_time < 0.0 || whale_start_time > mission_duration_);
 
         // Convert the along-line crossing distance into north/east coordinates.
-        const double crossing_north = line_start_north_ + along_north * crossing_distance;
-        const double crossing_east = line_start_east_ + along_east * crossing_distance;
+        const double crossing_north = line_start_north_ + line.along_north * crossing_distance;
+        const double crossing_east = line_start_east_ + line.along_east * crossing_distance;
 
         // Place the whale on its group's assigned side of the monitored line.
-        const double initial_north = crossing_north + group.side * perpendicular_north * start_distance_;
-        const double initial_east = crossing_east + group.side * perpendicular_east * start_distance_;
+        const double initial_north = crossing_north + group.side * line.perpendicular_north * start_distance_;
+        const double initial_east = crossing_east + group.side * line.perpendicular_east * start_distance_;
 
         // Generate this whale's individual speed and calling rate.
         const double whale_speed = speed(generator_);
         const double whale_call_rate = call_rate(generator_);
 
         // Point the initial velocity from the starting side toward the line.
-        const double crossing_velocity_north = -group.side * perpendicular_north * whale_speed;
-        const double crossing_velocity_east = -group.side * perpendicular_east * whale_speed;
+        const double crossing_velocity_north = -group.side * line.perpendicular_north * whale_speed;
+        const double crossing_velocity_east = -group.side * line.perpendicular_east * whale_speed;
         const double crossing_heading = std::atan2(crossing_velocity_east, crossing_velocity_north);
 
         // Store the whale's fixed configuration and initial lifecycle state.
@@ -278,7 +284,7 @@ void WhaleNode::initialize_whales() {
 
         // Generate movement first because the final trajectory time determines
         // when the whale leaves the monitored corridor.
-        whale.trajectory = generate_trajectory(initial_north, initial_east, crossing_heading, whale_speed, whale_start_time, perpendicular_north, perpendicular_east, group);
+        whale.trajectory = generate_trajectory(initial_north, initial_east, crossing_heading, whale_speed, whale_start_time, line.perpendicular_north, line.perpendicular_east, group);
         const double whale_end_time = whale.trajectory.back().time;
 
         // Generate calls only while the whale is inside the monitored corridor.
@@ -313,8 +319,8 @@ void WhaleNode::load_config() {
     // Whale movement.
     speed_min_ = declare_parameter<double>("speed_min", 1.0);
     speed_max_ = declare_parameter<double>("speed_max", 2.0);
-    turn_interval_ = declare_parameter<double>("turn_interval", 60.0);
-    heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);
+    turn_interval_ = declare_parameter<double>("turn_interval", 60.0);              // Update whale heading every turn_interval s
+    heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);  // Controls how strongly the whale’s next heading resembles its current heading
     heading_std_degrees_ = declare_parameter<double>("heading_std_degrees", 15.0);
 
     // Whale calling behavior.
