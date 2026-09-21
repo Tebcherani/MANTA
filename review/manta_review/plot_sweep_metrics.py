@@ -73,8 +73,7 @@ def plot_metric(ax, rows: list[dict[str, float]], metric: dict) -> None:
     lower_errors = [mean_value - lower_value for mean_value, lower_value in zip(means, lower_bounds)]
     upper_errors = [upper_value - mean_value for mean_value, upper_value in zip(means, upper_bounds)]
 
-    ax.fill_between(fleet_sizes, lower_bounds, upper_bounds, color=metric["color"], alpha=0.18, label="Confidence interval")
-    ax.errorbar(fleet_sizes, means, yerr=[lower_errors, upper_errors], fmt="-o", color=metric["color"], markersize=6, linewidth=1.8, elinewidth=2.0, capsize=6, capthick=2.0, label="Mean")
+    ax.errorbar(fleet_sizes, means, yerr=[lower_errors, upper_errors], fmt="o", color=metric["color"], markersize=6, elinewidth=2.0, capsize=6, capthick=2.0, label="Mean")
 
     if metric["percent"]:
         ax.yaxis.set_major_formatter(PercentFormatter(1.0))
