@@ -74,28 +74,11 @@ private:
 
     // Setup
     void load_config();
-    void validate_config() const;
-    void open_whale_log();
-    void seed_generator();
-    
-    // ROS interfaces
-    void create_ros_interfaces();
-    void create_publishers();
-    void create_subscribers();
-    void create_services();
-    
-    // Callbacks
-    void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response);
-    void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
-    void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr step);
-
-    // Simulation
-    TrajectoryPoint trajectory_at_time(const Whale &whale, double time) const;
-    void update_whales(const manta_interfaces::msg::SimStep &step);
-
-    // Whales
     void initialize_whale_groups(double line_length);
     void initialize_whales();
+    void open_whale_log();
+    void seed_generator();
+    void validate_config() const;
 
     std::vector<TrajectoryPoint> generate_trajectory(
         double initial_north, double initial_east,
@@ -107,6 +90,21 @@ private:
     );
     std::vector<double> generate_call_times(double start_time, double end_time, double call_rate_per_hour, const WhaleGroup &group);
     
+
+    // ROS interfaces
+    void create_ros_interfaces();
+    void create_publishers();
+    void create_subscribers();
+    void create_services();
+    
+    // Callbacks
+    void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response);
+    void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
+    void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr step);
+
+    TrajectoryPoint trajectory_at_time(const Whale &whale, double time) const;
+    void update_whales(const manta_interfaces::msg::SimStep &step);
+
     // ---------------------------------------------------------------------
     // Variables
     // ---------------------------------------------------------------------
