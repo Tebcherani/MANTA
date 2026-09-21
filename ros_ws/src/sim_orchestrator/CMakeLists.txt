@@ -22,6 +22,7 @@ add_executable(
   sim_orchestrator_node
   src/sim_orchestrator_node.cpp
   src/sim_orchestrator_callbacks.cpp
+  src/sim_orchestrator_setup.cpp
 )
 
 # -------------------------------------------------------------------------

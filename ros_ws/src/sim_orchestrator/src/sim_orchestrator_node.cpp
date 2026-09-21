@@ -15,135 +15,19 @@ extern "C" {
 }
 
 SimOrchestratorNode::SimOrchestratorNode() : rclcpp::Node("sim_orchestrator") {            
-            std_msgs::msg::Int64 calendar_start_time_message;
-            std_msgs::msg::Float64 sim_time_message;
-            std_msgs::msg::Bool startup_message;
+    RCLCPP_INFO(get_logger(), "Initializing simulation orchestrator.");
 
-            RCLCPP_INFO(get_logger(), "Initializing simulation orchestrator.");
+    load_vehicle_config();
+    open_whale_call_log();
+    create_ros_interfaces();
+    open_simulation_log();
+    initialize_simulation_config();
+    initialize_simulation_state();
 
-            vehicle_ids_ = declare_parameter<std::vector<std::string>>("vehicle_ids", std::vector<std::string>{});
-            if (vehicle_ids_.empty()) throw std::runtime_error("The vehicle_ids parameter must contain at least one vehicle.");
-            for (const std::string &vehicle_id : vehicle_ids_) {
-                const bool inserted = vehicle_states_.emplace(vehicle_id, VehicleState{}).second;
-                if (!inserted) throw std::runtime_error("Duplicate vehicle ID: " + vehicle_id);
-            }
+    RCLCPP_INFO(get_logger(), "Simulation orchestrator initialized and ready.");
 
-            RCLCPP_INFO(get_logger(), "Configured %zu simulation vehicles.", vehicle_ids_.size());
-
-            // Open the standard results file containing every published whale call.
-            const std::string data_directory = declare_parameter<std::string>("data_directory", "/odyssey/output/Data");
-            std::filesystem::create_directories(data_directory);
-            whale_call_log_.open(data_directory + "/whale_calls.csv", std::ios::out | std::ios::trunc);
-            if (!whale_call_log_.is_open()) throw std::runtime_error("Failed to open whale call results file.");
-            whale_call_log_ << "cycle,sim_time,whale_id,north,east,depth\n";
-
-            // ----------------------------------------------------------------- 
-            // QoS 
-            // -----------------------------------------------------------------
-            // Startup messages should be retained for late subscribers.
-            rclcpp::QoS startup_qos(1);
-            startup_qos.transient_local();
-            startup_qos.reliable();
-
-            // Retain the current step or result until its subscriber has discovered the publisher.
-            rclcpp::QoS step_qos(1);
-            step_qos.transient_local();
-            step_qos.reliable();
-
-            // ----------------------------------------------------------------- 
-            // Create publishers 
-            // -----------------------------------------------------------------
-            calendar_start_time_pub_ = create_publisher<std_msgs::msg::Int64>("/sim/calendar_start_time", startup_qos);
-            startup_ready_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/startup_ready", startup_qos);
-            sim_step_pub_ = create_publisher<manta_interfaces::msg::SimStep>("/sim/step", step_qos);
-            sim_time_pub_ = create_publisher<std_msgs::msg::Float64>("/sim/time", startup_qos);
-            shutdown_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/shutdown", startup_qos);
-            whale_call_pub_ = create_publisher<manta_interfaces::msg::WhaleCall>( "/sim/whales/calls", 100);
-
-            // ----------------------------------------------------------------- 
-            // Create subscribers
-            // -----------------------------------------------------------------
-            // Ready subscription
-            for (const std::string &vehicle_id : vehicle_ids_) {
-                const std::string ready_topic = "/" + vehicle_id + "/ready";
-                auto subscription = create_subscription<std_msgs::msg::Bool>(
-                    ready_topic, startup_qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_vehicle_ready(msg, vehicle_id);}
-                );
-                ready_subs_.push_back(subscription);
-            }
-
-            // Step result subscription
-            for (const std::string &vehicle_id : vehicle_ids_) {
-                const std::string result_topic = "/" + vehicle_id + "/step_result";
-                auto subscription = create_subscription<manta_interfaces::msg::SimStepResult>(
-                    result_topic, step_qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {handle_step_result(msg, vehicle_id);}
-                );
-                step_result_subs_.push_back(subscription);
-            }
-
-            whale_call_processed_sub_ = create_subscription<manta_interfaces::msg::WhaleCallProcessed>(
-                "/sim/whales/call_processed", 100, [this](const manta_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {handle_whale_call_processed(msg);}
-            );
-
-            // ----------------------------------------------------------------- 
-            // Create clients
-            // -----------------------------------------------------------------
-            next_whale_call_client_ = create_client<manta_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call");
-
-            // ----------------------------------------------------------------- 
-            // Open sim log
-            // -----------------------------------------------------------------
-            if (open_sim_log()) RCLCPP_INFO(get_logger(), "Simulation log opened.");
-            else throw std::runtime_error("Failed to open simulation log.");
-
-            // ----------------------------------------------------------------- 
-            // Init sim config
-            // -----------------------------------------------------------------
-            if (init_sim_config(&sim_config_)) RCLCPP_INFO(get_logger(), "Simulation configuration initialized.");
-            else throw std::runtime_error("Failed to initialize simulation configuration.");
-
-            sim_config_.timestep = declare_parameter<double>("timestep", sim_config_.timestep);
-            sim_config_.control_period = static_cast<int>(declare_parameter<std::int64_t>("control_period", sim_config_.control_period));
-            sim_config_.num_cycles = static_cast<int>(declare_parameter<std::int64_t>("max_cycles", sim_config_.num_cycles));
-            steps_per_message_ = static_cast<int>(declare_parameter<std::int64_t>("steps_per_message", 1));
-
-            if (steps_per_message_ < 1) throw std::runtime_error("steps_per_message must be at least 1.");
-
-            // ----------------------------------------------------------------- 
-            // Init world state
-            // -----------------------------------------------------------------
-            if (init_world_sim()) RCLCPP_INFO(get_logger(), "World simulation initialized.");
-            else throw std::runtime_error("Failed to initialize world simulation.");
-            world_state_ = get_world_state();
-            if (world_state_ == nullptr) throw std::runtime_error("Failed to get world state.");
-            
-            // ----------------------------------------------------------------- 
-            // Init sim state
-            // -----------------------------------------------------------------
-            if (init_sim_state(&sim_state_)) RCLCPP_INFO(get_logger(), "Simulation state initialized.");
-            else throw std::runtime_error("Failed to initialize simulation state.");
-
-            RCLCPP_INFO(get_logger(), "Simulation orchestrator initialized and ready.");
-
-            // ----------------------------------------------------------------- 
-            // Publish that Odysseys can begin init
-            // -----------------------------------------------------------------
-            startup_message.data = true;
-            startup_ready_pub_->publish(startup_message);
-            RCLCPP_INFO(get_logger(), "Ready to begin Odyssey initialization.");
-
-            // ----------------------------------------------------------------- 
-            // Publish sim time
-            // -----------------------------------------------------------------
-            sim_time_message.data = sim_state_.sim_time;
-            sim_time_pub_->publish(sim_time_message);
-
-            // ----------------------------------------------------------------- 
-            // Publish calendar start time
-            // -----------------------------------------------------------------
-            calendar_start_time_message.data = static_cast<std::int64_t>(sim_state_.calendar_start_time);
-            calendar_start_time_pub_->publish(calendar_start_time_message);
-        }
+    publish_startup_state();
+}
 
 SimOrchestratorNode::~SimOrchestratorNode() {
             RCLCPP_INFO(get_logger(), "Shutting down simulation orchestrator.");

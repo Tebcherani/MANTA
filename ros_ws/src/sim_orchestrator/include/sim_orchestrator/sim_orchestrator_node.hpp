@@ -45,6 +45,21 @@ private:
     void handle_vehicle_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
     void handle_whale_call_processed(const manta_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
 
+    // Configuration
+    void initialize_simulation_config();
+    void initialize_simulation_state();
+    void load_vehicle_config();
+    void open_simulation_log();
+    void open_whale_call_log();
+    void publish_startup_state();
+
+    // ROS interface setup
+    void create_clients();
+    void create_publishers(const rclcpp::QoS &qos);
+    rclcpp::QoS create_qos() const;
+    void create_ros_interfaces();
+    void create_subscribers(const rclcpp::QoS &qos);
+
     void request_next_whale_call(double after_time);
     void publish_whale_call(const manta_interfaces::msg::WhaleCall &call);
     void check_all_vehicles_initialized();
@@ -58,19 +73,16 @@ private:
     bool current_batch_reaches_whale_call_ = false;
     bool waiting_for_whale_call_processing_ = false;
 
-    std::vector<std::string> vehicle_ids_;
-    std::unordered_map<std::string, VehicleState> vehicle_states_;
-
-    sim_config_t sim_config_;
-    sim_state_t sim_state_;
-    const world_state_t *world_state_ = nullptr;
-
     int steps_per_message_ = 1;
     int current_batch_steps_ = 0;
 
+    std::vector<std::string> vehicle_ids_;
+    std::unordered_map<std::string, VehicleState> vehicle_states_;
+    sim_config_t sim_config_;
+    sim_state_t sim_state_;
+    const world_state_t *world_state_ = nullptr;
     manta_interfaces::msg::WhaleCall next_whale_call_;
     std::ofstream whale_call_log_;
-
     rclcpp::TimerBase::SharedPtr shutdown_timer_;
 
     rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr calendar_start_time_pub_;
@@ -82,7 +94,6 @@ private:
 
     std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
     std::vector<rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr> step_result_subs_;
-
     rclcpp::Subscription<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;
 
     rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedPtr next_whale_call_client_;

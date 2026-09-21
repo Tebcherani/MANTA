@@ -21,19 +21,21 @@ class OdysseyNode : public rclcpp::Node {
         ~OdysseyNode() override;
 
     private:
-        // Setup
-        void create_publishers(const rclcpp::QoS &qos);
-        rclcpp::QoS create_qos() const;
-        void create_ros_interfaces();
-        void create_subscribers(const rclcpp::QoS &qos);
-        void load_config();
-    
         // Callbacks
         void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
         void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
         void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr msg);
         void handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg);
         void handle_startup(const std_msgs::msg::Bool::SharedPtr msg);
+
+        // Configuration
+        void load_config();
+
+        // ROS interface setup
+        void create_publishers(const rclcpp::QoS &qos);
+        rclcpp::QoS create_qos() const;
+        void create_ros_interfaces();
+        void create_subscribers(const rclcpp::QoS &qos);
 
         void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time);
         void try_finish_init();
