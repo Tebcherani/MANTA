@@ -22,8 +22,11 @@ class OdysseyNode : public rclcpp::Node {
 
     private:
         // Setup
-        void create_publishers(const rclcpp::QoS &startup_qos, const rclcpp::QoS &step_qos);
-        void create_subscribers(const rclcpp::QoS &startup_qos, const rclcpp::QoS &step_qos);
+        void create_publishers(const rclcpp::QoS &qos);
+        rclcpp::QoS create_qos() const;
+        void create_ros_interfaces();
+        void create_subscribers(const rclcpp::QoS &qos);
+        void load_config();
     
         // Callbacks
         void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
