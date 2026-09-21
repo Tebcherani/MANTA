@@ -77,6 +77,13 @@ private:
         double perpendicular_east;
     };
 
+    // Initial whale position and direction of travel toward the picket line.
+    struct WhaleInitialState {
+        double north;
+        double east;
+        double heading;
+    };
+
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
@@ -84,11 +91,13 @@ private:
     // Setup
     void load_config();
     void initialize_whale_groups(double line_length);
+    void initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const LineGeometry &line, const WhaleGroup &group);
     void initialize_whales();
     void open_whale_log();
     void seed_generator();
     void validate_config() const;
 
+    WhaleInitialState compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double crossing_distance, double speed) const;
     LineGeometry compute_line_geometry() const;
     std::vector<TrajectoryPoint> generate_trajectory(
         double initial_north, double initial_east,
@@ -98,7 +107,13 @@ private:
         double perpendicular_north, double perpendicular_east,
         const WhaleGroup &group
     );
+    Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time, double call_rate) const;
     std::vector<double> generate_call_times(double start_time, double end_time, double call_rate_per_hour, const WhaleGroup &group);
+    std::size_t get_group_index_for_whale(std::size_t whale_index) const;
+    const WhaleGroup &get_group_for_whale(std::size_t whale_index) const;
+    double sample_crossing_distance(const WhaleGroup &group, double line_length);
+    double sample_start_time(const WhaleGroup &group);
+    double sample_speed();
 
     // ROS interfaces
     void create_ros_interfaces();
@@ -156,8 +171,8 @@ private:
     // Whale movement
     double heading_correlation_;
     double heading_std_degrees_;
-    double speed_min_;
-    double speed_max_;
+    double speed_mean_;
+    double speed_std_;
     double turn_interval_;
 
     // ---------------------------------------------------------------------
