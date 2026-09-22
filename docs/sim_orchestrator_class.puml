@@ -1,0 +1,118 @@
+@startuml
+title SimOrchestratorNode Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+skinparam shadowing false
+
+class SimOrchestratorNode <<ROS node>> {
+    ' Attributes
+
+    - simulation_started_ : bool
+    - simulation_failed_ : bool
+    
+    - next_whale_call_available_ : bool
+    - current_batch_reaches_whale_call_ : bool
+    - waiting_for_whale_call_processing_ : bool
+
+    - steps_per_message_ : int
+    - current_batch_steps_ : int
+
+    - sim_config_ : sim_config_t
+    - sim_state_ : sim_state_t
+    - world_state_ : world_state_t*
+    - vehicle_ids_ : vector<string>
+    - vehicle_states_ : map<string, VehicleState>
+
+    - next_whale_call_ : WhaleCall
+    - whale_call_log_ : ofstream
+
+    ' Operations
+
+    - create_ros_interfaces() : void
+    - initialize_simulation_config() : void
+    - initialize_simulation_state() : void
+    - load_vehicle_config() : void
+    - open_whale_call_log() : void
+    - open_simulation_log() : void
+
+    - handle_next_whale_call_response(future : GetNextWhaleCallFuture) : void
+    - handle_shutdown_timer() : void
+    - handle_step_result(msg : SimStepResult, expected_vehicle_id : string) : void
+    - handle_vehicle_ready(msg : bool, vehicle_id : string) : void
+    - handle_whale_call_processed(msg : WhaleCallProcessed) : void
+
+    - publish_current_step() : void
+    - publish_startup_state() : void
+    - publish_whale_call(call : WhaleCall) : void
+
+    - check_all_step_results_received() : void
+    - check_all_vehicles_initialized() : void
+
+    - request_next_whale_call(after_time : double) : void 
+    - request_simulation_shutdown(failed : bool) : void  
+
+    + simulation_failed() : bool
+}
+
+together {
+    class sim_config_t <<C structure>> {
+        + timestep : double
+        + num_cycles : int
+        + control_period : int
+    }
+
+    class sim_state_t <<C structure>> {
+        + initialized : int
+        + current_cycle : int
+        + sim_time : double 
+        + calendar_start_time : time_t
+    }
+
+    class "VehicleState" <<C++ structure>> {        
+        + ready : bool
+        + active : bool
+        + step_complete : bool
+    }
+
+    class world_state_t <<C structure>> {
+        + gravity : double
+        + magnetic_north : double 
+        + magnetic_east : double
+        + magnetic_down : double 
+        + seawater_density : double
+    }
+}
+
+together {
+    class SimStepResult <<ROS message>> {
+        + RUNNING : int
+        + MISSION_COMPLETE : int
+        + ABORTED : int
+        + ERROR : int
+        --
+        + vehicle_id : string
+        + completed_cycle : int
+        + status : int
+        + detail : string
+    }
+
+    class WhaleCall <<ROS message>> {
+        --
+        + whale_id : string
+        + cycle : int
+        + sim_time : float
+        + north : float 
+        + east : float
+        + depth : float
+    }
+
+    class WhaleCallProcessed <<ROS message>> {
+        --
+        + whale_id : string
+        + cycle : int
+        + sim_time : float
+    }
+}
+
+@enduml

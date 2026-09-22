@@ -104,14 +104,7 @@ std::vector<double> WhaleNode::generate_call_times(double start_time, double end
 /**
  * Generate one whale's complete movement trajectory through the monitored corridor.
  */
-std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(
-    double initial_north, double initial_east,
-    double crossing_heading,
-    double speed,
-    double start_time,
-    double perpendicular_north, double perpendicular_east,
-    const WhaleGroup &group
-) {
+std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time, double perpendicular_north, double perpendicular_east, const WhaleGroup &group) {
     std::vector<TrajectoryPoint> trajectory;
 
     // Calculate the individual AR(1) heading-error innovation scale.
@@ -323,11 +316,11 @@ void WhaleNode::initialize_whales() {
  */
 void WhaleNode::load_config() {
     // Scenario size and picket-line geometry.
-    whale_count_ = declare_parameter<int>("count", 5);
+    whale_count_ = declare_parameter<int>("count", 46);
     line_start_north_ = declare_parameter<double>("line_start_north", 0.0);
-    line_start_east_ = declare_parameter<double>("line_start_east", -1000.0);
+    line_start_east_ = declare_parameter<double>("line_start_east", -63000.0);
     line_end_north_ = declare_parameter<double>("line_end_north", 0.0);
-    line_end_east_ = declare_parameter<double>("line_end_east", 1000.0);
+    line_end_east_ = declare_parameter<double>("line_end_east", 63000.0);
     start_distance_ = declare_parameter<double>("start_distance", 2000.0);
     whale_depth_ = declare_parameter<double>("depth", 20.0);
     mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
