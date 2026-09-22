@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     liblapack-dev \
     libblas-dev \
     ros-dev-tools \
+    ros-jazzy-rqt-graph \
     python3-colcon-common-extensions \
     && rm -rf /var/lib/apt/lists/*
 

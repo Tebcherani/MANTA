@@ -1,0 +1,69 @@
+@startuml
+title OdysseyNodeClass Diagram
+
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+skinparam shadowing false
+
+class OdysseyNode <<ROS node>> {
+    ' Attributes
+
+    - log_decimation_configured_ : bool
+    - metrics_written_ : bool
+    - mission_finished_ : bool
+
+    - calendar_start_time_received_ : bool
+    - odyssey_initialized_ : bool
+    - odyssey_sim_started_ : bool
+    - ready_published_ : bool
+    - sim_time_initialized_ : bool
+    - sim_time_received_ : bool
+
+    - calendar_start_time_ : time_t
+    - sim_time_ : double
+
+    - output_sample_period_ double
+
+    - vehicle_id_ : string
+    - data_directory_ : string
+
+    ' Operations
+
+    - create_ros_interfaces() : void
+    - load_config() : void
+    - try_finish_init() : void
+
+    - handle_calendar_start_time(msg : int) : void
+    - handle_shutdown(msg : bool) : void
+    - handle_sim_step(msg : SimStep) : void
+    - handle_sim_time(msg : float) : void
+    - handle_startup(msg : bool) : void
+
+    - publish_vehicle_state() : void
+    - write_final_metrics() : void
+}
+
+together {
+    class SimStep <<ROS message>> {
+        --
+        + current_cycle : int
+        + sim_time : float
+        + timestep : float
+        + step_count : int
+        + control_period : int
+        + world : WorldState
+    }
+
+    class WorldState <<ROS message>> {
+        + gravity : float
+        + magnetic_north : float
+        + magnetic_east : float
+        + magnetic_down : float
+        + seawater_density : float
+    }
+}
+
+OdysseyNode ..> SimStep
+SimStep *-- WorldState
+
+@enduml

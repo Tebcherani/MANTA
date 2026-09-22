@@ -33,8 +33,8 @@ private:
     void create_subscribers();
 
     // Callbacks
-    void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
-    void handle_vehicle_state(const manta_interfaces::msg::VehicleState::SharedPtr message, const std::string &vehicle_id);
+    void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
+    void handle_vehicle_state(const manta_interfaces::msg::VehicleState::SharedPtr msg, const std::string &vehicle_id);
     void handle_whale_call(const manta_interfaces::msg::WhaleCall::SharedPtr call);
 
     // Detections
@@ -46,7 +46,7 @@ private:
 
     // Configuration
     std::vector<std::string> vehicle_ids_;
-    double detection_range_ = 500.0;
+    double detection_range_ = 11000;
 
     // Simulation
     bool pending_call_available_ = false;

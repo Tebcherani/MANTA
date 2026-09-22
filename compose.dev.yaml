@@ -16,8 +16,10 @@ services:
 
     environment:
       ROS_DOMAIN_ID: 1
+      DISPLAY: ${DISPLAY}
 
     volumes:
       - type: bind
         source: .
         target: /odyssey
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw

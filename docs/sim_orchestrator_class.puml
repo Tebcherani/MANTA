@@ -115,4 +115,13 @@ together {
     }
 }
 
+SimOrchestratorNode *-- sim_config_t
+SimOrchestratorNode *-- sim_state_t
+SimOrchestratorNode *-- VehicleState
+SimOrchestratorNode --> world_state_t
+
+SimOrchestratorNode ..> SimStepResult
+SimOrchestratorNode *-- WhaleCall
+SimOrchestratorNode ..> WhaleCallProcessed
+
 @enduml
