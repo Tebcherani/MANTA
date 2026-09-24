@@ -1,0 +1,38 @@
+@startuml
+title OdysseyDetectionNode Constructor Activity Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam svgLinkTarget _self
+
+start
+
+partition "WhaleDetectionNode()" {
+    :Load configuration;
+    note right
+        - Vehicle IDs
+        - Detection range: 11000
+    end note
+
+    :Open detection log;
+
+    partition "Create ROS interfaces" {
+        :Create QoS configuration;
+
+        :Create publisher;
+        note right
+            - Whale call processed
+        end note
+
+        :Create subscribers;
+        note right
+            - Vehicle state (vehicle ID, time, location) (for every vehicle)
+            - Whale call (whale ID, time, location)
+            - Request shutdown
+        end note
+    }
+}
+
+stop
+
+@enduml
