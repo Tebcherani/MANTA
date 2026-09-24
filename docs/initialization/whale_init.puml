@@ -1,0 +1,172 @@
+@startuml
+title WhaleNode Constructor Activity Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam svgLinkTarget _self
+
+start
+
+partition "WhaleNode()" {
+    :Load whale-model configuration;
+    note right
+        - Mission geometry and duration
+        - Whale count, distance, grouping, movement, and calling
+    end note
+
+    :Open whale state log;
+    :Seed random number generator;
+
+    partition "Initialize whales" {
+        :Compute picket line geometry;
+
+        partition "Place whales in groups" {
+            :Calculate number of groups;
+            :Calculate number of heading changes;
+            :Calculate number of calls;
+            :Create probability distributions;
+
+            partition "Generate whale groups" {
+                :Generate groups' crossing location;
+                note right: Uni(0, 126km)
+
+                :Generate groups' starting side;
+                note right: Bernoulli(0.5)
+
+                :Generate groups' start time;
+                note right: Uni(0, 3 days)
+
+                :Generate groups' heading changes;
+                note right
+                    Gaussian AR(1) process
+                    - rho = 0.95
+                    - update interval = 60 s
+                    - stationary STD = heading_std_degrees_
+                    - initial error = 0 degrees
+                end note
+
+                :Generate groups' call rate;
+                note right
+                    Mean-corrected lognormal AR(1) process
+                    - correlation = call_activity_correlation_
+                    - update interval = call_activity_interval_
+                    - log-scale SD = group_log_rate_std_
+                    - expected multiplier = 1
+                end note
+            }
+        }
+
+        partition "Create individual whales" {
+            :Create distributions;
+
+            while (More whales to create?) is (yes)
+                :Select whale group;
+                :Sample crossing distance;
+                note right: Normal(0, 1000km)
+
+                :Sample start time;
+                note right: Normal(0, 10 min)
+
+                :Sample swimming speed;
+                note right: Normal(1.5, 0.2m/s)
+
+                :Sample baseline call rate;
+                note right: Uni(4.8, 8.0 calls/hr)
+
+                :Compute initial position and heading;
+                :Create whale and assign properties;
+
+                partition "Generate movement trajectory" {
+                    :Calculate individual AR(1) heading innovation scale;
+                    note right
+                        - Heading STD = 15 deg
+                        - Heading correlation = 0.95
+                    end note
+
+                    :Calculate group and individual\nheading weights;
+                    note right
+                        - Shared heading fraction = 0.75
+                        - Group weight = sqrt(0.75)
+                        - Individual weight = sqrt(0.25)
+                    end note
+
+                    :Initialize time and position;
+
+                    while (Trajectory complete?) is (no)
+                        :Calculate heading;
+                        note right: - Shared heading fraction = 0.75
+
+                        :Calculate velocity;
+                        :Store next trajectory point;
+
+                        if (Mission duration reached?) then (yes)
+                            break
+                        else (no)
+                            :Determine next heading update;
+                            :Move using current velocity until next update time;
+                            :Calculate distance from picket line;
+
+                            if (Whale exited corridor?) then (yes)
+                                :Store final position with zero velocity;
+                                break
+                            else (no)
+                                :Update individual AR(1) heading error;
+                            endif
+                        endif
+                    endwhile (yes)
+                }
+
+                :Determine corridor exit time;
+
+                partition "Generate whale call times" {
+                    :Set interval start to whale's start time;
+
+                    while (Whale remains inside corridor?) is (yes)
+                        :Select group's call rate multiplier for current interval;
+                        :Calculate end time of interval;
+                        :Calculate interval duration;
+
+                        :Calculate call rate;
+                        note right: baseline individual call rate x group activity multiplier
+
+                        :Sample number of calls in current interval;
+                        note right: Poisson(call rate × interval duration)
+
+                        :Distribute num of calls uniformly throughout the interval;
+                        note right: Uni(interval start time, interval end time)
+                    endwhile (no)
+                }
+
+                :Initialize published position\nand velocity;
+                :Store whale in population;
+            endwhile (no)
+        }
+    }
+
+    partition "Create ROS interfaces" {
+        :Create publisher;
+        note right
+            - Whale states
+        end note
+
+        :Create subscribers;
+        note right
+            - Simulation step
+            - Shutdown request
+        end note
+
+        :Create service;
+        note right
+            - Get next whale call
+        end note
+    }
+
+    #A8DFA8:Whale population initialized;
+    note right
+        Log the number of initialized whales.
+    end note
+}
+
+stop
+
+@enduml
