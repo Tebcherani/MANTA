@@ -14,7 +14,7 @@ void WhaleDetectionNode::load_config() {
     if (vehicle_ids_.empty()) throw std::runtime_error("vehicle_ids must contain at least one vehicle.");
 
     // Load the maximum three-dimensional whale-detection distance.
-    detection_range_ = declare_parameter<double>("detection_range", 500.0);  
+    detection_range_ = declare_parameter<double>("detection_range", 11000.0);  
     if (detection_range_ <= 0.0) throw std::runtime_error("detection_range must be greater than zero.");
 }
 
