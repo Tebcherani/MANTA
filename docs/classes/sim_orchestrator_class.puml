@@ -15,7 +15,7 @@ class SimOrchestratorNode <<ROS node>> {
     - current_batch_reaches_whale_call_ : bool
     - waiting_for_whale_call_processing_ : bool
 
-    - steps_per_message_ : int
+    - steps_per_msg: int
     - current_batch_steps_ : int
 
     - sim_config_ : sim_config_t

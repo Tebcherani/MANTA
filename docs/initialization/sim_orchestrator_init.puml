@@ -1,0 +1,52 @@
+@startuml
+title SimOrchestratorNode Constructor Activity Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam svgLinkTarget _self
+
+start
+
+partition "SimOrchestratorNode()" {
+    :Load list of vehicles;    
+    :Open whale call log;
+    partition "Create ROS interfaces" {
+        :Create QoS configuration;
+        
+        :Create publishers;
+        note right
+            calendar_start_time_pub_
+            sim_step_pub_
+            sim_time_pub_
+            startup_ready_pub_
+            shutdown_pub_
+            whale_call_pub_
+        end note
+
+        :Create subscribers;
+        note right
+            ready_subs_
+            step_result_subs_
+            whale_call_processed_sub_
+        end note
+
+        :Create service clients;
+        note right
+            next_whale_call_client_
+        end note
+
+        :Create timers;
+        note right
+            shutdown_timer_
+        end note
+    }
+    
+    :Open simulation log;
+    :Initialize simulation;
+    :Initialize world;
+    :Publish that Odysseys can begin initialization;
+}
+
+stop
+
+@enduml
