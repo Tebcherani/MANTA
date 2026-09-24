@@ -1,0 +1,39 @@
+@startuml
+title OdysseyNode Constructor Activity Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam svgLinkTarget _self
+
+start
+
+partition "OdysseyNode()" {
+    :Load vehicle configuration;
+    note right
+        - Vehicle ID
+    end note
+
+    partition "Create ROS interfaces" {
+        :Create QoS configuration;
+
+        :Create publishers;
+        note right
+            - Vehicle init complete
+            - Sim step complete
+            - Vehicle state (vehicle ID, time, location)
+        end note
+
+        :Create subscribers;
+        note right
+            - Calendar start time
+            - Sim init complete
+            - Advance sim by a specified num of cycles
+            - Sim time
+            - Shutdown request
+        end note
+    }
+}
+
+stop
+
+@enduml
