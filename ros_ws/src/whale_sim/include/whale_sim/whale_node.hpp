@@ -117,7 +117,6 @@ private:
 
     // ROS interfaces
     void create_ros_interfaces();
-    void create_publishers();
     void create_subscribers();
     void create_services();
     
@@ -178,9 +177,6 @@ private:
     // ---------------------------------------------------------------------
     // ROS interfaces
     // ---------------------------------------------------------------------
-
-    // Publishers
-    rclcpp::Publisher<manta_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
 
     // Services
     rclcpp::Service<manta_interfaces::srv::GetNextWhaleCall>::SharedPtr next_call_service_;

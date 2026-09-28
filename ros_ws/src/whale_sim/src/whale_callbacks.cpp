@@ -151,9 +151,6 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     }
 
     // Build and publish the ground-truth state at the completed batch time.
-    manta_interfaces::msg::WhaleStateArray message;
-    message.cycle = completed_cycle;
-
     for (const auto &whale : whales_) {
         manta_interfaces::msg::WhaleState state;
         state.whale_id = whale.id;
@@ -164,10 +161,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         state.velocity_north = whale.velocity_north;
         state.velocity_east = whale.velocity_east;
         state.velocity_down = 0.0;
-        message.whales.push_back(state);
     }
-
-    whale_states_pub_->publish(message);
 
     // Record every requested output time crossed by this batch.
     while (next_whale_log_time_ <= batch_end_time + 1.0e-9) {

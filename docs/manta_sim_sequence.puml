@@ -1,0 +1,129 @@
+@startuml
+title MANTA ROS 2 Simulation Sequence Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Launch system" as Launcher
+participant "SimOrchestratorNode" as Orchestrator
+participant "WhaleNode" as Whale
+participant "OdysseyNode\n(one per vehicle)" as Odyssey
+participant "OdysseyDetectionNode" as Detection
+
+== Node construction ==
+
+Launcher -> Orchestrator : Construct node
+activate Orchestrator
+Orchestrator -> Orchestrator : Load vehicle list
+Orchestrator -> Orchestrator : Create ROS interfaces
+Orchestrator -> Orchestrator : Initialize simulation
+Orchestrator -> Orchestrator : Initialize world state
+deactivate Orchestrator
+
+Launcher -> Whale : Construct node
+activate Whale
+Whale -> Whale : Load whale configuration
+Whale -> Whale : Generate whale groups
+Whale -> Whale : Create whales
+Whale -> Whale : Generate whale trajectories
+Whale -> Whale : Generate whale call times
+Whale -> Whale : Create ROS interfaces
+deactivate Whale
+
+Launcher -> Odyssey : Construct each vehicle node
+activate Odyssey
+Odyssey -> Odyssey : Load vehicle configuration
+Odyssey -> Odyssey : Create ROS interfaces
+deactivate Odyssey
+
+Launcher -> Detection : Construct node
+activate Detection
+Detection -> Detection : Load detection configuration
+Detection -> Detection : Create ROS interfaces
+deactivate Detection
+
+== Vehicle initialization ==
+
+Orchestrator ->> Odyssey : Startup signal
+activate Odyssey
+Odyssey -> Odyssey : Initialize vehicle simulation
+deactivate Odyssey
+
+Orchestrator ->> Odyssey : Initial simulation time
+activate Odyssey
+Odyssey -> Odyssey : Initialize vehicle simulation time
+deactivate Odyssey
+
+Orchestrator ->> Odyssey : Calendar start time
+activate Odyssey
+Odyssey -> Odyssey : Initialize mission
+Odyssey -> Odyssey : Initialize vehicle
+Odyssey -> Odyssey : Initialize world state
+Odyssey ->> Orchestrator : Vehicle ready
+deactivate Odyssey
+
+activate Orchestrator
+Orchestrator -> Orchestrator : Wait for all vehicles
+Orchestrator -> Orchestrator : Start simulation
+
+== Simulation loop ==
+
+    loop Until simulation or all missions are complete
+
+    Orchestrator -> Whale : Request next whale call
+    deactivate Orchestrator
+
+    activate Whale
+    Whale -> Whale : Find first call after current time
+    Whale --> Orchestrator : Next whale call
+    deactivate Whale
+
+    Orchestrator -> Orchestrator : Store next whale call
+
+    Orchestrator ->> Whale : Advance by the specified number of simulation cycles
+    activate Whale
+    Whale -> Whale : Update whale positions and lifecycle
+    deactivate Whale
+
+    Orchestrator ->> Odyssey : Advance by the specified number of simulation cycles
+    activate Odyssey
+    Odyssey -> Odyssey : Update world state
+    Odyssey -> Odyssey : Advance vehicle dynamics
+
+    Odyssey ->> Detection : Vehicle state
+    activate Detection
+
+    Odyssey ->> Orchestrator : Simulation step complete signal
+    deactivate Odyssey
+
+    Orchestrator -> Orchestrator : Record result for each vehicle
+    Orchestrator -> Orchestrator : Wait for all vehicles
+
+    Orchestrator -> Detection : Whale call
+    Detection -> Detection : Wait for all vehicle states
+    Detection -> Detection : Evaluate detection for each vehicle
+    Detection ->> Orchestrator : Whale call processed signal
+    deactivate Detection
+
+    Orchestrator -> Whale : Request next whale call
+    activate Whale
+    Whale -> Whale : Find first call after current time
+    Whale --> Orchestrator : Next whale call
+    deactivate Whale
+
+    Orchestrator -> Orchestrator : Store following whale call
+end
+
+== Shutdown ==
+
+Orchestrator ->> Whale : Shutdown request
+Orchestrator ->> Odyssey : Shutdown request
+activate Odyssey
+Odyssey -> Odyssey : Write final vehicle metrics
+deactivate Odyssey
+
+Orchestrator ->> Detection : Shutdown request
+
+@enduml

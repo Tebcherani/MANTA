@@ -3,18 +3,9 @@
 #include <memory>
 
 /**
- * Create publishers used by the whale node.
- */
-void WhaleNode::create_publishers() {
-    // Publish whale ground-truth state for simulation infrastructure and review.
-    whale_states_pub_ = create_publisher<manta_interfaces::msg::WhaleStateArray>("/sim/whales/ground_truth", 10);
-}
-
-/**
  * Create all publishers, subscribers, and services used by the whale node.
  */
 void WhaleNode::create_ros_interfaces() {
-    create_publishers();
     create_subscribers();
     create_services();
 }

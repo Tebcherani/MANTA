@@ -13,7 +13,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SimStep.msg"
   "msg/SimStepResult.msg"
   "msg/WhaleState.msg"
-  "msg/WhaleStateArray.msg"
   "msg/WhaleCall.msg"
   "msg/WorldState.msg"
   "msg/VehicleState.msg"

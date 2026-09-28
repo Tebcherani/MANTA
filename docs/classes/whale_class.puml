@@ -169,11 +169,6 @@ together {
         + velocity_down : float 
     }
 
-    class WhaleStateArray <<ROS message>> {
-        + cycle : int 
-        + whales : WhaleState[]
-    }
-
     class WorldState <<ROS message>> {
         + gravity : float
         + magnetic_north : float
@@ -184,8 +179,6 @@ together {
 }
 
 WhaleNode ..> SimStep
-WhaleNode ..> WhaleStateArray 
-WhaleStateArray *-- WhaleState 
 SimStep *-- WorldState 
 WhaleNode *-- WhaleGroup 
 WhaleNode *-- Whale 
