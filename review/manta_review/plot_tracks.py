@@ -196,16 +196,15 @@ def plot_whale_tracks(ax) -> int:
     return plotted
 
 
-def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]], vehicle_colors: dict[str, str]) -> int:
-    """Plot undetected calls in one color and detected calls in the detecting vehicle's color."""
+def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]]) -> int:
+    """Plot only undetected whale calls as red dots."""
 
     if not WHALE_CALLS_PATH.is_file():
         print(f"No whale call file found: {WHALE_CALLS_PATH}")
         return 0
 
-    undetected_north = []
-    undetected_east = []
-    detected_by_vehicle = defaultdict(lambda: ([], []))
+    north = []
+    east = []
     call_count = 0
 
     try:
@@ -230,27 +229,17 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
                     continue
 
                 call_count += 1
-                detections = detections_by_call.get((cycle, whale_id), [])
 
-                if detections:
-                    for vehicle_id, _, _ in detections:
-                        detected_north, detected_east = detected_by_vehicle[vehicle_id]
-                        detected_north.append(call_north)
-                        detected_east.append(call_east)
-                else:
-                    undetected_north.append(call_north)
-                    undetected_east.append(call_east)
+                if (cycle, whale_id) not in detections_by_call:
+                    north.append(call_north)
+                    east.append(call_east)
 
     except (OSError, ValueError) as error:
         print(f"Could not read whale calls: {error}")
         return 0
 
-    if undetected_north:
-        ax.scatter(undetected_east, undetected_north, color=WHALE_CALL_COLOR, marker=".", s=12, alpha=0.5, label="Undetected whale calls", zorder=5)
-
-    for vehicle_id, (north, east) in sorted(detected_by_vehicle.items()):
-        color = vehicle_colors.get(vehicle_id, "tab:blue")
-        ax.scatter(east, north, color=color, marker=".", s=20, alpha=0.9, label=f"Calls detected by {vehicle_id}", zorder=6)
+    if north:
+        ax.scatter(east, north, color=WHALE_CALL_COLOR, marker=".", s=12, alpha=0.5, label="Undetected whale calls", zorder=5)
 
     print(f"Plotting {call_count} whale calls.")
     return call_count
@@ -275,8 +264,8 @@ def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[
 
     for vehicle_id, (north, east) in sorted(detections_by_vehicle.items()):
         color = vehicle_colors.get(vehicle_id, "tab:blue")
-        ax.scatter(east, north, facecolors="none", edgecolors=color, marker="D", s=45, linewidths=1.0, label=f"{vehicle_id} detections", zorder=7)
-
+        ax.scatter(east, north, color=color, marker="D", s=45, linewidths=0.5, label=f"{vehicle_id} detections", zorder=7)
+    
     print(f"Plotting {detection_count} whale detections.")
     return detection_count
 
@@ -288,7 +277,7 @@ def main() -> int:
     fig, ax = plt.subplots(figsize=(10, 8))
     fleet_size, vehicle_colors = plot_vehicle_tracks(ax, latest)
     whale_count = plot_whale_tracks(ax)
-    call_count = plot_whale_calls(ax, detections_by_call, vehicle_colors)
+    call_count = plot_whale_calls(ax, detections_by_call)
     detection_count = plot_detection_locations(ax, detections_by_call, vehicle_colors)
 
     if (fleet_size == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
@@ -301,7 +290,8 @@ def main() -> int:
     ax.set_title(f"Vehicle and Whale Tracks — {len(detected_whales)} Whales Detected")
     ax.set_xlabel("East (m)")
     ax.set_ylabel("North (m)")
-    ax.set_aspect("equal", adjustable="datalim")
+    ax.set_aspect("auto")
+    ax.margins(x=0.03, y=0.05)
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize="small", ncols=2)
     fig.tight_layout()
