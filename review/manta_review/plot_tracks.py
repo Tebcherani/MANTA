@@ -14,6 +14,8 @@ DATA_DIR = ROOT / "output" / "Data"
 WHALE_CALLS_PATH = DATA_DIR / "whale_calls.csv"
 WHALE_DETECTIONS_PATH = DATA_DIR / "whale_detections.csv"
 WHALE_TRAJECTORY_PATH = DATA_DIR / "whales.csv"
+WHALE_COLOR = "tab:gray"
+WHALE_CALL_COLOR = "tab:red"
 
 
 def find_latest_vehicle_results() -> dict[str, Path]:
@@ -29,10 +31,11 @@ def find_latest_vehicle_results() -> dict[str, Path]:
     return latest
 
 
-def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> int:
+def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> tuple[int, dict[str, str]]:
     """Plot the latest trajectory from each Odyssey vehicle."""
 
     plotted = 0
+    vehicle_colors = {}
 
     for name, path in sorted(latest.items()):
         print(f"Plotting vehicle {name}: {path.name}")
@@ -79,53 +82,54 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> int:
 
         line, = ax.plot(east, north, linewidth=1.5, label=name, zorder=4)
         color = line.get_color()
+        vehicle_colors[name] = color
         ax.scatter(east[0], north[0], color=color, marker="o", s=40, zorder=6)  # Vehicle starting position
         ax.scatter(east[-1], north[-1], color=color, marker="s", s=40, zorder=6)    # Vehicle ending position
 
         plotted += 1
 
-    return plotted
+    return plotted, vehicle_colors
 
 
-def read_whale_detections() -> tuple[set[str], list[float], list[float]]:
-    """Read detected whale IDs and detection locations."""
+def read_whale_detections() -> tuple[set[str], dict[tuple[int, str], list[tuple[str, float, float]]]]:
+    """Read detections and group them by simulation cycle and whale ID."""
 
     detected_whales = set()
-    detection_north = []
-    detection_east = []
+    detections_by_call = defaultdict(list)
 
     if not WHALE_DETECTIONS_PATH.is_file():
         print(f"No whale detection file found: {WHALE_DETECTIONS_PATH}")
-        return detected_whales, detection_north, detection_east
+        return detected_whales, {}
 
     try:
         with WHALE_DETECTIONS_PATH.open("r", encoding="utf-8", newline="") as file:
             reader = csv.DictReader(file)
-            required = {"whale_id", "whale_north", "whale_east"}
+            required = {"cycle", "vehicle_id", "whale_id", "whale_north", "whale_east"}
 
             if not reader.fieldnames or not required.issubset(reader.fieldnames):
-                raise ValueError("whale_detections.csv must contain whale_id, whale_north, and whale_east columns.")
+                raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_id, whale_north, and whale_east columns.")
 
             for row in reader:
+                vehicle_id = row.get("vehicle_id", "")
                 whale_id = row.get("whale_id", "")
 
                 try:
+                    cycle = int(row["cycle"])
                     north = float(row["whale_north"])
                     east = float(row["whale_east"])
                 except (TypeError, ValueError):
                     continue
 
-                if not whale_id or not np.isfinite(north) or not np.isfinite(east):
+                if not vehicle_id or not whale_id or not np.isfinite(north) or not np.isfinite(east):
                     continue
 
                 detected_whales.add(whale_id)
-                detection_north.append(north)
-                detection_east.append(east)
+                detections_by_call[(cycle, whale_id)].append((vehicle_id, north, east))
 
     except (OSError, ValueError) as error:
         print(f"Could not read whale detections: {error}")
 
-    return detected_whales, detection_north, detection_east
+    return detected_whales, dict(detections_by_call)
 
 
 def read_whale_tracks(path: Path) -> dict[str, tuple[list[float], list[float]]]:
@@ -162,8 +166,8 @@ def vehicle_id(path: Path) -> str | None:
     return path.stem
 
 
-def plot_whale_tracks(ax, detected_whales: set[str]) -> int:
-    """Plot detected whales in blue and undetected whales in gray."""
+def plot_whale_tracks(ax) -> int:
+    """Plot every whale trajectory using the same color."""
 
     if not WHALE_TRAJECTORY_PATH.is_file():
         print(f"No whale trajectory file found: {WHALE_TRAJECTORY_PATH}")
@@ -176,103 +180,116 @@ def plot_whale_tracks(ax, detected_whales: set[str]) -> int:
         return 0
 
     plotted = 0
-    detected_label_used = False
-    undetected_label_used = False
+    label_used = False
 
     for whale_id, (north, east) in sorted(tracks.items()):
         if not north:
             continue
 
-        detected = whale_id in detected_whales
-
-        if detected:
-            color = "tab:blue"
-            linewidth = 1.5
-            alpha = 0.9
-            zorder = 3
-            label = None if detected_label_used else "Detected whales"
-            detected_label_used = True
-        else:
-            color = "tab:gray"
-            linewidth = 1.0
-            alpha = 0.45
-            zorder = 1
-            label = None if undetected_label_used else "Undetected whales"
-            undetected_label_used = True
-
-        print(f"Plotting whale {whale_id}: {'detected' if detected else 'undetected'}")
-        ax.plot(east, north, color=color, linestyle="--", linewidth=linewidth, alpha=alpha, label=label, zorder=zorder)
-        ax.scatter(east[0], north[0], color=color, marker="x", s=25, alpha=alpha, zorder=zorder + 1)   # Whale starting position
+        print(f"Plotting whale {whale_id}.")
+        label = None if label_used else "Whale trajectories"
+        ax.plot(east, north, color=WHALE_COLOR, linestyle="--", linewidth=1.0, alpha=0.55, label=label, zorder=1)
+        ax.scatter(east[0], north[0], color=WHALE_COLOR, marker="x", s=25, alpha=0.7, zorder=2)
+        label_used = True
         plotted += 1
 
     return plotted
 
 
-def plot_whale_calls(ax) -> int:
-    """Plot every generated whale call as a red dot."""
+def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]], vehicle_colors: dict[str, str]) -> int:
+    """Plot undetected calls in one color and detected calls in the detecting vehicle's color."""
 
     if not WHALE_CALLS_PATH.is_file():
         print(f"No whale call file found: {WHALE_CALLS_PATH}")
         return 0
 
-    north = []
-    east = []
+    undetected_north = []
+    undetected_east = []
+    detected_by_vehicle = defaultdict(lambda: ([], []))
+    call_count = 0
 
     try:
         with WHALE_CALLS_PATH.open("r", encoding="utf-8", newline="") as file:
             reader = csv.DictReader(file)
-            required = {"north", "east"}
+            required = {"cycle", "whale_id", "north", "east"}
 
             if not reader.fieldnames or not required.issubset(reader.fieldnames):
-                raise ValueError("whale_calls.csv must contain north and east columns.")
+                raise ValueError("whale_calls.csv must contain cycle, whale_id, north, and east columns.")
 
             for row in reader:
+                whale_id = row.get("whale_id", "")
+
                 try:
+                    cycle = int(row["cycle"])
                     call_north = float(row["north"])
                     call_east = float(row["east"])
                 except (TypeError, ValueError):
                     continue
 
-                if np.isfinite(call_north) and np.isfinite(call_east):
-                    north.append(call_north)
-                    east.append(call_east)
+                if not whale_id or not np.isfinite(call_north) or not np.isfinite(call_east):
+                    continue
+
+                call_count += 1
+                detections = detections_by_call.get((cycle, whale_id), [])
+
+                if detections:
+                    for vehicle_id, _, _ in detections:
+                        detected_north, detected_east = detected_by_vehicle[vehicle_id]
+                        detected_north.append(call_north)
+                        detected_east.append(call_east)
+                else:
+                    undetected_north.append(call_north)
+                    undetected_east.append(call_east)
 
     except (OSError, ValueError) as error:
         print(f"Could not read whale calls: {error}")
         return 0
 
-    if not north:
-        print("No valid whale calls found.")
-        return 0
+    if undetected_north:
+        ax.scatter(undetected_east, undetected_north, color=WHALE_CALL_COLOR, marker=".", s=12, alpha=0.5, label="Undetected whale calls", zorder=5)
 
-    print(f"Plotting {len(north)} whale calls.")
-    ax.scatter(east, north, color="tab:red", marker=".", s=12, alpha=0.5, label="Whale calls", zorder=5)
+    for vehicle_id, (north, east) in sorted(detected_by_vehicle.items()):
+        color = vehicle_colors.get(vehicle_id, "tab:blue")
+        ax.scatter(east, north, color=color, marker=".", s=20, alpha=0.9, label=f"Calls detected by {vehicle_id}", zorder=6)
 
-    return len(north)
+    print(f"Plotting {call_count} whale calls.")
+    return call_count
 
 
-def plot_detection_locations(ax, north: list[float], east: list[float]) -> int:
-    """Mark the locations where AUVs detected whale calls."""
+def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]], vehicle_colors: dict[str, str]) -> int:
+    """Mark each detection using the detecting vehicle's color."""
 
-    if not north:
+    detections_by_vehicle = defaultdict(lambda: ([], []))
+
+    for detections in detections_by_call.values():
+        for vehicle_id, north, east in detections:
+            vehicle_north, vehicle_east = detections_by_vehicle[vehicle_id]
+            vehicle_north.append(north)
+            vehicle_east.append(east)
+
+    detection_count = sum(len(north) for north, _ in detections_by_vehicle.values())
+
+    if detection_count == 0:
         print("No whale detections found.")
         return 0
 
-    print(f"Plotting {len(north)} whale detections.")
-    ax.scatter(east, north, color="tab:blue", edgecolors="white", marker="D", s=35, linewidths=0.6, label="Detections", zorder=7)
+    for vehicle_id, (north, east) in sorted(detections_by_vehicle.items()):
+        color = vehicle_colors.get(vehicle_id, "tab:blue")
+        ax.scatter(east, north, facecolors="none", edgecolors=color, marker="D", s=45, linewidths=1.0, label=f"{vehicle_id} detections", zorder=7)
 
-    return len(north)
+    print(f"Plotting {detection_count} whale detections.")
+    return detection_count
 
 
 def main() -> int:
-    detected_whales, detection_north, detection_east = read_whale_detections()
+    detected_whales, detections_by_call = read_whale_detections()
     latest = find_latest_vehicle_results()
 
     fig, ax = plt.subplots(figsize=(10, 8))
-    fleet_size = plot_vehicle_tracks(ax, latest)
-    whale_count = plot_whale_tracks(ax, detected_whales)
-    call_count = plot_whale_calls(ax)
-    detection_count = plot_detection_locations(ax, detection_north, detection_east)
+    fleet_size, vehicle_colors = plot_vehicle_tracks(ax, latest)
+    whale_count = plot_whale_tracks(ax)
+    call_count = plot_whale_calls(ax, detections_by_call, vehicle_colors)
+    detection_count = plot_detection_locations(ax, detections_by_call, vehicle_colors)
 
     if (fleet_size == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
         print("No simulation results found in output/Data.")
