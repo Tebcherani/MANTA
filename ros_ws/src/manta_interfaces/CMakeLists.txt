@@ -12,7 +12,6 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SimStep.msg"
   "msg/SimStepResult.msg"
-  "msg/WhaleState.msg"
   "msg/WhaleCall.msg"
   "msg/WorldState.msg"
   "msg/VehicleState.msg"

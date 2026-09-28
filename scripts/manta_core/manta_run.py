@@ -125,8 +125,6 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
         "line_start_east": line["start"]["east"],
         "line_end_north": line["end"]["north"],
         "line_end_east": line["end"]["east"],
-        "speed_min": movement["speed_min"],
-        "speed_max": movement["speed_max"],
         "start_distance": whales["start_distance"],
         "depth": whales["depth"],
         "mission_duration": scenario["duration"],
