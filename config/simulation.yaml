@@ -73,7 +73,7 @@ scenario:
 
   whales:
     count: 46
-    start_distance: 11000.0
+    start_distance: 25000.0
     depth: 20.0
 
     movement:
@@ -114,6 +114,12 @@ vehicles:
     fault: ""
   
   - id: auv_3
+    type: odyssey
+    mission: ./generated/missions/picket_line_auv_3.mi
+    model: ./config/vehicles/Borealis.vd
+    fault: ""
+  
+  - id: auv_4
     type: odyssey
     mission: ./generated/missions/picket_line_auv_3.mi
     model: ./config/vehicles/Borealis.vd
