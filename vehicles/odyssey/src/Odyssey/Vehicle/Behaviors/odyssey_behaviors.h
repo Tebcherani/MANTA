@@ -28,5 +28,8 @@ int assign_behavior_fcn_ptr(const char *, struct behavior *);
 int dock(struct behavior *, int, int);
 int undock(struct behavior *, int, int);
 int wiggle(struct behavior *, int, int);
+int whale_follow(struct behavior *, int, int);
+
+void set_whale_follow_target(double north, double east);
 
 #endif /* ODYSSEY_BEHAVIORS_H */

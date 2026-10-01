@@ -6,8 +6,13 @@
  * Create all publishers, subscribers, and services used by the whale node.
  */
 void WhaleNode::create_ros_interfaces() {
+    create_publishers();
     create_subscribers();
     create_services();
+}
+
+void WhaleNode::create_publishers() {
+    whale_states_pub_ = create_publisher<manta_interfaces::msg::WhaleStateArray>("/sim/whales/states", 10);
 }
 
 /**

@@ -201,7 +201,7 @@ static int behavior_axis_mask( int behavior_id )
     switch ( behavior_id )
     {
     case ACQUIRE_HEADING:
-	return AXIS_HEADING;
+	    return AXIS_HEADING;
     case ASCEND:
     case DESCEND:
     case DOCK:
@@ -215,13 +215,16 @@ static int behavior_axis_mask( int behavior_id )
     case WAYPOINT_2D:
     case WIGGLE:
     case LAUNCH:
-	return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
+	    return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
+    case PICKET_LINE_PATROL:
+    case WHALE_FOLLOW:
+        return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
     case YO_YO:
-	return AXIS_DEPTH;
+	    return AXIS_DEPTH;
     case CHIRP_FIN:
-	return AXIS_DEPTH | AXIS_HEADING;
+	    return AXIS_DEPTH | AXIS_HEADING;
     case SETMODE:
-	return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
+	    return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
     default:
 	return 0;
     }

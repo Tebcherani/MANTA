@@ -27,12 +27,27 @@ rclcpp::QoS OdysseyNode::create_qos() const {
 }
 
 /**
+ * Create reliable, non-retained QoS for live whale data.
+ *
+ * Whale detections and states describe live simulation events and therefore
+ * do not need transient-local durability.
+ */
+rclcpp::QoS OdysseyNode::create_whale_qos() const {
+    rclcpp::QoS qos(100);
+    qos.reliable();
+    qos.durability_volatile();
+
+    return qos;
+}
+
+/**
  * Create all ROS publishers and subscribers used by the Odyssey node.
  */
 void OdysseyNode::create_ros_interfaces() {
     const rclcpp::QoS qos = create_qos();
+    const rclcpp::QoS whale_qos = create_whale_qos();
     create_publishers(qos);
-    create_subscribers(qos);
+    create_subscribers(qos, whale_qos);
 }
 
 /**
@@ -43,7 +58,7 @@ void OdysseyNode::create_ros_interfaces() {
  * @param startup_qos QoS used for retained simulation-state messages.
  * @param step_qos QoS used for simulation-step messages.
  */
-void OdysseyNode::create_subscribers(const rclcpp::QoS &qos) {
+void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &whale_qos) {
     calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>(
         "/sim/calendar_start_time", qos, [this](const std_msgs::msg::Int64::SharedPtr msg) {handle_calendar_start_time(msg);}
     );
@@ -62,5 +77,13 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos) {
 
     shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
         "/sim/shutdown", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_shutdown(msg);}
+    );
+
+    whale_detection_sub_ = create_subscription<manta_interfaces::msg::WhaleDetection>(
+        "/sim/whale_detections", whale_qos, [this](const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {handle_whale_detection(msg);}
+    );
+
+    whale_states_sub_ = create_subscription<manta_interfaces::msg::WhaleStateArray>(
+        "/sim/whales/states", whale_qos, [this](const manta_interfaces::msg::WhaleStateArray::SharedPtr msg) {handle_whale_states(msg);}
     );
 }

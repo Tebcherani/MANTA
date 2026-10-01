@@ -592,3 +592,7 @@
   b_arg:                       depth(m) 0
   b_arg:                     speed(m/s) 0
   b_arg:                     capture(m) 5
+ behavior: whale_follow 22
+  b_arg:                       depth(m) 0
+  b_arg:                     speed(m/s) 0
+  b_arg:                     capture(m) 5

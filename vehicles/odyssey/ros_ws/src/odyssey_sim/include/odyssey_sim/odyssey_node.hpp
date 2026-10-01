@@ -13,6 +13,8 @@
 #include "manta_interfaces/msg/sim_step.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
 #include "manta_interfaces/msg/vehicle_state.hpp"
+#include "manta_interfaces/msg/whale_detection.hpp"
+#include "manta_interfaces/msg/whale_state_array.hpp"
 
 
 class OdysseyNode : public rclcpp::Node {
@@ -31,8 +33,9 @@ class OdysseyNode : public rclcpp::Node {
         // ROS interface setup
         void create_publishers(const rclcpp::QoS &qos);
         rclcpp::QoS create_qos() const;
+        rclcpp::QoS create_whale_qos() const;
         void create_ros_interfaces();
-        void create_subscribers(const rclcpp::QoS &qos);
+        void create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &whale_qos);
 
         // Callbacks
         void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
@@ -40,6 +43,8 @@ class OdysseyNode : public rclcpp::Node {
         void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr msg);
         void handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg);
         void handle_startup(const std_msgs::msg::Bool::SharedPtr msg);
+        void handle_whale_detection(const manta_interfaces::msg::WhaleDetection::SharedPtr msg);
+        void handle_whale_states(const manta_interfaces::msg::WhaleStateArray::SharedPtr msg);
 
         void try_finish_init();
 
@@ -71,6 +76,7 @@ class OdysseyNode : public rclcpp::Node {
         std::string vehicle_id_;
         std::string data_directory_;
         double output_sample_period_ = 2.0;
+        std::string target_whale_id_;
 
         // ---------------------------------------------------------------------
         // ROS interfaces
@@ -87,6 +93,8 @@ class OdysseyNode : public rclcpp::Node {
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sim_time_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
+        rclcpp::Subscription<manta_interfaces::msg::WhaleDetection>::SharedPtr whale_detection_sub_;
+        rclcpp::Subscription<manta_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_sub_;
 };
 
 #endif

@@ -141,18 +141,24 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     const double batch_end_time = step.sim_time + static_cast<double>(step.step_count) * step.timestep;
     const std::uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
 
-    // Update each whale from its precomputed trajectory. Absolute-time lookup keeps whale movement independent of the ROS batch size.
+    manta_interfaces::msg::WhaleStateArray msg;
+    msg.cycle = completed_cycle;
+    msg.whales.reserve(whales_.size());
+
     for (auto &whale : whales_) {
+        // Update each whale from its precomputed trajectory. Absolute-time lookup keeps whale movement independent of the ROS batch size.
         const TrajectoryPoint position = trajectory_at_time(whale, batch_end_time);
         whale.north = position.north;
         whale.east = position.east;
         whale.velocity_north = position.velocity_north;
         whale.velocity_east = position.velocity_east;
-    }
+        whale.active = batch_end_time >= whale.start_time && batch_end_time < whale.trajectory.back().time;
+        whale.complete = batch_end_time >= whale.trajectory.back().time;
 
-    // Build and publish the ground-truth state at the completed batch time.
-    for (const auto &whale : whales_) {
+        // Build and publish the ground-truth state at the completed batch time.
         manta_interfaces::msg::WhaleState state;
+        state.active = whale.active;
+        state.calling = false;
         state.whale_id = whale.id;
         state.cycle = completed_cycle;
         state.north = whale.north;
@@ -161,7 +167,10 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         state.velocity_north = whale.velocity_north;
         state.velocity_east = whale.velocity_east;
         state.velocity_down = 0.0;
+        msg.whales.push_back(state);
     }
+
+    whale_states_pub_->publish(msg);
 
     // Record every requested output time crossed by this batch.
     while (next_whale_log_time_ <= batch_end_time + 1.0e-9) {

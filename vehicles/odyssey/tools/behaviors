@@ -229,6 +229,17 @@ const struct behavior bTemplate[] = {
         "capture(m)", 5,
         "", 0,
         "", 0,
+        "", 0,
+    "whale_follow", 0, -1., 0., 0,
+        "depth(m)", 0,
+        "speed(m/s)", 0,
+        "capture(m)", 5,
+        "", 0,
+        "", 0,
+        "", 0,
+        "", 0,
+        "", 0,
+        "", 0,
         "", 0
 };
 

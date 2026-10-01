@@ -45,6 +45,7 @@ target_include_directories(
     /odyssey/vehicles/odyssey/src/Sensors
     /odyssey/vehicles/odyssey/src/Odyssey
     /odyssey/vehicles/odyssey/src/Odyssey/Vehicle
+    /odyssey/vehicles/odyssey/src/Odyssey/Vehicle/Behaviors
     /odyssey/vehicles/odyssey/src/Odyssey/Simulator
     /odyssey/vehicles/odyssey/src/Odyssey/Simulator/Faults
     /odyssey/vehicles/odyssey/src/Odyssey/Simulator/Sensors

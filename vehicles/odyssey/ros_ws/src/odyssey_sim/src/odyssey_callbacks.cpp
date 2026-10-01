@@ -4,6 +4,7 @@
 
 extern "C" {
     #include "odyssey.h"
+    #include "odyssey_behaviors.h"
     #include "odyssey_sim.h"
     #include "world_sim.h"
 }
@@ -184,6 +185,33 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
     odyssey_initialized_ = true;                                                                    // Record successful initialization.
     RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
     try_finish_init();                                                                              // Complete startup if the required time values have also arrived.
+}
+
+/**
+ * Assign this vehicle to the first whale call it detects.
+ */
+void OdysseyNode::handle_whale_detection(const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {
+    if (msg->vehicle_id != vehicle_id_) return;
+    if (!target_whale_id_.empty()) return;
+
+    target_whale_id_ = msg->whale_id;
+    set_whale_follow_target(msg->whale_north, msg->whale_east);
+
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' is now following whale '%s'.", vehicle_id_.c_str(), target_whale_id_.c_str());
+}
+
+/**
+ * Update the moving waypoint from the assigned whale's exact state.
+ */
+void OdysseyNode::handle_whale_states(const manta_interfaces::msg::WhaleStateArray::SharedPtr msg) {
+    if (target_whale_id_.empty()) return;
+
+    for (const auto &whale : msg->whales) {
+        if (whale.whale_id != target_whale_id_) continue;
+
+        set_whale_follow_target(whale.north, whale.east);
+        return;
+    }
 }
 
 //----------------------------------------------------

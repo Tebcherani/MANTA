@@ -642,7 +642,12 @@ behavior: picket_line_patrol
   b_arg:                       depth(m) 0
   b_arg:                     speed(m/s) 0
   b_arg:                     capture(m) 5
-  
+
+behavior: whale_follow
+  b_arg:                       depth(m) 0
+  b_arg:                     speed(m/s) 0
+  b_arg:                     capture(m) 5
+
 END
  *----------------------------------------------------------------------*/
 
@@ -724,11 +729,10 @@ int add_b_arg(
   main function starts here
   -----------------------------------------------------------------------*/
 
-main( int argc, char **argv )
+int main( int argc, char **argv )
 {
     char *rcsrev = "$Revision: 2.22 $";
     char *rcsdate = "$Date: 1998/02/03 04:20:01 $";
-    char *rcsfile = "$RCSfile: edit_struct.c,v $";
 
 				/* prototypes */
     void parse_cmd_line( int argc, char **argv );
@@ -760,8 +764,8 @@ main( int argc, char **argv )
     parse_cmd_line( argc, argv );
 				/* make RCS announcement */
     fputs( "Odyssey II data structure editor\n", stderr );
-    fprintf( stderr, "\t%.*s, %.*s\n", strlen(rcsrev+1)-2, rcsrev+1,
-	     strlen(rcsdate+1)-2, rcsdate+1 );
+    fprintf( stderr, "\t%.*s, %.*s\n", (int)strlen(rcsrev+1)-2, rcsrev+1,
+	     (int)strlen(rcsdate+1)-2, rcsdate+1 );
 
     now = time(NULL);		/* get time now */
     tp = gmtime( &now );
@@ -782,7 +786,7 @@ main( int argc, char **argv )
     );
 
     load_configs(config_file);
-                                /* open $RCSfile: edit_struct.c,v $ (less
+                                /* open edit_struct.c,v $ (less
 				   prefix and ,v) in order to read the
 				   sensor and behavior lists */
     strcpy(infile_name, "tools/edit_struct.c");
@@ -1045,7 +1049,7 @@ void load_configs( const char *name )
 	}
 	else
 	    fprintf( stderr, "max cfgs exceeded, skipping %.*s ...\n",
-		     strlen(line) - 1, line );
+		     (int)strlen(line) - 1, line );
     }
     fclose( fcfg );
 }
@@ -1075,8 +1079,8 @@ FILE *fopen_fatal( const char *name, const char *type )
 
 int add_sensor( char *line, int *n, FILE *lfile, FILE *sfile, FILE *hfile )
 {
-    int nconv, i, len1;
-    char name[NAME_SIZE], *tmp;
+    int nconv, i;
+    char name[NAME_SIZE];
     double value;
 
     if ( ((*n) + 1) > MAX_SENSOR )
@@ -1084,7 +1088,7 @@ int add_sensor( char *line, int *n, FILE *lfile, FILE *sfile, FILE *hfile )
         fprintf( stderr, "add_sensor: max_sensor (%d) exceeded\n",
 		 MAX_SENSOR );
 
-    if ( (nconv = sscanf(line, " sensor: %s %lf\n", &name, &value)) > 0 )
+    if ((nconv = sscanf(line, " sensor: %63s %lf\n", name, &value)) > 0 )
         (*n)++;
     else
     {
@@ -1117,6 +1121,8 @@ int add_sensor( char *line, int *n, FILE *lfile, FILE *sfile, FILE *hfile )
     for ( i = 0; (name[i] != '(') && (i < strlen(name)); i++ ) 
         fputc( toupper(name[i]), hfile );
     fputs( ";\n", hfile );
+
+    return 0;
 }
 
 
@@ -1136,7 +1142,7 @@ int add_behavior( char *line, int *numBeh, int n_b_args, FILE *lfile,
         fprintf( stderr, "add_behavior: max_number of behaviors=%d "
                  "exceeeded\n", MAX_BEHAVIOR );
 
-    status = sscanf( line, " behavior: %s\n", &name );
+    status = sscanf( line, " behavior: %s\n", name );
     if ( status == 1 )
         (*numBeh)++;
     else
@@ -1195,7 +1201,7 @@ int add_b_arg( char *line, int *n, FILE *lfile, FILE *bfile )
         fprintf( stderr, "add_b_arg: n (%d) exceeds B_ARG_SIZE (%d)\n", *n,
 		 B_ARG_SIZE );
 
-    status = sscanf( line, " b_arg: %s %lf\n", &name, &value );
+    status = sscanf( line, " b_arg: %s %lf\n", name, &value );
     if (status == 2)
         (*n)++;
     else
