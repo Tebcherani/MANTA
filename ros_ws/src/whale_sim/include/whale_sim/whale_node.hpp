@@ -91,7 +91,7 @@ private:
     // Setup
     void load_config();
     void initialize_whale_groups(double line_length);
-    void initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const LineGeometry &line, const WhaleGroup &group);
+    void initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const WhaleGroup &group);
     void initialize_whales();
     void open_whale_log();
     void seed_generator();
@@ -104,7 +104,6 @@ private:
         double crossing_heading,
         double speed,
         double start_time,
-        double perpendicular_north, double perpendicular_east,
         const WhaleGroup &group
     );
     Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time, double call_rate) const;

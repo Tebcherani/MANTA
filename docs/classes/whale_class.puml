@@ -10,7 +10,7 @@ class WhaleNode <<ROS node>> {
 
     - load_config() : void
     - initialize_whale_groups(line_length : double) : void
-    - initialize_whale_dynamics(whale : Whale, initial_state : WhaleInitialState, speed : double, line : LineGeometry, group : WhaleGroup)
+    - initialize_whale_dynamics(whale : Whale, initial_state : WhaleInitialState, speed : double, group : WhaleGroup)
     - initialize_whales() : void
     - open_whale_log() : void
     - seed_generator() : void
@@ -20,7 +20,7 @@ class WhaleNode <<ROS node>> {
     - compute_line_geometry() : LineGeometry
     - create_whale(whale_index : size_t, group_index : size_t, group : WhaleGroup, start_time : double, call_rate : double) : Whale
     - generate_call_times(start_time : double, end_time : double, call_rate_per_hour : double, group : WhaleGroup) : vector<double>
-    - generate_trajectory(initial_north : double, initial_east : double, crossing_heading : double, speed : double, start_time : double, perpendicular_north : double, perpendicular_east : double, group : WhaleGroup) : vector<TrajectoryPoint>
+    - generate_trajectory(initial_north : double, initial_east : double, crossing_heading : double, speed : double, start_time : double, group : WhaleGroup) : vector<TrajectoryPoint>
     - get_group_index_for_whale(whale_index : size_t) : size_t
     - get_group_for_whale(whale_index : size_t) : WhaleGroup
     - sample_crossing_distance(group : WhaleGroup, line_length : double) : double
