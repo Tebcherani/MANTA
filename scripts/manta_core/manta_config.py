@@ -38,10 +38,24 @@ def load_yaml(path: Path) -> dict:
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse the MANTA command and optional review-plot selection."""
+    """Parse the MANTA command, scenario, and review plot."""
 
     parser = argparse.ArgumentParser(description="Build, run, review, and analyze MANTA simulations.")
-    parser.add_argument("command", nargs="?", default="run", choices=("generate", "build", "dev", "run", "down", "review", "monte-carlo", "monte-carlo-sweep"))
-    parser.add_argument("plot", nargs="?", default="tracks", choices=("tracks", "sweep",), help="Plot to show with the review command.")
+    parser.add_argument("command", nargs="?", default="run", choices=("generate", "build", "dev", "run", "down", "review", "monte_carlo", "monte_carlo_sweep"))
+    parser.add_argument("scenario", nargs="?", choices=("picket_line",), help="Simulation scenario.")
+    parser.add_argument("plot", nargs="?", choices=("tracks", "sweep"), help="Scenario plot to show.")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    scenario_commands = {"generate", "run", "monte_carlo", "monte_carlo_sweep"}
+
+    if args.command in scenario_commands and args.scenario is None:
+        parser.error(f"{args.command} requires a scenario: manta {args.command} picket_line")
+
+    if args.command == "review" and (args.scenario is None or args.plot is None):
+        parser.error("review requires a scenario and plot: manta review picket_line {tracks,sweep}")
+
+    if args.command != "review" and args.plot is not None:
+        parser.error("a plot can only be selected with the review command")
+
+    return args

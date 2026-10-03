@@ -20,7 +20,7 @@ from textwrap import dedent
 
 ROOT = Path(__file__).resolve().parents[2]
 config_path = Path(sys.argv[1]).resolve() if len(sys.argv) == 2 else CONFIG_PATH
-OUTPUT_DIR = ROOT / "generated" / "missions"
+OUTPUT_DIR = ROOT / "generated" / "missions" / "picket_line"
 
 
 @dataclass(frozen=True)
@@ -156,7 +156,7 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str, segment: LineS
         """
     )
 
-    mission_path = OUTPUT_DIR / f"picket_line_{vehicle_id}.mi"
+    mission_path = OUTPUT_DIR / f"{vehicle_id}.mi"
     mission_path.write_text(mission, encoding="utf-8")
 
     return mission_path

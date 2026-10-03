@@ -6,11 +6,11 @@ import numpy as np
 
 from collections import defaultdict
 from pathlib import Path
-from parse_obd import read_obd
+from review.manta_review.picket_line.parse_obd import read_obd
 
 
-ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "output" / "Data"
+ROOT = Path(__file__).resolve().parents[3]
+DATA_DIR = ROOT / "output" / "picket_line" / "Data"
 WHALE_CALLS_PATH = DATA_DIR / "whale_calls.csv"
 WHALE_DETECTIONS_PATH = DATA_DIR / "whale_detections.csv"
 WHALE_TRAJECTORY_PATH = DATA_DIR / "whales.csv"
@@ -281,7 +281,7 @@ def main() -> int:
     detection_count = plot_detection_locations(ax, detections_by_call, vehicle_colors)
 
     if (fleet_size == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
-        print("No simulation results found in output/Data.")
+        print("No simulation results found in output/picket_line/Data.")
         plt.close(fig)
         return 1
 

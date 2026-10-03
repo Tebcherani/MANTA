@@ -8,9 +8,9 @@ from matplotlib.ticker import PercentFormatter
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[2]
-SUMMARY_PATH = ROOT/ "output" / "monte_carlo_sweep" / "sweep_summary.csv"
-OUTPUT_PATH = ROOT / "output" / "monte_carlo_sweep" / "sweep_metrics.png"
+ROOT = Path(__file__).resolve().parents[3]
+SUMMARY_PATH = ROOT / "output" / "picket_line" / "monte_carlo_sweep" / "sweep_summary.csv"
+OUTPUT_PATH = ROOT / "output" / "picket_line" / "monte_carlo_sweep" / "sweep_metrics.png"
 
 
 METRICS = (

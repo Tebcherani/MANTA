@@ -8,22 +8,32 @@ from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_review import run_review
 from manta_core.manta_run import generate_missions, prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
-from paths import ROOT, CONFIG_PATH, DOCKER_COMPOSE_PATH, ENV_PATH
+from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH, PICKET_LINE_CONFIG_PATH, PICKET_LINE_MONTE_CARLO_OUTPUT_DIR
 
 def main() -> int:
     args = parse_args()
 
+    scenario_config_paths = {
+        "picket_line": PICKET_LINE_CONFIG_PATH,
+    }
+
+    scenario_monte_carlo_output_dirs = {
+        "picket_line": PICKET_LINE_MONTE_CARLO_OUTPUT_DIR,
+    }
+
     if args.command == "down": return run_down()
-    if args.command == "review": return run_review(plot=args.plot)
+    if args.command == "review": return run_review(scenario=args.scenario, plot=args.plot)
 
     try:
-        config = load_yaml(CONFIG_PATH)
-        if args.command == "monte-carlo-sweep": return run_monte_carlo_sweep(config)
+        config_path = scenario_config_paths.get(args.scenario, PICKET_LINE_CONFIG_PATH)
+        config = load_yaml(config_path)
 
-        prepare_runtime(config)
+        if args.command == "monte_carlo_sweep": return run_monte_carlo_sweep(config)
+
+        prepare_runtime(config, config_path)
         if args.command == "generate": return 0
         if args.command == "build": return run_build()
-        if args.command == "monte-carlo": return run_monte_carlo(config, ROOT)
+        if args.command == "monte_carlo": return run_monte_carlo(config, scenario_monte_carlo_output_dirs[args.scenario])
 
         commands = {
             "dev": ["docker", "compose", "--env-file", str(ENV_PATH), "-f", str(ROOT / "compose.dev.yaml"), "run", "--rm", "dev"],

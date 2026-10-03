@@ -112,13 +112,13 @@ These settings select the output directories and sampling periods for vehicle an
 simulation:
   timestep: 0.02
   control_period: 10
-  max_cycles: 12960000
+  max_steps: 12960000
   steps_per_message: 10000
 ```
 
 - `timestep` is the duration of one physics cycle in seconds.
 - `control_period` is the number of physics cycles between vehicle sensor and control updates.
-- `max_cycles` is the maximum number of physics cycles.
+- `max_steps` is the maximum number of physics cycles.
 - `steps_per_message` is the normal maximum number of cycles assigned by one `SimStep` message.
 
 The orchestrator shortens a batch when necessary so it stops at the cycle containing the next scheduled whale call.

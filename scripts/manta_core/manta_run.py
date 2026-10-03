@@ -5,7 +5,7 @@ import yaml
 
 from manta_core.manta_config import load_plugin
 from pathlib import Path
-from paths import ROOT, CONFIG_PATH, DOCKER_COMPOSE_PATH, ENV_PATH, MISSION_GENERATOR_PATH
+from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH, PICKET_LINE_MISSION_GENERATOR_PATH
 
 
 def container_path(configured_path: str) -> str:
@@ -24,15 +24,15 @@ def generate_missions(config: dict, config_path: Path) -> None:
     """Generate mission file for the picket line scenario with the given configuration."""
     scenario = config.get("scenario", {})
     if scenario.get("type") != "picket_line": return
-    result = subprocess.run([sys.executable, str(MISSION_GENERATOR_PATH), str(config_path)], cwd=ROOT, check=False)
+    result = subprocess.run([sys.executable, str(PICKET_LINE_MISSION_GENERATOR_PATH), str(config_path)], cwd=ROOT, check=False)
     if result.returncode != 0: raise ValueError("Failed to generate picket-line missions.")
 
 
-def prepare_runtime(sim_config: dict) -> tuple[Path, Path]:
+def prepare_runtime(sim_config: dict, config_path: Path) -> tuple[Path, Path]:
     """Generate missions, runtime environment, and Docker Compose configuration."""
 
-    generate_missions(sim_config, CONFIG_PATH)
-    print_config_summary(sim_config)
+    generate_missions(sim_config, config_path)
+    print_config_summary(sim_config, config_path)
 
     write_runtime_env(sim_config)
     compose_path = write_runtime_compose(sim_config, DOCKER_COMPOSE_PATH)
@@ -43,8 +43,8 @@ def prepare_runtime(sim_config: dict) -> tuple[Path, Path]:
     return compose_path
 
 
-def print_config_summary(config: dict) -> None:
-    print(f"Loaded configuration: {CONFIG_PATH}")
+def print_config_summary(config: dict, config_path: Path) -> None:
+    print(f"Loaded configuration: {config_path}")
     print(f"Configured vehicles: {len(config['vehicles'])}")
 
     for vehicle in config["vehicles"]:
@@ -248,7 +248,7 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
             f'-p "data_directory:={data_dir}" '
             f'-p "timestep:={simulation["timestep"]}" '
             f'-p "control_period:={simulation["control_period"]}" '
-            f'-p "max_cycles:={simulation["max_cycles"]}" '
+            f'-p "max_steps:={simulation["max_steps"]}" '
             f'-p "steps_per_message:='
             f'{simulation.get("steps_per_message", 1)}"',
         ],

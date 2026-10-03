@@ -7,7 +7,7 @@ from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult, Swe
 from manta_core.manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
 from manta_core.manta_run import generate_missions
 from pathlib import Path
-from paths import ROOT, SWEEP_GENERATED_DIR, SWEEP_SUMMARY_PATH, SWEEP_OUTPUT_DIR
+from paths import ROOT, PICKET_LINE_SWEEP_GENERATED_DIR, PICKET_LINE_SWEEP_SUMMARY_PATH, PICKET_LINE_SWEEP_OUTPUT_DIR
 from threading import Event
 
 
@@ -27,11 +27,11 @@ def generate_fleet_config(sim_config: dict, fleet_size: int) -> tuple[dict, Path
     for index in range(1, fleet_size + 1):
         vehicle = copy.deepcopy(template)
         vehicle["id"] = f"auv_{index}"
-        vehicle["mission"] = (f"./generated/missions/picket_line_auv_{index}.mi")
+        vehicle["mission"] = (f"./generated/missions/picket_line/picket_line_auv_{index}.mi")
         vehicles.append(vehicle)
 
     fleet_config["vehicles"] = vehicles
-    fleet_config_path = SWEEP_GENERATED_DIR / f"simulation_vehicles_{fleet_size:02d}.yaml"
+    fleet_config_path = PICKET_LINE_SWEEP_GENERATED_DIR / f"simulation_vehicles_{fleet_size:02d}.yaml"
     fleet_config_path.write_text(yaml.safe_dump(fleet_config, sort_keys=False), encoding="utf-8")
     
     return fleet_config, fleet_config_path
@@ -40,9 +40,9 @@ def generate_fleet_config(sim_config: dict, fleet_size: int) -> tuple[dict, Path
 def load_completed_sweep_results() -> dict[int, SweepResult]:
     """Load completed fleet results as SweepResult instances."""
 
-    if not SWEEP_SUMMARY_PATH.is_file(): return {}
+    if not PICKET_LINE_SWEEP_SUMMARY_PATH.is_file(): return {}
 
-    with SWEEP_SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
+    with PICKET_LINE_SWEEP_SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
         results = [SweepResult.from_csv_row(row) for row in reader]
 
@@ -54,7 +54,7 @@ def prepare_fleet_experiment(sim_config: dict, fleet_size: int) -> tuple[dict, P
 
     fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size)
     generate_missions(fleet_config, fleet_config_path)
-    fleet_directory = SWEEP_OUTPUT_DIR / f"vehicles_{fleet_size:02d}"
+    fleet_directory = PICKET_LINE_SWEEP_OUTPUT_DIR / f"vehicles_{fleet_size:02d}"
 
     return fleet_config, fleet_directory
 
@@ -62,8 +62,8 @@ def prepare_fleet_experiment(sim_config: dict, fleet_size: int) -> tuple[dict, P
 def prepare_monte_carlo_sweep(sim_config: dict) -> tuple[SweepConfig, MonteCarloConfig, dict[int, SweepResult]]:
     """Validate sweep settings, prepare output directories, and load completed results."""
 
-    SWEEP_GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-    SWEEP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    PICKET_LINE_SWEEP_GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+    PICKET_LINE_SWEEP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     sweep_config = SweepConfig.from_dict(sim_config.get("sweep", {}))
     monte_carlo_config = MonteCarloConfig.from_dict(sim_config.get("monte_carlo", {}))
@@ -79,7 +79,7 @@ def record_fleet_result(fleet_size: int, fleet_dir: Path, monte_carlo_config: Mo
     sweep_result = summarize_fleet_results(fleet_size, experiment_results, monte_carlo_config.confidence_level)
     completed_results[fleet_size] = sweep_result
     sweep_rows = [asdict(completed_results[fleet_size]) for fleet_size in sorted(completed_results)]
-    write_sweep_summary(SWEEP_SUMMARY_PATH, sweep_rows)
+    write_sweep_summary(PICKET_LINE_SWEEP_SUMMARY_PATH, sweep_rows)
 
     return sweep_result
 
@@ -195,6 +195,6 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
         sweep_result = record_fleet_result(fleet_size, fleet_dir, monte_carlo_config, completed_results)
         print(f"Fleet size {fleet_size}: mean {sweep_result.mean_detection:.2%}, CI half-width {sweep_result.ci_half_width:.2%} from {sweep_result.realizations} runs.")
 
-    print(f"Sweep data: {SWEEP_SUMMARY_PATH}\nRun './manta review sweep' to generate the sweep plots.")
+    print(f"Sweep data: {PICKET_LINE_SWEEP_SUMMARY_PATH}\nRun './manta review sweep' to generate the sweep plots.")
 
     return 0
