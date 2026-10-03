@@ -23,7 +23,6 @@ partition "WhaleNode()" {
         partition "Place whales in groups" {
             :Calculate number of groups;
             :Calculate number of heading changes;
-            :Calculate number of calls;
             :Create probability distributions;
 
             partition "Generate whale groups" {
@@ -44,102 +43,129 @@ partition "WhaleNode()" {
                     - stationary STD = heading_std_degrees_
                     - initial error = 0 degrees
                 end note
-
-                :Generate groups' call rate;
-                note right
-                    Mean-corrected lognormal AR(1) process
-                    - correlation = call_activity_correlation_
-                    - update interval = call_activity_interval_
-                    - log-scale SD = group_log_rate_std_
-                    - expected multiplier = 1
-                end note
             }
         }
 
         partition "Create individual whales" {
             :Create distributions;
 
-            while (More whales to create?) is (yes)
-                :Select whale group;
-                :Sample crossing distance;
-                note right: Normal(0, 1000km)
+            :Select whale group;
+            :Sample crossing distance;
+            note right: Normal(0, 1000km)
 
-                :Sample start time;
-                note right: Normal(0, 10 min)
+            :Sample start time;
+            note right: Normal(0, 10 min)
 
-                :Sample swimming speed;
-                note right: Normal(1.5, 0.2m/s)
+            :Sample swimming speed;
+            note right: Normal(1.5, 0.2m/s)
 
-                :Sample baseline call rate;
-                note right: Uni(4.8, 8.0 calls/hr)
+            :Sample baseline call rate;
+            note right: Uni(4.8, 8.0 calls/hr)
 
-                :Compute initial position and heading;
-                :Create whale and assign properties;
+            :Compute initial position and heading;
+            :Create whale and assign properties;
 
-                partition "Generate movement trajectory" {
-                    :Calculate individual AR(1) heading innovation scale;
-                    note right
-                        - Heading STD = 15 deg
-                        - Heading correlation = 0.95
-                    end note
+            partition "Generate movement trajectory" {
+                :Calculate individual AR(1) heading innovation scale;
+                note right
+                    - Heading STD = 15 deg
+                    - Heading correlation = 0.95
+                end note
 
-                    :Calculate group and individual\nheading weights;
-                    note right
-                        - Shared heading fraction = 0.75
-                        - Group weight = sqrt(0.75)
-                        - Individual weight = sqrt(0.25)
-                    end note
+                :Calculate group and individual\nheading weights;
+                note right
+                    - Shared heading fraction = 0.75
+                    - Group weight = sqrt(0.75)
+                    - Individual weight = sqrt(0.25)
+                end note
 
-                    :Initialize time and position;
+                :Initialize time and position;
 
-                    while (Trajectory complete?) is (no)
-                        :Calculate heading;
-                        note right: - Shared heading fraction = 0.75
+                while (Trajectory complete?) is (no)
+                    :Calculate heading;
+                    note right: - Shared heading fraction = 0.75
 
-                        :Calculate velocity;
-                        :Store next trajectory point;
+                    :Calculate velocity;
+                    :Store next trajectory point;
 
-                        if (Mission duration reached?) then (yes)
+                    if (Mission duration reached?) then (yes)
+                        break
+                    else (no)
+                        :Determine next heading update;
+                        :Move using current velocity until next update time;
+                        :Calculate distance from picket line;
+
+                        if (Whale exited corridor?) then (yes)
+                            :Store final position with zero velocity;
                             break
                         else (no)
-                            :Determine next heading update;
-                            :Move using current velocity until next update time;
-                            :Calculate distance from picket line;
-
-                            if (Whale exited corridor?) then (yes)
-                                :Store final position with zero velocity;
-                                break
-                            else (no)
-                                :Update individual AR(1) heading error;
-                            endif
+                            :Update individual AR(1) heading error;
                         endif
-                    endwhile (yes)
-                }
+                    endif
+                endwhile(no)
+            }
 
-                :Determine corridor exit time;
+            :Initialize published position\nand velocity;
+            :Store whale in population;
 
-                partition "Generate whale call times" {
-                    :Set interval start to whale's start time;
+            partition "Generate population call times" {
+                :Determine population activity interval;
+                note right
+                    From first whale activation
+                    through last whale's trajectory end
+                end note
 
-                    while (Whale remains inside corridor?) is (yes)
-                        :Select group's call rate multiplier for current interval;
-                        :Calculate end time of interval;
-                        :Calculate interval duration;
+                :Select initial active or silent state;
+                note right
+                    The simulation begins active with probability 0.19.
 
-                        :Calculate call rate;
-                        note right: baseline individual call rate x group activity multiplier
+                    This probability is the estimated fraction of time
+                    spent in active calling bouts:
 
-                        :Sample number of calls in current interval;
-                        note right: Poisson(call rate × interval duration)
+                    30.7 min active / (30.7 min active + 131 min silent) = 0.19
 
-                        :Distribute num of calls uniformly throughout the interval;
-                        note right: Uni(interval start time, interval end time)
+                    The 30.7 min active duration is reported by the paper.
+                    The 131 min silent duration is derived from the paper's
+                    total bouts and acoustically positive recorder-days.
+                end note
+
+                    while (Population calling interval remains?) is (yes)
+                        if (Population is in an active bout?) then (yes)
+                            :Sample active-bout duration;
+                            note right
+                                Exponential distribution
+                                Mean = 1,842 s (30.7 min)
+                            end note
+
+                            :Generate calls during active bout;
+                            note right
+                                Poisson process
+                                Rate = 40.1 calls/h
+                            end note
+                        else (no)
+                            :Sample silent duration;
+                            note right
+                                Exponential distribution
+                                Mean = 7,860 s (approximately 2.18 h)
+                            end note
+                        endif
+
+                        :Switch between active and silent states;
                     endwhile (no)
                 }
 
-                :Initialize published position\nand velocity;
-                :Store whale in population;
-            endwhile (no)
+                partition "Assign calls to whales" {
+                    while (More population calls?) is (yes)
+                        :Find whales active at call time;
+
+                        if (At least one whale is active?) then (yes)
+                            :Select one active whale uniformly;
+                            :Add call time to selected whale;
+                        else (no)
+                            :Discard call;
+                        endif
+                    endwhile (no)
+                }
         }
     }
 
