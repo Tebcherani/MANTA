@@ -4,11 +4,12 @@ import sys
 from manta_core.manta_build import run_build
 from manta_core.manta_config import load_yaml, parse_args
 from manta_core.manta_down import run_down
+from manta_core.manta_environment import get_host_environment
 from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_review import run_review
 from manta_core.manta_run import generate_missions, prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
-from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH, PICKET_LINE_CONFIG_PATH, PICKET_LINE_MONTE_CARLO_OUTPUT_DIR
+from paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, PICKET_LINE_CONFIG_PATH, PICKET_LINE_MONTE_CARLO_OUTPUT_DIR
 
 def main() -> int:
     args = parse_args()
@@ -25,6 +26,12 @@ def main() -> int:
     if args.command == "review": return run_review(scenario=args.scenario, plot=args.plot)
 
     try:
+        if args.command == "build": return run_build()
+
+        if args.command == "dev":
+            command = ["docker", "compose", "-f", str(DEV_COMPOSE_PATH), "run", "--rm", "dev"]
+            return subprocess.run(command, cwd=ROOT, env=get_host_environment(), check=False).returncode
+
         config_path = scenario_config_paths.get(args.scenario, PICKET_LINE_CONFIG_PATH)
         config = load_yaml(config_path)
 
@@ -32,11 +39,9 @@ def main() -> int:
 
         prepare_runtime(config, config_path)
         if args.command == "generate": return 0
-        if args.command == "build": return run_build()
         if args.command == "monte_carlo": return run_monte_carlo(config, scenario_monte_carlo_output_dirs[args.scenario])
 
         commands = {
-            "dev": ["docker", "compose", "--env-file", str(ENV_PATH), "-f", str(ROOT / "compose.dev.yaml"), "run", "--rm", "dev"],
             "run": ["docker", "compose", "-f", str(DOCKER_COMPOSE_PATH), "up", "--remove-orphans"],
         }
 

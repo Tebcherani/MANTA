@@ -55,6 +55,11 @@ def parse_args() -> argparse.Namespace:
     if args.command == "review" and (args.scenario is None or args.plot is None):
         parser.error("review requires a scenario and plot: manta review picket_line {tracks,sweep}")
 
+    scenario_independent_commands = {"build", "dev", "down"}
+
+    if args.command in scenario_independent_commands and args.scenario is not None:
+        parser.error(f"{args.command} does not accept a scenario: manta {args.command}")
+
     if args.command != "review" and args.plot is not None:
         parser.error("a plot can only be selected with the review command")
 

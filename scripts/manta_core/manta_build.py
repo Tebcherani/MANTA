@@ -1,21 +1,20 @@
 import subprocess
 
-from paths import ROOT, DEV_COMPOSE_PATH
-from pathlib import Path
-from paths import ENV_PATH
+from manta_core.manta_environment import get_host_environment
+from paths import DEV_COMPOSE_PATH, ROOT
 
 
 def run_build() -> int:
-    build_image = ["docker", "compose", "--env-file", str(ENV_PATH), "-f", str(DEV_COMPOSE_PATH), "build"]
+    environment = get_host_environment()
 
-    result = subprocess.run(build_image, cwd=ROOT, check=False)
+    build_image = ["docker", "compose", "-f", str(DEV_COMPOSE_PATH), "build"]
+
+    result = subprocess.run(build_image, cwd=ROOT, env=environment, check=False)
     if result.returncode != 0: return result.returncode
 
     build_inside_container = [
         "docker",
         "compose",
-        "--env-file",
-        str(ENV_PATH),
         "-f",
         str(DEV_COMPOSE_PATH),
         "run",
@@ -31,4 +30,4 @@ def run_build() -> int:
         "colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release",
     ]
 
-    return subprocess.run(build_inside_container, cwd=ROOT, check=False).returncode
+    return subprocess.run(build_inside_container, cwd=ROOT, env=environment, check=False).returncode
