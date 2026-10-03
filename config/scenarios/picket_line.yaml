@@ -89,12 +89,24 @@ scenario:
       start_time_std: 600.0
       shared_heading_fraction: 0.75
     
+    # Reference paper: https://academic.oup.com/icesjms/article/82/4/fsad174/7341838
     calling:
-      call_rate_min: 4.8  # original fixed value was 6.4 calls/h
-      call_rate_max: 8.0
-      activity_interval: 600.0
-      activity_correlation: 0.90
-      group_log_rate_std: 0.50
+      bouts:
+        # Mean observed upcalling-bout duration across the three full-year
+        # monitoring sites: 30.7 min × 60 s/min = 1,842 s.
+        mean_duration: 1842.0
+
+        # Approximate mean silent time between bouts, derived from 3,847 bouts
+        # observed over 432 acoustically positive recorder-days. The resulting
+        # 2.70 h mean active-silent cycle minus the 30.7 min mean bout duration
+        # gives approximately 2.18 h, or 7,860 s, of silence.
+        mean_silent_duration: 7860.0
+
+        # Aggregate active-bout rate derived from 79,032 confirmed upcalls across
+        # 3,847 bouts: 20.54 calls per bout divided by the 30.7 min mean bout
+        # duration gives approximately 40.1 calls/h. This is a recorder-level
+        # population rate, not an independent rate for each group or whale.
+        active_call_rate_per_hour: 40.1
 
 
 #--------------------------------------------------

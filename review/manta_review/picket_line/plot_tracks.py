@@ -6,8 +6,7 @@ import numpy as np
 
 from collections import defaultdict
 from pathlib import Path
-from review.manta_review.picket_line.parse_obd import read_obd
-
+from parse_obd import read_obd
 
 ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "output" / "picket_line" / "Data"

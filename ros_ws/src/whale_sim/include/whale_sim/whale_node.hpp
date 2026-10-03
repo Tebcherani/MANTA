@@ -39,7 +39,6 @@ private:
         double side;
         double start_time;
         std::vector<double> heading_errors;
-        std::vector<double> call_rate_multipliers;
     };
 
     // Simulation state and precomputed behavior for one whale.
@@ -49,7 +48,6 @@ private:
 
         double depth;
         double start_time;
-        double call_rate_per_hour;
 
         std::vector<double> call_times;
         std::size_t next_call_index = 0;
@@ -106,8 +104,9 @@ private:
         double start_time,
         const WhaleGroup &group
     );
-    Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time, double call_rate) const;
-    std::vector<double> generate_call_times(double start_time, double end_time, double call_rate_per_hour, const WhaleGroup &group);
+    Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time) const;
+    std::vector<double> generate_population_call_times(double start_time, double end_time);
+    void assign_population_call_times();
     std::size_t get_group_index_for_whale(std::size_t whale_index) const;
     const WhaleGroup &get_group_for_whale(std::size_t whale_index) const;
     double sample_crossing_distance(const WhaleGroup &group, double line_length);
@@ -155,11 +154,9 @@ private:
     std::vector<Whale> whales_;
 
     // Whale calling
-    double call_activity_correlation_;
-    double call_activity_interval_;
-    double call_rate_min_;
-    double call_rate_max_;
-    double group_log_rate_std_;
+    double bout_mean_duration_;
+    double bout_mean_silent_duration_;
+    double bout_active_call_rate_per_hour_;
 
     // Whale grouping
     double group_mean_size_;

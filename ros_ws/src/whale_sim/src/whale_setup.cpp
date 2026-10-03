@@ -6,6 +6,49 @@
 #include <stdexcept>
 
 /**
+ * Assign each population-level call to one whale active at that call time.
+ */
+void WhaleNode::assign_population_call_times() {
+    for (Whale &whale : whales_) {
+        whale.call_times.clear();
+        whale.next_call_index = 0;
+    }
+
+    if (whales_.empty()) return;
+
+    double first_start_time = mission_duration_;
+    double final_end_time = 0.0;
+
+    for (const Whale &whale : whales_) {
+        if (whale.trajectory.empty()) continue;
+
+        first_start_time = std::min(first_start_time, whale.start_time);
+        final_end_time = std::max(final_end_time, whale.trajectory.back().time);
+    }
+
+    const std::vector<double> population_calls = generate_population_call_times(first_start_time, final_end_time);
+
+    for (double call_time : population_calls) {
+        std::vector<std::size_t> active_whales;
+
+        for (std::size_t whale_index = 0; whale_index < whales_.size(); ++whale_index) {
+            const Whale &whale = whales_[whale_index];
+
+            if (whale.trajectory.empty()) continue;
+            if (call_time < whale.start_time) continue;
+            if (call_time > whale.trajectory.back().time) continue;
+
+            active_whales.push_back(whale_index);
+        }
+
+        if (active_whales.empty()) continue;
+
+        std::uniform_int_distribution<std::size_t> select_whale(0, active_whales.size() - 1);
+        whales_[active_whales[select_whale(generator_)]].call_times.push_back(call_time);
+    }
+}
+
+/**
  * Calculate the whale's starting position and heading toward the picket line.
  */
 WhaleNode::WhaleInitialState WhaleNode::compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double crossing_distance, double speed) const {
@@ -42,61 +85,76 @@ WhaleNode::LineGeometry WhaleNode::compute_line_geometry() const {
 /**
  * Create a whale with its fixed properties and inactive initial state.
  */
-WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time, double call_rate) const {
+WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time) const {
     Whale whale;
 
     whale.id = "whale_" + std::to_string(whale_index + 1);
     whale.group_index = group_index;
     whale.depth = whale_depth_;
     whale.start_time = start_time;
-    whale.call_rate_per_hour = call_rate;
     whale.active = false;
     whale.complete = false;
     whale.starting_side = group.side;
+
+    whale.call_times.clear();
+    whale.next_call_index = 0;
 
     return whale;
 }
 
 /**
- * Generate one whale's scheduled call times while it remains active.
+ * Generate the aggregate calling schedule observed across the simulated whale population.
+ *
+ * The population alternates between exponentially distributed active and silent
+ * periods. Calls within active bouts follow a homogeneous Poisson process.
  */
-std::vector<double> WhaleNode::generate_call_times(double start_time, double end_time, double call_rate_per_hour, const WhaleGroup &group) {
-    if (group.call_rate_multipliers.empty()) throw std::runtime_error("Whale group contains no call-rate multipliers.");
-    if (end_time < start_time) throw std::runtime_error("Whale call interval ends before its start time.");
-
+std::vector<double> WhaleNode::generate_population_call_times(double start_time, double end_time) {
     std::vector<double> call_times;
+
+    if (end_time <= start_time) return call_times;
+
+    std::exponential_distribution<double> active_duration(1.0 / bout_mean_duration_);
+    std::exponential_distribution<double> silent_duration(1.0 / bout_mean_silent_duration_);
+    std::exponential_distribution<double> call_interval(bout_active_call_rate_per_hour_ / 3600.0);
+
+    const double active_probability = bout_mean_duration_ / (bout_mean_duration_ + bout_mean_silent_duration_);
+    std::bernoulli_distribution initial_state(active_probability);
+
+    bool active = initial_state(generator_);
     double interval_start = start_time;
 
     while (interval_start < end_time) {
-        // Select the group's call-activity multiplier for this interval.
-        const std::size_t activity_index = std::min(static_cast<std::size_t>(std::floor(interval_start / call_activity_interval_)), group.call_rate_multipliers.size() - 1);
+        double duration;
 
-        // Limit this interval to the next activity boundary or the end of the whale's active trajectory.
-        const double next_activity_boundary = (std::floor(interval_start / call_activity_interval_) + 1.0) * call_activity_interval_;
-        const double interval_end = std::min(next_activity_boundary, end_time);
-        const double duration = interval_end - interval_start;
+        do {
+            duration = active ? active_duration(generator_) : silent_duration(generator_);
+        } while (duration <= 0.0);
 
-        // Convert the whale's hourly rate to the active rate for this interval.
-        const double calls_per_second = call_rate_per_hour * group.call_rate_multipliers[activity_index] / 3600.0;
+        const double interval_end = std::min(interval_start + duration, end_time);
 
-        // Draw the number of calls from a piecewise-constant Poisson process.
-        std::poisson_distribution<int> call_count(calls_per_second * duration);
-        const int count = call_count(generator_);
+        if (active) {
+            double time_until_call;
 
-        if (count > 0) {
-            // Distribute the generated calls uniformly throughout the interval.
-            std::uniform_real_distribution<double> call_time(interval_start, interval_end);
+            do {
+                time_until_call = call_interval(generator_);
+            } while (time_until_call <= 0.0);
 
-            for (int index = 0; index < count; ++index) {
-                call_times.push_back(call_time(generator_));
+            double call_time = interval_start + time_until_call;
+
+            while (call_time < interval_end) {
+                call_times.push_back(call_time);
+
+                do {
+                    time_until_call = call_interval(generator_);
+                } while (time_until_call <= 0.0);
+
+                call_time += time_until_call;
             }
         }
 
         interval_start = interval_end;
+        active = !active;
     }
-
-    // Calls sampled within an interval are not necessarily generated in order.
-    std::sort(call_times.begin(), call_times.end());
 
     return call_times;
 }
@@ -186,14 +244,12 @@ void WhaleNode::initialize_whale_groups(double line_length) {
     // Choose enough groups to approximately satisfy the configured mean size.
     const int group_count = std::max(1, static_cast<int>(std::ceil(static_cast<double>(whale_count_) / group_mean_size_)));
 
-    // Calculate the number of movement and calling intervals in the mission.
+    // Calculate the number of shared heading intervals in the mission.
     const std::size_t heading_count = static_cast<std::size_t>(std::ceil(mission_duration_ / turn_interval_)) + 1;
-    const std::size_t call_activity_count = static_cast<std::size_t>(std::ceil(mission_duration_ / call_activity_interval_)) + 1;
 
     // Convert heading variation to radians and calculate the AR(1) innovation scale.
     const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
     const double heading_innovation_scale = heading_std_radians * std::sqrt(1.0 - heading_correlation_ * heading_correlation_);
-    const double call_innovation_scale = std::sqrt(1.0 - call_activity_correlation_ * call_activity_correlation_);
 
     // Create distributions used to generate group-level properties.
     std::uniform_real_distribution<double> crossing_distance(0.0, line_length);
@@ -224,24 +280,6 @@ void WhaleNode::initialize_whale_groups(double line_length) {
             group.heading_errors.push_back(heading_error);
         }
 
-        // Generate the group's correlated calling-activity process.
-        group.call_rate_multipliers.reserve(call_activity_count);
-
-        // Starting in the stationary distribution avoids making the beginning
-        // of the simulation artificially quieter than the remainder.
-        double group_call_activity = standard_normal(generator_);
-
-        for (std::size_t activity_index = 0; activity_index < call_activity_count; ++activity_index) {
-            if (activity_index > 0) {
-                group_call_activity = call_activity_correlation_ * group_call_activity + call_innovation_scale * standard_normal(generator_);
-            }
-
-            // A lognormal multiplier keeps call rates positive. Subtracting
-            // sigma squared over two keeps the expected multiplier equal to one.
-            const double multiplier = std::exp(group_log_rate_std_ * group_call_activity - 0.5 * group_log_rate_std_ * group_log_rate_std_);
-            group.call_rate_multipliers.push_back(multiplier);
-        }
-
         whale_groups_.push_back(std::move(group));
     }
 
@@ -255,9 +293,8 @@ void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState 
     whale.trajectory = generate_trajectory(initial_state.north, initial_state.east, initial_state.heading, speed, whale.start_time, group);
 
     if (whale.trajectory.empty()) throw std::runtime_error("Generated whale trajectory is empty.");
-
-    const double end_time = whale.trajectory.back().time;
-    whale.call_times = generate_call_times(whale.start_time, end_time, whale.call_rate_per_hour, group);
+    
+    whale.call_times.clear();
     whale.next_call_index = 0;
 
     const TrajectoryPoint &first_point = whale.trajectory.front();
@@ -274,8 +311,6 @@ void WhaleNode::initialize_whales() {
     const LineGeometry line = compute_line_geometry();  // Calculate picket-line geometry and initialize shared whale groups.
     initialize_whale_groups(line.length);
 
-    std::uniform_real_distribution<double> call_rate(call_rate_min_, call_rate_max_);
-
     whales_.clear();
     whales_.reserve(whale_count_);
 
@@ -288,14 +323,15 @@ void WhaleNode::initialize_whales() {
         const double whale_start_time = sample_start_time(group);
         const double whale_speed = sample_speed();
 
-        const double whale_call_rate = call_rate(generator_);
         const WhaleInitialState initial_state = compute_initial_state(group, line, crossing_distance, whale_speed);
         
-        Whale whale = create_whale(index, group_index, group, whale_start_time, whale_call_rate);
+        Whale whale = create_whale(index, group_index, group, whale_start_time);
 
         initialize_whale_dynamics(whale, initial_state, whale_speed, group);
         whales_.push_back(std::move(whale));
     }
+
+    assign_population_call_times();
 }
 
 /**
@@ -320,11 +356,9 @@ void WhaleNode::load_config() {
     heading_std_degrees_ = declare_parameter<double>("heading_std_degrees", 15.0);
 
     // Whale calling behavior.
-    call_rate_min_ = declare_parameter<double>("call_rate_min", 4.8);
-    call_rate_max_ = declare_parameter<double>("call_rate_max", 8.0);
-    call_activity_interval_ = declare_parameter<double>("call_activity_interval", 600.0);
-    call_activity_correlation_ = declare_parameter<double>("call_activity_correlation", 0.90);
-    group_log_rate_std_ = declare_parameter<double>("group_log_rate_std", 0.50);
+    bout_mean_duration_ = declare_parameter<double>("bout_mean_duration", 1842.0);
+    bout_mean_silent_duration_ = declare_parameter<double>("bout_mean_silent_duration", 7860.0);
+    bout_active_call_rate_per_hour_ = declare_parameter<double>("bout_active_call_rate_per_hour", 40.1);
 
     // Whale grouping behavior.
     group_mean_size_ = declare_parameter<double>("group_mean_size", 3.0);
@@ -421,11 +455,9 @@ void WhaleNode::validate_config() const {
     if (heading_correlation_ < 0.0 || heading_correlation_ >= 1.0) throw std::runtime_error("heading_correlation must be in [0, 1).");
     if (heading_std_degrees_ < 0.0) throw std::runtime_error("heading_std_degrees cannot be negative.");
 
-    if (call_rate_min_ <= 0.0) throw std::runtime_error("call_rate_min must be greater than zero.");
-    if (call_rate_max_ < call_rate_min_) throw std::runtime_error("call_rate_max must be greater than or equal to call_rate_min.");
-    if (call_activity_interval_ <= 0.0) throw std::runtime_error("call_activity_interval must be greater than zero.");
-    if (call_activity_correlation_ < 0.0 || call_activity_correlation_ >= 1.0) throw std::runtime_error("call_activity_correlation must be in [0, 1).");
-    if (group_log_rate_std_ < 0.0) throw std::runtime_error("group_log_rate_std cannot be negative.");
+    if (bout_mean_duration_ <= 0.0) throw std::runtime_error("Mean calling-bout duration must be positive.");
+    if (bout_mean_silent_duration_ <= 0.0) throw std::runtime_error("Mean silent duration between calling bouts must be positive.");
+    if (bout_active_call_rate_per_hour_ <= 0.0) throw std::runtime_error("Active-bout call rate must be positive.");
 
     if (group_mean_size_ < 1.0) throw std::runtime_error("group_mean_size must be at least one.");
     if (group_position_std_ < 0.0) throw std::runtime_error("group_position_std cannot be negative.");
