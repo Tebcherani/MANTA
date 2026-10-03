@@ -23,7 +23,7 @@ void SimOrchestratorNode::initialize_simulation_config() {
     // Override the native defaults with the configured ROS parameters.
     sim_config_.timestep = declare_parameter<double>("timestep", sim_config_.timestep);
     sim_config_.control_period = static_cast<int>(declare_parameter<std::int64_t>("control_period", sim_config_.control_period));
-    sim_config_.num_cycles = static_cast<int>(declare_parameter<std::int64_t>("max_cycles", sim_config_.num_cycles));
+    sim_config_.num_cycles = static_cast<int>(declare_parameter<std::int64_t>("max_steps", sim_config_.num_cycles));
     steps_per_message_ = static_cast<int>(declare_parameter<std::int64_t>("steps_per_message", 1));
 
     // Every published batch must contain at least one simulation step.
