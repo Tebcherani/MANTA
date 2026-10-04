@@ -60,6 +60,7 @@ class OdysseyNode : public rclcpp::Node {
         bool log_decimation_configured_ = false;
         bool metrics_written_ = false;
         bool mission_finished_ = false;
+        bool tracking_enabled_ = false;
 
         // Simulation
         bool calendar_start_time_received_ = false;

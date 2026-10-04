@@ -19,9 +19,9 @@ from textwrap import dedent
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CONFIG_PATH = ROOT / "config" / "scenarios" / "picket_line.yaml"
 config_path = Path(sys.argv[1]).resolve() if len(sys.argv) == 2 else CONFIG_PATH
 OUTPUT_DIR = ROOT / "generated" / "missions" / "picket_line"
-
 
 @dataclass(frozen=True)
 class MissionConfig:
@@ -138,14 +138,8 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str, segment: LineS
           b_arg: depth_cutoff_active(bool) 0
           b_arg: cutoff_depth(m) {config.vehicle_depth + 25.0:.6f}
 
-        # Follow an assigned whale using its exact simulated position.
-        behavior: whale_follow 3
-          b_arg: depth(m) {config.vehicle_depth:.6f}
-          b_arg: speed(m/s) {config.vehicle_speed:.6f}
-          b_arg: capture(m) {config.vehicle_capture:.6f}
-
-        # Patrol until a whale is assigned.
-        behavior: picket_line_patrol 4
+        # Continuously patrol the assigned picket-line segment.
+        behavior: picket_line_patrol 3
           b_arg: start_n(m) {segment.start_n:.6f}
           b_arg: start_e(m) {segment.start_e:.6f}
           b_arg: end_n(m) {segment.end_n:.6f}

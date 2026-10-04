@@ -7,20 +7,12 @@ from manta_core.manta_down import run_down
 from manta_core.manta_environment import get_host_environment
 from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_review import run_review
-from manta_core.manta_run import generate_missions, prepare_runtime
+from manta_core.manta_run import prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
-from paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, PICKET_LINE_CONFIG_PATH, PICKET_LINE_MONTE_CARLO_OUTPUT_DIR
+from paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, SCENARIO_CONFIG_DIR
 
 def main() -> int:
     args = parse_args()
-
-    scenario_config_paths = {
-        "picket_line": PICKET_LINE_CONFIG_PATH,
-    }
-
-    scenario_monte_carlo_output_dirs = {
-        "picket_line": PICKET_LINE_MONTE_CARLO_OUTPUT_DIR,
-    }
 
     if args.command == "down": return run_down()
     if args.command == "review": return run_review(scenario=args.scenario, plot=args.plot)
@@ -32,14 +24,16 @@ def main() -> int:
             command = ["docker", "compose", "-f", str(DEV_COMPOSE_PATH), "run", "--rm", "dev"]
             return subprocess.run(command, cwd=ROOT, env=get_host_environment(), check=False).returncode
 
-        config_path = scenario_config_paths.get(args.scenario, PICKET_LINE_CONFIG_PATH)
+        config_path = SCENARIO_CONFIG_DIR / f"{args.scenario}.yaml"
         config = load_yaml(config_path)
 
         if args.command == "monte_carlo_sweep": return run_monte_carlo_sweep(config)
 
         prepare_runtime(config, config_path)
         if args.command == "generate": return 0
-        if args.command == "monte_carlo": return run_monte_carlo(config, scenario_monte_carlo_output_dirs[args.scenario])
+        if args.command == "monte_carlo":
+            output_dir = ROOT / "output" / args.scenario / "monte_carlo"
+            return run_monte_carlo(config, output_dir)
 
         commands = {
             "run": ["docker", "compose", "-f", str(DOCKER_COMPOSE_PATH), "up", "--remove-orphans"],

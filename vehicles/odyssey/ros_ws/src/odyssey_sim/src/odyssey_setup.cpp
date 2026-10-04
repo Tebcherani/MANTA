@@ -20,4 +20,6 @@ void OdysseyNode::load_config() {
 
     output_sample_period_ = declare_parameter<double>("output_sample_period", 2.0);
     if (output_sample_period_ <= 0.0) throw std::runtime_error("output_sample_period must be greater than zero.");
+
+    tracking_enabled_ = declare_parameter<bool>("tracking_enabled", false);
 }

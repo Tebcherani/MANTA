@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description="Build, run, review, and analyze MANTA simulations.")
     parser.add_argument("command", nargs="?", default="run", choices=("generate", "build", "dev", "run", "down", "review", "monte_carlo", "monte_carlo_sweep"))
-    parser.add_argument("scenario", nargs="?", choices=("picket_line",), help="Simulation scenario.")
+    parser.add_argument("scenario", nargs="?", choices=("picket_line", "trailing"), help="Simulation scenario.")
     parser.add_argument("plot", nargs="?", choices=("tracks", "sweep"), help="Scenario plot to show.")
 
     args = parser.parse_args()

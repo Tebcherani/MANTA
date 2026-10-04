@@ -188,9 +188,10 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
 }
 
 /**
- * Assign this vehicle to the first whale call it detects.
+ * Assign this vehicle to the first whale call it detects when tracking is enabled.
  */
 void OdysseyNode::handle_whale_detection(const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {
+    if (!tracking_enabled_) return;
     if (msg->vehicle_id != vehicle_id_) return;
     if (!target_whale_id_.empty()) return;
 

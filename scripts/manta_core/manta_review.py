@@ -1,33 +1,50 @@
 import subprocess
 import sys
 
-from paths import VENV_EXEC, REVIEW_DIR, PICKET_LINE_SWEEP_SUMMARY_PATH
+from paths import ROOT, VENV_EXEC, REVIEW_DIR
 
 
 def run_review(scenario: str, plot: str) -> int:
-    """Validate the review environment and run the selected plotting script."""
-    
+    """Validate the review environment and run the selected scenario plot."""
+
     scripts = {
         "picket_line": {
             "tracks": "plot_tracks.py",
             "sweep": "plot_sweep_metrics.py",
         },
+        "trailing": {
+            "tracks": "plot_tracks.py",
+            "sweep": "plot_sweep_metrics.py",
+        },
     }
 
-    script = REVIEW_DIR / scenario / scripts[scenario][plot]
+    scenario_scripts = scripts.get(scenario)
+
+    if scenario_scripts is None:
+        print(f"No review scripts are configured for scenario '{scenario}'.", file=sys.stderr)
+        return 1
+
+    script_name = scenario_scripts.get(plot)
+
+    if script_name is None:
+        print(f"Plot '{plot}' is not configured for scenario '{scenario}'.", file=sys.stderr)
+        return 1
+
+    script = REVIEW_DIR / scenario / script_name
 
     if not VENV_EXEC.is_file():
-        print(f"Review venv_dir is missing: {VENV_EXEC}", file=sys.stderr)
+        print(f"Review virtual environment is missing: {VENV_EXEC}", file=sys.stderr)
         return 1
+
     if not script.is_file():
         print(f"Review script is missing: {script}", file=sys.stderr)
         return 1
 
-    command = [str(VENV_EXEC), str(script)]
-
     if plot == "sweep":
-        if not PICKET_LINE_SWEEP_SUMMARY_PATH.is_file():
-            print(f"Monte Carlo sweep summary is missing: {PICKET_LINE_SWEEP_SUMMARY_PATH}", file=sys.stderr)
+        summary_path = ROOT / "output" / scenario / "monte_carlo_sweep" / "sweep_summary.csv"
+
+        if not summary_path.is_file():
+            print(f"Monte Carlo sweep summary is missing: {summary_path}", file=sys.stderr)
             return 1
-        
-    return subprocess.run(command, cwd=script.parent, check=False).returncode
+
+    return subprocess.run([str(VENV_EXEC), str(script)], cwd=script.parent, check=False).returncode

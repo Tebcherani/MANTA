@@ -5,7 +5,7 @@ import yaml
 
 from manta_core.manta_config import load_plugin
 from pathlib import Path
-from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH, PICKET_LINE_MISSION_GENERATOR_PATH
+from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH
 
 
 def container_path(configured_path: str) -> str:
@@ -21,11 +21,22 @@ def container_path(configured_path: str) -> str:
 
 
 def generate_missions(config: dict, config_path: Path) -> None:
-    """Generate mission file for the picket line scenario with the given configuration."""
-    scenario = config.get("scenario", {})
-    if scenario.get("type") != "picket_line": return
-    result = subprocess.run([sys.executable, str(PICKET_LINE_MISSION_GENERATOR_PATH), str(config_path)], cwd=ROOT, check=False)
-    if result.returncode != 0: raise ValueError("Failed to generate picket-line missions.")
+    """Run the mission generator associated with the selected scenario."""
+
+    scenario_type = config.get("scenario", {}).get("type")
+
+    if not scenario_type:
+        raise ValueError("Configuration is missing scenario.type.")
+
+    generator_path = ROOT / "missions" / scenario_type / f"generate_{scenario_type}_mission.py"
+
+    if not generator_path.is_file():
+        raise ValueError(f"Mission generator does not exist: {generator_path}")
+
+    result = subprocess.run([sys.executable, str(generator_path), str(config_path)], cwd=ROOT, check=False)
+
+    if result.returncode != 0:
+        raise ValueError(f"Failed to generate missions for scenario '{scenario_type}'.")
 
 
 def prepare_runtime(sim_config: dict, config_path: Path) -> tuple[Path, Path]:
@@ -55,7 +66,7 @@ def print_config_summary(config: dict, config_path: Path) -> None:
 # Compose file generation
 #-------------------------------------------------------
 
-def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int) -> dict:
+def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int, tracking_enabled: bool) -> dict:
     vehicle_id = vehicle["id"]
     vehicle_type = vehicle["type"]
     manifest = load_plugin(vehicle_type)
@@ -105,7 +116,8 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
             f"ros2 run {ros_package} {executable} --ros-args "
-            f"-p output_sample_period:={sample_period}",
+            f"-p output_sample_period:={sample_period} "
+            f"-p tracking_enabled:={str(tracking_enabled).lower()}",
         ],
     }
 
@@ -206,6 +218,8 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
     if compose_path is None: compose_path = DOCKER_COMPOSE_PATH
     compose_path.parent.mkdir(parents=True, exist_ok=True)
 
+    scenario_type = config["scenario"]["type"]
+    tracking_enabled = scenario_type == "trailing"
     data_dir = container_path(config["output"]["data_directory"])
     log_dir = container_path(config["output"]["log_directory"])
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
@@ -213,11 +227,11 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
     sample_period = float(config["output"].get("auv_sample_period", 2.0))
 
     services = {
-        vehicle["id"]: vehicle_service(vehicle, data_dir, log_dir, sample_period, ros_domain_id)
+        vehicle["id"]: vehicle_service(vehicle, data_dir, log_dir, sample_period, ros_domain_id, tracking_enabled)
         for vehicle in config["vehicles"]
     }
 
-    if config.get("scenario", {}).get("type") == "picket_line":
+    if scenario_type in {"picket_line", "trailing"}:
         services["whale_sim"] = whale_service(config, log_dir, ros_domain_id)
         services["whale_detection_sim"] = whale_detection_service(config, log_dir, ros_domain_id)
 
@@ -248,8 +262,7 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
             f'-p "timestep:={simulation["timestep"]}" '
             f'-p "control_period:={simulation["control_period"]}" '
             f'-p "max_steps:={simulation["max_steps"]}" '
-            f'-p "steps_per_message:='
-            f'{simulation.get("steps_per_message", 1)}"',
+            f'-p "steps_per_message:={simulation.get("steps_per_message", 1)}"',
         ],
     }
 

@@ -7,7 +7,7 @@ from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult, Swe
 from manta_core.manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
 from manta_core.manta_run import generate_missions
 from pathlib import Path
-from paths import ROOT, PICKET_LINE_SWEEP_GENERATED_DIR, PICKET_LINE_SWEEP_SUMMARY_PATH, PICKET_LINE_SWEEP_OUTPUT_DIR
+from paths import ROOT
 from threading import Event
 
 
@@ -15,11 +15,12 @@ from threading import Event
 # Helper functions
 # -----------------------------------------------------
 
-def generate_fleet_config(sim_config: dict, fleet_size: int) -> tuple[dict, Path]:
+def generate_fleet_config(sim_config: dict, fleet_size: int, generated_dir: Path) -> tuple[dict, Path]:
     """Create one fleet configuration by cloning the first vehicle plugin."""
 
     if not sim_config.get("vehicles"): raise ValueError("The sweep requires at least one vehicle template.")
 
+    scenario_type = sim_config["scenario"]["type"]
     fleet_config = copy.deepcopy(sim_config)
     template = copy.deepcopy(sim_config["vehicles"][0])
     vehicles = []
@@ -27,59 +28,59 @@ def generate_fleet_config(sim_config: dict, fleet_size: int) -> tuple[dict, Path
     for index in range(1, fleet_size + 1):
         vehicle = copy.deepcopy(template)
         vehicle["id"] = f"auv_{index}"
-        vehicle["mission"] = (f"./generated/missions/picket_line/picket_line_auv_{index}.mi")
+        vehicle["mission"] = f"./generated/missions/{scenario_type}/auv_{index}.mi"
         vehicles.append(vehicle)
 
     fleet_config["vehicles"] = vehicles
-    fleet_config_path = PICKET_LINE_SWEEP_GENERATED_DIR / f"simulation_vehicles_{fleet_size:02d}.yaml"
+    fleet_config_path = generated_dir / f"simulation_vehicles_{fleet_size:02d}.yaml"
     fleet_config_path.write_text(yaml.safe_dump(fleet_config, sort_keys=False), encoding="utf-8")
-    
+
     return fleet_config, fleet_config_path
 
 
-def load_completed_sweep_results() -> dict[int, SweepResult]:
+def load_completed_sweep_results(summary_path: Path) -> dict[int, SweepResult]:
     """Load completed fleet results as SweepResult instances."""
 
-    if not PICKET_LINE_SWEEP_SUMMARY_PATH.is_file(): return {}
+    if not summary_path.is_file(): return {}
 
-    with PICKET_LINE_SWEEP_SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
+    with summary_path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
         results = [SweepResult.from_csv_row(row) for row in reader]
 
     return {result.fleet_size: result for result in results}
 
 
-def prepare_fleet_experiment(sim_config: dict, fleet_size: int) -> tuple[dict, Path]:
+def prepare_fleet_experiment(sim_config: dict, fleet_size: int, generated_dir: Path, sweep_output_dir: Path) -> tuple[dict, Path]:
     """Generate the configuration, missions, and output path for one fleet size."""
 
-    fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size)
+    fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size, generated_dir)
     generate_missions(fleet_config, fleet_config_path)
-    fleet_directory = PICKET_LINE_SWEEP_OUTPUT_DIR / f"vehicles_{fleet_size:02d}"
+    fleet_directory = sweep_output_dir / f"vehicles_{fleet_size:02d}"
 
     return fleet_config, fleet_directory
 
 
-def prepare_monte_carlo_sweep(sim_config: dict) -> tuple[SweepConfig, MonteCarloConfig, dict[int, SweepResult]]:
+def prepare_monte_carlo_sweep(sim_config: dict, generated_dir: Path, sweep_output_dir: Path, summary_path: Path) -> tuple[SweepConfig, MonteCarloConfig, dict[int, SweepResult]]:
     """Validate sweep settings, prepare output directories, and load completed results."""
 
-    PICKET_LINE_SWEEP_GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-    PICKET_LINE_SWEEP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    generated_dir.mkdir(parents=True, exist_ok=True)
+    sweep_output_dir.mkdir(parents=True, exist_ok=True)
 
     sweep_config = SweepConfig.from_dict(sim_config.get("sweep", {}))
     monte_carlo_config = MonteCarloConfig.from_dict(sim_config.get("monte_carlo", {}))
-    completed_results = load_completed_sweep_results()
+    completed_results = load_completed_sweep_results(summary_path)
 
     return sweep_config, monte_carlo_config, completed_results
 
 
-def record_fleet_result(fleet_size: int, fleet_dir: Path, monte_carlo_config: MonteCarloConfig, completed_results: dict[int, SweepResult]) -> SweepResult:
+def record_fleet_result(fleet_size: int, fleet_dir: Path, monte_carlo_config: MonteCarloConfig, completed_results: dict[int, SweepResult], summary_path: Path) -> SweepResult:
     """Summarize one completed fleet experiment and update the sweep summary."""
 
     experiment_results = list(load_completed_results(fleet_dir / "summary.csv", monte_carlo_config.random_seed).values()) 
     sweep_result = summarize_fleet_results(fleet_size, experiment_results, monte_carlo_config.confidence_level)
     completed_results[fleet_size] = sweep_result
     sweep_rows = [asdict(completed_results[fleet_size]) for fleet_size in sorted(completed_results)]
-    write_sweep_summary(PICKET_LINE_SWEEP_SUMMARY_PATH, sweep_rows)
+    write_sweep_summary(summary_path, sweep_rows)
 
     return sweep_result
 
@@ -171,30 +172,41 @@ def write_sweep_summary(path: Path, rows: list[dict]) -> None:
 def run_monte_carlo_sweep(sim_config: dict) -> int:
     """Run adaptive Monte Carlo experiments for each fleet size."""
 
-    # Prepare monte carlo sweep
-    stop_requested = Event()
-    sweep_config, monte_carlo_config, completed_results = prepare_monte_carlo_sweep(sim_config)
+    scenario_type = sim_config.get("scenario", {}).get("type")
 
-    # Loop through all fleet sizes
-    for fleet_size in range(sweep_config.min_vehicles, sweep_config.max_vehicles+1):
+    if not scenario_type:
+        raise ValueError("Configuration is missing scenario.type.")
+
+    generated_dir = ROOT / "generated" / "monte_carlo_sweep" / scenario_type
+    sweep_output_dir = ROOT / "output" / scenario_type / "monte_carlo_sweep"
+    summary_path = sweep_output_dir / "sweep_summary.csv"
+
+    # Prepare the scenario-specific Monte Carlo sweep.
+    stop_requested = Event()
+    sweep_config, monte_carlo_config, completed_results = prepare_monte_carlo_sweep(sim_config, generated_dir, sweep_output_dir, summary_path)
+
+    # Run one Monte Carlo experiment for every requested fleet size.
+    for fleet_size in range(sweep_config.min_vehicles, sweep_config.max_vehicles + 1):
         if stop_requested.is_set(): return 130
 
-        print(f"\n=== Monte Carlo fleet sweep: {fleet_size} vehicle(s) ===")
+        print(f"\n=== {scenario_type} Monte Carlo fleet sweep: {fleet_size} vehicle(s) ===")
 
-        # Skip sweep results that already exist
+        # Preserve fleet-size experiments that have already completed.
         if fleet_size in completed_results:
             print(f"Skipping {fleet_size} vehicle(s); sweep results already exist.")
             continue
 
-        # Run monte carlo experiment for one fleet size
-        fleet_config, fleet_dir = prepare_fleet_experiment(sim_config, fleet_size)
-        result = run_monte_carlo(sim_config=fleet_config, output_dir=fleet_dir, project_offset=fleet_size*10000)
+        # Generate the fleet configuration and run its Monte Carlo experiment.
+        fleet_config, fleet_dir = prepare_fleet_experiment(sim_config, fleet_size, generated_dir, sweep_output_dir)
+        result = run_monte_carlo(sim_config=fleet_config, output_dir=fleet_dir, project_offset=fleet_size * 10000)
+
         if result != 0: return result
 
-        # Write fleet results to the sweep_summary.csv
-        sweep_result = record_fleet_result(fleet_size, fleet_dir, monte_carlo_config, completed_results)
+        # Add the completed fleet-size statistics to the sweep summary.
+        sweep_result = record_fleet_result(fleet_size, fleet_dir, monte_carlo_config, completed_results, summary_path)
         print(f"Fleet size {fleet_size}: mean {sweep_result.mean_detection:.2%}, CI half-width {sweep_result.ci_half_width:.2%} from {sweep_result.realizations} runs.")
 
-    print(f"Sweep data: {PICKET_LINE_SWEEP_SUMMARY_PATH}\nRun './manta review sweep' to generate the sweep plots.")
+    print(f"Sweep data: {summary_path}")
+    print(f"Run './manta review {scenario_type} sweep' to generate the sweep plots.")
 
     return 0
