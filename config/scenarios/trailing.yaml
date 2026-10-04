@@ -67,7 +67,7 @@ scenario:
     capture: 5.0
 
   detection:
-    radius: 11000.0 # meters
+    receive_all_calls: true
 
   whales:
     count: 3

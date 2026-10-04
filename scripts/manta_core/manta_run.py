@@ -205,10 +205,25 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
 
 
 def whale_detection_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
+    """Create the whale-detection service for range-based or all-call operation."""
+
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
-    detection_range = config["scenario"]["detection"]["radius"]
+    detection = config["scenario"]["detection"]
+    receive_all_calls = bool(detection.get("receive_all_calls", False))
     data_directory = container_path(config["output"]["data_directory"])
+
+    parameters = [
+        f'-p "vehicle_ids:={vehicle_list}"',
+        f'-p "receive_all_calls:={str(receive_all_calls).lower()}"',
+        f'-p "data_directory:={data_directory}"',
+    ]
+
+    if not receive_all_calls:
+        if "radius" not in detection: raise ValueError("Range-based whale detection requires scenario.detection.radius.")
+        parameters.append(f'-p "detection_range:={detection["radius"]}"')
+
+    arguments = " ".join(parameters)
 
     return {
         "image": "odyssey_sim_dev",
@@ -228,10 +243,7 @@ def whale_detection_service(config: dict, log_dir: str, ros_domain_id: int) -> d
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
-            "ros2 run whale_detection_sim whale_detection_node "
-            f'--ros-args -p "vehicle_ids:={vehicle_list}" '
-            f'-p "detection_range:={detection_range}" '
-            f'-p "data_directory:={data_directory}"',
+            f"exec ros2 run whale_detection_sim whale_detection_node --ros-args {arguments}",
         ],
     }
 

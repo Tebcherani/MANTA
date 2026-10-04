@@ -98,15 +98,15 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str) -> Path:
           b_arg: speed(m/s) {config.vehicle_speed:.6f}
           b_arg: capture(m) {config.vehicle_capture:.6f}
 
-        # Remain stationary until a detected call provides a trailing target.
-        behavior: picket_line 4
-          b_arg: start_n(m) {config.start_n:.6f}
-          b_arg: start_e(m) {config.start_e:.6f}
-          b_arg: end_n(m) {config.start_n:.6f}
-          b_arg: end_e(m) {config.start_e:.6f}
+        # Keep the mission active and the vehicle stationary while it waits for calls.
+        behavior: setpoint 4
+          b_arg: heading(rad) 0.0
           b_arg: depth(m) {config.vehicle_depth:.6f}
           b_arg: speed(m/s) 0.0
-          b_arg: capture(m) {config.vehicle_capture:.6f}
+          b_arg: time(s) {config.mission_duration:.6f}
+          b_arg: cycles(int) 1
+          b_arg: turn(rad) 0.0
+          b_arg: desired_pitch(rad) 0.0
         """
     )
 
