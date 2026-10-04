@@ -13,7 +13,9 @@ DATA_DIR = ROOT / "output" / "trailing" / "Data"
 WHALE_CALLS_PATH = DATA_DIR / "whale_calls.csv"
 WHALE_DETECTIONS_PATH = DATA_DIR / "whale_detections.csv"
 WHALE_TRAJECTORY_PATH = DATA_DIR / "whales.csv"
-WHALE_COLOR = "tab:gray"
+
+AUV_COLOR = "tab:blue"
+WHALE_COLOR = "tab:red"
 WHALE_CALL_COLOR = "tab:red"
 
 
@@ -79,7 +81,7 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> tuple[int, dict[str, str
             print(f"Skipping {name}: no valid positions.")
             continue
 
-        line, = ax.plot(east, north, linewidth=1.5, label=name, zorder=4)
+        line, = ax.plot(east, north, color=AUV_COLOR, linewidth=2.0, label=name, zorder=4)
         color = line.get_color()
         vehicle_colors[name] = color
         ax.scatter(east[0], north[0], color=color, marker="o", s=40, zorder=6)  # Vehicle starting position
@@ -244,16 +246,16 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
     return call_count
 
 
-def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]], vehicle_colors: dict[str, str]) -> int:
-    """Mark each detection using the detecting vehicle's color."""
+def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]]) -> int:
+    """Plot detected whale calls as solid red diamonds."""
 
     detections_by_vehicle = defaultdict(lambda: ([], []))
 
     for detections in detections_by_call.values():
         for vehicle_id, north, east in detections:
-            vehicle_north, vehicle_east = detections_by_vehicle[vehicle_id]
-            vehicle_north.append(north)
-            vehicle_east.append(east)
+            detection_north, detection_east = detections_by_vehicle[vehicle_id]
+            detection_north.append(north)
+            detection_east.append(east)
 
     detection_count = sum(len(north) for north, _ in detections_by_vehicle.values())
 
@@ -262,9 +264,8 @@ def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[
         return 0
 
     for vehicle_id, (north, east) in sorted(detections_by_vehicle.items()):
-        color = vehicle_colors.get(vehicle_id, "tab:blue")
-        ax.scatter(east, north, color=color, marker="D", s=45, linewidths=0.5, label=f"{vehicle_id} detections", zorder=7)
-    
+        ax.scatter(east, north, color=WHALE_COLOR, marker="D", s=45, linewidths=1.0, label=f"Calls received by {vehicle_id}", zorder=7)
+
     print(f"Plotting {detection_count} whale detections.")
     return detection_count
 
@@ -277,7 +278,7 @@ def main() -> int:
     fleet_size, vehicle_colors = plot_vehicle_tracks(ax, latest)
     whale_count = plot_whale_tracks(ax)
     call_count = plot_whale_calls(ax, detections_by_call)
-    detection_count = plot_detection_locations(ax, detections_by_call, vehicle_colors)
+    detection_count = plot_detection_locations(ax, detections_by_call)
 
     if (fleet_size == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
         print("No simulation results found in output/picket_line/Data.")
