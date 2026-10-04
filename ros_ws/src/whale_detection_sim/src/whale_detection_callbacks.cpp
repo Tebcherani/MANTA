@@ -103,7 +103,7 @@ void WhaleDetectionNode::try_process_pending_call() {
         const double distance = std::sqrt(north_difference * north_difference + east_difference * east_difference + depth_difference * depth_difference);
 
         // Ignore vehicles outside the configured acoustic detection range.
-        if (distance > detection_range_) continue;
+        if (!receive_all_calls_ && distance > detection_range_) continue;
 
         // Populate the detection with the exact vehicle and whale states used.
         manta_interfaces::msg::WhaleDetection detection;

@@ -47,6 +47,7 @@ private:
     // Configuration
     std::vector<std::string> vehicle_ids_;
     double detection_range_ = 11000;
+    bool receive_all_calls_ = false;
 
     // Simulation
     bool pending_call_available_ = false;
