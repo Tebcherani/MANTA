@@ -38,17 +38,18 @@ int whale_trailing(struct behavior *b, int priority, int level) {
 
     (void)level;
 
-    if (b->state == B_UNINITIALIZED) {
-        if (stack_busy(cmd)) return -1;
-        b->state = B_ACTIVE;
-    }
+    if (b->state == B_UNINITIALIZED) b->state = B_ACTIVE;
 
     // Keep the behavior active without commanding motion until a call is detected.
     if (!target_available) {
         cmd->depth_mode = 1;
+        cmd->heading_mode = 1;
         cmd->speed_mode = 1;
+
         cmd->depth[0] = bArg(DEPTH);
+        cmd->heading[0] = read_sensor(M_COMPASS_YAW);
         cmd->speed[0] = 0.0;
+
         return 0;
     }
 

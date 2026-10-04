@@ -97,16 +97,6 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str) -> Path:
           b_arg: depth(m) {config.vehicle_depth:.6f}
           b_arg: speed(m/s) {config.vehicle_speed:.6f}
           b_arg: capture(m) {config.vehicle_capture:.6f}
-
-        # Keep the mission active and the vehicle stationary while it waits for calls.
-        behavior: setpoint 4
-          b_arg: heading(rad) 0.0
-          b_arg: depth(m) {config.vehicle_depth:.6f}
-          b_arg: speed(m/s) 0.0
-          b_arg: time(s) {config.mission_duration:.6f}
-          b_arg: cycles(int) 1
-          b_arg: turn(rad) 0.0
-          b_arg: desired_pitch(rad) 0.0
         """
     )
 
