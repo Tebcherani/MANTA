@@ -133,6 +133,7 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
     monte_carlo = config.get("monte_carlo", {})
 
     params = {
+        "active_entire_mission": whales.get("active_entire_mission", False),
         "count": whales["count"],
         "line_start_north": line["start"]["north"],
         "line_start_east": line["start"]["east"],

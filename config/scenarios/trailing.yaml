@@ -44,7 +44,7 @@ monte_carlo:
 
 sweep:
   min_vehicles: 1
-  max_vehicles: 13
+  max_vehicles: 5
 
 
 #--------------------------------------------------
@@ -72,7 +72,8 @@ scenario:
     radius: 11000.0 # meters
 
   whales:
-    count: 46
+    count: 3
+    active_entire_mission: true
     start_distance: 25000.0
     depth: 20.0
 

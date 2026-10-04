@@ -160,9 +160,9 @@ std::vector<double> WhaleNode::generate_population_call_times(double start_time,
 }
 
 /**
- * Generate one whale's complete movement trajectory through the monitored corridor.
+ * Generate one whale's movement trajectory from its activation time to the end of the mission.
  */
-std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time, const WhaleGroup &group) {
+std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time, const LineGeometry &line, const WhaleGroup &group) {
     std::vector<TrajectoryPoint> trajectory;
 
     // Calculate the individual AR(1) heading-error innovation scale.
@@ -204,6 +204,18 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
         north += velocity_north * duration;
         east += velocity_east * duration;
         time = next_time;
+
+        // End nonpersistent whale trajectories after crossing through the monitored corridor.
+        if (!active_entire_mission_) {
+            const double relative_north = north - line_start_north_;
+            const double relative_east = east - line_start_east_;
+            const double signed_distance = relative_north * line.perpendicular_north + relative_east * line.perpendicular_east;
+
+            if (group.side * signed_distance <= -start_distance_) {
+                trajectory.push_back({time, north, east, 0.0, 0.0});
+                break;
+            }
+        }
 
         // Preserve the final mission position without extrapolating beyond it.
         if (time >= mission_duration_) {
@@ -289,9 +301,9 @@ void WhaleNode::initialize_whale_groups(double line_length) {
 /**
  * Generate the whale's movement and calls and set its initial published state.
  */
-void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const WhaleGroup &group) {
-    whale.trajectory = generate_trajectory(initial_state.north, initial_state.east, initial_state.heading, speed, whale.start_time, group);
-
+void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const LineGeometry &line, const WhaleGroup &group) {
+    whale.trajectory = generate_trajectory(initial_state.north, initial_state.east, initial_state.heading, speed, whale.start_time, line, group);
+    
     if (whale.trajectory.empty()) throw std::runtime_error("Generated whale trajectory is empty.");
     
     whale.call_times.clear();
@@ -320,14 +332,15 @@ void WhaleNode::initialize_whales() {
         const WhaleGroup &group = whale_groups_[group_index];
 
         const double crossing_distance = sample_crossing_distance(group, line.length);
-        const double whale_start_time = sample_start_time(group);
+        const double whale_start_time = active_entire_mission_ ? 0.0 : sample_start_time(group);
         const double whale_speed = sample_speed();
 
         const WhaleInitialState initial_state = compute_initial_state(group, line, crossing_distance, whale_speed);
         
         Whale whale = create_whale(index, group_index, group, whale_start_time);
 
-        initialize_whale_dynamics(whale, initial_state, whale_speed, group);
+        initialize_whale_dynamics(whale, initial_state, whale_speed, line, group);
+        
         whales_.push_back(std::move(whale));
     }
 
@@ -349,6 +362,7 @@ void WhaleNode::load_config() {
     mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
 
     // Whale movement.
+    active_entire_mission_ = declare_parameter<bool>("active_entire_mission", false);
     speed_mean_ = declare_parameter<double>("speed_mean", 1.5);
     speed_std_ = declare_parameter<double>("speed_std", 0.2);
     turn_interval_ = declare_parameter<double>("turn_interval", 60.0);              // Update whale heading every turn_interval s
