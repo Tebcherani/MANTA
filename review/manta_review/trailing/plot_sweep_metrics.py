@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 SUMMARY_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_summary.csv"
+OUTPUT_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_metrics.png"
 
 plt.rcParams.update({
     "font.size": 14,
@@ -139,7 +140,10 @@ def main() -> int:
 
     integrated_axis.set_ylabel("Integrated centroid tracking error (km·h)")
 
-    plt.show()
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved trailing sweep figure: {OUTPUT_PATH}")
 
     return 0
 
