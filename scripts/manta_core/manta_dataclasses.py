@@ -75,6 +75,8 @@ class MonteCarloResult:
     total_mass: float
     total_energy: float
     mean_vehicle_speed: float
+    mean_centroid_distance_km: float | None = None
+    integrated_tracking_error_km_hours: float | None = None
 
     @classmethod
     def from_csv_row(cls, row: dict[str, str], base_seed: int) -> "MonteCarloResult":
@@ -96,6 +98,90 @@ class MonteCarloResult:
             total_mass=float(row["total_mass"]),
             total_energy=float(row["total_energy"]),
             mean_vehicle_speed=float(row["mean_vehicle_speed"]),
+            mean_centroid_distance_km=float(row["mean_centroid_distance_km"]) if row.get("mean_centroid_distance_km", "").strip() else None,
+            integrated_tracking_error_km_hours=float(row["integrated_tracking_error_km_hours"]) if row.get("integrated_tracking_error_km_hours", "").strip() else None,
+        )
+
+
+@dataclass(frozen=True)
+class TrailingSweepConfig:
+    """Whale-call waypoint-update intervals evaluated by the trailing sweep."""
+
+    call_update_intervals: tuple[float, ...]
+
+    def __post_init__(self) -> None:
+        """Validate the configured call-update intervals."""
+
+        if not self.call_update_intervals:
+            raise ValueError("'sweep.call_update_intervals' must contain at least one value.")
+        if any(interval < 0.0 for interval in self.call_update_intervals):
+            raise ValueError("'sweep.call_update_intervals' cannot contain negative values.")
+        if len(self.call_update_intervals) != len(set(self.call_update_intervals)):
+            raise ValueError("'sweep.call_update_intervals' cannot contain duplicate values.")
+        if tuple(sorted(self.call_update_intervals)) != self.call_update_intervals:
+            raise ValueError("'sweep.call_update_intervals' must be ordered from smallest to largest.")
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "TrailingSweepConfig":
+        """Convert the YAML trailing-sweep mapping into validated settings."""
+
+        if not isinstance(data, dict):
+            raise ValueError("'sweep' must be a YAML mapping.")
+
+        intervals = data.get("call_update_intervals")
+
+        if not isinstance(intervals, list):
+            raise ValueError("'sweep.call_update_intervals' must be a YAML list.")
+
+        return cls(call_update_intervals=tuple(float(interval) for interval in intervals))
+
+
+@dataclass(frozen=True)
+class TrailingSweepResult:
+    """Aggregate tracking results for one call-update interval."""
+
+    call_update_interval: float
+    realizations: int
+    mean_centroid_distance_km: float
+    centroid_distance_ci_lower_km: float
+    centroid_distance_ci_upper_km: float
+    centroid_distance_ci_half_width_km: float
+    mean_integrated_tracking_error_km_hours: float
+    integrated_error_ci_lower_km_hours: float
+    integrated_error_ci_upper_km_hours: float
+    integrated_error_ci_half_width_km_hours: float
+    confidence_level: float
+
+    def __post_init__(self) -> None:
+        """Validate a completed trailing-sweep result."""
+
+        if self.call_update_interval < 0.0:
+            raise ValueError("Call-update interval cannot be negative.")
+        if self.realizations < 1:
+            raise ValueError("Trailing sweep result must contain at least one realization.")
+        if self.mean_centroid_distance_km < 0.0:
+            raise ValueError("Mean centroid distance cannot be negative.")
+        if self.mean_integrated_tracking_error_km_hours < 0.0:
+            raise ValueError("Integrated tracking error cannot be negative.")
+        if not 0.0 < self.confidence_level < 1.0:
+            raise ValueError("Confidence level must be between zero and one.")
+
+    @classmethod
+    def from_csv_row(cls, row: dict[str, str]) -> "TrailingSweepResult":
+        """Convert one trailing-sweep summary row into a typed result."""
+
+        return cls(
+            call_update_interval=float(row["call_update_interval"]),
+            realizations=int(row["realizations"]),
+            mean_centroid_distance_km=float(row["mean_centroid_distance_km"]),
+            centroid_distance_ci_lower_km=float(row["centroid_distance_ci_lower_km"]),
+            centroid_distance_ci_upper_km=float(row["centroid_distance_ci_upper_km"]),
+            centroid_distance_ci_half_width_km=float(row["centroid_distance_ci_half_width_km"]),
+            mean_integrated_tracking_error_km_hours=float(row["mean_integrated_tracking_error_km_hours"]),
+            integrated_error_ci_lower_km_hours=float(row["integrated_error_ci_lower_km_hours"]),
+            integrated_error_ci_upper_km_hours=float(row["integrated_error_ci_upper_km_hours"]),
+            integrated_error_ci_half_width_km_hours=float(row["integrated_error_ci_half_width_km_hours"]),
+            confidence_level=float(row["confidence_level"]),
         )
 
 

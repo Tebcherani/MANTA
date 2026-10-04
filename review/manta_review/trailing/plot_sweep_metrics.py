@@ -4,171 +4,132 @@ import csv
 import math
 import matplotlib.pyplot as plt
 
-from matplotlib.ticker import PercentFormatter
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
 SUMMARY_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_summary.csv"
-OUTPUT_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_metrics.png"
 
 
-METRICS = (
-    {   # Detection plot
-        "mean": "mean_detection",
-        "lower": "ci_lower",
-        "upper": "ci_upper",
-        "title": "Whale Detection",
-        "ylabel": "Unique whales detected (%)",
-        "color": "tab:blue",
-        "percent": True,
-    },
-    {   # Fleet mass plot
-        "mean": "mean_total_mass",
-        "lower": "mass_ci_lower",
-        "upper": "mass_ci_upper",
-        "title": "Total Fleet Mass",
-        "ylabel": "Mass (kg)",
-        "color": "tab:green",
-        "percent": False,
-    },
-    {   # Energy plot
-        "mean": "mean_total_energy",
-        "lower": "energy_ci_lower",
-        "upper": "energy_ci_upper",
-        "title": "Total Fleet Energy Consumption",
-        "ylabel": "Energy consumed (Wh)",
-        "color": "tab:orange",
-        "percent": False,
-    },
-    {   # Vehicle speed plot
-        "mean": "mean_vehicle_speed",
-        "lower": "speed_ci_lower",
-        "upper": "speed_ci_upper",
-        "title": "Mean Vehicle Speed",
-        "ylabel": "Speed (m/s)",
-        "color": "tab:red",
-        "percent": False,
-    },
-)
-
-
-def get_required_summary_columns() -> set[str]:
-    """Return every sweep-summary CSV column required by the plots."""
-
-    columns = {"fleet_size"}
-    for metric in METRICS:
-        columns.update((metric["mean"], metric["lower"], metric["upper"]))
-
-    return columns
-
-
-def plot_metric(ax, rows: list[dict[str, float]], metric: dict) -> None:
-    """Plot one fleet metric with error bars and a shaded confidence interval."""
-
-    fleet_sizes = [row["fleet_size"] for row in rows]
-    means = [row[metric["mean"]] for row in rows]
-    lower_bounds = [row[metric["lower"]] for row in rows]
-    upper_bounds = [row[metric["upper"]] for row in rows]
-    lower_errors = [mean_value - lower_value for mean_value, lower_value in zip(means, lower_bounds)]
-    upper_errors = [upper_value - mean_value for mean_value, upper_value in zip(means, upper_bounds)]
-
-    ax.errorbar(fleet_sizes, means, yerr=[lower_errors, upper_errors], fmt="o", color=metric["color"], markersize=6, elinewidth=2.0, capsize=6, capthick=2.0, label="Mean")
-
-    if metric["percent"]:
-        ax.yaxis.set_major_formatter(PercentFormatter(1.0))
-    else:
-        ax.ticklabel_format(axis="y", style="plain", useOffset=False)
-
-    ax.set_title(metric["title"])
-    ax.set_xlabel("Number of Odyssey vehicles")
-    ax.set_ylabel(metric["ylabel"])
-    ax.set_xticks(fleet_sizes)
-    ax.grid(True, alpha=0.3)
-    ax.legend()
-
-    if metric["percent"]:
-        ax.set_ylim(0.0, 1.0)
-        ax.yaxis.set_major_formatter(PercentFormatter(1.0))
-
-
-def read_summary() -> list[dict[str, float]]:
-    """Read already-aggregated fleet statistics from sweep_summary.csv."""
+def read_sweep_summary() -> list[dict[str, float]]:
+    """Read and validate the trailing call-update sweep summary."""
 
     if not SUMMARY_PATH.is_file():
-        raise ValueError(f"Sweep summary does not exist: {SUMMARY_PATH}")
+        raise ValueError(f"Trailing sweep summary does not exist: {SUMMARY_PATH}")
+
+    required = {
+        "call_update_interval",
+        "realizations",
+        "mean_centroid_distance_km",
+        "centroid_distance_ci_lower_km",
+        "centroid_distance_ci_upper_km",
+        "mean_integrated_tracking_error_km_hours",
+        "integrated_error_ci_lower_km_hours",
+        "integrated_error_ci_upper_km_hours",
+    }
 
     rows = []
 
     with SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
-        if not reader.fieldnames:
-            raise ValueError(f"Sweep summary has no header: {SUMMARY_PATH}")
 
-        columns = get_required_summary_columns()
-        missing = sorted(columns.difference(reader.fieldnames))
-        if missing:
-            raise ValueError(f"Sweep summary is missing metric columns: {', '.join(missing)}. Run the sweep with manta_runner_v2.py first.")
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            missing = sorted(required.difference(reader.fieldnames or []))
+            raise ValueError(f"Trailing sweep summary is missing columns: {', '.join(missing)}")
 
         for line_number, source in enumerate(reader, start=2):
             try:
-                row = {"fleet_size": int(source["fleet_size"])}
-
-                for metric in METRICS:
-                    row[metric["mean"]] = float(source[metric["mean"]])
-                    row[metric["lower"]] = float(source[metric["lower"]])
-                    row[metric["upper"]] = float(source[metric["upper"]])
+                row = {
+                    "call_update_interval": float(source["call_update_interval"]),
+                    "realizations": int(source["realizations"]),
+                    "mean_centroid_distance_km": float(source["mean_centroid_distance_km"]),
+                    "centroid_distance_ci_lower_km": float(source["centroid_distance_ci_lower_km"]),
+                    "centroid_distance_ci_upper_km": float(source["centroid_distance_ci_upper_km"]),
+                    "mean_integrated_tracking_error_km_hours": float(source["mean_integrated_tracking_error_km_hours"]),
+                    "integrated_error_ci_lower_km_hours": float(source["integrated_error_ci_lower_km_hours"]),
+                    "integrated_error_ci_upper_km_hours": float(source["integrated_error_ci_upper_km_hours"]),
+                }
             except (TypeError, ValueError) as error:
-                raise ValueError(f"Invalid numeric value on line {line_number} of {SUMMARY_PATH}.") from error
+                raise ValueError(f"Invalid value on line {line_number} of {SUMMARY_PATH}.") from error
 
-            values = [value for name, value in row.items() if name != "fleet_size"]
-
-            if row["fleet_size"] < 1:
-                raise ValueError(f"Vehicle count must be positive on line {line_number}.")
-
-            if not all(math.isfinite(value) for value in values):
-                raise ValueError(f"Non-finite metric on line {line_number} of {SUMMARY_PATH}.")
-
-            for metric in METRICS:
-                mean_value = row[metric["mean"]]
-                lower_value = row[metric["lower"]]
-                upper_value = row[metric["upper"]]
-
-                if lower_value > mean_value or mean_value > upper_value:
-                    raise ValueError(f"Invalid confidence interval for {metric['title']} on line {line_number}.")
+            if row["call_update_interval"] < 0.0:
+                raise ValueError(f"Negative call-update interval on line {line_number}.")
+            if row["realizations"] < 1:
+                raise ValueError(f"Invalid realization count on line {line_number}.")
+            if not all(math.isfinite(value) for name, value in row.items() if name != "realizations"):
+                raise ValueError(f"Non-finite sweep value on line {line_number}.")
 
             rows.append(row)
 
     if not rows:
-        raise ValueError(f"Sweep summary contains no results: {SUMMARY_PATH}")
+        raise ValueError(f"Trailing sweep summary contains no results: {SUMMARY_PATH}")
 
-    rows.sort(key=lambda row: row["fleet_size"])
-
-    fleet_sizes = [row["fleet_size"] for row in rows]
-    if len(fleet_sizes) != len(set(fleet_sizes)):
-        raise ValueError("Sweep summary contains duplicate vehicle counts.")
+    rows.sort(key=lambda row: row["call_update_interval"])
 
     return rows
 
 
+def plot_metric(ax, intervals: list[float], means: list[float], lower: list[float], upper: list[float], color: str, title: str, ylabel: str) -> None:
+    """Plot one trailing metric with confidence-interval error bars."""
+
+    lower_error = [mean - bound for mean, bound in zip(means, lower)]
+    upper_error = [bound - mean for mean, bound in zip(means, upper)]
+
+    ax.errorbar(intervals, means, yerr=[lower_error, upper_error], fmt="o", color=color, markersize=7, elinewidth=1.8, capsize=5, capthick=1.5)
+    ax.set_title(title)
+    ax.set_xlabel("Call waypoint update interval (hours)")
+    ax.set_ylabel(ylabel)
+    ax.grid(True, alpha=0.3)
+
+
 def main() -> int:
+    """Plot tracking performance against whale-call update interval."""
+
     try:
-        rows = read_summary()
+        rows = read_sweep_summary()
     except (OSError, ValueError) as error:
-        print(f"Could not plot sweep metrics: {error}")
+        print(f"Could not plot trailing sweep: {error}")
         return 1
 
-    fig, axes = plt.subplots(2, 2, figsize=(13, 9), constrained_layout=True)
-    fig.suptitle("MANTA Fleet-Size Monte Carlo Sweep", fontsize=15)
+    intervals_hours = [row["call_update_interval"] / 3600.0 for row in rows]
+    tick_labels = ["Every call" if row["call_update_interval"] == 0.0 else f"{row['call_update_interval'] / 3600.0:g}" for row in rows]
 
-    for ax, metric in zip(axes.flat, METRICS):
-        plot_metric(ax, rows, metric)
+    distance_means = [row["mean_centroid_distance_km"] for row in rows]
+    distance_lower = [row["centroid_distance_ci_lower_km"] for row in rows]
+    distance_upper = [row["centroid_distance_ci_upper_km"] for row in rows]
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")
-    print(f"Saved fleet-sweep metrics plot: {OUTPUT_PATH}")
+    fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
+    fig.suptitle("Effect of Whale-Call Update Interval on AUV Group Tracking", fontsize=14)
 
-    plt.close(fig)
+    plot_metric(
+        ax,
+        intervals_hours,
+        distance_means,
+        distance_lower,
+        distance_upper,
+        "tab:blue",
+        "AUV Distance from Whale-Group Centroid",
+        "Mean centroid distance (km)",
+    )
+
+    ax.set_xlabel("Call waypoint update interval (h)")
+    ax.set_xticks(intervals_hours)
+    ax.set_xticklabels(tick_labels, rotation=45, ha="right")
+    ax.set_ylim(bottom=0.0)
+
+    mission_duration_hours = 24.0
+
+    integrated_axis = ax.secondary_yaxis(
+        "right",
+        functions=(
+            lambda distance: distance * mission_duration_hours,
+            lambda integrated_error: integrated_error / mission_duration_hours,
+        ),
+    )
+
+    integrated_axis.set_ylabel("Integrated centroid tracking error (km·h)")
+
+    plt.show()
 
     return 0
 

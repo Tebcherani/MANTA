@@ -28,7 +28,7 @@ def generate_missions(config: dict, config_path: Path) -> None:
     if not scenario_type:
         raise ValueError("Configuration is missing scenario.type.")
 
-    generator_path = ROOT / "missions" / scenario_type / f"generate_{scenario_type}_mission.py"
+    generator_path = ROOT / "vehicles" / "odyssey" / "mission_generators" / f"generate_{scenario_type}_mission.py"
 
     if not generator_path.is_file():
         raise ValueError(f"Mission generator does not exist: {generator_path}")
@@ -66,7 +66,9 @@ def print_config_summary(config: dict, config_path: Path) -> None:
 # Compose file generation
 #-------------------------------------------------------
 
-def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int, tracking_enabled: bool) -> dict:
+def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int, tracking_enabled: bool, call_update_interval: float | None) -> dict:
+    """Create the runtime service for one configured vehicle."""
+
     vehicle_id = vehicle["id"]
     vehicle_type = vehicle["type"]
     manifest = load_plugin(vehicle_type)
@@ -83,10 +85,7 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
         log_dir_env = environment_names["log_directory"]
         simulation_log_env = environment_names["simulation_log"]
     except KeyError as error:
-        raise ValueError(
-            f"Plugin '{vehicle_type}' is missing runtime setting: "
-            f"{error.args[0]}"
-        ) from error
+        raise ValueError(f"Plugin '{vehicle_type}' is missing runtime setting: {error.args[0]}") from error
 
     environment = {
         "ROS_DOMAIN_ID": str(ros_domain_id),
@@ -98,7 +97,17 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
 
     for field, environment_name in config_environment.items():
         value = vehicle.get(field, "")
-        environment[environment_name] = (container_path(value) if value else "")
+        environment[environment_name] = container_path(value) if value else ""
+
+    parameters = [
+        f"-p output_sample_period:={sample_period}",
+        f"-p tracking_enabled:={str(tracking_enabled).lower()}",
+    ]
+
+    if call_update_interval is not None:
+        parameters.append(f"-p call_update_interval:={call_update_interval}")
+
+    arguments = " ".join(parameters)
 
     return {
         "image": image,
@@ -115,9 +124,7 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
             "source /odyssey/ros_ws/install/setup.bash\n"
-            f"ros2 run {ros_package} {executable} --ros-args "
-            f"-p output_sample_period:={sample_period} "
-            f"-p tracking_enabled:={str(tracking_enabled).lower()}",
+            f"exec ros2 run {ros_package} {executable} --ros-args {arguments}",
         ],
     }
 
@@ -254,6 +261,7 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
 
     scenario_type = config["scenario"]["type"]
     tracking_enabled = scenario_type == "trailing"
+    call_update_interval = float(config["scenario"]["trailing"].get("call_update_interval", 0.0)) if tracking_enabled else None
     data_dir = container_path(config["output"]["data_directory"])
     log_dir = container_path(config["output"]["log_directory"])
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
@@ -261,7 +269,7 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
     sample_period = float(config["output"].get("auv_sample_period", 2.0))
 
     services = {
-        vehicle["id"]: vehicle_service(vehicle, data_dir, log_dir, sample_period, ros_domain_id, tracking_enabled)
+        vehicle["id"]: vehicle_service(vehicle, data_dir, log_dir, sample_period, ros_domain_id, tracking_enabled, call_update_interval)
         for vehicle in config["vehicles"]
     }
 

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # -----------------------------------------------------------------
 # Code
 REVIEW_DIR = ROOT / "review" / "manta_review"
-SCENARIO_CONFIG_DIR = ROOT / "config" / "scenarios"
+SCENARIO_CONFIG_DIR = ROOT / "config"
 VEHICLE_DIR = ROOT / "vehicles"
 
 # ----------------------------------------------------------------- 
@@ -24,11 +24,11 @@ VENV_EXEC = ROOT / "review" / ".venv" / "bin" / "python"
 # -----------------------------------------------------------------
 
 # .env
-ENV_PATH = ROOT / "generated" / "manta.env"
+ENV_PATH = ROOT / "vehicles" / "odyssey" / "manta.env"
 
 # .sh
 CLEANUP_PATH = ROOT / "scripts" / "cleanup_monte_carlo.sh"
 
 # .yaml
 DEV_COMPOSE_PATH = ROOT / "compose.dev.yaml"
-DOCKER_COMPOSE_PATH = ROOT / "generated" / "compose.ros.yaml"
+DOCKER_COMPOSE_PATH = ROOT / "vehicles" / "odyssey" / "compose.ros.yaml"

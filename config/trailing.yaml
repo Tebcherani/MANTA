@@ -43,8 +43,19 @@ monte_carlo:
   random_seed: 42
 
 sweep:
-  min_vehicles: 1
-  max_vehicles: 5
+  call_update_intervals:
+    - 0.0      # Every call
+    - 60.0     # 1 minute
+    - 300.0    # 5 minutes
+    - 600.0    # 10 minutes
+    - 1800.0   # 30 minutes
+    - 3600.0   # 1 hour
+    - 7200.0   # 2 hours
+    - 10800.0  # 3 hours
+    - 14400.0  # 4 hours
+    - 18000.0  # 5 hours
+    - 36000.0  # 10 hours
+    - 54000.0  # 15 hours
 
 
 #--------------------------------------------------
@@ -58,6 +69,7 @@ scenario:
       north: 0.0
       east: 0.0
     initial_heading_degrees: 0.0
+    call_update_interval: 0.0 #50000.0 # seconds
 
   duration: 86400.0  # 1 day
 
@@ -114,6 +126,6 @@ scenario:
 vehicles:
   - id: auv_1
     type: odyssey
-    mission: ./generated/missions/trailing/auv_1.mi
-    model: ./config/vehicles/Borealis.vd
+    mission: ./vehicles/odyssey/missions/trailing/auv_1.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""

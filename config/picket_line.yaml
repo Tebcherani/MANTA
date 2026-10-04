@@ -64,7 +64,7 @@ scenario:
       east: 63000.0
 
   patrol:
-    speed: 1.5
+    speed: 0.25
     depth: 50.0
     capture: 5.0
 
@@ -116,24 +116,24 @@ scenario:
 vehicles:
   - id: auv_1
     type: odyssey
-    mission: ./generated/missions/picket_line/auv_1.mi
-    model: ./config/vehicles/Borealis.vd
+    mission: ./vehicles/odyssey/missions/picket_line/auv_1.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
 
   - id: auv_2
     type: odyssey
-    mission: ./generated/missions/picket_line/auv_2.mi
-    model: ./config/vehicles/Borealis.vd
+    mission: ./vehicles/odyssey/missions/picket_line/auv_2.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
   
   - id: auv_3
     type: odyssey
-    mission: ./generated/missions/picket_line/auv_3.mi
-    model: ./config/vehicles/Borealis.vd
+    mission: ./vehicles/odyssey/missions/picket_line/auv_3.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
   
   - id: auv_4
     type: odyssey
-    mission: ./generated/missions/picket_line/auv_4.mi
-    model: ./config/vehicles/Borealis.vd
+    mission: ./vehicles/odyssey/missions/picket_line/auv_4.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""

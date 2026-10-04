@@ -28,7 +28,7 @@ def generate_fleet_config(sim_config: dict, fleet_size: int, generated_dir: Path
     for index in range(1, fleet_size + 1):
         vehicle = copy.deepcopy(template)
         vehicle["id"] = f"auv_{index}"
-        vehicle["mission"] = f"./generated/missions/{scenario_type}/auv_{index}.mi"
+        vehicle["mission"] = f"./vehicles/odyssey/missions/{scenario_type}/auv_{index}.mi"
         vehicles.append(vehicle)
 
     fleet_config["vehicles"] = vehicles
@@ -177,7 +177,7 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
     if not scenario_type:
         raise ValueError("Configuration is missing scenario.type.")
 
-    generated_dir = ROOT / "generated" / "monte_carlo_sweep" / scenario_type
+    generated_dir = ROOT / "vehicles" / "odyssey" / "missions" / scenario_type / "monte_carlo_sweep"
     sweep_output_dir = ROOT / "output" / scenario_type / "monte_carlo_sweep"
     summary_path = sweep_output_dir / "sweep_summary.csv"
 

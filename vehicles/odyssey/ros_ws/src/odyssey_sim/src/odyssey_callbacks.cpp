@@ -60,6 +60,11 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     // A completed vehicle no longer participates in simulation cycles.
     if (mission_finished_) return;
 
+    // Schedule the first periodic call-waypoint update.
+    if (tracking_enabled_ && call_update_interval_ > 0.0 && next_call_update_time_ <= 0.0) {
+        next_call_update_time_ = msg->sim_time + call_update_interval_;
+    }
+
     // Convert the ROS world snapshot to Odyssey's native world structure.
     world_state.gravity = msg->world.gravity;
     world_state.magnetic_north = msg->world.magnetic_north;
@@ -100,6 +105,28 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     for (std::uint32_t offset = 0; offset < msg->step_count; ++offset) {
         const std::uint64_t cycle = msg->current_cycle + offset;
         result.completed_cycle = cycle;
+        
+        const double current_sim_time = msg->sim_time + static_cast<double>(offset) * msg->timestep;
+
+        // At each configured update boundary, use the most recently received call.
+        if (tracking_enabled_ && call_update_interval_ > 0.0 && current_sim_time + 1.0e-9 >= next_call_update_time_) {
+            if (pending_call_available_) {
+                set_whale_trailing_target(pending_call_north_, pending_call_east_);
+                pending_call_available_ = false;
+
+                RCLCPP_INFO(
+                    get_logger(),
+                    "Vehicle '%s' updated its waypoint at %.1f s using the latest call from %.1f s.",
+                    vehicle_id_.c_str(),
+                    current_sim_time,
+                    pending_call_time_
+                );
+            }
+
+            do {
+                next_call_update_time_ += call_update_interval_;
+            } while (next_call_update_time_ <= current_sim_time + 1.0e-9);
+        }
 
         if (odyssey_abort_requested()) {
             mission_finished_ = true;
@@ -188,15 +215,22 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
 }
 
 /**
- * Update this vehicle's destination to its most recently detected whale call.
+ * Store the latest whale-call location for the next waypoint update.
  */
 void OdysseyNode::handle_whale_detection(const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {
     if (!tracking_enabled_) return;
     if (msg->vehicle_id != vehicle_id_) return;
 
-    set_whale_trailing_target(msg->whale_north, msg->whale_east);
+    if (call_update_interval_ <= 0.0) {
+        set_whale_trailing_target(msg->whale_north, msg->whale_east);
+        RCLCPP_INFO(get_logger(), "Vehicle '%s' updated its waypoint from the call at %.1f s.", vehicle_id_.c_str(), msg->sim_time);
+        return;
+    }
 
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' is moving toward a detected call at north=%.1f m, east=%.1f m.", vehicle_id_.c_str(), msg->whale_north, msg->whale_east);
+    pending_call_north_ = msg->whale_north;
+    pending_call_east_ = msg->whale_east;
+    pending_call_time_ = msg->sim_time;
+    pending_call_available_ = true;
 }
 
 //----------------------------------------------------

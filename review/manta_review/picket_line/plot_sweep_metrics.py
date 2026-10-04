@@ -14,7 +14,7 @@ OUTPUT_PATH = ROOT / "output" / "picket_line" / "monte_carlo_sweep" / "sweep_met
 
 
 METRICS = (
-    {   # Detection plot
+    {
         "mean": "mean_detection",
         "lower": "ci_lower",
         "upper": "ci_upper",
@@ -22,33 +22,6 @@ METRICS = (
         "ylabel": "Unique whales detected (%)",
         "color": "tab:blue",
         "percent": True,
-    },
-    {   # Fleet mass plot
-        "mean": "mean_total_mass",
-        "lower": "mass_ci_lower",
-        "upper": "mass_ci_upper",
-        "title": "Total Fleet Mass",
-        "ylabel": "Mass (kg)",
-        "color": "tab:green",
-        "percent": False,
-    },
-    {   # Energy plot
-        "mean": "mean_total_energy",
-        "lower": "energy_ci_lower",
-        "upper": "energy_ci_upper",
-        "title": "Total Fleet Energy Consumption",
-        "ylabel": "Energy consumed (Wh)",
-        "color": "tab:orange",
-        "percent": False,
-    },
-    {   # Vehicle speed plot
-        "mean": "mean_vehicle_speed",
-        "lower": "speed_ci_lower",
-        "upper": "speed_ci_upper",
-        "title": "Mean Vehicle Speed",
-        "ylabel": "Speed (m/s)",
-        "color": "tab:red",
-        "percent": False,
     },
 )
 
@@ -158,11 +131,10 @@ def main() -> int:
         print(f"Could not plot sweep metrics: {error}")
         return 1
 
-    fig, axes = plt.subplots(2, 2, figsize=(13, 9), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
     fig.suptitle("MANTA Fleet-Size Monte Carlo Sweep", fontsize=15)
 
-    for ax, metric in zip(axes.flat, METRICS):
-        plot_metric(ax, rows, metric)
+    plot_metric(ax, rows, METRICS[0])
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")

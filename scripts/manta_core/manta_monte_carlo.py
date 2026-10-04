@@ -36,20 +36,37 @@ def check_monte_carlo_convergence(fractions: list[float], monte_carlo_config: Mo
 
     return converged, sample_mean, half_width, mean_change
 
+def get_convergence_values(completed: dict[int, MonteCarloResult], scenario_type: str) -> tuple[list[float], str, str]:
+    """Select the realization metric used to test Monte Carlo convergence."""
 
-def check_saved_result_convergence(completed: dict[int, dict], monte_carlo_config: MonteCarloConfig, summary_path: Path) -> bool:
+    results = [completed[index] for index in sorted(completed)]
+
+    if scenario_type == "trailing":
+        if any(result.mean_centroid_distance_km is None for result in results):
+            raise ValueError("Trailing Monte Carlo results are missing mean centroid distances.")
+
+        values = [result.mean_centroid_distance_km for result in results]
+        return values, "mean centroid distance", "km"
+
+    values = [result.detection_fraction for result in results]
+    return values, "mean detection", "%"
+
+def check_saved_result_convergence(completed: dict[int, MonteCarloResult], monte_carlo_config: MonteCarloConfig, summary_path: Path, scenario_type: str) -> bool:
     """Report whether previously completed realizations already satisfy convergence."""
 
-    # Get detection fractions for all monte carlo runs
-    detection_fractions = [completed[index].detection_fraction for index in sorted(completed)]
-    if not detection_fractions: return False
+    values, metric_name, unit = get_convergence_values(completed, scenario_type)
+    if not values:
+        return False
 
-    # Check if the confidence intervals have converged
-    converged, sample_mean, half_width, mean_change = check_monte_carlo_convergence(detection_fractions, monte_carlo_config)
-    print(f"Current {len(detection_fractions)} realizations: mean detection {sample_mean:.2%}, CI half-width {half_width:.2%}, mean change {mean_change:.2%}.")
+    converged, sample_mean, half_width, mean_change = check_monte_carlo_convergence(values, monte_carlo_config)
+
+    if unit == "%":
+        print(f"Current {len(values)} realizations: {metric_name} {sample_mean:.2%}, CI half-width {half_width:.2%}, mean change {mean_change:.2%}.")
+    else:
+        print(f"Current {len(values)} realizations: {metric_name} {sample_mean:.3f} {unit}, CI half-width {half_width:.3f} {unit}, mean change {mean_change:.3f} {unit}.")
 
     if converged:
-        print(f"Saved results already satisfy convergence after {len(detection_fractions)} realizations.")
+        print(f"Saved results already satisfy convergence after {len(values)} realizations.")
         print(f"Summary: {summary_path}")
 
     return converged
@@ -182,14 +199,17 @@ def recover_failed_batch(failures: list[str], consecutive_recoveries: int, monte
     return next_realization
 
 
-def report_monte_carlo_checkpoint(completed_results: dict[int, MonteCarloResult], monte_carlo_config: MonteCarloConfig) -> bool:
+def report_monte_carlo_checkpoint(completed_results: dict[int, MonteCarloResult], monte_carlo_config: MonteCarloConfig, scenario_type: str) -> bool:
     """Evaluate and report convergence at the current realization checkpoint."""
 
-    fractions = [completed_results[index].detection_fraction for index in sorted(completed_results)]
-    converged, sample_mean, half_width, mean_change = check_monte_carlo_convergence(fractions, monte_carlo_config)
+    values, metric_name, unit = get_convergence_values(completed_results, scenario_type)
+    converged, sample_mean, half_width, mean_change = check_monte_carlo_convergence(values, monte_carlo_config)
     confidence_percent = 100.0 * monte_carlo_config.confidence_level
 
-    print(f"After {len(fractions)} realizations: mean detection {sample_mean:.2%}, {confidence_percent:.1f}% CI half-width {half_width:.2%}, mean change {mean_change:.2%}.")
+    if unit == "%":
+        print(f"After {len(values)} realizations: {metric_name} {sample_mean:.2%}, {confidence_percent:.1f}% CI half-width {half_width:.2%}, mean change {mean_change:.2%}.")
+    else:
+        print(f"After {len(values)} realizations: {metric_name} {sample_mean:.3f} {unit}, {confidence_percent:.1f}% CI half-width {half_width:.3f} {unit}, mean change {mean_change:.3f} {unit}.")
 
     return converged
 
@@ -239,6 +259,8 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
                 "total_mass",
                 "total_energy",
                 "mean_vehicle_speed",
+                "mean_centroid_distance_km",
+                "integrated_tracking_error_km_hours",
             ),
         )
         writer.writeheader()
@@ -252,13 +274,15 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
 # -----------------------------------------------------
 
 def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -> int:
+    scenario_type = sim_config["scenario"]["type"]
+    
     # Handle ctrl+c interrupt
     stop_requested.clear()
     signal.signal(signal.SIGINT, handle_interrupt)
     signal.signal(signal.SIGTERM, handle_interrupt)
 
     monte_carlo_config, workers, completed_results, next_realization, summary_path = prepare_monte_carlo_experiment(sim_config, output_dir)
-    if check_saved_result_convergence(completed_results, monte_carlo_config, summary_path): return 0
+    if check_saved_result_convergence(completed_results, monte_carlo_config, summary_path, scenario_type): return 0
 
     consecutive_recoveries = 0
     while len(completed_results) < monte_carlo_config.max_realizations:
@@ -286,7 +310,7 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
 
         # Check for confidence interval convergence
         consecutive_recoveries = 0
-        converged = report_monte_carlo_checkpoint(completed_results, monte_carlo_config)
+        converged = report_monte_carlo_checkpoint(completed_results, monte_carlo_config, scenario_type)
         if converged:
             print(f"Monte Carlo convergence reached after {len(completed_results)} realizations.\nSummary: {summary_path}")
             return 0

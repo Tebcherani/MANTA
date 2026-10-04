@@ -2,6 +2,7 @@
 
 import copy
 import csv
+import json
 import math
 import subprocess
 import sys
@@ -23,12 +24,20 @@ def check_stop_requested() -> None:
     if stop_requested.is_set(): raise InterruptedError("Monte Carlo was stopped by the user.")
 
 
-def collect_realization_result(config: dict, data_directory: Path, vehicle_ids: list[str], realization: int, seed: int) -> MonteCarloResult:
+def collect_realization_result(config: dict, root: Path, data_directory: Path, vehicle_ids: list[str], realization: int, seed: int) -> MonteCarloResult:
     """Read simulation outputs and construct the completed realization result."""
 
     whale_count = int(config["scenario"]["whales"]["count"])
     detected_count, detection_fraction = summarize_realization(data_directory, whale_count)
     total_mass, total_energy, mean_vehicle_speed = summarize_vehicle_metrics(data_directory, vehicle_ids)
+    mean_centroid_distance_km = None
+    integrated_tracking_error_km_hours = None
+
+    if config["scenario"]["type"] == "trailing":
+        if len(vehicle_ids) != 1:
+            raise ValueError("Trailing Monte Carlo experiments require exactly one vehicle.")
+
+        mean_centroid_distance_km, integrated_tracking_error_km_hours = summarize_tracking_metrics(root, data_directory, vehicle_ids[0])
 
     return MonteCarloResult(
         realization=realization,
@@ -39,6 +48,8 @@ def collect_realization_result(config: dict, data_directory: Path, vehicle_ids: 
         total_mass=total_mass,
         total_energy=total_energy,
         mean_vehicle_speed=mean_vehicle_speed,
+        mean_centroid_distance_km=mean_centroid_distance_km,
+        integrated_tracking_error_km_hours=integrated_tracking_error_km_hours,
     )
 
 
@@ -58,7 +69,7 @@ def get_realization_paths(root: Path, output_directory: Path, realization: int) 
     run_directory = output_directory / f"realization_{realization:04d}"
     data_directory = run_directory / "Data"
     log_directory = run_directory / "Logs"
-    compose_path = root / "generated" / output_directory.relative_to(root / "output") / f"compose_{realization:04d}.yaml"
+    compose_path = root / "vehicles" / "odyssey" / "missions" / output_directory.relative_to(root / "output") / f"compose_{realization:04d}.yaml"
 
     data_directory.mkdir(parents=True, exist_ok=True)
     log_directory.mkdir(parents=True, exist_ok=True)
@@ -188,6 +199,44 @@ def summarize_vehicle_metrics(data_directory: Path, vehicle_ids: list[str]) -> t
     return total_mass, total_energy, mean(vehicle_speeds)
 
 
+def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str) -> tuple[float, float]:
+    """Run the trailing metric calculator for one completed realization."""
+
+    python_path = root / "review" / ".venv" / "bin" / "python"
+    script_path = root / "review" / "manta_review" / "trailing" / "trailing_metrics.py"
+
+    if not python_path.is_file():
+        raise ValueError(f"Review Python environment does not exist: {python_path}")
+    if not script_path.is_file():
+        raise ValueError(f"Trailing metric script does not exist: {script_path}")
+
+    result = subprocess.run(
+        [str(python_path), str(script_path), str(data_directory), vehicle_id],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "unknown tracking-metric failure"
+        raise ValueError(f"Trailing metric calculation failed: {detail}")
+
+    try:
+        metrics = json.loads(result.stdout)
+        mean_distance = float(metrics["mean_centroid_distance_km"])
+        integrated_error = float(metrics["integrated_tracking_error_km_hours"])
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+        raise ValueError(f"Trailing metric script returned invalid output: {result.stdout.strip()}") from error
+
+    if not math.isfinite(mean_distance) or mean_distance < 0.0:
+        raise ValueError("Mean centroid distance must be finite and nonnegative.")
+    if not math.isfinite(integrated_error) or integrated_error < 0.0:
+        raise ValueError("Integrated tracking error must be finite and nonnegative.")
+
+    return mean_distance, integrated_error
+
+
 #--------------------------------------------------
 # Main realization code
 #--------------------------------------------------
@@ -204,8 +253,16 @@ def run_realization_attempt(config: dict, root: Path, realization: int, attempt:
     try:
         run_compose_attempt(up_command, root, console_log, timeout)
         check_stop_requested()
-        result = collect_realization_result(config, data_directory, vehicle_ids, realization, seed)
-        print(f"Completed realization {realization}: {result.detected_whales}/{result.whale_count} whales ({result.detection_fraction:.1%})")
+        result = collect_realization_result(config, root, data_directory, vehicle_ids, realization, seed)
+        if config["scenario"]["type"] == "trailing":
+            print(
+                f"Completed realization {realization}: "
+                f"mean centroid distance {result.mean_centroid_distance_km:.3f} km, "
+                f"integrated tracking error {result.integrated_tracking_error_km_hours:.3f} km·h"
+            )
+        else:
+            print(f"Completed realization {realization}: {result.detected_whales}/{result.whale_count} whales ({result.detection_fraction:.1%})")
+        
         return result
     finally:
         cleanup_error = stop_compose_project(down_command, root)

@@ -1,0 +1,89 @@
+name: manta-mc-000022
+services:
+  auv_1:
+    image: odyssey_sim_dev
+    environment:
+      ROS_DOMAIN_ID: '31'
+      ODYSSEY_VEHICLE_ID: auv_1
+      ODYSSEY_DATA_DIR: /odyssey/output/trailing/monte_carlo/realization_0022/Data
+      ROS_LOG_DIR: /odyssey/output/trailing/monte_carlo/realization_0022/Logs
+      SIM_LOG_PATH: /odyssey/output/trailing/monte_carlo/realization_0022/Logs/auv_1.log
+      MISSION_PATH: /odyssey/vehicles/odyssey/missions/trailing/auv_1.mi
+      VEHICLE_PATH: /odyssey/vehicles/odyssey/config/Borealis.vd
+      FAULT_PATH: ''
+    volumes:
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
+    command:
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
+
+      source /odyssey/ros_ws/install/setup.bash
+
+      exec ros2 run odyssey_sim odyssey_node --ros-args -p output_sample_period:=5.0
+      -p tracking_enabled:=true -p call_update_interval:=0.0'
+  whale_sim:
+    image: odyssey_sim_dev
+    environment:
+      ROS_DOMAIN_ID: '31'
+      ROS_LOG_DIR: /odyssey/output/trailing/monte_carlo/realization_0022/Logs
+    volumes:
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
+    command:
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
+
+      source /odyssey/ros_ws/install/setup.bash
+
+      exec ros2 run whale_sim whale_node --ros-args -p "count:=3" -p "depth:=20.0"
+      -p "mission_duration:=86400.0" -p "active_entire_mission:=True" -p "bout_mean_duration:=1842.0"
+      -p "bout_mean_silent_duration:=7860.0" -p "bout_active_call_rate_per_hour:=40.1"
+      -p "turn_interval:=60.0" -p "heading_correlation:=0.95" -p "heading_std_degrees:=15.0"
+      -p "speed_mean:=1.5" -p "speed_std:=0.2" -p "group_mean_size:=3.0" -p "group_position_std:=1000.0"
+      -p "group_start_time_std:=0.0" -p "shared_heading_fraction:=0.75" -p "data_directory:=/odyssey/output/trailing/monte_carlo/realization_0022/Data"
+      -p "random_seed:=63" -p "sample_period:=60.0" -p "initialization_mode:=fixed"
+      -p "initial_north:=0.0" -p "initial_east:=0.0" -p "initial_heading_degrees:=0.0"'
+    stop_grace_period: 5s
+  whale_detection_sim:
+    image: odyssey_sim_dev
+    environment:
+      ROS_DOMAIN_ID: '31'
+      ROS_LOG_DIR: /odyssey/output/trailing/monte_carlo/realization_0022/Logs
+    volumes:
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
+    command:
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
+
+      source /odyssey/ros_ws/install/setup.bash
+
+      exec ros2 run whale_detection_sim whale_detection_node --ros-args -p "vehicle_ids:=[auv_1]"
+      -p "receive_all_calls:=true" -p "data_directory:=/odyssey/output/trailing/monte_carlo/realization_0022/Data"'
+  sim_orchestrator:
+    image: odyssey_sim_dev
+    environment:
+      ROS_DOMAIN_ID: '31'
+      ROS_LOG_DIR: /odyssey/output/trailing/monte_carlo/realization_0022/Logs
+      SIM_LOG_PATH: /odyssey/output/trailing/monte_carlo/realization_0022/Logs/sim_orchestrator.log
+    volumes:
+    - type: bind
+      source: /home/tanya/Documents/MANTA
+      target: /odyssey
+    command:
+    - /bin/bash
+    - -lc
+    - 'source /opt/ros/jazzy/setup.bash
+
+      source /odyssey/ros_ws/install/setup.bash
+
+      ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[auv_1]"
+      -p "data_directory:=/odyssey/output/trailing/monte_carlo/realization_0022/Data"
+      -p "timestep:=0.02" -p "control_period:=10" -p "max_steps:=4320000" -p "steps_per_message:=10000"'

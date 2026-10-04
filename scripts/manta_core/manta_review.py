@@ -18,22 +18,18 @@ def run_review(scenario: str, plot: str) -> int:
         },
     }
 
-    scenario_scripts = scripts.get(scenario)
-
-    if scenario_scripts is None:
-        print(f"No review scripts are configured for scenario '{scenario}'.", file=sys.stderr)
+    if scenario not in scripts:
+        print(f"Review is not configured for scenario '{scenario}'.", file=sys.stderr)
         return 1
 
-    script_name = scenario_scripts.get(plot)
-
-    if script_name is None:
-        print(f"Plot '{plot}' is not configured for scenario '{scenario}'.", file=sys.stderr)
+    if plot not in scripts[scenario]:
+        print(f"Review plot '{plot}' is not configured for scenario '{scenario}'.", file=sys.stderr)
         return 1
 
-    script = REVIEW_DIR / scenario / script_name
+    script = REVIEW_DIR / scenario / scripts[scenario][plot]
 
     if not VENV_EXEC.is_file():
-        print(f"Review virtual environment is missing: {VENV_EXEC}", file=sys.stderr)
+        print(f"Review environment is missing: {VENV_EXEC}", file=sys.stderr)
         return 1
 
     if not script.is_file():

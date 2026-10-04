@@ -1,0 +1,79 @@
+version: 1
+output:
+  data_directory: ./output/picket_line/Data
+  log_directory: ./output/picket_line/Logs
+  auv_sample_period: 5.0
+  whale_sample_period: 60.0
+simulation:
+  timestep: 0.02
+  control_period: 10
+  max_steps: 12960000
+  steps_per_message: 10000
+monte_carlo:
+  min_realizations: 100
+  max_realizations: 500
+  batch_size: 25
+  workers: 8
+  realization_timeout: 60
+  max_retries: 1
+  recovery_cycles: 3
+  confidence_level: 0.95
+  target_half_width: 0.03
+  stability_tolerance: 0.01
+  random_seed: 42
+sweep:
+  min_vehicles: 1
+  max_vehicles: 13
+scenario:
+  type: picket_line
+  duration: 259200.0
+  picket_line:
+    start:
+      north: 0.0
+      east: -63000.0
+    end:
+      north: 0.0
+      east: 63000.0
+  patrol:
+    speed: 0.25
+    depth: 50.0
+    capture: 5.0
+  detection:
+    radius: 11000.0
+  whales:
+    count: 46
+    active_entire_mission: false
+    start_distance: 25000.0
+    depth: 20.0
+    movement:
+      speed_mean: 1.5
+      speed_std: 0.2
+      turn_interval: 60.0
+      heading_correlation: 0.95
+      heading_std_degrees: 15.0
+    grouping:
+      mean_group_size: 3.0
+      position_std: 1000.0
+      start_time_std: 600.0
+      shared_heading_fraction: 0.75
+    calling:
+      bouts:
+        mean_duration: 1842.0
+        mean_silent_duration: 7860.0
+        active_call_rate_per_hour: 40.1
+vehicles:
+- id: auv_1
+  type: odyssey
+  mission: ./vehicles/odyssey/missions/picket_line/auv_1.mi
+  model: ./vehicles/odyssey/config/Borealis.vd
+  fault: ''
+- id: auv_2
+  type: odyssey
+  mission: ./vehicles/odyssey/missions/picket_line/auv_2.mi
+  model: ./vehicles/odyssey/config/Borealis.vd
+  fault: ''
+- id: auv_3
+  type: odyssey
+  mission: ./vehicles/odyssey/missions/picket_line/auv_3.mi
+  model: ./vehicles/odyssey/config/Borealis.vd
+  fault: ''
