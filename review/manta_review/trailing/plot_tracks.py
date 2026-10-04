@@ -18,6 +18,16 @@ AUV_COLOR = "tab:blue"
 WHALE_COLOR = "tab:red"
 WHALE_CALL_COLOR = "tab:red"
 
+plt.rcParams.update({
+    "font.size": 14,
+    "axes.titlesize": 17,
+    "axes.labelsize": 15,
+    "xtick.labelsize": 13,
+    "ytick.labelsize": 13,
+    "legend.fontsize": 12,
+    "figure.titlesize": 18,
+})
+
 
 def find_latest_vehicle_results() -> dict[str, Path]:
     """Find the newest Odyssey result for each vehicle."""
@@ -389,7 +399,7 @@ def main() -> int:
     ax.set_aspect("auto")
     ax.margins(x=0.03, y=0.05)
     ax.grid(True, alpha=0.3)
-    ax.legend(fontsize="small", ncols=2)
+    ax.legend(ncols=2)
     fig.tight_layout()
     plt.show()
 

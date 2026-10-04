@@ -10,6 +10,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 SUMMARY_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_summary.csv"
 
+plt.rcParams.update({
+    "font.size": 14,
+    "axes.titlesize": 17,
+    "axes.labelsize": 15,
+    "xtick.labelsize": 13,
+    "ytick.labelsize": 13,
+    "legend.fontsize": 12,
+    "figure.titlesize": 18,
+})
+
 
 def read_sweep_summary() -> list[dict[str, float]]:
     """Read and validate the trailing call-update sweep summary."""

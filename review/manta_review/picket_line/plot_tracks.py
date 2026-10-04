@@ -13,8 +13,19 @@ DATA_DIR = ROOT / "output" / "picket_line" / "Data"
 WHALE_CALLS_PATH = DATA_DIR / "whale_calls.csv"
 WHALE_DETECTIONS_PATH = DATA_DIR / "whale_detections.csv"
 WHALE_TRAJECTORY_PATH = DATA_DIR / "whales.csv"
+
 WHALE_COLOR = "tab:gray"
 WHALE_CALL_COLOR = "tab:red"
+
+plt.rcParams.update({
+    "font.size": 14,
+    "axes.titlesize": 17,
+    "axes.labelsize": 15,
+    "xtick.labelsize": 13,
+    "ytick.labelsize": 13,
+    "legend.fontsize": 12,
+    "figure.titlesize": 18,
+})
 
 
 def find_latest_vehicle_results() -> dict[str, Path]:
@@ -292,7 +303,7 @@ def main() -> int:
     ax.set_aspect("auto")
     ax.margins(x=0.03, y=0.05)
     ax.grid(True, alpha=0.3)
-    ax.legend(fontsize="small", ncols=2)
+    ax.legend(ncols=2)
     fig.tight_layout()
     plt.show()
 

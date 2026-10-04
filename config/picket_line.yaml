@@ -116,24 +116,24 @@ scenario:
 vehicles:
   - id: auv_1
     type: odyssey
-    mission: ./vehicles/odyssey/missions/picket_line/auv_1.mi
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_1.mi
     model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
 
   - id: auv_2
     type: odyssey
-    mission: ./vehicles/odyssey/missions/picket_line/auv_2.mi
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_2.mi
     model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
   
   - id: auv_3
     type: odyssey
-    mission: ./vehicles/odyssey/missions/picket_line/auv_3.mi
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_3.mi
     model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
   
   - id: auv_4
     type: odyssey
-    mission: ./vehicles/odyssey/missions/picket_line/auv_4.mi
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_4.mi
     model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
