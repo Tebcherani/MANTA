@@ -5,7 +5,7 @@ Generate one Odyssey picket-line mission file per configured vehicle.
 
 The picket line is divided into equal-length segments. Each vehicle patrols
 between the endpoints of its assigned segment using the Odyssey
-`picket_line_patrol` behavior.
+`picket_line` behavior.
 """
 
 
@@ -139,7 +139,7 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str, segment: LineS
           b_arg: cutoff_depth(m) {config.vehicle_depth + 25.0:.6f}
 
         # Continuously patrol the assigned picket-line segment.
-        behavior: picket_line_patrol 3
+        behavior: picket_line 3
           b_arg: start_n(m) {segment.start_n:.6f}
           b_arg: start_e(m) {segment.start_e:.6f}
           b_arg: end_n(m) {segment.end_n:.6f}

@@ -188,31 +188,15 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
 }
 
 /**
- * Assign this vehicle to the first whale call it detects when tracking is enabled.
+ * Update this vehicle's destination to its most recently detected whale call.
  */
 void OdysseyNode::handle_whale_detection(const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {
     if (!tracking_enabled_) return;
     if (msg->vehicle_id != vehicle_id_) return;
-    if (!target_whale_id_.empty()) return;
 
-    target_whale_id_ = msg->whale_id;
-    set_whale_follow_target(msg->whale_north, msg->whale_east);
+    set_whale_trailing_target(msg->whale_north, msg->whale_east);
 
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' is now following whale '%s'.", vehicle_id_.c_str(), target_whale_id_.c_str());
-}
-
-/**
- * Update the moving waypoint from the assigned whale's exact state.
- */
-void OdysseyNode::handle_whale_states(const manta_interfaces::msg::WhaleStateArray::SharedPtr msg) {
-    if (target_whale_id_.empty()) return;
-
-    for (const auto &whale : msg->whales) {
-        if (whale.whale_id != target_whale_id_) continue;
-
-        set_whale_follow_target(whale.north, whale.east);
-        return;
-    }
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' is moving toward a detected call at north=%.1f m, east=%.1f m.", vehicle_id_.c_str(), msg->whale_north, msg->whale_east);
 }
 
 //----------------------------------------------------

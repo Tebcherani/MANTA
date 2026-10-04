@@ -8,7 +8,7 @@
 #include "vehicle.h"
 
 /*
-behavior: picket_line_patrol
+behavior: picket_line
   b_arg: start_n(m) 0
   b_arg: start_e(m) 0
   b_arg: end_n(m) 0
@@ -18,7 +18,7 @@ behavior: picket_line_patrol
   b_arg: capture(m) 25
 */
 
-int picket_line_patrol(struct behavior *b, int priority, int level) {
+int picket_line(struct behavior *b, int priority, int level) {
     enum {
         START_N,
         START_E,

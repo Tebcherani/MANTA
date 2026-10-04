@@ -82,8 +82,4 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &
     whale_detection_sub_ = create_subscription<manta_interfaces::msg::WhaleDetection>(
         "/sim/whale_detections", whale_qos, [this](const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {handle_whale_detection(msg);}
     );
-
-    whale_states_sub_ = create_subscription<manta_interfaces::msg::WhaleStateArray>(
-        "/sim/whales/states", whale_qos, [this](const manta_interfaces::msg::WhaleStateArray::SharedPtr msg) {handle_whale_states(msg);}
-    );
 }

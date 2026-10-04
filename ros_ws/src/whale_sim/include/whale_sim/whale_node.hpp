@@ -147,6 +147,13 @@ private:
     std::vector<WhaleGroup> whale_groups_;
     std::vector<Whale> whales_;
 
+    // Whale initialization
+    bool active_entire_mission_ = false;
+    std::string initialization_mode_;
+    double initial_north_;
+    double initial_east_;
+    double initial_heading_degrees_;
+
     // Whale calling
     double bout_mean_duration_;
     double bout_mean_silent_duration_;
@@ -159,7 +166,6 @@ private:
     double shared_heading_fraction_;
 
     // Whale movement
-    bool active_entire_mission_ = false;
     double heading_correlation_;
     double heading_std_degrees_;
     double speed_mean_;

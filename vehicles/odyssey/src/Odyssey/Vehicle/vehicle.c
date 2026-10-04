@@ -10,7 +10,7 @@
 
 #include "ody_var.h"
 
-char *creation_date = "2026/10/04 12:22:42 GMT";
+char *creation_date = "2026/10/04 13:03:03 GMT";
 
 const struct sensor sss[] = {
     "m_present_time(s)", 0, 0, 0, 0, 0, DBL_MAX, -DBL_MAX,
@@ -674,7 +674,7 @@ const struct behavior bTemplate[] = {
         "", 0,
         "", 0,
         "", 0,
-    "picket_line_patrol", 0, -1., 0., 0,
+    "picket_line", 0, -1., 0., 0,
         "start_n(m)", 0,
         "start_e(m)", 0,
         "end_n(m)", 0,
@@ -685,7 +685,7 @@ const struct behavior bTemplate[] = {
         "", 0,
         "", 0,
         "", 0,
-    "whale_follow", 0, -1., 0., 0,
+    "whale_trailing", 0, -1., 0., 0,
         "depth(m)", 0,
         "speed(m/s)", 0,
         "capture(m)", 5,

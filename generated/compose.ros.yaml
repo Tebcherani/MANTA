@@ -40,14 +40,14 @@ services:
 
       source /odyssey/ros_ws/install/setup.bash
 
-      exec ros2 run whale_sim whale_node --ros-args -p "active_entire_mission:=True"
-      -p "count:=3" -p "line_start_north:=0.0" -p "line_start_east:=-63000.0" -p "line_end_north:=0.0"
-      -p "line_end_east:=63000.0" -p "start_distance:=25000.0" -p "depth:=20.0" -p
-      "mission_duration:=259200.0" -p "bout_mean_duration:=1842.0" -p "bout_mean_silent_duration:=7860.0"
-      -p "bout_active_call_rate_per_hour:=40.1" -p "turn_interval:=60.0" -p "heading_correlation:=0.95"
-      -p "heading_std_degrees:=15.0" -p "group_mean_size:=3.0" -p "group_position_std:=1000.0"
-      -p "group_start_time_std:=600.0" -p "shared_heading_fraction:=0.75" -p "data_directory:=/odyssey/output/trailing/Data"
-      -p "random_seed:=42" -p "sample_period:=60.0"'
+      exec ros2 run whale_sim whale_node --ros-args -p "count:=3" -p "depth:=20.0"
+      -p "mission_duration:=86400.0" -p "active_entire_mission:=True" -p "bout_mean_duration:=1842.0"
+      -p "bout_mean_silent_duration:=7860.0" -p "bout_active_call_rate_per_hour:=40.1"
+      -p "turn_interval:=60.0" -p "heading_correlation:=0.95" -p "heading_std_degrees:=15.0"
+      -p "speed_mean:=1.5" -p "speed_std:=0.2" -p "group_mean_size:=3.0" -p "group_position_std:=1000.0"
+      -p "group_start_time_std:=0.0" -p "shared_heading_fraction:=0.75" -p "data_directory:=/odyssey/output/trailing/Data"
+      -p "random_seed:=42" -p "sample_period:=60.0" -p "initialization_mode:=fixed"
+      -p "initial_north:=0.0" -p "initial_east:=0.0" -p "initial_heading_degrees:=0.0"'
     stop_grace_period: 5s
   whale_detection_sim:
     image: odyssey_sim_dev
@@ -86,4 +86,4 @@ services:
 
       ros2 run sim_orchestrator sim_orchestrator_node --ros-args -p "vehicle_ids:=[auv_1]"
       -p "data_directory:=/odyssey/output/trailing/Data" -p "timestep:=0.02" -p "control_period:=10"
-      -p "max_steps:=12960000" -p "steps_per_message:=10000"'
+      -p "max_steps:=4320000" -p "steps_per_message:=10000"'

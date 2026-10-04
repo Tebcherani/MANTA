@@ -216,8 +216,8 @@ static int behavior_axis_mask( int behavior_id )
     case WIGGLE:
     case LAUNCH:
 	    return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
-    case PICKET_LINE_PATROL:
-    case WHALE_FOLLOW:
+    case PICKET_LINE:
+    case WHALE_TRAILING:
         return AXIS_DEPTH | AXIS_HEADING | AXIS_SPEED;
     case YO_YO:
 	    return AXIS_DEPTH;

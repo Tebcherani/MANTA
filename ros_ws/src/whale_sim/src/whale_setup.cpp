@@ -206,7 +206,7 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
         time = next_time;
 
         // End nonpersistent whale trajectories after crossing through the monitored corridor.
-        if (!active_entire_mission_) {
+        if (initialization_mode_ == "picket_line" && !active_entire_mission_) {
             const double relative_north = north - line_start_north_;
             const double relative_east = east - line_start_east_;
             const double signed_distance = relative_north * line.perpendicular_north + relative_east * line.perpendicular_east;
@@ -320,27 +320,35 @@ void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState 
  * Initialize every whale's position, movement trajectory, and call schedule.
  */
 void WhaleNode::initialize_whales() {
-    const LineGeometry line = compute_line_geometry();  // Calculate picket-line geometry and initialize shared whale groups.
-    initialize_whale_groups(line.length);
+    LineGeometry line{};
+
+    if (initialization_mode_ == "picket_line") {
+        line = compute_line_geometry();
+        initialize_whale_groups(line.length);
+    } 
+    else initialize_whale_groups(0.0);
 
     whales_.clear();
     whales_.reserve(whale_count_);
 
-    // Loop through all whales
     for (int index = 0; index < whale_count_; ++index) {
         const std::size_t group_index = get_group_index_for_whale(index);
         const WhaleGroup &group = whale_groups_[group_index];
-
-        const double crossing_distance = sample_crossing_distance(group, line.length);
         const double whale_start_time = active_entire_mission_ ? 0.0 : sample_start_time(group);
         const double whale_speed = sample_speed();
 
-        const WhaleInitialState initial_state = compute_initial_state(group, line, crossing_distance, whale_speed);
-        
-        Whale whale = create_whale(index, group_index, group, whale_start_time);
+        WhaleInitialState initial_state;
 
+        if (initialization_mode_ == "fixed") {
+            const double heading_radians = initial_heading_degrees_ * std::acos(-1.0) / 180.0;
+            initial_state = {initial_north_, initial_east_, heading_radians};
+        } else {
+            const double crossing_distance = sample_crossing_distance(group, line.length);
+            initial_state = compute_initial_state(group, line, crossing_distance, whale_speed);
+        }
+
+        Whale whale = create_whale(index, group_index, group, whale_start_time);
         initialize_whale_dynamics(whale, initial_state, whale_speed, line, group);
-        
         whales_.push_back(std::move(whale));
     }
 
@@ -361,8 +369,14 @@ void WhaleNode::load_config() {
     whale_depth_ = declare_parameter<double>("depth", 20.0);
     mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
 
-    // Whale movement.
+    // Whale config
     active_entire_mission_ = declare_parameter<bool>("active_entire_mission", false);
+    initialization_mode_ = declare_parameter<std::string>("initialization_mode", "picket_line");
+    initial_north_ = declare_parameter<double>("initial_north", 0.0);
+    initial_east_ = declare_parameter<double>("initial_east", 0.0);
+    initial_heading_degrees_ = declare_parameter<double>("initial_heading_degrees", 0.0);
+
+    // Whale movement.
     speed_mean_ = declare_parameter<double>("speed_mean", 1.5);
     speed_std_ = declare_parameter<double>("speed_std", 0.2);
     turn_interval_ = declare_parameter<double>("turn_interval", 60.0);              // Update whale heading every turn_interval s
@@ -463,6 +477,9 @@ void WhaleNode::validate_config() const {
     if (start_distance_ <= 0.0) throw std::runtime_error("start_distance must be greater than zero.");
     if (mission_duration_ <= 0.0) throw std::runtime_error("mission_duration must be greater than zero.");
     if (whale_sample_period_ <= 0.0) throw std::runtime_error("sample_period must be greater than zero.");
+
+    if (initialization_mode_ != "picket_line" && initialization_mode_ != "fixed") throw std::runtime_error("Whale initialization_mode must be 'picket_line' or 'fixed'.");
+    if (!std::isfinite(initial_north_) || !std::isfinite(initial_east_) || !std::isfinite(initial_heading_degrees_)) throw std::runtime_error("Fixed whale initialization values must be finite.");
 
     if (speed_mean_ <= 0.0) throw std::runtime_error("speed_mean must be greater than zero.");
     if (turn_interval_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");

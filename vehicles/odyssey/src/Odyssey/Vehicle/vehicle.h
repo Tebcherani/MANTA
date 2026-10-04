@@ -1,7 +1,7 @@
 #include "ody_defs.h"
 #include "ody_types.h"
 #include "ody_var.h"
-#define CREATION_DATE "2026/10/04 12:22:42 GMT"
+#define CREATION_DATE "2026/10/04 13:03:03 GMT"
 
 extern int M_PRESENT_TIME;
 extern int M_DT;
@@ -463,5 +463,5 @@ extern int M_LOAD_VOLTAGE;
 #define WIGGLE 17
 #define LAUNCH 18
 #define YO_YO 19
-#define PICKET_LINE_PATROL 20
-#define WHALE_FOLLOW 21
+#define PICKET_LINE 20
+#define WHALE_TRAILING 21

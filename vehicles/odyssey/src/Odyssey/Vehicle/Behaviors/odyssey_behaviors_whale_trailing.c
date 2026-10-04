@@ -11,20 +11,20 @@ static int target_available = 0;
 static double target_north = 0.0;
 static double target_east = 0.0;
 
-void set_whale_follow_target(double north, double east) {
+void set_whale_trailing_target(double north, double east) {
     target_north = north;
     target_east = east;
     target_available = 1;
 }
 
 /*
-behavior: whale_follow
+behavior: whale_trailing
   b_arg: depth(m) 0
   b_arg: speed(m/s) 0
   b_arg: capture(m) 5
 */
 
-int whale_follow(struct behavior *b, int priority, int level) {
+int whale_trailing(struct behavior *b, int priority, int level) {
     enum {
         DEPTH,
         SPEED,
@@ -38,9 +38,19 @@ int whale_follow(struct behavior *b, int priority, int level) {
 
     (void)level;
 
-    if (!target_available) return -1;
+    if (b->state == B_UNINITIALIZED) {
+        if (stack_busy(cmd)) return -1;
+        b->state = B_ACTIVE;
+    }
 
-    if (b->state == B_UNINITIALIZED) b->state = B_ACTIVE;
+    // Keep the behavior active without commanding motion until a call is detected.
+    if (!target_available) {
+        cmd->depth_mode = 1;
+        cmd->speed_mode = 1;
+        cmd->depth[0] = bArg(DEPTH);
+        cmd->speed[0] = 0.0;
+        return 0;
+    }
 
     north_difference = target_north - read_sensor(M_POS_N);
     east_difference = target_east - read_sensor(M_POS_E);

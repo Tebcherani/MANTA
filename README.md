@@ -224,7 +224,7 @@ The orchestrator shortens a batch when necessary so that the batch ends at the s
 
 ### Picket-line scenario
 
-In the `picket_line` scenario, every vehicle receives a mission containing `picket_line_patrol` but not `whale_follow`.
+In the `picket_line` scenario, every vehicle receives a mission containing `picket_line` but not `whale_trailing`.
 
 Vehicles:
 
@@ -239,8 +239,8 @@ Tracking is disabled through the Odyssey `tracking_enabled` ROS parameter.
 
 In the `trailing` scenario, vehicle missions contain both:
 
-- `picket_line_patrol`;
-- `whale_follow`.
+- `picket_line`;
+- `trailing`.
 
 Tracking is enabled through the Odyssey `tracking_enabled` ROS parameter. A vehicle may accept its first detected whale as a target and then follow that whale’s simulated position.
 

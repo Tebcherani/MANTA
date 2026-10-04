@@ -9,7 +9,6 @@ its call.
 """
 
 
-import math
 import sys
 import yaml
 
@@ -26,32 +25,15 @@ OUTPUT_DIR = ROOT / "generated" / "missions" / "trailing"
 
 @dataclass(frozen=True)
 class MissionConfig:
-    """Configuration values needed to generate picket-line missions."""
+    """Configuration values needed to generate trailing missions."""
 
     vehicles: list[dict]
-    line_start_n: float
-    line_start_e: float
-    line_end_n: float
-    line_end_e: float
+    start_n: float
+    start_e: float
     mission_duration: float
     vehicle_speed: float
     vehicle_depth: float
     vehicle_capture: float
-
-    @property
-    def delta_n(self) -> float:
-        """North displacement of the complete picket line."""
-        return self.line_end_n - self.line_start_n
-
-    @property
-    def delta_e(self) -> float:
-        """East displacement of the complete picket line."""
-        return self.line_end_e - self.line_start_e
-
-    @property
-    def line_length(self) -> float:
-        """Total horizontal length of the picket line."""
-        return math.hypot(self.delta_n, self.delta_e)
 
     @property
     def fleet_size(self) -> int:
@@ -62,53 +44,24 @@ class MissionConfig:
 
         if self.fleet_size == 0:
             raise ValueError("At least one vehicle is required.")
-        
+
         vehicle_ids = [vehicle.get("id") for vehicle in self.vehicles]
 
         if any(not vehicle_id for vehicle_id in vehicle_ids):
             raise ValueError("Every vehicle must have a nonempty ID.")
         if len(set(vehicle_ids)) != self.fleet_size:
             raise ValueError("Vehicle IDs must be unique.")
-        if self.line_length <= 0.0:
-            raise ValueError("Picket line must have nonzero length.")
         if self.mission_duration <= 0.0:
             raise ValueError("Scenario duration must be greater than zero.")
         if self.vehicle_speed <= 0.0:
-            raise ValueError("Patrol speed must be greater than zero.")
+            raise ValueError("Trailing speed must be greater than zero.")
         if self.vehicle_depth <= 0.0:
-            raise ValueError("Patrol depth must be greater than zero.")
+            raise ValueError("Trailing depth must be greater than zero.")
         if self.vehicle_capture <= 0.0:
-            raise ValueError("Patrol capture distance must be greater than zero.")
+            raise ValueError("Trailing capture distance must be greater than zero.")
 
 
-@dataclass(frozen=True)
-class LineSegment:
-    """North/east endpoints of one vehicle's picket-line segment."""
-
-    start_n: float
-    start_e: float
-    end_n: float
-    end_e: float
-
-
-def compute_vehicle_segment(config: MissionConfig, vehicle_index: int) -> LineSegment:
-    """Calculate the picket-line segment assigned to one vehicle."""
-
-    if vehicle_index < 0 or vehicle_index >= config.fleet_size:
-        raise ValueError("Vehicle index is outside the fleet.")
-
-    start_fraction = vehicle_index / config.fleet_size
-    end_fraction = (vehicle_index + 1) / config.fleet_size
-
-    return LineSegment(
-        start_n = config.line_start_n + start_fraction * config.delta_n,
-        start_e = config.line_start_e + start_fraction * config.delta_e,
-        end_n = config.line_start_n + end_fraction * config.delta_n,
-        end_e = config.line_start_e + end_fraction * config.delta_e,
-    )
-
-
-def generate_mission_file(config: MissionConfig, vehicle_id: str, segment: LineSegment) -> Path:
+def generate_mission_file(config: MissionConfig, vehicle_id: str) -> Path:
     """Generate and write the trailing mission for one Odyssey."""
 
     mission = dedent(
@@ -116,12 +69,12 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str, segment: LineS
         # Generated MANTA trailing mission for {vehicle_id}
         UseSim 1
 
-        # Start at the beginning of this vehicle's assigned segment.
-        sensor: m_pos_n(m) {segment.start_n:.6f}
-        sensor: m_pos_e(m) {segment.start_e:.6f}
+        # Start at the configured trailing location.
+        sensor: m_pos_n(m) {config.start_n:.6f}
+        sensor: m_pos_e(m) {config.start_e:.6f}
         sensor: m_depth(m) {config.vehicle_depth:.6f}
-        sensor: real_x(m) {segment.start_n:.6f}
-        sensor: real_y(m) {segment.start_e:.6f}
+        sensor: real_x(m) {config.start_n:.6f}
+        sensor: real_y(m) {config.start_e:.6f}
         sensor: real_z(m) {config.vehicle_depth:.6f}
 
         state: picket_line
@@ -139,20 +92,20 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str, segment: LineS
           b_arg: depth_cutoff_active(bool) 0
           b_arg: cutoff_depth(m) {config.vehicle_depth + 25.0:.6f}
 
-        # Follow an assigned whale using its exact simulated position.
-        behavior: whale_follow 3
+        # Move toward the most recently detected whale-call location.
+        behavior: whale_trailing 3
           b_arg: depth(m) {config.vehicle_depth:.6f}
           b_arg: speed(m/s) {config.vehicle_speed:.6f}
           b_arg: capture(m) {config.vehicle_capture:.6f}
 
-        # Patrol until a whale is assigned.
-        behavior: picket_line_patrol 4
-          b_arg: start_n(m) {segment.start_n:.6f}
-          b_arg: start_e(m) {segment.start_e:.6f}
-          b_arg: end_n(m) {segment.end_n:.6f}
-          b_arg: end_e(m) {segment.end_e:.6f}
+        # Remain stationary until a detected call provides a trailing target.
+        behavior: picket_line 4
+          b_arg: start_n(m) {config.start_n:.6f}
+          b_arg: start_e(m) {config.start_e:.6f}
+          b_arg: end_n(m) {config.start_n:.6f}
+          b_arg: end_e(m) {config.start_e:.6f}
           b_arg: depth(m) {config.vehicle_depth:.6f}
-          b_arg: speed(m/s) {config.vehicle_speed:.6f}
+          b_arg: speed(m/s) 0.0
           b_arg: capture(m) {config.vehicle_capture:.6f}
         """
     )
@@ -172,20 +125,18 @@ def load_mission_config() -> MissionConfig:
 
     # Load top-level sections
     scenario = config["scenario"]
-    line = scenario["picket_line"]
+    trailing = scenario["trailing"]
     patrol = scenario["patrol"]
 
     # Load configuration values
     config = MissionConfig(
-        vehicles = config.get("vehicles", []),
-        line_start_n = float(line["start"]["north"]),
-        line_start_e = float(line["start"]["east"]),
-        line_end_n = float(line["end"]["north"]),
-        line_end_e = float(line["end"]["east"]),
-        mission_duration = float(scenario["duration"]),
-        vehicle_speed = float(patrol["speed"]),
-        vehicle_depth = float(patrol["depth"]),
-        vehicle_capture = float(patrol.get("capture", 25.0)),
+        vehicles=config.get("vehicles", []),
+        start_n=float(trailing["start"]["north"]),
+        start_e=float(trailing["start"]["east"]),
+        mission_duration=float(scenario["duration"]),
+        vehicle_speed=float(patrol["speed"]),
+        vehicle_depth=float(patrol["depth"]),
+        vehicle_capture=float(patrol.get("capture", 25.0)),
     )
 
     return config
@@ -198,9 +149,8 @@ def main() -> int:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Generate mission file for each vehicle
-    for index, vehicle in enumerate(config.vehicles):
-        segment = compute_vehicle_segment(config=config, vehicle_index=index)
-        mission_path = generate_mission_file(config=config, vehicle_id=vehicle["id"], segment=segment)
+    for vehicle in config.vehicles:
+        mission_path = generate_mission_file(config=config, vehicle_id=vehicle["id"])
         print(f"Generated {mission_path.relative_to(ROOT)}")
 
     return 0

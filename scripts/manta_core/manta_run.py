@@ -124,30 +124,26 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
 
 def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
     scenario = config["scenario"]
-    line = scenario["picket_line"]
+    scenario_type = scenario["type"]
     whales = scenario["whales"]
     movement = whales["movement"]
     grouping = whales["grouping"]
-    calling = whales["calling"]
-    bouts = calling["bouts"]
+    bouts = whales["calling"]["bouts"]
     monte_carlo = config.get("monte_carlo", {})
 
     params = {
-        "active_entire_mission": whales.get("active_entire_mission", False),
         "count": whales["count"],
-        "line_start_north": line["start"]["north"],
-        "line_start_east": line["start"]["east"],
-        "line_end_north": line["end"]["north"],
-        "line_end_east": line["end"]["east"],
-        "start_distance": whales["start_distance"],
         "depth": whales["depth"],
         "mission_duration": scenario["duration"],
+        "active_entire_mission": whales.get("active_entire_mission", False),
         "bout_mean_duration": bouts["mean_duration"],
         "bout_mean_silent_duration": bouts["mean_silent_duration"],
         "bout_active_call_rate_per_hour": bouts["active_call_rate_per_hour"],
         "turn_interval": movement["turn_interval"],
         "heading_correlation": movement["heading_correlation"],
         "heading_std_degrees": movement["heading_std_degrees"],
+        "speed_mean": movement["speed_mean"],
+        "speed_std": movement["speed_std"],
         "group_mean_size": grouping["mean_group_size"],
         "group_position_std": grouping["position_std"],
         "group_start_time_std": grouping["start_time_std"],
@@ -156,6 +152,31 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
         "random_seed": monte_carlo.get("random_seed", 42),
         "sample_period": config["output"].get("whale_sample_period", 60.0),
     }
+
+    if scenario_type == "picket_line":
+        line = scenario["picket_line"]
+
+        params.update({
+            "initialization_mode": "picket_line",
+            "line_start_north": line["start"]["north"],
+            "line_start_east": line["start"]["east"],
+            "line_end_north": line["end"]["north"],
+            "line_end_east": line["end"]["east"],
+            "start_distance": whales["start_distance"],
+        })
+
+    elif scenario_type == "trailing":
+        trailing = scenario["trailing"]
+
+        params.update({
+            "initialization_mode": "fixed",
+            "initial_north": trailing["start"]["north"],
+            "initial_east": trailing["start"]["east"],
+            "initial_heading_degrees": trailing["initial_heading_degrees"],
+        })
+
+    else:
+        raise ValueError(f"Whale simulation is not configured for scenario '{scenario_type}'.")
 
     arguments = " ".join(f'-p "{name}:={value}"' for name, value in params.items())
 
