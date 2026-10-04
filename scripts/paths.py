@@ -31,4 +31,4 @@ CLEANUP_PATH = ROOT / "scripts" / "cleanup_monte_carlo.sh"
 
 # .yaml
 DEV_COMPOSE_PATH = ROOT / "compose.dev.yaml"
-DOCKER_COMPOSE_PATH = ROOT / "vehicles" / "odyssey" / "compose.ros.yaml"
+DOCKER_COMPOSE_PATH = ROOT / "compose.ros.yaml"
