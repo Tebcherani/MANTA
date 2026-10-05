@@ -109,7 +109,7 @@ def write_trailing_sweep_summary(path: Path, results: dict[float, TrailingSweepR
             writer.writerow(asdict(results[interval]))
 
 
-def run_trailing_monte_carlo_sweep(sim_config: dict) -> int:
+def run_monte_carlo_sweep(sim_config: dict) -> int:
     """Run one Monte Carlo experiment for every trailing call-update interval."""
 
     if sim_config.get("scenario", {}).get("type") != "trailing":

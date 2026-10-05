@@ -10,7 +10,6 @@ from manta_core.manta_review import run_review
 from manta_core.manta_missions import generate_missions
 from manta_core.manta_run import prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
-from manta_core.manta_trailing_sweep import run_trailing_monte_carlo_sweep
 from paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, MISSION_DIR
 
 def main() -> int:
@@ -30,15 +29,7 @@ def main() -> int:
         config = load_yaml(config_path)
 
         if args.command == "monte_carlo_sweep":
-            scenario_type = config["scenario"]["type"]
-
-            if scenario_type == "trailing":
-                return run_trailing_monte_carlo_sweep(config)
-
-            if scenario_type == "picket_line":
-                return run_monte_carlo_sweep(config)
-
-            raise ValueError(f"Monte Carlo sweep is not configured for scenario '{scenario_type}'.")
+            return run_monte_carlo_sweep(config)
 
         if args.command == "generate":
             generate_missions(config, config_path)
