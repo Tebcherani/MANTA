@@ -4,8 +4,8 @@
  * Create publishers for whale detections and call-processing acknowledgements.
  */
 void WhaleDetectionNode::create_publishers() {
-    detection_pub_ = create_publisher<manta_interfaces::msg::WhaleDetection>("/sim/whale_detections", 100);             // Publish detections produced when vehicles are within range of a whale call.
-    processed_pub_ = create_publisher<manta_interfaces::msg::WhaleCallProcessed>("/sim/whales/call_processed", 100);    // Notify the orchestrator after every vehicle has evaluated a whale call.
+    detection_pub_ = create_publisher<acoustics_interfaces::msg::WhaleDetection>("/sim/whale_detections", 100);             // Publish detections produced when vehicles are within range of a whale call.
+    processed_pub_ = create_publisher<acoustics_interfaces::msg::WhaleCallProcessed>("/sim/whales/call_processed", 100);    // Notify the orchestrator after every vehicle has evaluated a whale call.
 }
 
 /**

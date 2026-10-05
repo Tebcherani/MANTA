@@ -11,6 +11,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(acoustics_interfaces REQUIRED)
 find_package(manta_interfaces REQUIRED)
 find_package(whale_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -47,6 +48,7 @@ target_compile_features(whale_detection_node PUBLIC cxx_std_17)
 ament_target_dependencies(
   whale_detection_node
   rclcpp
+  acoustics_interfaces
   manta_interfaces
   whale_interfaces
   std_msgs

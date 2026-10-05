@@ -217,7 +217,7 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
 /**
  * Store the latest whale-call location for the next waypoint update.
  */
-void OdysseyNode::handle_whale_detection(const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {
+void OdysseyNode::handle_whale_detection(const acoustics_interfaces::msg::WhaleDetection::SharedPtr msg) {
     if (!tracking_enabled_) return;
     if (msg->vehicle_id != vehicle_id_) return;
 

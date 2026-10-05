@@ -15,7 +15,7 @@
 #include "manta_interfaces/msg/sim_step.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
 #include "whale_interfaces/msg/whale_call.hpp"
-#include "manta_interfaces/msg/whale_call_processed.hpp"
+#include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "whale_interfaces/srv/get_next_whale_call.hpp"
 
 extern "C" {
@@ -67,7 +67,7 @@ private:
     void handle_shutdown_timer();
     void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id);
     void handle_vehicle_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
-    void handle_whale_call_processed(const manta_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
+    void handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
 
     void check_all_step_results_received();
 
@@ -127,7 +127,7 @@ private:
     // Subscribers
     std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
     std::vector<rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr> step_result_subs_;
-    rclcpp::Subscription<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;
+    rclcpp::Subscription<acoustics_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;
 
     // Timers
     rclcpp::TimerBase::SharedPtr shutdown_timer_;

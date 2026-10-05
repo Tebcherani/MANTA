@@ -11,8 +11,8 @@
 
 #include "manta_interfaces/msg/vehicle_state.hpp"
 #include "whale_interfaces/msg/whale_call.hpp"
-#include "manta_interfaces/msg/whale_call_processed.hpp"
-#include "manta_interfaces/msg/whale_detection.hpp"
+#include "acoustics_interfaces/msg/whale_call_processed.hpp"
+#include "acoustics_interfaces/msg/whale_detection.hpp"
 
 class WhaleDetectionNode : public rclcpp::Node {
 public:
@@ -62,8 +62,8 @@ private:
     // ---------------------------------------------------------------------
 
     // Publishers
-    rclcpp::Publisher<manta_interfaces::msg::WhaleDetection>::SharedPtr detection_pub_;
-    rclcpp::Publisher<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr processed_pub_;
+    rclcpp::Publisher<acoustics_interfaces::msg::WhaleDetection>::SharedPtr detection_pub_;
+    rclcpp::Publisher<acoustics_interfaces::msg::WhaleCallProcessed>::SharedPtr processed_pub_;
 
     // Subscribers
     rclcpp::Subscription<whale_interfaces::msg::WhaleCall>::SharedPtr whale_call_sub_;

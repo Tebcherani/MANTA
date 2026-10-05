@@ -78,7 +78,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
     }
 
     // Receive confirmation that the current whale call has been evaluated.
-    whale_call_processed_sub_ = create_subscription<manta_interfaces::msg::WhaleCallProcessed>(
-        "/sim/whales/call_processed", 100, [this](const manta_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {handle_whale_call_processed(msg);}
+    whale_call_processed_sub_ = create_subscription<acoustics_interfaces::msg::WhaleCallProcessed>(
+        "/sim/whales/call_processed", 100, [this](const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {handle_whale_call_processed(msg);}
     );
 }

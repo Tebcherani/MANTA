@@ -160,7 +160,7 @@ void SimOrchestratorNode::handle_vehicle_ready( const std_msgs::msg::Bool::Share
  *
  * @param msg ROS message identifying the whale call that was processed.
  */
-void SimOrchestratorNode::handle_whale_call_processed(const manta_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
+void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
     // Ignore acknowledgements when no whale-call processing is pending.
     if (!waiting_for_whale_call_processing_) {
         RCLCPP_WARN(get_logger(), "Ignored unexpected whale-call acknowledgement.");

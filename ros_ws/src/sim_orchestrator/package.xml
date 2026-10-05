@@ -11,6 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
+  <depend>acoustics_interfaces</depend>
   <depend>manta_interfaces</depend>
   <depend>whale_interfaces</depend>
 

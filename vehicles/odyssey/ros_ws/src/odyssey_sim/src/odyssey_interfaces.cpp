@@ -79,7 +79,7 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &
         "/sim/shutdown", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_shutdown(msg);}
     );
 
-    whale_detection_sub_ = create_subscription<manta_interfaces::msg::WhaleDetection>(
-        "/sim/whale_detections", whale_qos, [this](const manta_interfaces::msg::WhaleDetection::SharedPtr msg) {handle_whale_detection(msg);}
+    whale_detection_sub_ = create_subscription<acoustics_interfaces::msg::WhaleDetection>(
+        "/sim/whale_detections", whale_qos, [this](const acoustics_interfaces::msg::WhaleDetection::SharedPtr msg) {handle_whale_detection(msg);}
     );
 }

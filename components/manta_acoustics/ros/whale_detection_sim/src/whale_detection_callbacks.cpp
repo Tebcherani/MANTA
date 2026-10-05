@@ -106,7 +106,7 @@ void WhaleDetectionNode::try_process_pending_call() {
         if (!receive_all_calls_ && distance > detection_range_) continue;
 
         // Populate the detection with the exact vehicle and whale states used.
-        manta_interfaces::msg::WhaleDetection detection;
+        acoustics_interfaces::msg::WhaleDetection detection;
         detection.vehicle_id = vehicle_id;
         detection.whale_id = pending_call_.whale_id;
         detection.cycle = pending_call_.cycle;
@@ -127,7 +127,7 @@ void WhaleDetectionNode::try_process_pending_call() {
     }
 
     // Acknowledge that every vehicle has evaluated the pending whale call.
-    manta_interfaces::msg::WhaleCallProcessed processed;
+    acoustics_interfaces::msg::WhaleCallProcessed processed;
     processed.whale_id = pending_call_.whale_id;
     processed.cycle = pending_call_.cycle;
     processed.sim_time = pending_call_.sim_time;
