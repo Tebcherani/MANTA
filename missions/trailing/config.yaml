@@ -8,7 +8,7 @@ version: 1
 # Mission generation
 #--------------------------------------------------
 mission_generation:
-  generator: components/manta_odyssey/mission_generators/generate_trailing_mission.py
+  generator: missions/trailing/generate_odyssey_mission.py
   output_directory: ./output/trailing/missions
 
 

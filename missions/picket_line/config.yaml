@@ -8,7 +8,7 @@ version: 1
 # Mission generation
 #--------------------------------------------------
 mission_generation:
-  generator: components/manta_odyssey/mission_generators/generate_picket_line_mission.py
+  generator: missions/picket_line/generate_odyssey_mission.py
   output_directory: ./output/picket_line/missions
 
 
