@@ -7,7 +7,7 @@ import numpy as np
 
 from collections import defaultdict
 from pathlib import Path
-from missions.trailing.review.parse_obd import read_obd
+from parse_obd import read_obd
 
 
 def read_whale_centroids(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

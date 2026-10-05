@@ -1,46 +1,40 @@
 import subprocess
 import sys
 
-from paths import ROOT, VENV_EXEC, REVIEW_DIR
+from manta_core.manta_config import load_yaml
+from paths import ROOT, MISSION_DIR, VENV_EXEC
 
 
 def run_review(scenario: str, plot: str) -> int:
-    """Validate the review environment and run the selected scenario plot."""
+    """Run the review script selected by mission configuration."""
 
-    scripts = {
-        "picket_line": {
-            "tracks": "plot_tracks.py",
-            "sweep": "plot_sweep_metrics.py",
-        },
-        "trailing": {
-            "tracks": "plot_tracks.py",
-            "sweep": "plot_sweep_metrics.py",
-        },
-    }
+    try:
+        config_path = MISSION_DIR / scenario / "config.yaml"
+        config = load_yaml(config_path)
 
-    if scenario not in scripts:
-        print(f"Review is not configured for scenario '{scenario}'.", file=sys.stderr)
+        review = config.get("review")
+        if not isinstance(review, dict):
+            raise ValueError("Configuration is missing review settings.")
+
+        script_setting = review.get(plot)
+        if not isinstance(script_setting, str) or not script_setting.strip():
+            raise ValueError(f"Review '{plot}' is not configured.")
+
+        script = (ROOT / script_setting).resolve()
+
+        if not script.is_relative_to(ROOT.resolve()):
+            raise ValueError("Review script must be inside MANTA.")
+        if not script.is_file():
+            raise ValueError(f"Review script does not exist: {script}")
+        if not VENV_EXEC.is_file():
+            raise ValueError(f"Python environment is missing: {VENV_EXEC}")
+
+        return subprocess.run(
+            [str(VENV_EXEC), str(script)],
+            cwd=script.parent,
+            check=False,
+        ).returncode
+
+    except (ValueError, OSError) as error:
+        print(f"MANTA review error: {error}", file=sys.stderr)
         return 1
-
-    if plot not in scripts[scenario]:
-        print(f"Review plot '{plot}' is not configured for scenario '{scenario}'.", file=sys.stderr)
-        return 1
-
-    script = REVIEW_DIR / scenario / "review" / scripts[scenario][plot]
-
-    if not VENV_EXEC.is_file():
-        print(f"Review environment is missing: {VENV_EXEC}", file=sys.stderr)
-        return 1
-
-    if not script.is_file():
-        print(f"Review script is missing: {script}", file=sys.stderr)
-        return 1
-
-    if plot == "sweep":
-        summary_path = ROOT / "output" / scenario / "monte_carlo_sweep" / "sweep_summary.csv"
-
-        if not summary_path.is_file():
-            print(f"Monte Carlo sweep summary is missing: {summary_path}", file=sys.stderr)
-            return 1
-
-    return subprocess.run([str(VENV_EXEC), str(script)], cwd=script.parent, check=False).returncode

@@ -11,6 +11,9 @@ mission_generation:
   generator: missions/trailing/generate_odyssey_mission.py
   output_directory: ./output/trailing/missions
 
+review:
+  tracks: missions/trailing/review/plot_tracks.py
+  sweep: missions/trailing/review/plot_sweep_metrics.py
 
 #--------------------------------------------------
 # Output directories
