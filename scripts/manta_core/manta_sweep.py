@@ -5,7 +5,7 @@ import yaml
 from dataclasses import asdict
 from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult, SweepConfig, SweepResult
 from manta_core.manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
-from manta_core.manta_run import generate_missions
+from manta_core.manta_missions import generate_missions
 from pathlib import Path
 from paths import ROOT
 from threading import Event

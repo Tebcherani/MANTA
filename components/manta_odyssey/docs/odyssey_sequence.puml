@@ -1,0 +1,35 @@
+@startuml
+title MANTA ROS 2 Simulation Sequence Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+participant "SimOrchestratorNode" as Orchestrator
+participant "OdysseyNode" as Odyssey
+participant "AcousticsNode" as Detection
+
+== Vehicle initialization ==
+
+Orchestrator ->> Odyssey : Startup signal
+activate Odyssey
+Odyssey -> Odyssey : Initialize vehicle simulation
+Orchestrator ->> Odyssey : Initial simulation time
+Odyssey -> Odyssey : Initialize vehicle simulation time
+Orchestrator ->> Odyssey : Calendar start time
+Odyssey -> Odyssey : Initialize mission
+Odyssey -> Odyssey : Initialize vehicle
+Odyssey -> Odyssey : Initialize world state
+Odyssey ->> Orchestrator : Vehicle ready
+
+== Simulation loop ==
+
+Orchestrator ->> Odyssey : Advance by the specified number of simulation cycles
+Odyssey -> Odyssey : Update world state
+Odyssey -> Odyssey : Advance vehicle dynamics
+Odyssey ->> Detection : Vehicle state
+Odyssey ->> Orchestrator : Simulation step complete signal
+deactivate Odyssey
+
+@enduml

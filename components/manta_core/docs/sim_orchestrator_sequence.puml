@@ -13,10 +13,22 @@ participant "OdysseyNode\n(one per vehicle)" as Odyssey
 participant "OdysseyDetectionNode" as Detection
 
 
+== Vehicle initialization ==
+
+Orchestrator ->> Odyssey : Startup signal
+activate Orchestrator
+activate Odyssey
+Orchestrator ->> Odyssey : Initial simulation time
+Orchestrator ->> Odyssey : Calendar start time
+Odyssey ->> Orchestrator : Vehicle ready
+deactivate Odyssey
+
+Orchestrator -> Orchestrator : Wait for all vehicles
+Orchestrator -> Orchestrator : Start simulation
+
 == Simulation loop ==
 
-    Orchestrator -> Whale : Request next whale call
-    activate Orchestrator
+Orchestrator -> Whale : Request next whale call
     activate Whale
     Whale --> Orchestrator : Next whale call
     deactivate Whale

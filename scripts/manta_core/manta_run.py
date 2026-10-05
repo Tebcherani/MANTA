@@ -4,6 +4,7 @@ import sys
 import yaml
 
 from manta_core.manta_config import load_plugin
+from manta_core.manta_missions import generate_missions
 from pathlib import Path
 from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH
 
@@ -18,30 +19,6 @@ def container_path(configured_path: str) -> str:
         raise ValueError(f"Path must remain inside MANTA: {host_path}") from error
 
     return f"/odyssey/{relative_path.as_posix()}"
-
-
-def generate_missions(config: dict, config_path: Path, output_directory: Path | None = None) -> None:
-    """Run the mission generator associated with the selected scenario."""
-
-    scenario_type = config.get("scenario", {}).get("type")
-
-    if not scenario_type:
-        raise ValueError("Configuration is missing scenario.type.")
-
-    generator_path = ROOT / "components" / "manta_odyssey" / "mission_generators" / f"generate_{scenario_type}_mission.py"
-    
-    if not generator_path.is_file():
-        raise ValueError(f"Mission generator does not exist: {generator_path}")
-
-    command = [sys.executable, str(generator_path), str(config_path)]
-
-    if output_directory is not None:
-        command.append(str(output_directory))
-
-    result = subprocess.run(command, cwd=ROOT, check=False)
-
-    if result.returncode != 0:
-        raise ValueError(f"Failed to generate missions for scenario '{scenario_type}'.")
 
 
 def prepare_runtime(sim_config: dict, config_path: Path) -> tuple[Path, Path]:

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # -----------------------------------------------------------------
 # Code
 REVIEW_DIR = ROOT / "review" / "manta_review"
-SCENARIO_CONFIG_DIR = ROOT / "config"
+MISSION_DIR = ROOT / "missions"
 COMPONENT_DIR = ROOT / "components"
 
 # ----------------------------------------------------------------- 

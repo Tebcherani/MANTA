@@ -7,10 +7,11 @@ from manta_core.manta_down import run_down
 from manta_core.manta_environment import get_host_environment
 from manta_core.manta_monte_carlo import run_monte_carlo
 from manta_core.manta_review import run_review
+from manta_core.manta_missions import generate_missions
 from manta_core.manta_run import prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
 from manta_core.manta_trailing_sweep import run_trailing_monte_carlo_sweep
-from paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, SCENARIO_CONFIG_DIR
+from paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, MISSION_DIR
 
 def main() -> int:
     args = parse_args()
@@ -25,7 +26,7 @@ def main() -> int:
             command = ["docker", "compose", "-f", str(DEV_COMPOSE_PATH), "run", "--rm", "dev"]
             return subprocess.run(command, cwd=ROOT, env=get_host_environment(), check=False).returncode
 
-        config_path = SCENARIO_CONFIG_DIR / f"{args.scenario}.yaml"
+        config_path = MISSION_DIR / args.scenario / "config.yaml"
         config = load_yaml(config_path)
 
         if args.command == "monte_carlo_sweep":
@@ -39,8 +40,12 @@ def main() -> int:
 
             raise ValueError(f"Monte Carlo sweep is not configured for scenario '{scenario_type}'.")
 
+        if args.command == "generate":
+            generate_missions(config, config_path)
+            return 0
+
         prepare_runtime(config, config_path)
-        if args.command == "generate": return 0
+
         if args.command == "monte_carlo":
             output_dir = ROOT / "output" / args.scenario / "monte_carlo"
             return run_monte_carlo(config, output_dir)

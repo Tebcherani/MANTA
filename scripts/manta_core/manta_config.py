@@ -2,7 +2,7 @@ import argparse
 import yaml
 
 from pathlib import Path
-from paths import COMPONENT_DIR
+from paths import COMPONENT_DIR, MISSION_DIR
 
 
 def load_plugin(plugin_id: str) -> dict:
@@ -42,7 +42,10 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description="Build, run, review, and analyze MANTA simulations.")
     parser.add_argument("command", nargs="?", default="run", choices=("generate", "build", "dev", "run", "down", "review", "monte_carlo", "monte_carlo_sweep"))
-    parser.add_argument("scenario", nargs="?", choices=("picket_line", "trailing"), help="Simulation scenario.")
+
+    available_missions = sorted(path.parent.name for path in MISSION_DIR.glob("*/config.yaml"))
+    parser.add_argument("scenario", nargs="?", choices=available_missions, help="Mission folder containing config.yaml.")
+    
     parser.add_argument("plot", nargs="?", choices=("tracks", "sweep"), help="Scenario plot to show.")
 
     args = parser.parse_args()

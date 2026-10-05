@@ -5,11 +5,19 @@ version: 1
 
 
 #--------------------------------------------------
+# Mission generation
+#--------------------------------------------------
+mission_generation:
+  generator: components/manta_odyssey/mission_generators/generate_picket_line_mission.py
+  output_directory: ./output/picket_line/missions
+
+
+#--------------------------------------------------
 # Output directories
 #--------------------------------------------------
 output:
-  data_directory: ./output/trailing/Data
-  log_directory: ./output/trailing/Logs
+  data_directory: ./output/picket_line/Data
+  log_directory: ./output/picket_line/Logs
   auv_sample_period: 5.0    # Sample AUV's state every X simulated seconds
   whale_sample_period: 60.0 # Sample whale state every X simulated seconds
 
@@ -18,9 +26,9 @@ output:
 # Simulation parameters
 #--------------------------------------------------
 simulation:
-  timestep: 0.02
-  control_period: 10
-  max_steps: 4320000
+  timestep: 0.02      # Each simulation step advances time by X seconds
+  control_period: 10  # Sensor processing and vehicle control run once every X simulation steps
+  max_steps: 12960000 
   steps_per_message: 10000
 
 
@@ -43,47 +51,37 @@ monte_carlo:
   random_seed: 42
 
 sweep:
-  call_update_intervals:
-    - 0.0      # Every call
-    - 60.0     # 1 minute
-    - 300.0    # 5 minutes
-    - 600.0    # 10 minutes
-    - 1800.0   # 30 minutes
-    - 3600.0   # 1 hour
-    - 7200.0   # 2 hours
-    - 10800.0  # 3 hours
-    - 14400.0  # 4 hours
-    - 18000.0  # 5 hours
-    - 36000.0  # 10 hours
-    - 54000.0  # 15 hours
+  min_vehicles: 1
+  max_vehicles: 13
 
 
 #--------------------------------------------------
 # Mission
 #--------------------------------------------------
 scenario:
-  type: trailing
+  type: picket_line
 
-  trailing:
+  duration: 259200.0  # 3 days
+
+  picket_line:
     start:
       north: 0.0
-      east: 0.0
-    initial_heading_degrees: 0.0
-    call_update_interval: 0.0 #50000.0 # seconds
-
-  duration: 86400.0  # 1 day
+      east: -63000.0
+    end:
+      north: 0.0
+      east: 63000.0
 
   patrol:
-    speed: 1.5
+    speed: 0.25
     depth: 50.0
     capture: 5.0
 
   detection:
-    receive_all_calls: true
+    radius: 11000.0 # meters
 
   whales:
-    count: 3
-    active_entire_mission: true
+    count: 46
+    active_entire_mission: false
     start_distance: 25000.0
     depth: 20.0
 
@@ -97,7 +95,7 @@ scenario:
     grouping:
       mean_group_size: 3.0
       position_std: 1000.0
-      start_time_std: 0.0
+      start_time_std: 600.0
       shared_heading_fraction: 0.75
     
     # Reference paper: https://academic.oup.com/icesjms/article/82/4/fsad174/7341838
@@ -126,6 +124,6 @@ scenario:
 vehicles:
   - id: auv_1
     type: odyssey
-    mission: ./components/manta_odyssey/missions/trailing/baseline/auv_1.mi
+    mission: ./output/picket_line/missions/auv_1.mi
     model: ./components/manta_odyssey/config/Borealis.vd
     fault: ""

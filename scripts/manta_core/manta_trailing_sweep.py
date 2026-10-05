@@ -5,7 +5,7 @@ import yaml
 from dataclasses import asdict
 from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult, TrailingSweepConfig, TrailingSweepResult
 from manta_core.manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
-from manta_core.manta_run import generate_missions
+from manta_core.manta_missions import generate_missions
 from pathlib import Path
 from paths import ROOT
 
@@ -137,7 +137,7 @@ def run_trailing_monte_carlo_sweep(sim_config: dict) -> int:
 
         interval_name = interval_directory_name(interval)
         interval_directory = sweep_output_dir / interval_name
-        mission_directory = ROOT / "vehicles" / "odyssey" / "missions" / "trailing" / "monte_carlo_sweep" / interval_name
+        mission_directory = ROOT / "components" / "manta_odyssey" / "missions" / "trailing" / "monte_carlo_sweep" / interval_name
         interval_config, interval_config_path = prepare_interval_config(sim_config, interval, interval_directory, mission_directory)
         generate_missions(interval_config, interval_config_path, mission_directory)
         project_offset = (interval_index + 1) * 10000

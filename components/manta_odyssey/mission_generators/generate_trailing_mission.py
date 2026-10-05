@@ -17,16 +17,13 @@ from pathlib import Path
 from textwrap import dedent
 
 
-ROOT = Path(__file__).resolve().parents[3]
-CONFIG_PATH = ROOT / "config" / "trailing.yaml"
-DEFAULT_OUTPUT_DIR = ROOT / "components" / "manta_odyssey" / "missions" / "trailing" / "baseline"
+if len(sys.argv) != 3:
+    raise SystemExit(
+        f"Usage: {Path(sys.argv[0]).name} <config_path> <output_directory>"
+    )
 
-if len(sys.argv) > 3:
-    raise ValueError("Usage: generate_trailing_mission.py [config_path] [output_directory]")
-
-config_path = Path(sys.argv[1]).resolve() if len(sys.argv) >= 2 else CONFIG_PATH
-OUTPUT_DIR = Path(sys.argv[2]).resolve() if len(sys.argv) >= 3 else DEFAULT_OUTPUT_DIR
-
+config_path = Path(sys.argv[1]).resolve()
+OUTPUT_DIR = Path(sys.argv[2]).resolve()
 
 @dataclass(frozen=True)
 class MissionConfig:
@@ -146,7 +143,7 @@ def main() -> int:
     # Generate mission file for each vehicle
     for vehicle in config.vehicles:
         mission_path = generate_mission_file(config=config, vehicle_id=vehicle["id"])
-        print(f"Generated {mission_path.relative_to(ROOT)}")
+        print(f"Generated {mission_path}")
 
     return 0
 
