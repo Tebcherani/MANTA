@@ -202,8 +202,8 @@ def summarize_vehicle_metrics(data_directory: Path, vehicle_ids: list[str]) -> t
 def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str) -> tuple[float, float]:
     """Run the trailing metric calculator for one completed realization."""
 
-    python_path = root / "review" / ".venv" / "bin" / "python"
-    script_path = root / "review" / "manta_review" / "trailing" / "trailing_metrics.py"
+    python_path = root / ".venv" / "bin" / "python"
+    script_path = root / "missions" / "trailing" / "review" / "trailing_metrics.py"
 
     if not python_path.is_file():
         raise ValueError(f"Review Python environment does not exist: {python_path}")

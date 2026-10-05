@@ -6,7 +6,7 @@ import numpy as np
 
 from collections import defaultdict
 from pathlib import Path
-from parse_obd import read_obd
+from missions.trailing.review.parse_obd import read_obd
 
 ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "output" / "trailing" / "Data"

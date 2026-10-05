@@ -10,14 +10,14 @@ ROOT = Path(__file__).resolve().parent.parent
 # Directories
 # -----------------------------------------------------------------
 # Code
-REVIEW_DIR = ROOT / "review" / "manta_review"
 MISSION_DIR = ROOT / "missions"
+REVIEW_DIR = MISSION_DIR
 COMPONENT_DIR = ROOT / "components"
 
 # ----------------------------------------------------------------- 
 # Executables
 # -----------------------------------------------------------------
-VENV_EXEC = ROOT / "review" / ".venv" / "bin" / "python"
+VENV_EXEC = ROOT / ".venv" / "bin" / "python"
 
 # ----------------------------------------------------------------- 
 # Files

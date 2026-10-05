@@ -26,7 +26,7 @@ def run_review(scenario: str, plot: str) -> int:
         print(f"Review plot '{plot}' is not configured for scenario '{scenario}'.", file=sys.stderr)
         return 1
 
-    script = REVIEW_DIR / scenario / scripts[scenario][plot]
+    script = REVIEW_DIR / scenario / "review" / scripts[scenario][plot]
 
     if not VENV_EXEC.is_file():
         print(f"Review environment is missing: {VENV_EXEC}", file=sys.stderr)
