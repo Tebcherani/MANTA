@@ -20,7 +20,7 @@ def container_path(configured_path: str) -> str:
     return f"/odyssey/{relative_path.as_posix()}"
 
 
-def generate_missions(config: dict, config_path: Path) -> None:
+def generate_missions(config: dict, config_path: Path, output_directory: Path | None = None) -> None:
     """Run the mission generator associated with the selected scenario."""
 
     scenario_type = config.get("scenario", {}).get("type")
@@ -33,7 +33,12 @@ def generate_missions(config: dict, config_path: Path) -> None:
     if not generator_path.is_file():
         raise ValueError(f"Mission generator does not exist: {generator_path}")
 
-    result = subprocess.run([sys.executable, str(generator_path), str(config_path)], cwd=ROOT, check=False)
+    command = [sys.executable, str(generator_path), str(config_path)]
+
+    if output_directory is not None:
+        command.append(str(output_directory))
+
+    result = subprocess.run(command, cwd=ROOT, check=False)
 
     if result.returncode != 0:
         raise ValueError(f"Failed to generate missions for scenario '{scenario_type}'.")

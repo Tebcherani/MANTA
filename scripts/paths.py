@@ -24,7 +24,7 @@ VENV_EXEC = ROOT / "review" / ".venv" / "bin" / "python"
 # -----------------------------------------------------------------
 
 # .env
-ENV_PATH = ROOT / "vehicles" / "odyssey" / "manta.env"
+ENV_PATH = ROOT / "manta.env"
 
 # .sh
 CLEANUP_PATH = ROOT / "scripts" / "cleanup_monte_carlo.sh"

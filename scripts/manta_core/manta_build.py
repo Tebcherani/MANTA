@@ -27,7 +27,9 @@ def run_build() -> int:
         "make generate_odyssey && "
         "make libraries && "
         "cd /odyssey/ros_ws && "
-        "colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release",
+        "colcon build "
+        "--base-paths /odyssey/ros_ws/src /odyssey/vehicles/odyssey/ros_ws/src "
+        "--cmake-args -DCMAKE_BUILD_TYPE=Release",
     ]
 
     return subprocess.run(build_inside_container, cwd=ROOT, env=environment, check=False).returncode

@@ -15,12 +15,14 @@ from threading import Event
 # Helper functions
 # -----------------------------------------------------
 
-def generate_fleet_config(sim_config: dict, fleet_size: int, generated_dir: Path) -> tuple[dict, Path]:
+def generate_fleet_config(sim_config: dict, fleet_size: int, config_dir: Path) -> tuple[dict, Path]:
     """Create one fleet configuration by cloning the first vehicle plugin."""
 
-    if not sim_config.get("vehicles"): raise ValueError("The sweep requires at least one vehicle template.")
+    if not sim_config.get("vehicles"):
+        raise ValueError("The sweep requires at least one vehicle template.")
 
     scenario_type = sim_config["scenario"]["type"]
+    mission_directory = ROOT / "vehicles" / "odyssey" / "missions" / scenario_type / "monte_carlo_sweep" / f"vehicles_{fleet_size:02d}"
     fleet_config = copy.deepcopy(sim_config)
     template = copy.deepcopy(sim_config["vehicles"][0])
     vehicles = []
@@ -28,11 +30,11 @@ def generate_fleet_config(sim_config: dict, fleet_size: int, generated_dir: Path
     for index in range(1, fleet_size + 1):
         vehicle = copy.deepcopy(template)
         vehicle["id"] = f"auv_{index}"
-        vehicle["mission"] = f"./vehicles/odyssey/missions/{scenario_type}/auv_{index}.mi"
+        vehicle["mission"] = f"./{(mission_directory / f'auv_{index}.mi').relative_to(ROOT)}"
         vehicles.append(vehicle)
 
     fleet_config["vehicles"] = vehicles
-    fleet_config_path = generated_dir / f"simulation_vehicles_{fleet_size:02d}.yaml"
+    fleet_config_path = config_dir / f"simulation_vehicles_{fleet_size:02d}.yaml"
     fleet_config_path.write_text(yaml.safe_dump(fleet_config, sort_keys=False), encoding="utf-8")
 
     return fleet_config, fleet_config_path
@@ -50,20 +52,22 @@ def load_completed_sweep_results(summary_path: Path) -> dict[int, SweepResult]:
     return {result.fleet_size: result for result in results}
 
 
-def prepare_fleet_experiment(sim_config: dict, fleet_size: int, generated_dir: Path, sweep_output_dir: Path) -> tuple[dict, Path]:
+def prepare_fleet_experiment(sim_config: dict, fleet_size: int, config_dir: Path, sweep_output_dir: Path) -> tuple[dict, Path]:
     """Generate the configuration, missions, and output path for one fleet size."""
 
-    fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size, generated_dir)
-    generate_missions(fleet_config, fleet_config_path)
+    scenario_type = sim_config["scenario"]["type"]
+    mission_directory = ROOT / "vehicles" / "odyssey" / "missions" / scenario_type / "monte_carlo_sweep" / f"vehicles_{fleet_size:02d}"
+    fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size, config_dir)
+    generate_missions(fleet_config, fleet_config_path, mission_directory)
     fleet_directory = sweep_output_dir / f"vehicles_{fleet_size:02d}"
 
     return fleet_config, fleet_directory
 
 
-def prepare_monte_carlo_sweep(sim_config: dict, generated_dir: Path, sweep_output_dir: Path, summary_path: Path) -> tuple[SweepConfig, MonteCarloConfig, dict[int, SweepResult]]:
+def prepare_monte_carlo_sweep(sim_config: dict, config_dir: Path, sweep_output_dir: Path, summary_path: Path) -> tuple[SweepConfig, MonteCarloConfig, dict[int, SweepResult]]:
     """Validate sweep settings, prepare output directories, and load completed results."""
 
-    generated_dir.mkdir(parents=True, exist_ok=True)
+    config_dir.mkdir(parents=True, exist_ok=True)
     sweep_output_dir.mkdir(parents=True, exist_ok=True)
 
     sweep_config = SweepConfig.from_dict(sim_config.get("sweep", {}))
@@ -177,13 +181,13 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
     if not scenario_type:
         raise ValueError("Configuration is missing scenario.type.")
 
-    generated_dir = ROOT / "vehicles" / "odyssey" / "missions" / scenario_type / "monte_carlo_sweep"
     sweep_output_dir = ROOT / "output" / scenario_type / "monte_carlo_sweep"
+    config_dir = sweep_output_dir / "configs"
     summary_path = sweep_output_dir / "sweep_summary.csv"
 
     # Prepare the scenario-specific Monte Carlo sweep.
     stop_requested = Event()
-    sweep_config, monte_carlo_config, completed_results = prepare_monte_carlo_sweep(sim_config, generated_dir, sweep_output_dir, summary_path)
+    sweep_config, monte_carlo_config, completed_results = prepare_monte_carlo_sweep(sim_config, config_dir, sweep_output_dir, summary_path)
 
     # Run one Monte Carlo experiment for every requested fleet size.
     for fleet_size in range(sweep_config.min_vehicles, sweep_config.max_vehicles + 1):
@@ -197,7 +201,7 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
             continue
 
         # Generate the fleet configuration and run its Monte Carlo experiment.
-        fleet_config, fleet_dir = prepare_fleet_experiment(sim_config, fleet_size, generated_dir, sweep_output_dir)
+        fleet_config, fleet_dir = prepare_fleet_experiment(sim_config, fleet_size, config_dir, sweep_output_dir)
         result = run_monte_carlo(sim_config=fleet_config, output_dir=fleet_dir, project_offset=fleet_size * 10000)
 
         if result != 0: return result

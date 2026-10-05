@@ -18,6 +18,7 @@ __pycache__/
 /generated/
 /output/
 compose.ros.yaml
+manta.env
 
 # Python-generated files
 /review/.venv/

@@ -69,7 +69,7 @@ def get_realization_paths(root: Path, output_directory: Path, realization: int) 
     run_directory = output_directory / f"realization_{realization:04d}"
     data_directory = run_directory / "Data"
     log_directory = run_directory / "Logs"
-    compose_path = root / "vehicles" / "odyssey" / "missions" / output_directory.relative_to(root / "output") / f"compose_{realization:04d}.yaml"
+    compose_path = run_directory / "compose.yaml"
 
     data_directory.mkdir(parents=True, exist_ok=True)
     log_directory.mkdir(parents=True, exist_ok=True)
