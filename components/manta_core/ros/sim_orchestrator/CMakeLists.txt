@@ -37,12 +37,12 @@ target_include_directories(
   sim_orchestrator_node
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    /odyssey/vehicles/odyssey/include
-    /odyssey/vehicles/odyssey/src/Common
-    /odyssey/vehicles/odyssey/src/World
-    /odyssey/vehicles/odyssey/src/Simulation
-    /odyssey/vehicles/odyssey/src/Sensors
-    /odyssey/vehicles/odyssey/src/Odyssey
+    /odyssey/components/manta_odyssey/include
+    /odyssey/components/manta_odyssey/src/Common
+    /odyssey/components/manta_odyssey/src/World
+    /odyssey/components/manta_odyssey/src/Simulation
+    /odyssey/components/manta_odyssey/src/Sensors
+    /odyssey/components/manta_odyssey/src/Odyssey
 )
 
 # -------------------------------------------------------------------------
@@ -65,11 +65,11 @@ ament_target_dependencies(
 target_link_libraries(
   sim_orchestrator_node
   "-Wl,--start-group"
-  /odyssey/vehicles/odyssey/lib/libsimulation.a
-  /odyssey/vehicles/odyssey/lib/libworld_sim.a
-  /odyssey/vehicles/odyssey/lib/libsim_common.a
-  /odyssey/vehicles/odyssey/lib/libsim_sensors.a
-  /odyssey/vehicles/odyssey/lib/libodyssey.a
+  /odyssey/components/manta_odyssey/lib/libsimulation.a
+  /odyssey/components/manta_odyssey/lib/libworld_sim.a
+  /odyssey/components/manta_odyssey/lib/libsim_common.a
+  /odyssey/components/manta_odyssey/lib/libsim_sensors.a
+  /odyssey/components/manta_odyssey/lib/libodyssey.a
   "-Wl,--end-group"
   lapacke
   lapack

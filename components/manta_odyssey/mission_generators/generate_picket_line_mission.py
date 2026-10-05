@@ -20,7 +20,7 @@ from textwrap import dedent
 
 ROOT = Path(__file__).resolve().parents[3]
 CONFIG_PATH = ROOT / "config" / "picket_line.yaml"
-DEFAULT_OUTPUT_DIR = ROOT / "vehicles" / "odyssey" / "missions" / "picket_line" / "baseline"
+DEFAULT_OUTPUT_DIR = ROOT / "components" / "manta_odyssey" / "missions" / "picket_line" / "baseline"
 
 if len(sys.argv) > 3:
     raise ValueError("Usage: generate_picket_line_mission.py [config_path] [output_directory]")

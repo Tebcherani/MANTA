@@ -40,16 +40,16 @@ target_include_directories(
   odyssey_node
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    /odyssey/vehicles/odyssey/include
-    /odyssey/vehicles/odyssey/src/Common
-    /odyssey/vehicles/odyssey/src/World
-    /odyssey/vehicles/odyssey/src/Sensors
-    /odyssey/vehicles/odyssey/src/Odyssey
-    /odyssey/vehicles/odyssey/src/Odyssey/Vehicle
-    /odyssey/vehicles/odyssey/src/Odyssey/Vehicle/Behaviors
-    /odyssey/vehicles/odyssey/src/Odyssey/Simulator
-    /odyssey/vehicles/odyssey/src/Odyssey/Simulator/Faults
-    /odyssey/vehicles/odyssey/src/Odyssey/Simulator/Sensors
+    /odyssey/components/manta_odyssey/include
+    /odyssey/components/manta_odyssey/src/Common
+    /odyssey/components/manta_odyssey/src/World
+    /odyssey/components/manta_odyssey/src/Sensors
+    /odyssey/components/manta_odyssey/src/Odyssey
+    /odyssey/components/manta_odyssey/src/Odyssey/Vehicle
+    /odyssey/components/manta_odyssey/src/Odyssey/Vehicle/Behaviors
+    /odyssey/components/manta_odyssey/src/Odyssey/Simulator
+    /odyssey/components/manta_odyssey/src/Odyssey/Simulator/Faults
+    /odyssey/components/manta_odyssey/src/Odyssey/Simulator/Sensors
 )
 
 # -------------------------------------------------------------------------
@@ -70,9 +70,9 @@ ament_target_dependencies(
 
 target_link_libraries(
   odyssey_node
-  /odyssey/vehicles/odyssey/lib/libodyssey.a
-  /odyssey/vehicles/odyssey/lib/libsim_sensors.a
-  /odyssey/vehicles/odyssey/lib/libsim_common.a
+  /odyssey/components/manta_odyssey/lib/libodyssey.a
+  /odyssey/components/manta_odyssey/lib/libsim_sensors.a
+  /odyssey/components/manta_odyssey/lib/libsim_common.a
   lapacke
   lapack
   blas

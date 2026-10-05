@@ -28,8 +28,8 @@ def generate_missions(config: dict, config_path: Path, output_directory: Path | 
     if not scenario_type:
         raise ValueError("Configuration is missing scenario.type.")
 
-    generator_path = ROOT / "vehicles" / "odyssey" / "mission_generators" / f"generate_{scenario_type}_mission.py"
-
+    generator_path = ROOT / "components" / "manta_odyssey" / "mission_generators" / f"generate_{scenario_type}_mission.py"
+    
     if not generator_path.is_file():
         raise ValueError(f"Mission generator does not exist: {generator_path}")
 

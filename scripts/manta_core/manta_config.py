@@ -2,13 +2,13 @@ import argparse
 import yaml
 
 from pathlib import Path
-from paths import VEHICLE_DIR
+from paths import COMPONENT_DIR
 
 
 def load_plugin(plugin_id: str) -> dict:
     """Load a vehicle plugin manifest and verify its ID and plugin type."""
 
-    path = VEHICLE_DIR / plugin_id / "manta_plugin.yaml"
+    path = COMPONENT_DIR / f"manta_{plugin_id}" / "manta_plugin.yaml"
 
     if not path.is_file(): raise ValueError(f"Vehicle plugin '{plugin_id}' was not found: {path}")
 

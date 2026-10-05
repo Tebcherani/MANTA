@@ -126,6 +126,6 @@ scenario:
 vehicles:
   - id: auv_1
     type: odyssey
-    mission: ./vehicles/odyssey/missions/trailing/baseline/auv_1.mi
-    model: ./vehicles/odyssey/config/Borealis.vd
+    mission: ./components/manta_odyssey/missions/trailing/baseline/auv_1.mi
+    model: ./components/manta_odyssey/config/Borealis.vd
     fault: ""

@@ -51,3 +51,4 @@ ros_ws/build/
 ros_ws/install/
 ros_ws/log/
 
+components/manta_odyssey/trailing/monte_carlo/compose_*.yaml

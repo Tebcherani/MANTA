@@ -22,7 +22,7 @@ def generate_fleet_config(sim_config: dict, fleet_size: int, config_dir: Path) -
         raise ValueError("The sweep requires at least one vehicle template.")
 
     scenario_type = sim_config["scenario"]["type"]
-    mission_directory = ROOT / "vehicles" / "odyssey" / "missions" / scenario_type / "monte_carlo_sweep" / f"vehicles_{fleet_size:02d}"
+    mission_directory = ROOT / "components" / "manta_odyssey" / "missions" / scenario_type / "monte_carlo_sweep" / f"vehicles_{fleet_size:02d}"
     fleet_config = copy.deepcopy(sim_config)
     template = copy.deepcopy(sim_config["vehicles"][0])
     vehicles = []
@@ -56,7 +56,7 @@ def prepare_fleet_experiment(sim_config: dict, fleet_size: int, config_dir: Path
     """Generate the configuration, missions, and output path for one fleet size."""
 
     scenario_type = sim_config["scenario"]["type"]
-    mission_directory = ROOT / "vehicles" / "odyssey" / "missions" / scenario_type / "monte_carlo_sweep" / f"vehicles_{fleet_size:02d}"
+    mission_directory = ROOT / "components" / "manta_odyssey" / "missions" / scenario_type / "monte_carlo_sweep" / f"vehicles_{fleet_size:02d}"
     fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size, config_dir)
     generate_missions(fleet_config, fleet_config_path, mission_directory)
     fleet_directory = sweep_output_dir / f"vehicles_{fleet_size:02d}"

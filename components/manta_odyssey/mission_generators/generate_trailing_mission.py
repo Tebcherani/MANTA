@@ -19,7 +19,7 @@ from textwrap import dedent
 
 ROOT = Path(__file__).resolve().parents[3]
 CONFIG_PATH = ROOT / "config" / "trailing.yaml"
-DEFAULT_OUTPUT_DIR = ROOT / "vehicles" / "odyssey" / "missions" / "trailing" / "baseline"
+DEFAULT_OUTPUT_DIR = ROOT / "components" / "manta_odyssey" / "missions" / "trailing" / "baseline"
 
 if len(sys.argv) > 3:
     raise ValueError("Usage: generate_trailing_mission.py [config_path] [output_directory]")
