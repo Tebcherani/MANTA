@@ -10,11 +10,11 @@ version: 1
 mission_generation:
   generator: missions/picket_line/generate_odyssey_mission.py
   output_directory: ./output/picket_line/missions
-  sweep: missions/picket_line/sweep.py
+  sweep: missions/picket_line/sweep_fleet_size.py
 
 review:
   tracks: missions/picket_line/review/plot_tracks.py
-  sweep: missions/picket_line/review/plot_sweep_metrics.py
+  sweep: missions/picket_line/review/plot_sweep_fleet_size.py
 
 
 #--------------------------------------------------
