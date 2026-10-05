@@ -137,3 +137,57 @@ vehicles:
     mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_4.mi
     model: ./vehicles/odyssey/config/Borealis.vd
     fault: ""
+  
+  - id: auv_5
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_5.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+
+  - id: auv_6
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_6.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+  
+  - id: auv_7
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_7.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+  
+  - id: auv_8
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_8.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+  
+  - id: auv_9
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_9.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+
+  - id: auv_10
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_10.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+  
+  - id: auv_11
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_11.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+  
+  - id: auv_12
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_12.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
+  
+  - id: auv_13
+    type: odyssey
+    mission: ./vehicles/odyssey/missions/picket_line/baseline/auv_13.mi
+    model: ./vehicles/odyssey/config/Borealis.vd
+    fault: ""
