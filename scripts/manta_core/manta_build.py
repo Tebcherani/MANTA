@@ -31,6 +31,7 @@ def run_build() -> int:
         "--base-paths "
         "/odyssey/ros_ws/src "
         "/odyssey/components/manta_core/ros "
+        "/odyssey/components/manta_whale_sim/ros "
         "/odyssey/vehicles/odyssey/ros_ws/src "
         "--cmake-args -DCMAKE_BUILD_TYPE=Release",
     ]

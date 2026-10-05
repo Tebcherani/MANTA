@@ -2,4 +2,4 @@
 uint64 cycle
 
 # Ground-truth state of every whale in the scenario.
-manta_interfaces/WhaleState[] whales
+whale_interfaces/WhaleState[] whales

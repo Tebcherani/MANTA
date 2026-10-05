@@ -10,7 +10,7 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "manta_interfaces/msg/vehicle_state.hpp"
-#include "manta_interfaces/msg/whale_call.hpp"
+#include "whale_interfaces/msg/whale_call.hpp"
 #include "manta_interfaces/msg/whale_call_processed.hpp"
 #include "manta_interfaces/msg/whale_detection.hpp"
 
@@ -35,7 +35,7 @@ private:
     // Callbacks
     void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
     void handle_vehicle_state(const manta_interfaces::msg::VehicleState::SharedPtr msg, const std::string &vehicle_id);
-    void handle_whale_call(const manta_interfaces::msg::WhaleCall::SharedPtr call);
+    void handle_whale_call(const whale_interfaces::msg::WhaleCall::SharedPtr call);
 
     // Detections
     void try_process_pending_call();
@@ -52,7 +52,7 @@ private:
     // Simulation
     bool pending_call_available_ = false;
     std::unordered_map<std::string, manta_interfaces::msg::VehicleState> latest_vehicle_states_;
-    manta_interfaces::msg::WhaleCall pending_call_;
+    whale_interfaces::msg::WhaleCall pending_call_;
 
     // Output
     std::ofstream detection_log_;
@@ -66,7 +66,7 @@ private:
     rclcpp::Publisher<manta_interfaces::msg::WhaleCallProcessed>::SharedPtr processed_pub_;
 
     // Subscribers
-    rclcpp::Subscription<manta_interfaces::msg::WhaleCall>::SharedPtr whale_call_sub_;
+    rclcpp::Subscription<whale_interfaces::msg::WhaleCall>::SharedPtr whale_call_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
     std::vector<rclcpp::Subscription<manta_interfaces::msg::VehicleState>::SharedPtr> vehicle_state_subs_;
 };

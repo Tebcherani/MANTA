@@ -13,7 +13,7 @@
  * @param request Request containing the last processed simulation time.
  * @param response Response populated with the next available whale call.
  */
-void WhaleNode::handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response) {
+void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCall::Request &request, whale_interfaces::srv::GetNextWhaleCall::Response &response) {
     // No whale has been selected yet.
     Whale *next_whale = nullptr;
     double next_time = std::numeric_limits<double>::infinity();
@@ -141,7 +141,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     const double batch_end_time = step.sim_time + static_cast<double>(step.step_count) * step.timestep;
     const std::uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
 
-    manta_interfaces::msg::WhaleStateArray msg;
+    whale_interfaces::msg::WhaleStateArray msg;
     msg.cycle = completed_cycle;
     msg.whales.reserve(whales_.size());
 
@@ -156,7 +156,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         whale.complete = batch_end_time >= whale.trajectory.back().time;
 
         // Build and publish the ground-truth state at the completed batch time.
-        manta_interfaces::msg::WhaleState state;
+        whale_interfaces::msg::WhaleState state;
         state.active = whale.active;
         state.calling = false;
         state.whale_id = whale.id;

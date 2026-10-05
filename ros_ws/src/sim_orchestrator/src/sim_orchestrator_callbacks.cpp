@@ -15,7 +15,7 @@
  *
  * @param future Asynchronous service result containing the next whale call.
  */
-void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {
+void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {
     const auto response = future.get();
 
     // Continue normal stepping when no future whale call remains.
@@ -303,12 +303,12 @@ void SimOrchestratorNode::request_next_whale_call(double after_time) {
     }
 
     // Request the first call strictly after the supplied simulation time.
-    auto request = std::make_shared<manta_interfaces::srv::GetNextWhaleCall::Request>();
+    auto request = std::make_shared<whale_interfaces::srv::GetNextWhaleCall::Request>();
     request->after_time = after_time;
 
     // Forward the asynchronous response to the corresponding callback.
     next_whale_call_client_->async_send_request(
-        request, [this](rclcpp::Client<manta_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {handle_next_whale_call_response(future);}
+        request, [this](rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {handle_next_whale_call_response(future);}
     );
 }
 

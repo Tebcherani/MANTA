@@ -62,7 +62,7 @@ void SimOrchestratorNode::publish_current_step() {
  *
  * @param call Whale-call event scheduled by the whale simulator.
  */
-void SimOrchestratorNode::publish_whale_call(const manta_interfaces::msg::WhaleCall &call) {
+void SimOrchestratorNode::publish_whale_call(const whale_interfaces::msg::WhaleCall &call) {
     whale_call_pub_->publish(call); // Publish the event for the whale-detection node.
     whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time << ',' << call.whale_id << ',' << call.north << ',' << call.east << ',' << call.depth << '\n';   // Record the published event for simulation analysis and review.
 }

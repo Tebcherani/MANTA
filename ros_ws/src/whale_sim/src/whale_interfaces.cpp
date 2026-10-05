@@ -12,7 +12,7 @@ void WhaleNode::create_ros_interfaces() {
 }
 
 void WhaleNode::create_publishers() {
-    whale_states_pub_ = create_publisher<manta_interfaces::msg::WhaleStateArray>("/sim/whales/states", 10);
+    whale_states_pub_ = create_publisher<whale_interfaces::msg::WhaleStateArray>("/sim/whales/states", 10);
 }
 
 /**
@@ -35,9 +35,9 @@ void WhaleNode::create_subscribers() {
  */
 void WhaleNode::create_services() {
     // Return the first scheduled whale call after a requested simulation time.
-    next_call_service_ = create_service<manta_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call", [this](
-        const std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Request> request,
-        std::shared_ptr<manta_interfaces::srv::GetNextWhaleCall::Response> response) {
+    next_call_service_ = create_service<whale_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call", [this](
+        const std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Request> request,
+        std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Response> response) {
         handle_get_next_call(*request, *response);
     });
 }

@@ -4,7 +4,7 @@
  * Create service clients used by the simulation orchestrator.
  */
 void SimOrchestratorNode::create_clients() {
-    next_whale_call_client_ = create_client<manta_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call");  // Request the first scheduled whale call after a given simulation time.
+    next_whale_call_client_ = create_client<whale_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call");  // Request the first scheduled whale call after a given simulation time.
 }
 
 /**
@@ -21,7 +21,7 @@ void SimOrchestratorNode::create_publishers(const rclcpp::QoS &qos) {
     sim_step_pub_ = create_publisher<manta_interfaces::msg::SimStep>("/sim/step", qos);                 // Publish batches of simulation cycles for each node to process.
     sim_time_pub_ = create_publisher<std_msgs::msg::Float64>("/sim/time", qos);                         // Publish the initial shared simulation time.
     startup_ready_pub_ = create_publisher<std_msgs::msg::Bool>("/sim/startup_ready", qos);              // Notify simulation nodes that coordinated startup is complete.
-    whale_call_pub_ = create_publisher<manta_interfaces::msg::WhaleCall>("/sim/whales/calls", 100);     // Publish individual whale-call events for the detection node to evaluate.
+    whale_call_pub_ = create_publisher<whale_interfaces::msg::WhaleCall>("/sim/whales/calls", 100);     // Publish individual whale-call events for the detection node to evaluate.
 }
 
 /**

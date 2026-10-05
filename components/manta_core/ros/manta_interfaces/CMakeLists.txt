@@ -14,12 +14,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SimStepResult.msg"
   "msg/WorldState.msg"
   "msg/VehicleState.msg"
-  "msg/WhaleCall.msg"
-  "msg/WhaleState.msg"
-  "msg/WhaleStateArray.msg"
   "msg/WhaleDetection.msg"
   "msg/WhaleCallProcessed.msg"
-  "srv/GetNextWhaleCall.srv"
 )
 
 if(BUILD_TESTING)

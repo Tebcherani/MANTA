@@ -33,8 +33,8 @@ void WhaleDetectionNode::create_subscribers() {
     }
 
     // Receive whale calls that must be evaluated against every vehicle state.
-    whale_call_sub_ = create_subscription<manta_interfaces::msg::WhaleCall>(
-        "/sim/whales/calls", 100, [this](const manta_interfaces::msg::WhaleCall::SharedPtr call) {handle_whale_call(call);}
+    whale_call_sub_ = create_subscription<whale_interfaces::msg::WhaleCall>(
+        "/sim/whales/calls", 100, [this](const whale_interfaces::msg::WhaleCall::SharedPtr call) {handle_whale_call(call);}
     );
 
     // Receive the orchestrator's request to stop the simulation.

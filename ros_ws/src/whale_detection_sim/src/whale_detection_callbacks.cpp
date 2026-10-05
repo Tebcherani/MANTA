@@ -41,7 +41,7 @@ void WhaleDetectionNode::handle_vehicle_state(const manta_interfaces::msg::Vehic
  *
  * @param call Whale-call event published by the whale simulator.
  */
-void WhaleDetectionNode::handle_whale_call(const manta_interfaces::msg::WhaleCall::SharedPtr call) {
+void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCall::SharedPtr call) {
     // Reject a new call if the previous call has not yet been evaluated.
     if (pending_call_available_) {
         RCLCPP_ERROR(

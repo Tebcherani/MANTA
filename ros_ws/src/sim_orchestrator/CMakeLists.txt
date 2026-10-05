@@ -13,6 +13,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(manta_interfaces REQUIRED)
+find_package(whale_interfaces REQUIRED)
 
 # -------------------------------------------------------------------------
 # Simulator orchestrator ROS node
@@ -52,6 +53,7 @@ ament_target_dependencies(
   rclcpp
   std_msgs
   manta_interfaces
+  whale_interfaces
 )
 
 # -------------------------------------------------------------------------

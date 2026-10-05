@@ -11,8 +11,8 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "manta_interfaces/msg/sim_step.hpp"
-#include "manta_interfaces/msg/whale_state_array.hpp"
-#include "manta_interfaces/srv/get_next_whale_call.hpp"
+#include "whale_interfaces/msg/whale_state_array.hpp"
+#include "whale_interfaces/srv/get_next_whale_call.hpp"
 
 
 class WhaleNode : public rclcpp::Node {
@@ -114,7 +114,7 @@ private:
     void create_services();
     
     // Callbacks
-    void handle_get_next_call(const manta_interfaces::srv::GetNextWhaleCall::Request &request, manta_interfaces::srv::GetNextWhaleCall::Response &response);
+    void handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCall::Request &request, whale_interfaces::srv::GetNextWhaleCall::Response &response);
     void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
     void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr step);
 
@@ -177,10 +177,10 @@ private:
     // ---------------------------------------------------------------------
 
     // Publishers
-    rclcpp::Publisher<manta_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
+    rclcpp::Publisher<whale_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
     
     // Services
-    rclcpp::Service<manta_interfaces::srv::GetNextWhaleCall>::SharedPtr next_call_service_;
+    rclcpp::Service<whale_interfaces::srv::GetNextWhaleCall>::SharedPtr next_call_service_;
 
     // Subscribers
     rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr step_sub_;
