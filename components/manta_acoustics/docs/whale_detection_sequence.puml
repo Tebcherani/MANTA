@@ -1,0 +1,20 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+participant "SimOrchestratorNode" as Orchestrator
+participant "OdysseyNode\n(one per vehicle)" as Odyssey
+participant "OdysseyDetectionNode" as Detection
+
+Orchestrator -> Detection : Whale call
+activate Detection
+Odyssey ->> Detection : Vehicle state
+Detection -> Detection : Wait for all vehicle states
+Detection -> Detection : Evaluate detection for each vehicle
+Detection ->> Orchestrator : Whale call processed signal
+deactivate Detection
+
+@enduml
