@@ -12,11 +12,11 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SimStep.msg"
   "msg/SimStepResult.msg"
+  "msg/WorldState.msg"
+  "msg/VehicleState.msg"
   "msg/WhaleCall.msg"
   "msg/WhaleState.msg"
   "msg/WhaleStateArray.msg"
-  "msg/WorldState.msg"
-  "msg/VehicleState.msg"
   "msg/WhaleDetection.msg"
   "msg/WhaleCallProcessed.msg"
   "srv/GetNextWhaleCall.srv"

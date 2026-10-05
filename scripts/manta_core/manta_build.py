@@ -28,7 +28,10 @@ def run_build() -> int:
         "make libraries && "
         "cd /odyssey/ros_ws && "
         "colcon build "
-        "--base-paths /odyssey/ros_ws/src /odyssey/vehicles/odyssey/ros_ws/src "
+        "--base-paths "
+        "/odyssey/ros_ws/src "
+        "/odyssey/components/manta_core/ros "
+        "/odyssey/vehicles/odyssey/ros_ws/src "
         "--cmake-args -DCMAKE_BUILD_TYPE=Release",
     ]
 
