@@ -1,0 +1,27 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+participant "SimOrchestratorNode" as Orchestrator
+participant "WhaleNode" as Whale
+
+    Orchestrator -> Whale : Request next whale call
+    deactivate Orchestrator
+
+    activate Whale
+    Whale -> Whale : Find first call after current time
+    Whale --> Orchestrator : Next whale call
+    deactivate Whale
+
+    Orchestrator ->> Whale : Advance by the specified number of simulation cycles
+    activate Whale
+    Whale -> Whale : Update whale positions and lifecycle
+    Orchestrator -> Whale : Request next whale call
+    Whale -> Whale : Find first call after current time
+    Whale --> Orchestrator : Next whale call
+    deactivate Whale
+
+@enduml
