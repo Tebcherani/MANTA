@@ -661,7 +661,7 @@ Generated runtime services automatically source:
 
 ```text
 /opt/ros/jazzy/setup.bash
-/odyssey/ros_ws/install/setup.bash
+/odyssey/.build/ros/install/setup.bash
 ```
 
 ### Runtime configuration is stale

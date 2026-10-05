@@ -128,7 +128,7 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
             "/bin/bash",
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
-            "source /odyssey/ros_ws/install/setup.bash\n"
+            "source /odyssey/.build/ros/install/setup.bash\n"
             f"exec ros2 run {ros_package} {executable} --ros-args {arguments}",
         ],
     }
@@ -209,7 +209,7 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
             "/bin/bash",
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
-            "source /odyssey/ros_ws/install/setup.bash\n"
+            "source /odyssey/.build/ros/install/setup.bash\n"
             f"exec ros2 run whale_sim whale_node --ros-args {arguments}",
         ],
         "stop_grace_period": "5s",
@@ -254,7 +254,7 @@ def whale_detection_service(config: dict, log_dir: str, ros_domain_id: int) -> d
             "/bin/bash",
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
-            "source /odyssey/ros_ws/install/setup.bash\n"
+            "source /odyssey/.build/ros/install/setup.bash\n"
             f"exec ros2 run whale_detection_sim whale_detection_node --ros-args {arguments}",
         ],
     }
@@ -302,7 +302,7 @@ def write_runtime_compose(config: dict, compose_path: Path | None = None, projec
             "/bin/bash",
             "-lc",
             "source /opt/ros/jazzy/setup.bash\n"
-            "source /odyssey/ros_ws/install/setup.bash\n"
+            "source /odyssey/.build/ros/install/setup.bash\n"
             "ros2 run sim_orchestrator sim_orchestrator_node "
             f'--ros-args -p "vehicle_ids:={vehicle_list}" '
             f'-p "data_directory:={data_dir}" '

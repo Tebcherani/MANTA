@@ -36,6 +36,7 @@ build/
 log/
 *.o
 *.a
+.build/
 
 # Linux compiled binaries (no extension)
 sim
