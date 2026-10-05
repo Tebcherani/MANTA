@@ -1,0 +1,41 @@
+@startuml
+title MANTA ROS 2 Simulation Sequence Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Launch system" as Launcher
+participant "SimOrchestratorNode" as Orchestrator
+participant "WhaleNode" as Whale
+participant "OdysseyNode\n(one per vehicle)" as Odyssey
+participant "OdysseyDetectionNode" as Detection
+
+
+== Simulation loop ==
+
+    Orchestrator -> Whale : Request next whale call
+    activate Orchestrator
+    activate Whale
+    Whale --> Orchestrator : Next whale call
+    deactivate Whale
+
+    Orchestrator -> Orchestrator : Store next whale call
+
+    Orchestrator ->> Whale : Advance by the specified number of simulation cycles
+
+    Orchestrator ->> Odyssey : Advance by the specified number of simulation cycles
+    activate Odyssey
+    Odyssey ->> Orchestrator : Simulation step complete signal
+    deactivate Odyssey
+
+    Orchestrator -> Orchestrator : Record result for each vehicle
+    Orchestrator -> Orchestrator : Wait for all vehicles
+
+    Orchestrator -> Detection : Whale call
+    activate Detection
+    Detection ->> Orchestrator : Whale call processed signal
+    deactivate Detection
+
+@enduml

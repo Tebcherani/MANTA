@@ -106,14 +106,6 @@ Orchestrator -> Orchestrator : Start simulation
     Detection -> Detection : Evaluate detection for each vehicle
     Detection ->> Orchestrator : Whale call processed signal
     deactivate Detection
-
-    Orchestrator -> Whale : Request next whale call
-    activate Whale
-    Whale -> Whale : Find first call after current time
-    Whale --> Orchestrator : Next whale call
-    deactivate Whale
-
-    Orchestrator -> Orchestrator : Store following whale call
 end
 
 == Shutdown ==
