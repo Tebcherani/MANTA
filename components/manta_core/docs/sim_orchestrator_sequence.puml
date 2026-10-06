@@ -10,7 +10,7 @@ actor "Launch system" as Launcher
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
 participant "OdysseyNode\n(one per vehicle)" as Odyssey
-participant "OdysseyDetectionNode" as Detection
+participant "AcousticNode" as Detection
 
 
 == Vehicle initialization ==
