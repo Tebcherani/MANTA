@@ -54,25 +54,25 @@ def summarize_interval_results(interval: float, results: list[MonteCarloResult],
     if not results:
         raise ValueError(f"Call-update interval {interval:g} s has no Monte Carlo results.")
 
-    if any(result.mean_centroid_distance_km is None for result in results):
-        raise ValueError(f"Call-update interval {interval:g} s contains missing centroid-distance results.")
+    if any(result.mean_distance_km is None for result in results):
+        raise ValueError(f"Call-update interval {interval:g} s contains missing distance results.")
 
     if any(result.integrated_tracking_error_km_hours is None for result in results):
         raise ValueError(f"Call-update interval {interval:g} s contains missing integrated-error results.")
 
-    centroid_distances = [result.mean_centroid_distance_km for result in results]
+    distances = [result.mean_distance_km for result in results]
     integrated_errors = [result.integrated_tracking_error_km_hours for result in results]
 
-    mean_distance, distance_half_width = compute_monte_carlo_statistics(centroid_distances, confidence_level)
+    mean_distance, distance_half_width = compute_monte_carlo_statistics(distances, confidence_level)
     mean_integrated_error, integrated_half_width = compute_monte_carlo_statistics(integrated_errors, confidence_level)
 
     return TrailingSweepResult(
         call_update_interval=interval,
         realizations=len(results),
-        mean_centroid_distance_km=mean_distance,
-        centroid_distance_ci_lower_km=max(0.0, mean_distance - distance_half_width),
-        centroid_distance_ci_upper_km=mean_distance + distance_half_width,
-        centroid_distance_ci_half_width_km=distance_half_width,
+        mean_distance_km=mean_distance,
+        distance_ci_lower_km=max(0.0, mean_distance - distance_half_width),
+        distance_ci_upper_km=mean_distance + distance_half_width,
+        distance_ci_half_width_km=distance_half_width,
         mean_integrated_tracking_error_km_hours=mean_integrated_error,
         integrated_error_ci_lower_km_hours=max(0.0, mean_integrated_error - integrated_half_width),
         integrated_error_ci_upper_km_hours=mean_integrated_error + integrated_half_width,
@@ -92,10 +92,10 @@ def write_trailing_sweep_summary(path: Path, results: dict[float, TrailingSweepR
             fieldnames=(
                 "call_update_interval",
                 "realizations",
-                "mean_centroid_distance_km",
-                "centroid_distance_ci_lower_km",
-                "centroid_distance_ci_upper_km",
-                "centroid_distance_ci_half_width_km",
+                "mean_distance_km",
+                "distance_ci_lower_km",
+                "distance_ci_upper_km",
+                "distance_ci_half_width_km",
                 "mean_integrated_tracking_error_km_hours",
                 "integrated_error_ci_lower_km_hours",
                 "integrated_error_ci_upper_km_hours",
@@ -153,7 +153,7 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
 
         print(
             f"Interval {interval:g} s: "
-            f"mean centroid distance {sweep_result.mean_centroid_distance_km:.3f} km, "
+            f"mean distance {sweep_result.mean_distance_km:.3f} km, "
             f"integrated error {sweep_result.mean_integrated_tracking_error_km_hours:.3f} km·h "
             f"from {sweep_result.realizations} realizations."
         )

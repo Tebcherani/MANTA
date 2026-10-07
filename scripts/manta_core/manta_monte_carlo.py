@@ -42,11 +42,11 @@ def get_convergence_values(completed: dict[int, MonteCarloResult], scenario_type
     results = [completed[index] for index in sorted(completed)]
 
     if scenario_type == "trailing":
-        if any(result.mean_centroid_distance_km is None for result in results):
-            raise ValueError("Trailing Monte Carlo results are missing mean centroid distances.")
+        if any(result.mean_distance_km is None for result in results):
+            raise ValueError("Trailing Monte Carlo results are missing mean distances.")
 
-        values = [result.mean_centroid_distance_km for result in results]
-        return values, "mean centroid distance", "km"
+        values = [result.mean_distance_km for result in results]
+        return values, "mean distance", "km"
 
     values = [result.detection_fraction for result in results]
     return values, "mean detection", "%"
@@ -259,7 +259,7 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
                 "total_mass",
                 "total_energy",
                 "mean_vehicle_speed",
-                "mean_centroid_distance_km",
+                "mean_distance_km",
                 "integrated_tracking_error_km_hours",
             ),
         )

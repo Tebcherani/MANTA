@@ -6,10 +6,8 @@ float64 sim_time
 
 float64 vehicle_north
 float64 vehicle_east
-float64 vehicle_depth
 
 float64 whale_north
 float64 whale_east
-float64 whale_depth
 
 float64 distance

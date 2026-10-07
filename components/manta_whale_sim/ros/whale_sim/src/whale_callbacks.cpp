@@ -53,7 +53,6 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
 
     response.call.north = call_position.north;
     response.call.east = call_position.east;
-    response.call.depth = next_whale->depth;
 }
 
 /**
@@ -163,10 +162,8 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         state.cycle = completed_cycle;
         state.north = whale.north;
         state.east = whale.east;
-        state.depth = whale.depth;
         state.velocity_north = whale.velocity_north;
         state.velocity_east = whale.velocity_east;
-        state.velocity_down = 0.0;
         msg.whales.push_back(state);
     }
 
@@ -188,7 +185,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         // Record every whale at the exact scheduled output time.
         for (const auto &whale : whales_) {
             const TrajectoryPoint sample = trajectory_at_time(whale, next_whale_log_time_);
-            whale_log_ << sample_cycle << ',' << next_whale_log_time_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.north << ',' << sample.east << ',' << whale.depth << '\n';
+            whale_log_ << sample_cycle << ',' << next_whale_log_time_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.north << ',' << sample.east << ',' << '\n';
         }
 
         next_whale_log_time_ += whale_sample_period_;

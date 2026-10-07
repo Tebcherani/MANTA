@@ -123,8 +123,8 @@ def load_mission_config() -> MissionConfig:
     # Load configuration values
     config = MissionConfig(
         vehicles=config.get("vehicles", []),
-        start_n=float(trailing["start"]["north"]),
-        start_e=float(trailing["start"]["east"]),
+        start_n=0.0,
+        start_e=0.0,
         mission_duration=float(scenario["duration"]),
         vehicle_speed=float(patrol["speed"]),
         vehicle_depth=float(patrol["depth"]),

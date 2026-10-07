@@ -96,11 +96,10 @@ void WhaleDetectionNode::try_process_pending_call() {
     for (const std::string &vehicle_id : vehicle_ids_) {
         const auto &vehicle = latest_vehicle_states_.at(vehicle_id);
 
-        // Calculate the three-dimensional vehicle-to-whale displacement.
+        // Calculate horizontal vehicle-to-whale distance.
         const double north_difference = pending_call_.north - vehicle.north;
         const double east_difference = pending_call_.east - vehicle.east;
-        const double depth_difference = pending_call_.depth - vehicle.depth;
-        const double distance = std::sqrt(north_difference * north_difference + east_difference * east_difference + depth_difference * depth_difference);
+        const double distance = std::hypot(north_difference, east_difference);
 
         // Ignore vehicles outside the configured acoustic detection range.
         if (!receive_all_calls_ && distance > detection_range_) continue;
@@ -113,17 +112,21 @@ void WhaleDetectionNode::try_process_pending_call() {
         detection.sim_time = pending_call_.sim_time;
         detection.vehicle_north = vehicle.north;
         detection.vehicle_east = vehicle.east;
-        detection.vehicle_depth = vehicle.depth;
         detection.whale_north = pending_call_.north;
         detection.whale_east = pending_call_.east;
-        detection.whale_depth = pending_call_.depth;
         detection.distance = distance;
+
+        // Add noise to the whale call
+        if (position_std_m_ > 0.0) {
+            detection.whale_north += position_std_m_ * normal_(rng_);
+            detection.whale_east += position_std_m_ * normal_(rng_);
+        }
 
         // Publish the detection for any interested simulation components.
         detection_pub_->publish(detection);
 
         // Record the exact detection for later analysis and review.
-        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north << ',' << detection.vehicle_east << ',' << detection.vehicle_depth << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.whale_depth << ',' << detection.distance << '\n';
+        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north << ',' << detection.vehicle_east << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.distance << '\n';
     }
 
     // Acknowledge that every vehicle has evaluated the pending whale call.

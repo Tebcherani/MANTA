@@ -4,6 +4,20 @@ import yaml
 from pathlib import Path
 from paths import COMPONENT_DIR, MISSION_DIR
 
+def get_whale_count(config: dict) -> int:
+    """Trailing always uses one whale; other missions configure their count."""
+    scenario = config["scenario"]
+    whales = scenario["whales"]
+
+    if scenario["type"] == "trailing":
+        if "count" in whales:
+            raise ValueError(
+                "Trailing always uses exactly one whale. "
+                "Remove scenario.whales.count from the configuration."
+            )
+        return 1
+
+    return int(whales["count"])
 
 def load_plugin(plugin_id: str) -> dict:
     """Load a vehicle plugin manifest and verify its ID and plugin type."""

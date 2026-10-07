@@ -7,6 +7,7 @@ import numpy as np
 from collections import defaultdict
 from pathlib import Path
 from parse_obd import read_obd
+from matplotlib.ticker import FuncFormatter
 
 ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "output" / "trailing" / "Data"
@@ -170,8 +171,8 @@ def read_whale_tracks(path: Path) -> dict[str, tuple[list[float], list[float]]]:
     return tracks
 
 
-def read_whale_centroids(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Calculate the whale-group centroid at every logged simulation time."""
+def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Calculate the whale position at every logged simulation time."""
 
     positions_by_time = defaultdict(list)
 
@@ -196,14 +197,14 @@ def read_whale_centroids(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
             positions_by_time[sim_time].append((north, east))
 
     times = np.asarray(sorted(positions_by_time), dtype=float)
-    centroid_north = np.asarray([np.mean([position[0] for position in positions_by_time[time]]) for time in times], dtype=float)
-    centroid_east = np.asarray([np.mean([position[1] for position in positions_by_time[time]]) for time in times], dtype=float)
+    whale_north = np.asarray([np.mean([position[0] for position in positions_by_time[time]]) for time in times], dtype=float)
+    whale_east = np.asarray([np.mean([position[1] for position in positions_by_time[time]]) for time in times], dtype=float)
 
-    return times, centroid_north, centroid_east
+    return times, whale_north, whale_east
 
 
-def compute_centroid_tracking_error(latest: dict[str, Path]) -> tuple[float, float]:
-    """Calculate integrated and mean AUV distance from the whale-group centroid."""
+def compute_tracking_error(latest: dict[str, Path]) -> tuple[float, float]:
+    """Calculate integrated and mean AUV distance from the whale position."""
 
     if not WHALE_TRAJECTORY_PATH.is_file():
         raise ValueError(f"No whale trajectory file found: {WHALE_TRAJECTORY_PATH}")
@@ -235,21 +236,21 @@ def compute_centroid_tracking_error(latest: dict[str, Path]) -> tuple[float, flo
     if vehicle_time.size < 2:
         raise ValueError(f"Vehicle {vehicle_id} has insufficient position samples.")
 
-    centroid_time, centroid_north, centroid_east = read_whale_centroids(WHALE_TRAJECTORY_PATH)
-    overlap = (centroid_time >= vehicle_time[0]) & (centroid_time <= vehicle_time[-1])
-    centroid_time = centroid_time[overlap]
-    centroid_north = centroid_north[overlap]
-    centroid_east = centroid_east[overlap]
+    whale_time, whale_north, whale_east = read_whale_positions(WHALE_TRAJECTORY_PATH)
+    overlap = (whale_time >= vehicle_time[0]) & (whale_time <= vehicle_time[-1])
+    whale_time = whale_time[overlap]
+    whale_north = whale_north[overlap]
+    whale_east = whale_east[overlap]
 
-    if centroid_time.size < 2:
+    if whale_time.size < 2:
         raise ValueError("Vehicle and whale trajectories have insufficient overlapping times.")
 
-    interpolated_north = np.interp(centroid_time, vehicle_time, vehicle_north)
-    interpolated_east = np.interp(centroid_time, vehicle_time, vehicle_east)
-    centroid_distance = np.hypot(interpolated_north - centroid_north, interpolated_east - centroid_east)
+    interpolated_north = np.interp(whale_time, vehicle_time, vehicle_north)
+    interpolated_east = np.interp(whale_time, vehicle_time, vehicle_east)
+    distance = np.hypot(interpolated_north - whale_north, interpolated_east - whale_east)
 
-    integrated_error_m_seconds = float(np.trapezoid(centroid_distance, centroid_time))
-    duration = float(centroid_time[-1] - centroid_time[0])
+    integrated_error_m_seconds = float(np.trapezoid(distance, whale_time))
+    duration = float(whale_time[-1] - whale_time[0])
     mean_distance_m = integrated_error_m_seconds / duration
     integrated_error_km_hours = integrated_error_m_seconds / 3_600_000.0
 
@@ -369,7 +370,7 @@ def main() -> int:
     latest = find_latest_vehicle_results()
 
     try:
-        integrated_error, mean_distance = compute_centroid_tracking_error(latest)
+        integrated_error, mean_distance = compute_tracking_error(latest)
     except (OSError, ValueError) as error:
         print(f"Could not calculate centroid tracking error: {error}")
         integrated_error = float("nan")
@@ -387,16 +388,22 @@ def main() -> int:
         return 1
 
     if np.isfinite(integrated_error):
-        print(f"Mean centroid distance: {mean_distance / 1000.0:.3f} km")
-        print(f"Integrated centroid tracking error: {integrated_error:.3f} km·h")
+        print(f"Mean distance: {mean_distance / 1000.0:.3f} km")
+        print(f"Integrated tracking error: {integrated_error:.3f} km·h")
 
     if np.isfinite(integrated_error):
-        ax.set_title(f"Vehicle and Whale Tracks — Mean Centroid Distance: {mean_distance / 1000.0:.2f} km")
+        ax.set_title(f"Vehicle and Whale Tracks — Mean distance: {mean_distance / 1000.0:.2f} km")
     else:
         ax.set_title("Vehicle and Whale Tracks")
-    ax.set_xlabel("East (m)")
-    ax.set_ylabel("North (m)")
-    ax.set_aspect("auto")
+
+    km_formatter = FuncFormatter(lambda value, _: f"{value / 1000:g}")
+    ax.xaxis.set_major_formatter(km_formatter)
+    ax.yaxis.set_major_formatter(km_formatter)
+
+    ax.set_xlabel("East (km)")
+    ax.set_ylabel("North (km)")
+    
+    ax.set_aspect("equal", adjustable="box")
     ax.margins(x=0.03, y=0.05)
     ax.grid(True, alpha=0.3)
     ax.legend(ncols=2)

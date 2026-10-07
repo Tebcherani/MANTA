@@ -6,7 +6,7 @@ import numpy as np
 
 from collections import defaultdict
 from pathlib import Path
-from missions.picket_line.review.parse_obd import read_obd
+from parse_obd import read_obd
 
 ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "output" / "picket_line" / "Data"
@@ -300,7 +300,7 @@ def main() -> int:
     ax.set_title(f"Vehicle and Whale Tracks — {len(detected_whales)} Whales Detected")
     ax.set_xlabel("East (m)")
     ax.set_ylabel("North (m)")
-    ax.set_aspect("auto")
+    ax.set_aspect("equal", adjustable="box")
     ax.margins(x=0.03, y=0.05)
     ax.grid(True, alpha=0.3)
     ax.legend(ncols=2)

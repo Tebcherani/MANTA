@@ -14,6 +14,13 @@ activate Detection
 Odyssey ->> Detection : Vehicle state
 Detection -> Detection : Wait for all vehicle states
 Detection -> Detection : Evaluate detection for each vehicle
+note left
+    Detected if whale in detection range
+end note
+Detection -> Detection : Add noise to whale call readings
+note left
+    Normal(0.0, call_position_std_m)
+end note
 Detection ->> Orchestrator : Whale call processed signal
 deactivate Detection
 

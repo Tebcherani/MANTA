@@ -2,6 +2,7 @@
 #define WHALE_DETECTION_SIM__WHALE_DETECTION_NODE_HPP_
 
 #include <fstream>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -39,6 +40,11 @@ private:
 
     // Detections
     void try_process_pending_call();
+
+    // Detection noise
+    double position_std_m_ = 0.0;
+    std::mt19937_64 rng_;
+    std::normal_distribution<double> normal_{0.0, 1.0};
 
     // ---------------------------------------------------------------------
     // Variables

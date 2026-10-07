@@ -41,7 +41,7 @@ simulation:
 #--------------------------------------------------
 monte_carlo:
   min_realizations: 100
-  max_realizations: 500
+  max_realizations: 200 #500
   batch_size: 25
   workers: 8
 
@@ -68,6 +68,10 @@ sweep:
     - 18000.0  # 5 hours
     - 36000.0  # 10 hours
     - 54000.0  # 15 hours
+  accuracy:
+    min_std_km: 0.0
+    max_std_km: 150.0
+    step_std_km: 10.0
 
 
 #--------------------------------------------------
@@ -77,11 +81,8 @@ scenario:
   type: trailing
 
   trailing:
-    start:
-      north: 0.0
-      east: 0.0
-    initial_heading_degrees: 0.0
     call_update_interval: 0.0 #50000.0 # seconds
+    call_position_std_m: 0.0
 
   duration: 86400.0  # 1 day
 
@@ -90,14 +91,8 @@ scenario:
     depth: 50.0
     capture: 5.0
 
-  detection:
-    receive_all_calls: true
-
   whales:
-    count: 3
-    active_entire_mission: true
     start_distance: 25000.0
-    depth: 20.0
 
     movement:
       speed_mean: 1.5
@@ -105,12 +100,6 @@ scenario:
       turn_interval: 60.0
       heading_correlation: 0.95
       heading_std_degrees: 15.0
-
-    grouping:
-      mean_group_size: 3.0
-      position_std: 1000.0
-      start_time_std: 0.0
-      shared_heading_fraction: 0.75
     
     # Reference paper: https://academic.oup.com/icesjms/article/82/4/fsad174/7341838
     calling:

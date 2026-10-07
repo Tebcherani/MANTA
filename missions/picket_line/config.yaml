@@ -88,7 +88,6 @@ scenario:
     count: 46
     active_entire_mission: false
     start_distance: 25000.0
-    depth: 20.0
 
     movement:
       speed_mean: 1.5

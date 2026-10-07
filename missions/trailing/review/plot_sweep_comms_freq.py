@@ -31,9 +31,9 @@ def read_sweep_summary() -> list[dict[str, float]]:
     required = {
         "call_update_interval",
         "realizations",
-        "mean_centroid_distance_km",
-        "centroid_distance_ci_lower_km",
-        "centroid_distance_ci_upper_km",
+        "mean_distance_km",
+        "distance_ci_lower_km",
+        "distance_ci_upper_km",
         "mean_integrated_tracking_error_km_hours",
         "integrated_error_ci_lower_km_hours",
         "integrated_error_ci_upper_km_hours",
@@ -53,9 +53,9 @@ def read_sweep_summary() -> list[dict[str, float]]:
                 row = {
                     "call_update_interval": float(source["call_update_interval"]),
                     "realizations": int(source["realizations"]),
-                    "mean_centroid_distance_km": float(source["mean_centroid_distance_km"]),
-                    "centroid_distance_ci_lower_km": float(source["centroid_distance_ci_lower_km"]),
-                    "centroid_distance_ci_upper_km": float(source["centroid_distance_ci_upper_km"]),
+                    "mean_distance_km": float(source["mean_distance_km"]),
+                    "distance_ci_lower_km": float(source["distance_ci_lower_km"]),
+                    "distance_ci_upper_km": float(source["distance_ci_upper_km"]),
                     "mean_integrated_tracking_error_km_hours": float(source["mean_integrated_tracking_error_km_hours"]),
                     "integrated_error_ci_lower_km_hours": float(source["integrated_error_ci_lower_km_hours"]),
                     "integrated_error_ci_upper_km_hours": float(source["integrated_error_ci_upper_km_hours"]),
@@ -105,9 +105,9 @@ def main() -> int:
     intervals_hours = [row["call_update_interval"] / 3600.0 for row in rows]
     tick_labels = ["Every call" if row["call_update_interval"] == 0.0 else f"{row['call_update_interval'] / 3600.0:g}" for row in rows]
 
-    distance_means = [row["mean_centroid_distance_km"] for row in rows]
-    distance_lower = [row["centroid_distance_ci_lower_km"] for row in rows]
-    distance_upper = [row["centroid_distance_ci_upper_km"] for row in rows]
+    distance_means = [row["mean_distance_km"] for row in rows]
+    distance_lower = [row["distance_ci_lower_km"] for row in rows]
+    distance_upper = [row["distance_ci_upper_km"] for row in rows]
 
     fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
     fig.suptitle("Effect of Whale-Call Update Interval on AUV Group Tracking", fontsize=14)
@@ -119,8 +119,8 @@ def main() -> int:
         distance_lower,
         distance_upper,
         "tab:blue",
-        "AUV Distance from Whale-Group Centroid",
-        "Mean centroid distance (km)",
+        "AUV Distance from Whale",
+        "Mean distance (km)",
     )
 
     ax.set_xlabel("Call waypoint update interval (h)")
@@ -138,7 +138,7 @@ def main() -> int:
         ),
     )
 
-    integrated_axis.set_ylabel("Integrated centroid tracking error (km·h)")
+    integrated_axis.set_ylabel("Integrated tracking error (km·h)")
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")

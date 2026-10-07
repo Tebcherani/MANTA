@@ -46,7 +46,6 @@ private:
         std::string id;
         int group_index;
 
-        double depth;
         double start_time;
 
         std::vector<double> call_times;
@@ -140,7 +139,6 @@ private:
 
     double mission_duration_;
     double start_distance_;
-    double whale_depth_;
 
     // Simulation
     std::mt19937 generator_;

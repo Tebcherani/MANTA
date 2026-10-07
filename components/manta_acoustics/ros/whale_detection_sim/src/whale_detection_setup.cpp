@@ -1,5 +1,7 @@
 #include "whale_detection_sim/whale_detection_node.hpp"
 
+#include <cmath>
+#include <cstdint>
 #include <filesystem>
 #include <stdexcept>
 
@@ -17,6 +19,14 @@ void WhaleDetectionNode::load_config() {
     receive_all_calls_ = declare_parameter<bool>("receive_all_calls", false);
     detection_range_ = declare_parameter<double>("detection_range", 11000.0);
     if (!receive_all_calls_ && detection_range_ <= 0.0) throw std::runtime_error("detection_range must be greater than zero.");
+
+    // Initialize detection noise parameters
+    position_std_m_ = declare_parameter<double>("call_position_std_m", 0.0);
+    if (!std::isfinite(position_std_m_) || position_std_m_ < 0.0) throw std::runtime_error("call_position_std_m must be finite and nonnegative.");
+
+    const auto seed = declare_parameter<int64_t>("call_position_seed", 0);
+    if (seed < 0) throw std::runtime_error("call_position_seed cannot be negative.");
+    rng_.seed(static_cast<std::uint64_t>(seed));
 }
 
 /**
@@ -34,5 +44,5 @@ void WhaleDetectionNode::open_detection_log() {
     if (!detection_log_.is_open()) throw std::runtime_error("Failed to open whale detection results file.");
     
     // Write the column names before recording any detection events.
-    detection_log_ << "cycle,sim_time,vehicle_id,whale_id,vehicle_north,vehicle_east,vehicle_depth,whale_north,whale_east,whale_depth,distance\n";
+    detection_log_ << "cycle,sim_time,vehicle_id,whale_id,vehicle_north,vehicle_east,whale_north,whale_east,distance\n";
 }

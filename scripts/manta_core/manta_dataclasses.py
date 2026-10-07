@@ -75,7 +75,7 @@ class MonteCarloResult:
     total_mass: float
     total_energy: float
     mean_vehicle_speed: float
-    mean_centroid_distance_km: float | None = None
+    mean_distance_km: float | None = None
     integrated_tracking_error_km_hours: float | None = None
 
     @classmethod
@@ -98,7 +98,7 @@ class MonteCarloResult:
             total_mass=float(row["total_mass"]),
             total_energy=float(row["total_energy"]),
             mean_vehicle_speed=float(row["mean_vehicle_speed"]),
-            mean_centroid_distance_km=float(row["mean_centroid_distance_km"]) if row.get("mean_centroid_distance_km", "").strip() else None,
+            mean_distance_km=float(row["mean_distance_km"]) if row.get("mean_distance_km", "").strip() else None,
             integrated_tracking_error_km_hours=float(row["integrated_tracking_error_km_hours"]) if row.get("integrated_tracking_error_km_hours", "").strip() else None,
         )
 
@@ -142,10 +142,10 @@ class TrailingSweepResult:
 
     call_update_interval: float
     realizations: int
-    mean_centroid_distance_km: float
-    centroid_distance_ci_lower_km: float
-    centroid_distance_ci_upper_km: float
-    centroid_distance_ci_half_width_km: float
+    mean_distance_km: float
+    distance_ci_lower_km: float
+    distance_ci_upper_km: float
+    distance_ci_half_width_km: float
     mean_integrated_tracking_error_km_hours: float
     integrated_error_ci_lower_km_hours: float
     integrated_error_ci_upper_km_hours: float
@@ -159,8 +159,8 @@ class TrailingSweepResult:
             raise ValueError("Call-update interval cannot be negative.")
         if self.realizations < 1:
             raise ValueError("Trailing sweep result must contain at least one realization.")
-        if self.mean_centroid_distance_km < 0.0:
-            raise ValueError("Mean centroid distance cannot be negative.")
+        if self.mean_distance_km < 0.0:
+            raise ValueError("Mean distance cannot be negative.")
         if self.mean_integrated_tracking_error_km_hours < 0.0:
             raise ValueError("Integrated tracking error cannot be negative.")
         if not 0.0 < self.confidence_level < 1.0:
@@ -173,10 +173,10 @@ class TrailingSweepResult:
         return cls(
             call_update_interval=float(row["call_update_interval"]),
             realizations=int(row["realizations"]),
-            mean_centroid_distance_km=float(row["mean_centroid_distance_km"]),
-            centroid_distance_ci_lower_km=float(row["centroid_distance_ci_lower_km"]),
-            centroid_distance_ci_upper_km=float(row["centroid_distance_ci_upper_km"]),
-            centroid_distance_ci_half_width_km=float(row["centroid_distance_ci_half_width_km"]),
+            mean_distance_km=float(row["mean_distance_km"]),
+            distance_ci_lower_km=float(row["distance_ci_lower_km"]),
+            distance_ci_upper_km=float(row["distance_ci_upper_km"]),
+            distance_ci_half_width_km=float(row["distance_ci_half_width_km"]),
             mean_integrated_tracking_error_km_hours=float(row["mean_integrated_tracking_error_km_hours"]),
             integrated_error_ci_lower_km_hours=float(row["integrated_error_ci_lower_km_hours"]),
             integrated_error_ci_upper_km_hours=float(row["integrated_error_ci_upper_km_hours"]),

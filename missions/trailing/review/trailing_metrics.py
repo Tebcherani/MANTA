@@ -10,8 +10,8 @@ from pathlib import Path
 from parse_obd import read_obd
 
 
-def read_whale_centroids(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Calculate the whale-group centroid at every logged simulation time."""
+def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Calculate the whale position at every logged simulation time."""
 
     positions_by_time = defaultdict(list)
 
@@ -43,14 +43,14 @@ def read_whale_centroids(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
     if times.size < 2:
         raise ValueError("Whale trajectory data contain insufficient time samples.")
 
-    centroid_north = np.asarray([np.mean([position[0] for position in positions_by_time[time]]) for time in times], dtype=float)
-    centroid_east = np.asarray([np.mean([position[1] for position in positions_by_time[time]]) for time in times], dtype=float)
+    whale_north = np.asarray([np.mean([position[0] for position in positions_by_time[time]]) for time in times], dtype=float)
+    whale_east = np.asarray([np.mean([position[1] for position in positions_by_time[time]]) for time in times], dtype=float)
 
-    return times, centroid_north, centroid_east
+    return times, whale_north, whale_east
 
 
 def compute_tracking_metrics(data_directory: Path, vehicle_id: str) -> dict[str, float]:
-    """Calculate centroid-distance metrics for one trailing realization."""
+    """Calculate distance metrics for one trailing realization."""
 
     whale_path = data_directory / "whales.csv"
     vehicle_path = data_directory / f"{vehicle_id}.obd"
@@ -81,24 +81,24 @@ def compute_tracking_metrics(data_directory: Path, vehicle_id: str) -> dict[str,
     if vehicle_time.size < 2:
         raise ValueError(f"Vehicle {vehicle_id} has insufficient position samples.")
 
-    centroid_time, centroid_north, centroid_east = read_whale_centroids(whale_path)
-    overlap = (centroid_time >= vehicle_time[0]) & (centroid_time <= vehicle_time[-1])
-    centroid_time = centroid_time[overlap]
-    centroid_north = centroid_north[overlap]
-    centroid_east = centroid_east[overlap]
+    whale_time, whale_north, whale_east = read_whale_positions(whale_path)
+    overlap = (whale_time >= vehicle_time[0]) & (whale_time <= vehicle_time[-1])
+    whale_time = whale_time[overlap]
+    whale_north = whale_north[overlap]
+    whale_east = whale_east[overlap]
 
-    if centroid_time.size < 2:
+    if whale_time.size < 2:
         raise ValueError("Vehicle and whale trajectories have insufficient overlapping times.")
 
-    interpolated_north = np.interp(centroid_time, vehicle_time, vehicle_north)
-    interpolated_east = np.interp(centroid_time, vehicle_time, vehicle_east)
-    centroid_distance = np.hypot(interpolated_north - centroid_north, interpolated_east - centroid_east)
+    interpolated_north = np.interp(whale_time, vehicle_time, vehicle_north)
+    interpolated_east = np.interp(whale_time, vehicle_time, vehicle_east)
+    distance = np.hypot(interpolated_north - whale_north, interpolated_east - whale_east)
 
-    integrated_error_m_seconds = float(np.trapezoid(centroid_distance, centroid_time))
-    duration_seconds = float(centroid_time[-1] - centroid_time[0])
+    integrated_error_m_seconds = float(np.trapezoid(distance, whale_time))
+    duration_seconds = float(whale_time[-1] - whale_time[0])
 
     return {
-        "mean_centroid_distance_km": integrated_error_m_seconds / duration_seconds / 1000.0,
+        "mean_distance_km": integrated_error_m_seconds / duration_seconds / 1000.0,
         "integrated_tracking_error_km_hours": integrated_error_m_seconds / 3_600_000.0,
     }
 

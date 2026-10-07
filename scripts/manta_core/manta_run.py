@@ -3,7 +3,7 @@ import subprocess
 import sys
 import yaml
 
-from manta_core.manta_config import load_plugin
+from manta_core.manta_config import get_whale_count, load_plugin
 from manta_core.manta_missions import generate_missions
 from pathlib import Path
 from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH
@@ -116,15 +116,27 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
     scenario_type = scenario["type"]
     whales = scenario["whales"]
     movement = whales["movement"]
-    grouping = whales["grouping"]
+
+    if scenario_type == "trailing":
+        grouping = {
+            "mean_group_size": 1.0,
+            "position_std": 0.0,
+            "start_time_std": 0.0,
+            "shared_heading_fraction": 0.75,
+        }
+    else:
+        grouping = whales["grouping"]
+
     bouts = whales["calling"]["bouts"]
     monte_carlo = config.get("monte_carlo", {})
 
     params = {
-        "count": whales["count"],
-        "depth": whales["depth"],
+        "count": get_whale_count(config),
         "mission_duration": scenario["duration"],
-        "active_entire_mission": whales.get("active_entire_mission", False),
+        "active_entire_mission": (
+            True if scenario_type == "trailing"
+            else whales.get("active_entire_mission", False)
+        ),
         "bout_mean_duration": bouts["mean_duration"],
         "bout_mean_silent_duration": bouts["mean_silent_duration"],
         "bout_active_call_rate_per_hour": bouts["active_call_rate_per_hour"],
@@ -159,9 +171,9 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
 
         params.update({
             "initialization_mode": "fixed",
-            "initial_north": trailing["start"]["north"],
-            "initial_east": trailing["start"]["east"],
-            "initial_heading_degrees": trailing["initial_heading_degrees"],
+            "initial_north": 0.0,
+            "initial_east": 0.0,
+            "initial_heading_degrees": 0.0,
         })
 
     else:
@@ -198,14 +210,25 @@ def whale_detection_service(config: dict, log_dir: str, ros_domain_id: int) -> d
 
     vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
-    detection = config["scenario"]["detection"]
-    receive_all_calls = bool(detection.get("receive_all_calls", False))
+
+    scenario = config["scenario"]
+    detection = scenario.get("detection", {})
+
+    receive_all_calls = (
+        True if scenario["type"] == "trailing"
+        else bool(detection.get("receive_all_calls", False))
+    )
+
     data_directory = container_path(config["output"]["data_directory"])
+    call_position_std_m = float(config["scenario"].get("trailing", {}).get("call_position_std_m", 0.0))
+    call_position_seed = int(config.get("monte_carlo", {}).get("random_seed", 0))
 
     parameters = [
         f'-p "vehicle_ids:={vehicle_list}"',
         f'-p "receive_all_calls:={str(receive_all_calls).lower()}"',
         f'-p "data_directory:={data_directory}"',
+        f'-p "call_position_std_m:={call_position_std_m}"',
+        f'-p "call_position_seed:={call_position_seed}"',
     ]
 
     if not receive_all_calls:

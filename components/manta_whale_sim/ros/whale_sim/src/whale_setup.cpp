@@ -90,7 +90,6 @@ WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t gr
 
     whale.id = "whale_" + std::to_string(whale_index + 1);
     whale.group_index = group_index;
-    whale.depth = whale_depth_;
     whale.start_time = start_time;
     whale.active = false;
     whale.complete = false;
@@ -366,7 +365,6 @@ void WhaleNode::load_config() {
     line_end_north_ = declare_parameter<double>("line_end_north", 0.0);
     line_end_east_ = declare_parameter<double>("line_end_east", 63000.0);
     start_distance_ = declare_parameter<double>("start_distance", 2000.0);
-    whale_depth_ = declare_parameter<double>("depth", 20.0);
     mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
 
     // Whale config
@@ -408,7 +406,7 @@ void WhaleNode::open_whale_log() {
     std::filesystem::create_directories(data_directory);
         whale_log_.open(data_directory + "/whales.csv", std::ios::out | std::ios::trunc);
         if (!whale_log_.is_open()) throw std::runtime_error("Failed to open whale trajectory log.");
-        whale_log_ << "cycle,sim_time,whale_id,group_id,north,east,depth\n";
+        whale_log_ << "cycle,sim_time,whale_id,group_id,north,east\n";
 }
 
 /**
