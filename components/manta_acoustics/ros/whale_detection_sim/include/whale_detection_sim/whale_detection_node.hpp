@@ -54,6 +54,8 @@ private:
     // Configuration
     std::vector<std::string> vehicle_ids_;
     double detection_range_ = 11000;
+    double call_update_interval_ = 0.0;
+    std::unordered_map<std::string, double> last_received_call_times_;
 
     // Simulation
     bool pending_call_available_ = false;

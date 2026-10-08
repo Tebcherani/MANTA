@@ -67,12 +67,6 @@ class OdysseyNode : public rclcpp::Node {
         // ---------------------------------------------------------------------
 
         // Call detections
-        double call_update_interval_ = 0.0;
-        bool pending_call_available_ = false;
-        double pending_call_north_ = 0.0;
-        double pending_call_east_ = 0.0;
-        double pending_call_time_ = 0.0;
-        double next_call_update_time_ = 0.0;
         std::deque<BearingPosition> bearing_positions_;
         std::map<std::uint64_t, std::unordered_map<std::string, acoustics_interfaces::msg::BearingMsg>> bearing_pairs_;
 

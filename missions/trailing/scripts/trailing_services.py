@@ -49,7 +49,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
             sample_period=sample_period,
             ros_domain_id=ros_domain_id,
             tracking_enabled=True,
-            call_update_interval=call_update_interval,
+            call_update_interval=None,
         )
         for vehicle in vehicles
     }
@@ -97,6 +97,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         "data_directory": data_dir,
         "call_position_std_m": float(trailing.get("call_position_std_m", 0.0)),
         "call_position_seed": int(monte_carlo.get("random_seed", 0)),
+        "call_update_interval": call_update_interval,
     }
 
     services["whale_detection_sim"] = ros_service(

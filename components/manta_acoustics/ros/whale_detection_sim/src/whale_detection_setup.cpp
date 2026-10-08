@@ -19,6 +19,10 @@ void WhaleDetectionNode::load_config() {
     detection_range_ = declare_parameter<double>("detection_range", 11000.0);
     if (!std::isfinite(detection_range_) || detection_range_ <= 0.0) throw std::runtime_error("detection_range must be finite and greater than zero.");
 
+    // Minimum time between accepted calls for each vehicle.
+    call_update_interval_ = declare_parameter<double>("call_update_interval", 0.0);
+    if (!std::isfinite(call_update_interval_) || call_update_interval_ < 0.0) throw std::runtime_error("call_update_interval must be finite and nonnegative.");
+
     // Initialize detection noise parameters
     position_std_m_ = declare_parameter<double>("call_position_std_m", 0.0);
     if (!std::isfinite(position_std_m_) || position_std_m_ < 0.0) throw std::runtime_error("call_position_std_m must be finite and nonnegative.");

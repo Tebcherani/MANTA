@@ -108,6 +108,13 @@ void WhaleDetectionNode::try_process_pending_call() {
         // Ignore vehicles outside the configured acoustic detection range.
         if (distance > detection_range_) continue;
 
+        // Accept the first eligible call, then enforce the reception interval.
+        const auto previous_call = last_received_call_times_.find(vehicle_id);
+        if (call_update_interval_ > 0.0 && previous_call != last_received_call_times_.end() && pending_call_.sim_time + 1.0e-9 < previous_call->second + call_update_interval_) continue;
+
+        // A bearing is undefined at zero separation.
+        if (distance <= 1.0e-6) continue;
+
         // Perfect bearing measurement: clockwise from north, in radians.
         const double delta_north = pending_call_.north - vehicle.north;
         const double delta_east = pending_call_.east - vehicle.east;
@@ -123,6 +130,8 @@ void WhaleDetectionNode::try_process_pending_call() {
 
             bearing_pubs_.at(vehicle_id)->publish(observation);
             bearing_receiver_ids.push_back(vehicle_id);
+            
+            last_received_call_times_[vehicle_id] = pending_call_.sim_time;
         }
 
         // Populate the detection with the exact vehicle and whale states used.

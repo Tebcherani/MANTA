@@ -115,15 +115,8 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
 
     RCLCPP_INFO(get_logger(), "Vehicle '%s' estimated whale position: north %.2f m, east %.2f m.",vehicle_id_.c_str(), estimated_north, estimated_east);
 
-    // Apply immediate updates, or retain the estimate for the next update boundary.
-    if (call_update_interval_ <= 0.0) {
-        set_whale_trailing_target(estimated_north, estimated_east);
-    } else if (!pending_call_available_ || first.sim_time >= pending_call_time_) {
-        pending_call_north_ = estimated_north;
-        pending_call_east_ = estimated_east;
-        pending_call_time_ = first.sim_time;
-        pending_call_available_ = true;
-    }
+    // Reception has already been filtered by the detector.
+    set_whale_trailing_target(estimated_north, estimated_east);
 
     // Acknowledge after the estimated target has been applied or stored.
     acknowledge(true);
@@ -166,11 +159,6 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     // A completed vehicle no longer participates in simulation cycles.
     if (mission_finished_) return;
 
-    // Schedule the first periodic call-waypoint update.
-    if (tracking_enabled_ && call_update_interval_ > 0.0 && next_call_update_time_ <= 0.0) {
-        next_call_update_time_ = msg->sim_time + call_update_interval_;
-    }
-
     // Convert the ROS world snapshot to Odyssey's native world structure.
     world_state.gravity = msg->world.gravity;
     world_state.magnetic_north = msg->world.magnetic_north;
@@ -211,28 +199,6 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     for (std::uint32_t offset = 0; offset < msg->step_count; ++offset) {
         const std::uint64_t cycle = msg->current_cycle + offset;
         result.completed_cycle = cycle;
-        
-        const double current_sim_time = msg->sim_time + static_cast<double>(offset) * msg->timestep;
-
-        // At each configured update boundary, use the most recently received call.
-        if (tracking_enabled_ && call_update_interval_ > 0.0 && current_sim_time + 1.0e-9 >= next_call_update_time_) {
-            if (pending_call_available_) {
-                set_whale_trailing_target(pending_call_north_, pending_call_east_);
-                pending_call_available_ = false;
-
-                RCLCPP_INFO(
-                    get_logger(),
-                    "Vehicle '%s' updated its waypoint at %.1f s using the latest call from %.1f s.",
-                    vehicle_id_.c_str(),
-                    current_sim_time,
-                    pending_call_time_
-                );
-            }
-
-            do {
-                next_call_update_time_ += call_update_interval_;
-            } while (next_call_update_time_ <= current_sim_time + 1.0e-9);
-        }
 
         if (odyssey_abort_requested()) {
             mission_finished_ = true;
