@@ -84,22 +84,14 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     )
     services["whale_sim"]["stop_grace_period"] = "5s"
 
-    # Detection
-    receive_all_calls = bool(detection.get("receive_all_calls", False))
-
+    # Always enforce the configured acoustic detection range.
     detection_parameters = {
         "vehicle_ids": vehicle_list,
-        "receive_all_calls": receive_all_calls,
+        "detection_range": float(detection["radius"]),
         "data_directory": data_dir,
         "call_position_std_m": 0.0,
         "call_position_seed": monte_carlo.get("random_seed", 0),
     }
-
-    if not receive_all_calls:
-        if "radius" not in detection:
-            raise ValueError("Range-based detection requires scenario.detection.radius.")
-
-        detection_parameters["detection_range"] = detection["radius"]
 
     services["whale_detection_sim"] = ros_service(
         "whale_detection_sim", "whale_detection_node",

@@ -75,12 +75,15 @@ scenario:
   type: trailing
 
   trailing:
-    call_update_interval: 0.0 #50000.0 # seconds
+    call_update_interval: 0.0 # seconds
     call_position_std_m: 0.0
     vehicle_separation_m: 2000.0
     following_distance_m: 1000.0
 
   duration: 86400.0  # 1 day
+
+  detection:
+    radius: 11000.0 # meters
 
   patrol:
     speed: 1.5
@@ -91,7 +94,7 @@ scenario:
     start_distance: 25000.0
 
     movement:
-      speed_mean: 1.5
+      speed_mean: 1.0 # m/s
       speed_std: 0.2
       turn_interval: 60.0
       heading_correlation: 0.95

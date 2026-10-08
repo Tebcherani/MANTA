@@ -90,10 +90,10 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     )
     services["whale_sim"]["stop_grace_period"] = "5s"
 
-    # Receive every call, with configurable horizontal position noise.
+    # Always enforce the configured acoustic detection range.    
     detection_parameters = {
         "vehicle_ids": vehicle_list,
-        "receive_all_calls": True,
+        "detection_range": float(scenario["detection"]["radius"]),
         "data_directory": data_dir,
         "call_position_std_m": float(trailing.get("call_position_std_m", 0.0)),
         "call_position_seed": int(monte_carlo.get("random_seed", 0)),

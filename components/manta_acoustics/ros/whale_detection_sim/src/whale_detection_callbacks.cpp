@@ -106,7 +106,7 @@ void WhaleDetectionNode::try_process_pending_call() {
         const double distance = std::hypot(north_difference, east_difference);
 
         // Ignore vehicles outside the configured acoustic detection range.
-        if (!receive_all_calls_ && distance > detection_range_) continue;
+        if (distance > detection_range_) continue;
 
         // Perfect bearing measurement: clockwise from north, in radians.
         const double delta_north = pending_call_.north - vehicle.north;

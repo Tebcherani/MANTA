@@ -15,10 +15,9 @@ void WhaleDetectionNode::load_config() {
     vehicle_ids_ = declare_parameter<std::vector<std::string>>("vehicle_ids", std::vector<std::string>{});
     if (vehicle_ids_.empty()) throw std::runtime_error("vehicle_ids must contain at least one vehicle.");
 
-    // Load the maximum three-dimensional whale-detection distance.
-    receive_all_calls_ = declare_parameter<bool>("receive_all_calls", false);
+    // Load the maximum horizontal whale-detection distance in metres.
     detection_range_ = declare_parameter<double>("detection_range", 11000.0);
-    if (!receive_all_calls_ && detection_range_ <= 0.0) throw std::runtime_error("detection_range must be greater than zero.");
+    if (!std::isfinite(detection_range_) || detection_range_ <= 0.0) throw std::runtime_error("detection_range must be finite and greater than zero.");
 
     // Initialize detection noise parameters
     position_std_m_ = declare_parameter<double>("call_position_std_m", 0.0);
