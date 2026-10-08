@@ -23,19 +23,17 @@ deactivate Odyssey
 
 Orchestrator -> Orchestrator : Wait until all vehicles are ready
 
-== Simulation batch ==
+== Simulation ==
 
 Orchestrator ->> Odyssey : SimStep (world state, start cycle/time,\ntimestep, control period, step count)
 activate Odyssey
 Odyssey -> Odyssey : Convert supplied world state
 
-loop
-    Odyssey -> Odyssey : Advance vehicle dynamics
-    opt
-        Odyssey -> Odyssey : Update sensors, navigation,\ncontrol, and mission logic
-    end
-    Odyssey -> Odyssey : Update simulation time
-end
+Odyssey -> Odyssey : Advance vehicle dynamics
+Odyssey -> Odyssey : Update sensors and navigation
+Odyssey -> Odyssey : Predict whale position at current simulation time\nusing stored position and velocity
+Odyssey -> Odyssey : Set next waypoint
+Odyssey -> Odyssey : Update simulation time
 
 Odyssey -> Odyssey : Save completed position snapshot
 Odyssey ->> Detection : VehicleState (ID, cycle, time, position)

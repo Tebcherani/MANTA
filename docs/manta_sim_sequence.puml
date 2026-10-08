@@ -18,7 +18,7 @@ participant "WhaleDetectionNode" as Detection
 Launcher -> Orchestrator : Construct node
 Orchestrator -> Orchestrator : Load vehicle list and simulation configuration
 Orchestrator -> Orchestrator : Initialize simulation and world state
-Orchestrator -> Orchestrator : Create ROS interfaces and open logs
+Orchestrator -> Orchestrator : Create ROS interfaces
 
 Launcher -> Whale : Construct node
 Whale -> Whale : Load whale configuration
@@ -36,7 +36,6 @@ AUV2 -> AUV2 : Create ROS interfaces
 
 Launcher -> Detection : Construct node
 Detection -> Detection : Load detection configuration
-Detection -> Detection : Open detection log
 Detection -> Detection : Create ROS interfaces
 
 == Vehicle initialization ==
@@ -64,6 +63,9 @@ loop
 
     Orchestrator ->> AUV1 : Simulation step
     AUV1 -> AUV1 : Advance vehicle dynamics
+    AUV1 -> AUV1 : Update sensors and navigation
+    AUV1 -> AUV1 : Predict whale position at current simulation time\nusing stored position and velocity
+    AUV1 -> AUV1 : Set next waypoint
     AUV1 -> AUV1 : Update simulation time
     AUV1 -> AUV1 : Save completed position snapshot
     AUV1 ->> Detection : VehicleState (ID, cycle, time, position)
@@ -71,6 +73,9 @@ loop
 
     Orchestrator ->> AUV2 : Simulation step 
     AUV2 -> AUV2 : Advance vehicle dynamics
+    AUV2 -> AUV2 : Update sensors and navigation
+    AUV2 -> AUV2 : Predict whale position at current simulation time\nusing stored position and velocity
+    AUV2 -> AUV2 : Set next waypoint
     AUV2 -> AUV2 : Update simulation time
     AUV2 -> AUV2 : Save completed position snapshot
     AUV2 ->> Detection : VehicleState (ID, cycle, time, position)
