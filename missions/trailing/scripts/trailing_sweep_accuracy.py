@@ -14,13 +14,12 @@ from pathlib import Path
 
 import yaml
 
-# Support direct execution and MANTA's dynamically loaded sweep entry point.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "components" / "manta_core" / "scripts"))
 
-from paths import ROOT
-from manta_core.manta_dataclasses import MonteCarloConfig
-from manta_core.manta_missions import generate_missions
-from manta_core.manta_monte_carlo import (
+from manta_dataclasses import MonteCarloConfig
+from manta_missions import generate_missions
+from manta_monte_carlo import (
     compute_monte_carlo_statistics,
     load_completed_results,
     run_monte_carlo,
@@ -110,7 +109,7 @@ def run_monte_carlo_sweep(sim_config):
     interval = float(sim_config["scenario"]["trailing"].get("call_update_interval", 0.0))
     if not math.isfinite(interval) or interval < 0:
         raise ValueError("call_update_interval must be finite and nonnegative.")
-    output = ROOT / "output" / "trailing" / "monte_carlo_sweep"
+    output = ROOT / "output" / "trailing" / "sweep_accuracy"
     output.mkdir(parents=True, exist_ok=True)
     # Refuse to silently reuse results from another experiment configuration.
     snapshot = output / "sweep_config.yaml"

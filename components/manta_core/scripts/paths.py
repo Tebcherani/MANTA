@@ -26,7 +26,7 @@ VENV_EXEC = ROOT / ".venv" / "bin" / "python"
 ENV_PATH = ROOT / "manta.env"
 
 # .sh
-CLEANUP_PATH = ROOT / "scripts" / "cleanup_monte_carlo.sh"
+CLEANUP_PATH = ROOT / "components" / "manta_core" / "scripts" / "cleanup_monte_carlo.sh"
 
 # .yaml
 DEV_COMPOSE_PATH = ROOT / "compose.dev.yaml"

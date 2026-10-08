@@ -1,14 +1,21 @@
+import argparse
 import copy
 import csv
+import sys
 import yaml
 
 from dataclasses import asdict
-from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult, SweepConfig, SweepResult
-from manta_core.manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
-from manta_core.manta_missions import generate_missions
 from pathlib import Path
-from paths import ROOT
 from threading import Event
+
+ROOT = Path(__file__).resolve().parents[3]
+
+sys.path.insert(0, str(ROOT / "components" / "manta_core" / "scripts"))
+
+from manta_dataclasses import MonteCarloConfig, MonteCarloResult, SweepConfig, SweepResult
+from manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
+from manta_missions import generate_missions
+from manta_load import load_yaml
 
 
 # -----------------------------------------------------
@@ -56,7 +63,7 @@ def prepare_fleet_experiment(sim_config: dict, fleet_size: int, config_dir: Path
     """Generate the configuration, missions, and output path for one fleet size."""
 
     scenario_type = sim_config["scenario"]["type"]
-    mission_directory = ROOT / "components" / "manta_odyssey" / "missions" / scenario_type / "monte_carlo_sweep" / f"vehicles_{fleet_size:02d}"
+    mission_directory = ROOT / "output" / "picket_line" / "monte_carlo_sweep" / "missions" / f"vehicles_{fleet_size:02d}"
     fleet_config, fleet_config_path = generate_fleet_config(sim_config, fleet_size, config_dir)
     generate_missions(fleet_config, fleet_config_path, mission_directory)
     fleet_directory = sweep_output_dir / f"vehicles_{fleet_size:02d}"
@@ -211,6 +218,23 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
         print(f"Fleet size {fleet_size}: mean {sweep_result.mean_detection:.2%}, CI half-width {sweep_result.ci_half_width:.2%} from {sweep_result.realizations} runs.")
 
     print(f"Sweep data: {summary_path}")
-    print(f"Run './manta review {scenario_type} sweep' to generate the sweep plots.")
+    print("Run './picket_line review sweep' to generate the sweep plots.")
 
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Sweep picket-line fleet size.")
+    parser.add_argument("config_path", type=Path)
+    args = parser.parse_args()
+
+    config = load_yaml(args.config_path.resolve())
+
+    if config["scenario"]["type"] != "picket_line":
+        raise ValueError("Expected a picket_line scenario.")
+
+    return run_monte_carlo_sweep(config)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

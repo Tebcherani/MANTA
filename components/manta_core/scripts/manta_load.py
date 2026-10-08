@@ -3,6 +3,7 @@
 from pathlib import Path
 from paths import COMPONENT_DIR, MISSION_DIR, ROOT
 
+import importlib.util
 import yaml
 
 
@@ -16,6 +17,33 @@ def container_path(configured_path: str) -> str:
         raise ValueError(f"Path must remain inside MANTA: {host_path}") from error
 
     return f"/odyssey/{relative_path.as_posix()}"
+
+
+def load_mission_services(config: dict, ros_domain_id: int = 1) -> dict:
+    """Build services using the configured mission's service module."""
+    mission_type = config["scenario"]["type"]
+    mission_root = (ROOT / "missions").resolve()
+    script = (
+        mission_root / mission_type / "scripts"
+        / f"{mission_type}_services.py"
+    ).resolve()
+
+    if not script.is_relative_to(mission_root):
+        raise ValueError("Mission service script must be inside missions.")
+    if not script.is_file():
+        raise ValueError(f"Mission service script does not exist: {script}")
+
+    spec = importlib.util.spec_from_file_location(
+        f"{mission_type}_services", script
+    )
+
+    if spec is None or spec.loader is None:
+        raise ValueError(f"Cannot load mission services: {script}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module.create_services(config, ros_domain_id=ros_domain_id)
 
 
 def load_plugin(plugin_id: str) -> dict:

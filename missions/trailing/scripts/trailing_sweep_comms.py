@@ -1,13 +1,19 @@
+import argparse
 import copy
 import csv
+import sys
+from dataclasses import asdict
+from pathlib import Path
+
 import yaml
 
-from dataclasses import asdict
-from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult, TrailingSweepConfig, TrailingSweepResult
-from manta_core.manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
-from manta_core.manta_missions import generate_missions
-from pathlib import Path
-from paths import ROOT
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "components" / "manta_core" / "scripts"))
+
+from manta_dataclasses import MonteCarloConfig, MonteCarloResult, TrailingSweepConfig, TrailingSweepResult
+from manta_load import load_yaml
+from manta_missions import generate_missions
+from manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
 
 
 def interval_directory_name(interval: float) -> str:
@@ -122,7 +128,7 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
 
     sweep_config = TrailingSweepConfig.from_dict(sim_config.get("sweep", {}))
     monte_carlo_config = MonteCarloConfig.from_dict(sim_config.get("monte_carlo", {}))
-    sweep_output_dir = ROOT / "output" / "trailing" / "monte_carlo_sweep"
+    sweep_output_dir = ROOT / "output" / "trailing" / "sweep_comms"
     summary_path = sweep_output_dir / "sweep_summary.csv"
     completed_results = load_completed_trailing_sweep_results(summary_path)
 
@@ -137,7 +143,7 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
 
         interval_name = interval_directory_name(interval)
         interval_directory = sweep_output_dir / interval_name
-        mission_directory = ROOT / "components" / "manta_odyssey" / "missions" / "trailing" / "monte_carlo_sweep" / interval_name
+        mission_directory = sweep_output_dir / "missions" / interval_name
         interval_config, interval_config_path = prepare_interval_config(sim_config, interval, interval_directory, mission_directory)
         generate_missions(interval_config, interval_config_path, mission_directory)
         project_offset = (interval_index + 1) * 10000

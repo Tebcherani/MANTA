@@ -11,9 +11,9 @@ import threading
 from pathlib import Path
 from statistics import mean
 
-from manta_core.manta_dataclasses import MonteCarloConfig, MonteCarloResult
-from manta_core.manta_config import get_whale_count
-from manta_core.manta_run import write_runtime_compose
+from manta_dataclasses import MonteCarloConfig, MonteCarloResult
+from manta_compose import write_runtime_compose
+from manta_load import load_mission_services
 
 
 stop_requested = threading.Event()
@@ -28,7 +28,7 @@ def check_stop_requested() -> None:
 def collect_realization_result(config: dict, root: Path, data_directory: Path, vehicle_ids: list[str], realization: int, seed: int) -> MonteCarloResult:
     """Read simulation outputs and construct the completed realization result."""
 
-    whale_count = get_whale_count(config)
+    whale_count = count_simulated_whales(data_directory / "whales.csv")
     detected_count, detection_fraction = summarize_realization(data_directory, whale_count)
     total_mass, total_energy, mean_vehicle_speed = summarize_vehicle_metrics(data_directory, vehicle_ids)
     mean_distance_km = None
@@ -52,6 +52,29 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
         mean_distance_km=mean_distance_km,
         integrated_tracking_error_km_hours=integrated_tracking_error_km_hours,
     )
+
+
+def count_simulated_whales(path: Path) -> int:
+    """Count distinct whales recorded in the simulation output."""
+    if not path.is_file():
+        raise ValueError(f"Whale trajectory file does not exist: {path}")
+
+    with path.open("r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+
+        if not reader.fieldnames or "whale_id" not in reader.fieldnames:
+            raise ValueError("whales.csv must contain a whale_id column.")
+
+        whale_ids = {
+            row["whale_id"].strip()
+            for row in reader
+            if row.get("whale_id", "").strip()
+        }
+
+    if not whale_ids:
+        raise ValueError("whales.csv contains no whale IDs.")
+
+    return len(whale_ids)
 
 
 def create_docker_commands(compose_path: Path, project_name: str) -> tuple[list[str], list[str]]:
@@ -101,7 +124,8 @@ def prepare_realization(base_config: dict, root: Path, realization: int, output_
     project_name = f"manta-mc-{project_offset + realization:06d}"
     ros_domain_id = 10 + ((realization - 1) % 200)
 
-    write_runtime_compose(config, compose_path=compose_path, project_name=project_name, ros_domain_id=ros_domain_id)
+    services = load_mission_services(config, ros_domain_id=ros_domain_id)
+    write_runtime_compose(services, compose_path=compose_path, project_name=project_name)
 
     up_command, down_command = create_docker_commands(compose_path, project_name)
 

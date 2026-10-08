@@ -8,9 +8,8 @@ version: 1
 # Mission generation
 #--------------------------------------------------
 mission_generation:
-  generator: missions/picket_line/generate_odyssey_mission.py
+  generator: missions/picket_line/scripts/picket_line_mission.py
   output_directory: ./output/picket_line/missions
-  sweep: missions/picket_line/sweep_fleet_size.py
 
 review:
   tracks: missions/picket_line/review/plot_tracks.py

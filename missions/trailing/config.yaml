@@ -8,9 +8,8 @@ version: 1
 # Mission generation
 #--------------------------------------------------
 mission_generation:
-  generator: missions/trailing/generate_odyssey_mission.py
+  generator: missions/trailing/scripts/trailing_mission.py
   output_directory: ./output/trailing/missions
-  sweep: missions/trailing/sweep_comms_freq.py
 
 review:
   tracks: missions/trailing/review/plot_tracks.py
@@ -62,12 +61,6 @@ sweep:
     - 600.0    # 10 minutes
     - 1800.0   # 30 minutes
     - 3600.0   # 1 hour
-    - 7200.0   # 2 hours
-    - 10800.0  # 3 hours
-    - 14400.0  # 4 hours
-    - 18000.0  # 5 hours
-    - 36000.0  # 10 hours
-    - 54000.0  # 15 hours
   accuracy:
     min_std_km: 0.0
     max_std_km: 150.0

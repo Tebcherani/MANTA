@@ -14,13 +14,14 @@ from manta_load import load_yaml
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run and review the MANTA picket-line mission.")
+    parser = argparse.ArgumentParser(description="Run, sweep, and review the MANTA picket-line mission.")
     commands = parser.add_subparsers(dest="command", required=True)
 
     commands.add_parser("run", help="Run the simulation.")
+    commands.add_parser("sweep", help="Sweep the AUV fleet size.")
 
     review_parser = commands.add_parser("review", help="Review simulation results.")
-    review_parser.add_argument("plot", choices=("tracks",))
+    review_parser.add_argument("plot", choices=("tracks", "sweep"))
 
     args = parser.parse_args()
     config_path = ROOT / "missions" / "picket_line" / "config.yaml"
@@ -31,8 +32,18 @@ def main() -> int:
         if config["scenario"]["type"] != "picket_line":
             raise ValueError("Expected a picket_line scenario.")
 
+        if args.command == "sweep":
+            # Run the mission's fleet-size sweep using the same interpreter.
+            sweep_path = ROOT / "missions" / "picket_line" / "scripts" / "picket_line_sweep.py"
+
+            if not sweep_path.is_file():
+                raise ValueError(f"Sweep script does not exist: {sweep_path}")
+
+            command = [sys.executable, str(sweep_path), str(config_path)]
+            return subprocess.run(command, cwd=ROOT, check=False).returncode
+
         if args.command == "review":
-            # Run the configured plotting script using the same Python interpreter.
+            # Plot existing results without preparing a new simulation.
             plot_path = (ROOT / config["review"][args.plot]).resolve()
 
             if not plot_path.is_relative_to(ROOT):
@@ -43,7 +54,7 @@ def main() -> int:
             command = [sys.executable, str(plot_path)]
             return subprocess.run(command, cwd=ROOT, check=False).returncode
 
-        # Load simulation helpers only when running the mission.
+        # Load simulation helpers only for the run command.
         from picket_line_services import create_services
         from manta_runtime import prepare_runtime
 

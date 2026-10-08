@@ -1,6 +1,6 @@
 import subprocess
 
-from manta_core.manta_environment import get_host_environment
+from manta_environment import get_host_environment
 from paths import DEV_COMPOSE_PATH, ROOT
 
 

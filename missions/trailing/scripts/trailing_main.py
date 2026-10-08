@@ -14,10 +14,13 @@ from manta_load import load_yaml
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run and review the MANTA trailing mission.")
+    parser = argparse.ArgumentParser(description="Run, sweep, and review the MANTA trailing mission.")
     commands = parser.add_subparsers(dest="command", required=True)
 
     commands.add_parser("run", help="Run the simulation.")
+
+    sweep_parser = commands.add_parser("sweep", help="Run a trailing experiment sweep.")
+    sweep_parser.add_argument("experiment", choices=("accuracy", "comms"))
 
     review_parser = commands.add_parser("review", help="Review simulation results.")
     review_parser.add_argument("plot", choices=("tracks",))
@@ -30,6 +33,20 @@ def main() -> int:
 
         if config["scenario"]["type"] != "trailing":
             raise ValueError("Expected a trailing scenario.")
+
+        if args.command == "sweep":
+            # Select the mission's accuracy or call-update interval sweep.
+            sweep_scripts = {
+                "accuracy": "trailing_sweep_accuracy.py",
+                "comms": "trailing_sweep_comms.py",
+            }
+            sweep_path = ROOT / "missions" / "trailing" / "scripts" / sweep_scripts[args.experiment]
+
+            if not sweep_path.is_file():
+                raise ValueError(f"Sweep script does not exist: {sweep_path}")
+
+            command = [sys.executable, str(sweep_path), str(config_path)]
+            return subprocess.run(command, cwd=ROOT, check=False).returncode
 
         if args.command == "review":
             # Review existing results without preparing a new simulation.
