@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
+"""Plot trailing mission tracks and report distance metrics for every AUV."""
 
 import csv
-import matplotlib.pyplot as plt
-import numpy as np
-
 from collections import defaultdict
 from pathlib import Path
-from parse_obd import read_obd
+
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.ticker import FuncFormatter
+from parse_obd import read_obd
+
 
 ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "output" / "trailing" / "Data"
@@ -15,46 +17,51 @@ WHALE_CALLS_PATH = DATA_DIR / "whale_calls.csv"
 WHALE_DETECTIONS_PATH = DATA_DIR / "whale_detections.csv"
 WHALE_TRAJECTORY_PATH = DATA_DIR / "whales.csv"
 
-AUV_COLOR = "tab:blue"
 WHALE_COLOR = "tab:red"
 WHALE_CALL_COLOR = "tab:red"
 
-plt.rcParams.update({
-    "font.size": 14,
-    "axes.titlesize": 17,
-    "axes.labelsize": 15,
-    "xtick.labelsize": 13,
-    "ytick.labelsize": 13,
-    "legend.fontsize": 12,
-    "figure.titlesize": 18,
-})
+plt.rcParams.update({"font.size": 14, "axes.titlesize": 17, "axes.labelsize": 15, "xtick.labelsize": 13, "ytick.labelsize": 13, "legend.fontsize": 12, "figure.titlesize": 18})
+
+
+def vehicle_id(path: Path) -> str:
+    """Extract the vehicle ID from an Odyssey result filename."""
+    return path.stem
 
 
 def find_latest_vehicle_results() -> dict[str, Path]:
     """Find the newest Odyssey result for each vehicle."""
-
     latest = {}
 
     for path in DATA_DIR.rglob("*.obd"):
         name = vehicle_id(path)
-        if name and (name not in latest or path.stat().st_mtime > latest[name].stat().st_mtime):
+        if name not in latest or path.stat().st_mtime > latest[name].stat().st_mtime:
             latest[name] = path
 
     return latest
 
 
-def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> tuple[int, dict[str, str]]:
-    """Plot the latest trajectory from each Odyssey vehicle."""
+def read_vehicle_positions(dataset, name: str) -> tuple[np.ndarray, np.ndarray]:
+    """Read horizontal truth positions, falling back to navigation positions."""
+    if "real_x" in dataset and "real_y" in dataset:
+        return np.asarray(dataset["real_x"].values, dtype=float), np.asarray(dataset["real_y"].values, dtype=float)
 
+    if "m_pos_n" in dataset and "m_pos_e" in dataset:
+        return np.asarray(dataset["m_pos_n"].values, dtype=float), np.asarray(dataset["m_pos_e"].values, dtype=float)
+
+    raise ValueError(f"Vehicle {name} has no position data.")
+
+
+def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> int:
+    """Plot each vehicle trajectory with a separate color."""
     plotted = 0
-    vehicle_colors = {}
 
     for index, (name, path) in enumerate(sorted(latest.items())):
         print(f"Plotting vehicle {name}: {path.name}")
 
         try:
             dataset = read_obd(path)
-        except Exception as error:
+            north, east = read_vehicle_positions(dataset, name)
+        except (OSError, ValueError) as error:
             print(f"Skipping {name}: {error}")
             continue
 
@@ -62,27 +69,11 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> tuple[int, dict[str, str
             forward = np.asarray(dataset["real_u"].values, dtype=float)
             lateral = np.asarray(dataset["real_v"].values, dtype=float)
             vertical = np.asarray(dataset["real_w"].values, dtype=float)
-
             speed = np.sqrt(forward * forward + lateral * lateral + vertical * vertical)
             speed = speed[np.isfinite(speed)]
-            if speed.size:
-                print(
-                    f"  Actual speed: "
-                    f"median={np.median(speed):.2f} m/s, "
-                    f"mean={np.mean(speed):.2f} m/s, "
-                    f"95th={np.percentile(speed, 95):.2f} m/s, "
-                    f"max={np.max(speed):.2f} m/s"
-                )
 
-        if "real_x" in dataset and "real_y" in dataset:
-            north = dataset["real_x"].values
-            east = dataset["real_y"].values
-        elif "m_pos_n" in dataset and "m_pos_e" in dataset:
-            north = dataset["m_pos_n"].values
-            east = dataset["m_pos_e"].values
-        else:
-            print(f"Skipping {name}: no position data.")
-            continue
+            if speed.size:
+                print(f"  Actual speed: median={np.median(speed):.2f} m/s, mean={np.mean(speed):.2f} m/s, 95th={np.percentile(speed, 95):.2f} m/s, max={np.max(speed):.2f} m/s")
 
         valid = np.isfinite(north) & np.isfinite(east)
         north = north[valid]
@@ -92,20 +83,17 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> tuple[int, dict[str, str
             print(f"Skipping {name}: no valid positions.")
             continue
 
-        line, = ax.plot(east, north, color=f"C{index % 10}", linewidth=2.0, label=name, zorder=4)
-        color = line.get_color()
-        vehicle_colors[name] = color
-        ax.scatter(east[0], north[0], color=color, marker="o", s=40, zorder=6)  # Vehicle starting position
-        ax.scatter(east[-1], north[-1], color=color, marker="s", s=40, zorder=6)    # Vehicle ending position
-
+        color = f"C{index % 10}"
+        ax.plot(east, north, color=color, linewidth=2.0, label=name, zorder=4)
+        ax.scatter(east[0], north[0], color=color, marker="o", s=40, zorder=6)
+        ax.scatter(east[-1], north[-1], color=color, marker="s", s=40, zorder=6)
         plotted += 1
 
-    return plotted, vehicle_colors
+    return plotted
 
 
 def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, float]]]:
-    """Read received whale calls grouped by simulation cycle and whale ID."""
-
+    """Read logged detections grouped by cycle and whale ID."""
     detections_by_call = defaultdict(list)
 
     if not WHALE_DETECTIONS_PATH.is_file():
@@ -121,8 +109,8 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
                 raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_id, whale_north, and whale_east columns.")
 
             for row in reader:
-                vehicle_id = row.get("vehicle_id", "")
-                whale_id = row.get("whale_id", "")
+                name = row.get("vehicle_id", "")
+                whale = row.get("whale_id", "")
 
                 try:
                     cycle = int(row["cycle"])
@@ -131,10 +119,8 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
                 except (TypeError, ValueError):
                     continue
 
-                if not vehicle_id or not whale_id or not np.isfinite(north) or not np.isfinite(east):
-                    continue
-
-                detections_by_call[(cycle, whale_id)].append((vehicle_id, north, east))
+                if name and whale and np.isfinite(north) and np.isfinite(east):
+                    detections_by_call[(cycle, whale)].append((name, north, east))
 
     except (OSError, ValueError) as error:
         print(f"Could not read whale detections: {error}")
@@ -144,7 +130,6 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
 
 def read_whale_tracks(path: Path) -> dict[str, tuple[list[float], list[float]]]:
     """Read whale trajectories grouped by whale ID."""
-
     tracks = defaultdict(lambda: ([], []))
 
     with path.open("r", encoding="utf-8", newline="") as file:
@@ -161,27 +146,27 @@ def read_whale_tracks(path: Path) -> dict[str, tuple[list[float], list[float]]]:
             except (TypeError, ValueError):
                 continue
 
-            if not np.isfinite(north) or not np.isfinite(east):
+            if not row["whale_id"] or not np.isfinite(north) or not np.isfinite(east):
                 continue
 
             track_north, track_east = tracks[row["whale_id"]]
             track_north.append(north)
             track_east.append(east)
 
-    return tracks
+    return dict(tracks)
 
 
 def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Calculate the whale position at every logged simulation time."""
-
-    positions_by_time = defaultdict(list)
+    """Read the single trailing whale's position at each logged time."""
+    positions_by_time = {}
+    whale_ids = set()
 
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
-        required = {"sim_time", "north", "east"}
+        required = {"whale_id", "sim_time", "north", "east"}
 
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise ValueError("whales.csv must contain sim_time, north, and east columns.")
+            raise ValueError("whales.csv must contain whale_id, sim_time, north, and east columns.")
 
         for row in reader:
             try:
@@ -191,50 +176,53 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
             except (TypeError, ValueError):
                 continue
 
-            if not np.isfinite(sim_time) or not np.isfinite(north) or not np.isfinite(east):
+            if not row["whale_id"] or not np.isfinite(sim_time) or not np.isfinite(north) or not np.isfinite(east):
                 continue
 
-            positions_by_time[sim_time].append((north, east))
+            whale_ids.add(row["whale_id"])
+            positions_by_time[sim_time] = (north, east)
+
+    if len(whale_ids) != 1:
+        raise ValueError(f"Trailing distance metrics require exactly one whale; found {len(whale_ids)}.")
 
     times = np.asarray(sorted(positions_by_time), dtype=float)
-    whale_north = np.asarray([np.mean([position[0] for position in positions_by_time[time]]) for time in times], dtype=float)
-    whale_east = np.asarray([np.mean([position[1] for position in positions_by_time[time]]) for time in times], dtype=float)
+    north = np.asarray([positions_by_time[time][0] for time in times], dtype=float)
+    east = np.asarray([positions_by_time[time][1] for time in times], dtype=float)
 
-    return times, whale_north, whale_east
+    return times, north, east
 
 
-def compute_tracking_error(latest: dict[str, Path]) -> tuple[float, float]:
-    """Calculate integrated and mean AUV distance from the whale position."""
-
+def compute_tracking_error(latest: dict[str, Path], name: str) -> tuple[float, float]:
+    """Return integrated distance (km·h) and time-weighted mean distance (m)."""
     if not WHALE_TRAJECTORY_PATH.is_file():
         raise ValueError(f"No whale trajectory file found: {WHALE_TRAJECTORY_PATH}")
 
-    if not latest:
-        raise ValueError("No Odyssey result files were found.")
+    if name not in latest:
+        raise ValueError(f"No Odyssey result file found for {name}.")
 
-    vehicle_id, path = sorted(latest.items())[0]
-    dataset = read_obd(path)
+    dataset = read_obd(latest[name])
 
     if "time" not in dataset.coords:
-        raise ValueError(f"Vehicle {vehicle_id} has no simulation-time coordinate.")
+        raise ValueError(f"Vehicle {name} has no simulation-time coordinate.")
 
-    if "real_x" in dataset and "real_y" in dataset:
-        vehicle_north = np.asarray(dataset["real_x"].values, dtype=float)
-        vehicle_east = np.asarray(dataset["real_y"].values, dtype=float)
-    elif "m_pos_n" in dataset and "m_pos_e" in dataset:
-        vehicle_north = np.asarray(dataset["m_pos_n"].values, dtype=float)
-        vehicle_east = np.asarray(dataset["m_pos_e"].values, dtype=float)
-    else:
-        raise ValueError(f"Vehicle {vehicle_id} has no position data.")
-
+    vehicle_north, vehicle_east = read_vehicle_positions(dataset, name)
     vehicle_time = np.asarray(dataset.coords["time"].values, dtype=float)
-    valid_vehicle = np.isfinite(vehicle_time) & np.isfinite(vehicle_north) & np.isfinite(vehicle_east)
-    vehicle_time = vehicle_time[valid_vehicle]
-    vehicle_north = vehicle_north[valid_vehicle]
-    vehicle_east = vehicle_east[valid_vehicle]
+    valid = np.isfinite(vehicle_time) & np.isfinite(vehicle_north) & np.isfinite(vehicle_east)
+    vehicle_time = vehicle_time[valid]
+    vehicle_north = vehicle_north[valid]
+    vehicle_east = vehicle_east[valid]
+
+    # Interpolation requires ordered timestamps without duplicates.
+    order = np.argsort(vehicle_time, kind="stable")
+    vehicle_time = vehicle_time[order]
+    vehicle_north = vehicle_north[order]
+    vehicle_east = vehicle_east[order]
+    vehicle_time, indices = np.unique(vehicle_time, return_index=True)
+    vehicle_north = vehicle_north[indices]
+    vehicle_east = vehicle_east[indices]
 
     if vehicle_time.size < 2:
-        raise ValueError(f"Vehicle {vehicle_id} has insufficient position samples.")
+        raise ValueError(f"Vehicle {name} has insufficient position samples.")
 
     whale_time, whale_north, whale_east = read_whale_positions(WHALE_TRAJECTORY_PATH)
     overlap = (whale_time >= vehicle_time[0]) & (whale_time <= vehicle_time[-1])
@@ -243,28 +231,21 @@ def compute_tracking_error(latest: dict[str, Path]) -> tuple[float, float]:
     whale_east = whale_east[overlap]
 
     if whale_time.size < 2:
-        raise ValueError("Vehicle and whale trajectories have insufficient overlapping times.")
+        raise ValueError(f"Vehicle {name} and whale trajectories have insufficient overlapping times.")
 
     interpolated_north = np.interp(whale_time, vehicle_time, vehicle_north)
     interpolated_east = np.interp(whale_time, vehicle_time, vehicle_east)
     distance = np.hypot(interpolated_north - whale_north, interpolated_east - whale_east)
-
-    integrated_error_m_seconds = float(np.trapezoid(distance, whale_time))
+    integrated_distance_m_seconds = float(np.trapezoid(distance, whale_time))
     duration = float(whale_time[-1] - whale_time[0])
-    mean_distance_m = integrated_error_m_seconds / duration
-    integrated_error_km_hours = integrated_error_m_seconds / 3_600_000.0
+    mean_distance_m = integrated_distance_m_seconds / duration
+    integrated_distance_km_hours = integrated_distance_m_seconds / 3_600_000.0
 
-    return integrated_error_km_hours, mean_distance_m
-
-
-def vehicle_id(path: Path) -> str | None:
-    """Extract the vehicle ID from an Odyssey result filename."""
-    return path.stem
+    return integrated_distance_km_hours, mean_distance_m
 
 
 def plot_whale_tracks(ax) -> int:
-    """Plot every whale trajectory using the same color."""
-
+    """Plot logged whale trajectories."""
     if not WHALE_TRAJECTORY_PATH.is_file():
         print(f"No whale trajectory file found: {WHALE_TRAJECTORY_PATH}")
         return 0
@@ -276,32 +257,28 @@ def plot_whale_tracks(ax) -> int:
         return 0
 
     plotted = 0
-    label_used = False
 
-    for whale_id, (north, east) in sorted(tracks.items()):
+    for whale, (north, east) in sorted(tracks.items()):
         if not north:
             continue
 
-        print(f"Plotting whale {whale_id}.")
-        label = None if label_used else "Whale trajectories"
+        print(f"Plotting whale {whale}.")
+        label = "Whale trajectory" if plotted == 0 else None
         ax.plot(east, north, color=WHALE_COLOR, linestyle="--", linewidth=1.0, alpha=0.55, label=label, zorder=1)
         ax.scatter(east[0], north[0], color=WHALE_COLOR, marker="x", s=25, alpha=0.7, zorder=2)
-        label_used = True
         plotted += 1
 
     return plotted
 
 
 def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]]) -> int:
-    """Plot only undetected whale calls as red dots."""
-
+    """Plot calls without any logged detection as red dots."""
     if not WHALE_CALLS_PATH.is_file():
         print(f"No whale call file found: {WHALE_CALLS_PATH}")
         return 0
 
     north = []
     east = []
-    call_count = 0
 
     try:
         with WHALE_CALLS_PATH.open("r", encoding="utf-8", newline="") as file:
@@ -312,7 +289,7 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
                 raise ValueError("whale_calls.csv must contain cycle, whale_id, north, and east columns.")
 
             for row in reader:
-                whale_id = row.get("whale_id", "")
+                whale = row.get("whale_id", "")
 
                 try:
                     cycle = int(row["cycle"])
@@ -321,12 +298,10 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
                 except (TypeError, ValueError):
                     continue
 
-                if not whale_id or not np.isfinite(call_north) or not np.isfinite(call_east):
+                if not whale or not np.isfinite(call_north) or not np.isfinite(call_east):
                     continue
 
-                call_count += 1
-
-                if (cycle, whale_id) not in detections_by_call:
+                if (cycle, whale) not in detections_by_call:
                     north.append(call_north)
                     east.append(call_east)
 
@@ -337,73 +312,68 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
     if north:
         ax.scatter(east, north, color=WHALE_CALL_COLOR, marker=".", s=12, alpha=0.5, label="Undetected whale calls", zorder=5)
 
-    print(f"Plotting {call_count} whale calls.")
-    return call_count
+    print(f"Plotting {len(north)} undetected whale calls.")
+    return len(north)
 
 
 def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]]) -> int:
-    """Plot detected whale calls as solid red diamonds."""
-
+    """Plot logged whale call locations, not triangulated estimates."""
     detections_by_vehicle = defaultdict(lambda: ([], []))
 
     for detections in detections_by_call.values():
-        for vehicle_id, north, east in detections:
-            detection_north, detection_east = detections_by_vehicle[vehicle_id]
+        for name, north, east in detections:
+            detection_north, detection_east = detections_by_vehicle[name]
             detection_north.append(north)
             detection_east.append(east)
 
     detection_count = sum(len(north) for north, _ in detections_by_vehicle.values())
 
-    if detection_count == 0:
-        print("No whale detections found.")
-        return 0
+    for name, (north, east) in sorted(detections_by_vehicle.items()):
+        ax.scatter(east, north, color=WHALE_COLOR, marker="D", s=45, linewidths=1.0, label=f"Calls received by {name}", zorder=7)
 
-    for vehicle_id, (north, east) in sorted(detections_by_vehicle.items()):
-        ax.scatter(east, north, color=WHALE_COLOR, marker="D", s=45, linewidths=1.0, label=f"Calls received by {vehicle_id}", zorder=7)
-
-    print(f"Plotting {detection_count} received whale calls.")
+    print(f"Plotting {detection_count} logged detections.")
     return detection_count
 
 
 def main() -> int:
+    """Plot mission results and report separate distance metrics for all AUVs."""
     detections_by_call = read_whale_detections()
     latest = find_latest_vehicle_results()
+    distance_labels = []
 
-    try:
-        integrated_error, mean_distance = compute_tracking_error(latest)
-    except (OSError, ValueError) as error:
-        print(f"Could not calculate centroid tracking error: {error}")
-        integrated_error = float("nan")
-        mean_distance = float("nan")
+    for name in sorted(latest):
+        try:
+            integrated_distance, mean_distance = compute_tracking_error(latest, name)
+        except (OSError, ValueError) as error:
+            print(f"Could not calculate distance for {name}: {error}")
+            distance_labels.append(f"{name}: unavailable")
+            continue
+
+        print(f"{name} mean distance: {mean_distance / 1000.0:.3f} km")
+        print(f"{name} integrated distance: {integrated_distance:.3f} km·h")
+        distance_labels.append(f"{name}: {mean_distance / 1000.0:.2f} km")
 
     fig, ax = plt.subplots(figsize=(10, 8))
-    fleet_size, vehicle_colors = plot_vehicle_tracks(ax, latest)
+    fleet_size = plot_vehicle_tracks(ax, latest)
     whale_count = plot_whale_tracks(ax)
     call_count = plot_whale_calls(ax, detections_by_call)
     detection_count = plot_detection_locations(ax, detections_by_call)
 
-    if (fleet_size == 0 and whale_count == 0 and call_count == 0 and detection_count == 0):
-        print("No simulation results found in output/picket_line/Data.")
+    if fleet_size == 0 and whale_count == 0 and call_count == 0 and detection_count == 0:
+        print(f"No simulation results found in {DATA_DIR}.")
         plt.close(fig)
         return 1
 
-    if np.isfinite(integrated_error):
-        print(f"Mean distance: {mean_distance / 1000.0:.3f} km")
-        print(f"Integrated tracking error: {integrated_error:.3f} km·h")
+    title = "Vehicle and Whale Tracks"
+    if distance_labels:
+        title += "\nMean distance — " + "; ".join(distance_labels)
 
-    if np.isfinite(integrated_error):
-        metric_vehicle = sorted(latest)[0]
-        ax.set_title(f"Vehicle and Whale Tracks — {metric_vehicle} mean distance: {mean_distance / 1000.0:.2f} km")
-    else:
-        ax.set_title("Vehicle and Whale Tracks")
-
+    ax.set_title(title)
     km_formatter = FuncFormatter(lambda value, _: f"{value / 1000:g}")
     ax.xaxis.set_major_formatter(km_formatter)
     ax.yaxis.set_major_formatter(km_formatter)
-
     ax.set_xlabel("East (km)")
     ax.set_ylabel("North (km)")
-    
     ax.set_aspect("equal", adjustable="box")
     ax.margins(x=0.03, y=0.05)
     ax.grid(True, alpha=0.3)
