@@ -64,7 +64,52 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     // This vehicle now has the pair needed to estimate the whale position.
     RCLCPP_INFO(get_logger(), "Vehicle '%s' has both bearings for cycle %llu.", vehicle_id_.c_str(), static_cast<unsigned long long>(msg->call_cycle));
 
-    // Triangulation will go here next.
+    // Convert bearings clockwise from north into unit direction vectors.
+    const double first_n = std::cos(first.bearing_rad);
+    const double first_e = std::sin(first.bearing_rad);
+    const double second_n = std::cos(second.bearing_rad);
+    const double second_e = std::sin(second.bearing_rad);
+
+    // Calculate the displacement between the two measurement positions.
+    const double baseline_n = second.receiver_north - first.receiver_north;
+    const double baseline_e = second.receiver_east - first.receiver_east;
+
+    // Nearly parallel bearing lines do not give a stable intersection.
+    const double determinant = first_n * second_e - first_e * second_n;
+
+    if (!std::isfinite(determinant) || std::abs(determinant) < 1.0e-6) {
+        RCLCPP_WARN(get_logger(), "Cannot triangulate nearly parallel bearings.");
+        bearing_pairs_.erase(msg->call_cycle);
+        return;
+    }
+
+    // Solve for the distance along each vehicle's bearing ray.
+    const double first_range = (baseline_n * second_e - baseline_e * second_n) / determinant;
+    const double second_range = (baseline_n * first_e - baseline_e * first_n) / determinant;
+
+    // A valid intersection must lie ahead of both receivers.
+    if (!std::isfinite(first_range) || !std::isfinite(second_range) ||
+        first_range < 0.0 || second_range < 0.0) {
+        RCLCPP_WARN(get_logger(), "Bearing rays have no valid forward intersection.");
+        bearing_pairs_.erase(msg->call_cycle);
+        return;
+    }
+
+    // Estimate the whale position from the intersection.
+    const double estimated_north = first.receiver_north + first_range * first_n;
+    const double estimated_east = first.receiver_east + first_range * first_e;
+
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' estimated whale position: north %.2f m, east %.2f m.",vehicle_id_.c_str(), estimated_north, estimated_east);
+
+    // Apply immediate updates, or retain the estimate for the next update boundary.
+    if (call_update_interval_ <= 0.0) {
+        set_whale_trailing_target(estimated_north, estimated_east);
+    } else if (!pending_call_available_ || first.sim_time >= pending_call_time_) {
+        pending_call_north_ = estimated_north;
+        pending_call_east_ = estimated_east;
+        pending_call_time_ = first.sim_time;
+        pending_call_available_ = true;
+    }
 
     // Remove the collected pair after processing.
     bearing_pairs_.erase(msg->call_cycle);
