@@ -1,5 +1,4 @@
 @startuml
-title OdysseyDetectionNode Constructor Activity Diagram
 
 skinparam monochrome true
 skinparam shadowing false
@@ -21,6 +20,7 @@ partition "WhaleDetectionNode()" {
 
         :Create publisher;
         note right
+            - Bearing observations (one for each vehicle)
             - Whale call processed
         end note
 

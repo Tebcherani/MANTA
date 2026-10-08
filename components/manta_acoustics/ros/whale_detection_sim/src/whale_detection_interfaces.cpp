@@ -7,7 +7,6 @@ void WhaleDetectionNode::create_publishers() {
     for (const std::string &vehicle_id : vehicle_ids_) {
         bearing_pubs_[vehicle_id] = create_publisher<acoustics_interfaces::msg::BearingObservation>("/" + vehicle_id + "/sensors/bearing", rclcpp::QoS(100).reliable());
     }
-    detection_pub_ = create_publisher<acoustics_interfaces::msg::WhaleDetection>("/sim/whale_detections", 100);             // Publish detections produced when vehicles are within range of a whale call.
     processed_pub_ = create_publisher<acoustics_interfaces::msg::WhaleCallProcessed>("/sim/whales/call_processed", 100);    // Notify the orchestrator after every vehicle has evaluated a whale call.
 }
 

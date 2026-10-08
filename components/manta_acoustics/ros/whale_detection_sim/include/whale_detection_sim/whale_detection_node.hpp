@@ -70,7 +70,6 @@ private:
 
     // Publishers
     std::unordered_map<std::string, rclcpp::Publisher<acoustics_interfaces::msg::BearingObservation>::SharedPtr> bearing_pubs_;
-    rclcpp::Publisher<acoustics_interfaces::msg::WhaleDetection>::SharedPtr detection_pub_;
     rclcpp::Publisher<acoustics_interfaces::msg::WhaleCallProcessed>::SharedPtr processed_pub_;
 
     // Subscribers

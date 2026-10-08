@@ -143,9 +143,6 @@ void WhaleDetectionNode::try_process_pending_call() {
             detection.whale_east += position_std_m_ * normal_(rng_);
         }
 
-        // Publish the detection for any interested simulation components.
-        detection_pub_->publish(detection);
-
         // Record the exact detection for later analysis and review.
         detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north << ',' << detection.vehicle_east << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.distance << '\n';
     }
