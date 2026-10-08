@@ -83,7 +83,8 @@ loop
 
     Detection -> Detection : Wait for all vehicle states\nmatching the call cycle
     Detection -> Detection : Evaluate range 
-    Detection -> Detection : Calculate bearings
+    Detection -> Detection : Check reception interval\nfor each in-range vehicle
+    Detection -> Detection : Calculate bearings for accepted calls
 
     Detection ->> AUV1 : BearingObservation
     AUV1 -> AUV1 : Find own position snapshot\nmatching call cycle
