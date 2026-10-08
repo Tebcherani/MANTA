@@ -116,7 +116,7 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     RCLCPP_INFO(get_logger(), "Vehicle '%s' estimated whale position: north %.2f m, east %.2f m.",vehicle_id_.c_str(), estimated_north, estimated_east);
 
     // Reception has already been filtered by the detector.
-    set_whale_trailing_target(estimated_north, estimated_east);
+    set_whale_trailing_target(estimated_north, estimated_east, first.sim_time);
 
     // Acknowledge after the estimated target has been applied or stored.
     acknowledge(true);

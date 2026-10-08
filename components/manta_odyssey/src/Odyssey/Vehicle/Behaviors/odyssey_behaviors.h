@@ -30,6 +30,6 @@ int undock(struct behavior *, int, int);
 int wiggle(struct behavior *, int, int);
 int whale_trailing(struct behavior *, int, int);
 
-void set_whale_trailing_target(double north, double east);
+void set_whale_trailing_target(double north, double east, double measurement_time);
 
 #endif /* ODYSSEY_BEHAVIORS_H */
