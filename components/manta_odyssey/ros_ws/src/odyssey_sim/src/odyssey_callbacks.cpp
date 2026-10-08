@@ -342,7 +342,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     shared.receiver_east = position->east;
 
     // Feed our own measurement directly into this vehicle's estimator.
-    handle_shared_bearing(td::make_shared<acoustics_interfaces::msg::BearingMsg>(shared));
+    handle_shared_bearing(std::make_shared<acoustics_interfaces::msg::BearingMsg>(shared));
 
     // Share the measurement with the other vehicle.
     bearing_pub_->publish(shared);
