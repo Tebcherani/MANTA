@@ -6,48 +6,48 @@ skinparam shadowing false
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
-actor "Launch system" as Launcher
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
-participant "OdysseyNode\n(one per vehicle)" as Odyssey
-participant "AcousticNode" as Detection
-
+participant "OdysseyNode\nauv_1" as AUV1
+participant "OdysseyNode\nauv_2" as AUV2
+participant "WhaleDetectionNode" as Detection
 
 == Vehicle initialization ==
 
-Orchestrator ->> Odyssey : Startup signal
-activate Orchestrator
-activate Odyssey
-Orchestrator ->> Odyssey : Initial simulation time
-Orchestrator ->> Odyssey : Calendar start time
-Odyssey ->> Orchestrator : Vehicle ready
-deactivate Odyssey
+Orchestrator ->> AUV1 : Startup data (ready, initial time, calendar time)
+AUV1 -> AUV1 : Initialize vehicle simulation
+AUV1 ->> Orchestrator : Vehicle ready
 
-Orchestrator -> Orchestrator : Wait for all vehicles
-Orchestrator -> Orchestrator : Start simulation
+Orchestrator ->> AUV2 : Startup data (ready, initial time, calendar time)
+AUV2 -> AUV2 : Initialize vehicle simulation
+AUV2 ->> Orchestrator : Vehicle ready
+Orchestrator -> Orchestrator : Wait until both vehicles are ready
 
 == Simulation loop ==
 
-Orchestrator -> Whale : Request next whale call
-    activate Whale
-    Whale --> Orchestrator : Next whale call
-    deactivate Whale
+loop
+    Orchestrator -> Whale : Request next whale call
+    Whale --> Orchestrator : Next call or no future call
+    Orchestrator -> Orchestrator : Store scheduling response
 
-    Orchestrator -> Orchestrator : Store next whale call
+    Orchestrator ->> Whale : Simulation step 
 
-    Orchestrator ->> Whale : Advance by the specified number of simulation cycles
+    Orchestrator ->> AUV1 : Simulation step
+    AUV1 ->> Orchestrator : Simulation step result
 
-    Orchestrator ->> Odyssey : Advance by the specified number of simulation cycles
-    activate Odyssey
-    Odyssey ->> Orchestrator : Simulation step complete signal
-    deactivate Odyssey
+    Orchestrator ->> AUV2 : Simulation step
+    AUV2 ->> Orchestrator : Simulation step result
 
-    Orchestrator -> Orchestrator : Record result for each vehicle
-    Orchestrator -> Orchestrator : Wait for all vehicles
+    Orchestrator -> Orchestrator : Wait for all active vehicle results
+    Orchestrator -> Orchestrator : Advance shared simulation clock
 
-    Orchestrator -> Detection : Whale call
-    activate Detection
-    Detection ->> Orchestrator : Whale call processed signal
-    deactivate Detection
+    Orchestrator ->> Detection : Whale call (ID, cycle, time, position)
+    Detection ->> Orchestrator : WhaleCallProcessed (bearing receiver IDs)
+
+    AUV1 ->> Orchestrator : BearingProcessed
+    AUV2 ->> Orchestrator : BearingProcessed
+
+    Orchestrator -> Orchestrator : Wait for detector completion\nand required estimator acknowledgments
+end
 
 @enduml

@@ -62,7 +62,10 @@ void OdysseyNode::create_ros_interfaces() {
  */
 void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &whale_qos) {
     calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>( "/sim/calendar_start_time", qos, [this](const std_msgs::msg::Int64::SharedPtr msg) {handle_calendar_start_time(msg);});
-    shared_bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingMsg>("/comms/bearings", whale_qos, [this](const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {handle_shared_bearing(msg);});
+    shared_bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingMsg>("/comms/bearings", whale_qos, [this](const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {
+        if (msg->receiver_id == vehicle_id_) return;
+        handle_shared_bearing(msg);
+    }
     startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_startup(msg);});
     sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {handle_sim_step(msg);});
     sim_time_sub_ = create_subscription<std_msgs::msg::Float64>("/sim/time", qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {handle_sim_time(msg);});

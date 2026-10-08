@@ -9,113 +9,111 @@ skinparam responseMessageBelowArrow true
 actor "Launch system" as Launcher
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
-participant "OdysseyNode\n(one per vehicle)" as Odyssey
-participant "AcousticDetectionNode" as Detection
+participant "OdysseyNode\nauv_1" as AUV1
+participant "OdysseyNode\nauv_2" as AUV2
+participant "WhaleDetectionNode" as Detection
 
 == Node construction ==
 
 Launcher -> Orchestrator : Construct node
-activate Orchestrator
-Orchestrator -> Orchestrator : Load vehicle list
-Orchestrator -> Orchestrator : Create ROS interfaces
-Orchestrator -> Orchestrator : Initialize simulation
-Orchestrator -> Orchestrator : Initialize world state
-deactivate Orchestrator
+Orchestrator -> Orchestrator : Load vehicle list and simulation configuration
+Orchestrator -> Orchestrator : Initialize simulation and world state
+Orchestrator -> Orchestrator : Create ROS interfaces and open logs
 
 Launcher -> Whale : Construct node
-activate Whale
 Whale -> Whale : Load whale configuration
-Whale -> Whale : Generate whale groups
-Whale -> Whale : Create whales
-Whale -> Whale : Generate whale trajectories
-Whale -> Whale : Generate whale call times
+Whale -> Whale : Generate groups and create whales
+Whale -> Whale : Generate trajectories and call times
 Whale -> Whale : Create ROS interfaces
-deactivate Whale
 
-Launcher -> Odyssey : Construct each vehicle node
-activate Odyssey
-Odyssey -> Odyssey : Load vehicle configuration
-Odyssey -> Odyssey : Create ROS interfaces
-deactivate Odyssey
+Launcher -> AUV1 : Construct node
+AUV1 -> AUV1 : Load vehicle configuration
+AUV1 -> AUV1 : Create ROS interfaces
+
+Launcher -> AUV2 : Construct node
+AUV2 -> AUV2 : Load vehicle configuration
+AUV2 -> AUV2 : Create ROS interfaces
 
 Launcher -> Detection : Construct node
-activate Detection
 Detection -> Detection : Load detection configuration
+Detection -> Detection : Open detection log
 Detection -> Detection : Create ROS interfaces
-deactivate Detection
 
 == Vehicle initialization ==
 
-Orchestrator ->> Odyssey : Startup signal
-activate Odyssey
-Odyssey -> Odyssey : Initialize vehicle simulation
-deactivate Odyssey
+Orchestrator ->> AUV1 : Startup ready, initial time, calendar time
+AUV1 -> AUV1 : Initialize native simulation, time,\nmission, vehicle, and world
+AUV1 ->> Orchestrator : Vehicle ready
 
-Orchestrator ->> Odyssey : Initial simulation time
-activate Odyssey
-Odyssey -> Odyssey : Initialize vehicle simulation time
-deactivate Odyssey
+Orchestrator ->> AUV2 : Startup ready, initial time, calendar time
+AUV2 -> AUV2 : Initialize native simulation, time,\nmission, vehicle, and world
+AUV2 ->> Orchestrator : Vehicle ready
 
-Orchestrator ->> Odyssey : Calendar start time
-activate Odyssey
-Odyssey -> Odyssey : Initialize mission
-Odyssey -> Odyssey : Initialize vehicle
-Odyssey -> Odyssey : Initialize world state
-Odyssey ->> Orchestrator : Vehicle ready
-deactivate Odyssey
-
-activate Orchestrator
-Orchestrator -> Orchestrator : Wait for all vehicles
-Orchestrator -> Orchestrator : Start simulation
+Orchestrator -> Orchestrator : Wait until both vehicles are ready
 
 == Simulation loop ==
 
-    loop Until simulation or all missions are complete
+loop
 
-    Orchestrator -> Whale : Request next whale call
-    deactivate Orchestrator
+    Orchestrator -> Whale : Request first call after supplied time
+    Whale -> Whale : Find next scheduled call
+    Whale --> Orchestrator : Next call or no future call
 
-    activate Whale
-    Whale -> Whale : Find first call after current time
-    Whale --> Orchestrator : Next whale call
-    deactivate Whale
-
-    Orchestrator -> Orchestrator : Store next whale call
-
-    Orchestrator ->> Whale : Advance by the specified number of simulation cycles
-    activate Whale
+    Orchestrator ->> Whale : Simulation step 
     Whale -> Whale : Update whale positions and lifecycle
-    deactivate Whale
 
-    Orchestrator ->> Odyssey : Advance by the specified number of simulation cycles
-    activate Odyssey
-    Odyssey -> Odyssey : Update world state
-    Odyssey -> Odyssey : Advance vehicle dynamics
+    Orchestrator ->> AUV1 : Simulation step
+    AUV1 -> AUV1 : Advance vehicle dynamics
+    AUV1 -> AUV1 : Update simulation time
+    AUV1 -> AUV1 : Save completed position snapshot
+    AUV1 ->> Detection : VehicleState (ID, cycle, time, position)
+    AUV1 ->> Orchestrator : SimStepResult
 
-    Odyssey ->> Detection : Vehicle state
-    activate Detection
+    Orchestrator ->> AUV2 : Simulation step 
+    AUV2 -> AUV2 : Advance vehicle dynamics
+    AUV2 -> AUV2 : Update simulation time
+    AUV2 -> AUV2 : Save completed position snapshot
+    AUV2 ->> Detection : VehicleState (ID, cycle, time, position)
+    AUV2 ->> Orchestrator : SimStepResult
 
-    Odyssey ->> Orchestrator : Simulation step complete signal
-    deactivate Odyssey
+    Orchestrator -> Orchestrator : Record results and wait\nfor all active vehicles
+    Orchestrator -> Orchestrator : Check termination conditions and advance shared clock
 
-    Orchestrator -> Orchestrator : Record result for each vehicle
-    Orchestrator -> Orchestrator : Wait for all vehicles
+    Orchestrator ->> Detection : Whale call (ID, cycle, time, position)
 
-    Orchestrator -> Detection : Whale call
-    Detection -> Detection : Wait for all vehicle states
-    Detection -> Detection : Evaluate detection for each vehicle
-    Detection ->> Orchestrator : Whale call processed signal
-    deactivate Detection
+    Detection -> Detection : Wait for all vehicle states\nmatching the call cycle
+    Detection -> Detection : Evaluate range 
+    Detection -> Detection : Calculate bearings
+
+    Detection ->> AUV1 : BearingObservation
+    AUV1 -> AUV1 : Find own position snapshot\nmatching call cycle
+    AUV1 ->> AUV2 : BearingMsg
+    
+    AUV2 -> AUV2 : Find own position snapshot\nmatching call cycle
+    AUV2 ->> AUV1 : BearingMsg
+
+    Detection ->> Orchestrator : WhaleCallProcessed
+
+    AUV1 -> AUV1 : Supply own measurement locally
+    AUV1 -> AUV1 : Collect pair and triangulate
+    AUV1 -> AUV1 : Apply target
+    AUV1 ->> Orchestrator : BearingProcessed
+
+    AUV2 -> AUV2 : Supply own measurement locally
+    AUV2 -> AUV2 : Collect pair and triangulate
+    AUV2 -> AUV2 : Apply target
+    AUV2 ->> Orchestrator : BearingProcessed
+
+    Orchestrator -> Orchestrator : Wait for detector completion and estimator acknowledgments
 end
 
 == Shutdown ==
 
 Orchestrator ->> Whale : Shutdown request
-Orchestrator ->> Odyssey : Shutdown request
-activate Odyssey
-Odyssey -> Odyssey : Write final vehicle metrics
-deactivate Odyssey
-
+Orchestrator ->> AUV1 : Shutdown request
+Orchestrator ->> AUV2 : Shutdown request
 Orchestrator ->> Detection : Shutdown request
+
+Orchestrator -> Orchestrator : Shutdown
 
 @enduml

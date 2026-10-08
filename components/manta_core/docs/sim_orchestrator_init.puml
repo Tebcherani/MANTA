@@ -25,9 +25,10 @@ partition "SimOrchestratorNode()" {
 
         :Create subscribers;
         note right
-            - Init complete (for every vehicle)
-            - Step results (for every vehicle)
-            - Whale call processed
+            - Init complete (for every AUV)
+            - Step results (for every AUV)
+            - Whale call processed by detector
+            - Bearing processed (by one AUV)
         end note
 
         :Create service clients;

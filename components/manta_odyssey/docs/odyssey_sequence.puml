@@ -1,5 +1,5 @@
 @startuml
-title MANTA ROS 2 Simulation Sequence Diagram
+title MANTA Vehicle Initialization and Stepping
 
 skinparam monochrome true
 skinparam shadowing false
@@ -7,29 +7,39 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
-participant "OdysseyNode" as Odyssey
+participant "OdysseyNode\n(one per vehicle)" as Odyssey
 participant "AcousticsNode" as Detection
 
 == Vehicle initialization ==
 
-Orchestrator ->> Odyssey : Startup signal
-activate Odyssey
-Odyssey -> Odyssey : Initialize vehicle simulation
+Orchestrator ->> Odyssey : Startup ready
 Orchestrator ->> Odyssey : Initial simulation time
-Odyssey -> Odyssey : Initialize vehicle simulation time
 Orchestrator ->> Odyssey : Calendar start time
-Odyssey -> Odyssey : Initialize mission
-Odyssey -> Odyssey : Initialize vehicle
-Odyssey -> Odyssey : Initialize world state
+
+activate Odyssey
+Odyssey -> Odyssey : Initialize Odyssey simulation,\ntime, mission, vehicle, and world
 Odyssey ->> Orchestrator : Vehicle ready
+deactivate Odyssey
 
-== Simulation loop ==
+Orchestrator -> Orchestrator : Wait until all vehicles are ready
 
-Orchestrator ->> Odyssey : Advance by the specified number of simulation cycles
-Odyssey -> Odyssey : Update world state
-Odyssey -> Odyssey : Advance vehicle dynamics
-Odyssey ->> Detection : Vehicle state
-Odyssey ->> Orchestrator : Simulation step complete signal
+== Simulation batch ==
+
+Orchestrator ->> Odyssey : SimStep (world state, start cycle/time,\ntimestep, control period, step count)
+activate Odyssey
+Odyssey -> Odyssey : Convert supplied world state
+
+loop
+    Odyssey -> Odyssey : Advance vehicle dynamics
+    opt
+        Odyssey -> Odyssey : Update sensors, navigation,\ncontrol, and mission logic
+    end
+    Odyssey -> Odyssey : Update simulation time
+end
+
+Odyssey -> Odyssey : Save completed position snapshot
+Odyssey ->> Detection : VehicleState (ID, cycle, time, position)
+Odyssey ->> Orchestrator : SimStepResult
 deactivate Odyssey
 
 @enduml

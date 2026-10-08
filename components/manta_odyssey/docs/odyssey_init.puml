@@ -18,6 +18,8 @@ partition "OdysseyNode()" {
 
         :Create publishers;
         note right
+            - Bearing (bearing, vehicle position)
+            - Bearing processed
             - Vehicle init complete
             - Sim step complete
             - Vehicle state (vehicle ID, time, location)
@@ -25,6 +27,9 @@ partition "OdysseyNode()" {
 
         :Create subscribers;
         note right
+            - Own bearing observation
+            - Shared bearings from other vehicles
+              (ignore own published messages)
             - Calendar start time
             - Sim init complete
             - Advance sim by a specified num of cycles
