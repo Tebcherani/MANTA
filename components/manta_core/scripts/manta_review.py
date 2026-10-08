@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-from manta_core.manta_config import load_yaml
+from manta_load import load_yaml
 from paths import ROOT, MISSION_DIR, VENV_EXEC
 
 

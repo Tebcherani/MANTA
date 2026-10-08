@@ -1,7 +1,3 @@
 #!/usr/bin/env bash
-
-set -e
-
-MANTA_ROOT="$(cd "$(dirname "$0")" && pwd)"
-
-exec python3 "$MANTA_ROOT/scripts/manta_runner.py" "$@"
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec python3 "$ROOT_DIR/components/manta_core/scripts/manta_main.py" "$@"

@@ -1,21 +1,20 @@
 import subprocess
 import sys
 
-from manta_core.manta_build import run_build
+from components.manta_core.scripts.manta_build import run_build
 from manta_core.manta_config import load_yaml, parse_args
-from manta_core.manta_down import run_down
-from manta_core.manta_environment import get_host_environment
+from components.manta_core.scripts.manta_down import run_down
+from components.manta_core.scripts.manta_environment import get_host_environment
 from manta_core.manta_monte_carlo import run_monte_carlo
-from manta_core.manta_review import run_review
-from manta_core.manta_missions import generate_missions
+from components.manta_core.scripts.manta_review import run_review
+from components.manta_core.scripts.manta_missions import generate_missions
 from manta_core.manta_run import prepare_runtime
 from manta_core.manta_sweep import run_monte_carlo_sweep
-from paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, MISSION_DIR
+from components.manta_core.scripts.paths import ROOT, DEV_COMPOSE_PATH, DOCKER_COMPOSE_PATH, MISSION_DIR
 
 def main() -> int:
     args = parse_args()
 
-    if args.command == "down": return run_down()
     if args.command == "review": return run_review(scenario=args.scenario, plot=args.plot)
 
     try:

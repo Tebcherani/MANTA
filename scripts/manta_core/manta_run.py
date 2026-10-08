@@ -4,36 +4,8 @@ import sys
 import yaml
 
 from manta_core.manta_config import get_whale_count, load_plugin
-from manta_core.manta_missions import generate_missions
 from pathlib import Path
 from paths import ROOT, DOCKER_COMPOSE_PATH, ENV_PATH
-
-
-def container_path(configured_path: str) -> str:
-    """Convert a repository-relative host path to its `/odyssey` container path."""
-    host_path = (ROOT / configured_path).resolve()
-
-    try:
-        relative_path = host_path.relative_to(ROOT.resolve())
-    except ValueError as error:
-        raise ValueError(f"Path must remain inside MANTA: {host_path}") from error
-
-    return f"/odyssey/{relative_path.as_posix()}"
-
-
-def prepare_runtime(sim_config: dict, config_path: Path) -> tuple[Path, Path]:
-    """Generate missions, runtime environment, and Docker Compose configuration."""
-
-    generate_missions(sim_config, config_path)
-    print_config_summary(sim_config, config_path)
-
-    write_runtime_env(sim_config)
-    compose_path = write_runtime_compose(sim_config, DOCKER_COMPOSE_PATH)
-
-    print(f"Generated environment: {ENV_PATH}")
-    print(f"Generated Compose file: {compose_path}")
-
-    return compose_path
 
 
 def print_config_summary(config: dict, config_path: Path) -> None:
@@ -167,14 +139,7 @@ def whale_service(config: dict, log_dir: str, ros_domain_id: int) -> dict:
         })
 
     elif scenario_type == "trailing":
-        trailing = scenario["trailing"]
-
-        params.update({
-            "initialization_mode": "fixed",
-            "initial_north": 0.0,
-            "initial_east": 0.0,
-            "initial_heading_degrees": 0.0,
-        })
+        params["initialization_mode"] = "fixed"
 
     else:
         raise ValueError(f"Whale simulation is not configured for scenario '{scenario_type}'.")
@@ -258,96 +223,3 @@ def whale_detection_service(config: dict, log_dir: str, ros_domain_id: int) -> d
             f"exec ros2 run whale_detection_sim whale_detection_node --ros-args {arguments}",
         ],
     }
-
-
-def write_runtime_compose(config: dict, compose_path: Path | None = None, project_name: str = "manta", ros_domain_id: int = 1) -> Path:
-    if compose_path is None: compose_path = DOCKER_COMPOSE_PATH
-    compose_path.parent.mkdir(parents=True, exist_ok=True)
-
-    scenario_type = config["scenario"]["type"]
-    tracking_enabled = scenario_type == "trailing"
-    call_update_interval = float(config["scenario"]["trailing"].get("call_update_interval", 0.0)) if tracking_enabled else None
-    data_dir = container_path(config["output"]["data_directory"])
-    log_dir = container_path(config["output"]["log_directory"])
-    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
-    simulation = config["simulation"]
-    sample_period = float(config["output"].get("auv_sample_period", 2.0))
-
-    services = {
-        vehicle["id"]: vehicle_service(vehicle, data_dir, log_dir, sample_period, ros_domain_id, tracking_enabled, call_update_interval)
-        for vehicle in config["vehicles"]
-    }
-
-    if scenario_type in {"picket_line", "trailing"}:
-        services["whale_sim"] = whale_service(config, log_dir, ros_domain_id)
-        services["whale_detection_sim"] = whale_detection_service(config, log_dir, ros_domain_id)
-
-    vehicle_list = f"[{', '.join(vehicle_ids)}]"
-
-    services["sim_orchestrator"] = {
-        "image": "odyssey_sim_dev",
-        "environment": {
-            "ROS_DOMAIN_ID": str(ros_domain_id),
-            "ROS_LOG_DIR": log_dir,
-            "SIM_LOG_PATH": f"{log_dir}/sim_orchestrator.log",
-        },
-        "volumes": [
-            {
-                "type": "bind",
-                "source": str(ROOT),
-                "target": "/odyssey",
-            }
-        ],
-        "command": [
-            "/bin/bash",
-            "-lc",
-            "source /opt/ros/jazzy/setup.bash\n"
-            "source /odyssey/.build/ros/install/setup.bash\n"
-            "ros2 run sim_orchestrator sim_orchestrator_node "
-            f'--ros-args -p "vehicle_ids:={vehicle_list}" '
-            f'-p "data_directory:={data_dir}" '
-            f'-p "timestep:={simulation["timestep"]}" '
-            f'-p "control_period:={simulation["control_period"]}" '
-            f'-p "max_steps:={simulation["max_steps"]}" '
-            f'-p "steps_per_message:={simulation.get("steps_per_message", 1)}"',
-        ],
-    }
-
-    document = {
-        "name": project_name,
-        "services": services,
-    }
-
-    compose_path.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
-    return compose_path
-
-
-#-------------------------------------------------------
-# Environment file generation
-#-------------------------------------------------------
-
-def write_runtime_env(config: dict) -> None:
-    """Write Docker Compose environment variables for the configured MANTA fleet."""
-    ENV_PATH.parent.mkdir(parents=True, exist_ok=True)
-    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
-
-    lines = [
-        f"HOST_UID={os.getuid()}",
-        f"HOST_GID={os.getgid()}",
-        f"MANTA_VEHICLE_IDS=[{', '.join(vehicle_ids)}]",
-        f"MANTA_DATA_DIR={container_path(config['output']['data_directory'])}",
-        f"MANTA_LOG_DIR={container_path(config['output']['log_directory'])}",
-    ]
-
-    for vehicle in config["vehicles"]:
-        prefix = "".join(character.upper() if character.isalnum() else "_" for character in vehicle["id"])
-        fault_path = container_path(vehicle["fault"]) if vehicle.get("fault") else ""
-
-        lines.extend([
-            f"{prefix}_TYPE={vehicle['type']}",
-            f"{prefix}_MISSION={container_path(vehicle['mission'])}",
-            f"{prefix}_MODEL={container_path(vehicle['model'])}",
-            f"{prefix}_FAULT={fault_path}",
-        ])
-
-    ENV_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
