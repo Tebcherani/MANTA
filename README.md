@@ -1,13 +1,13 @@
 # MANTA
 
-MANTA is a ROS 2 and Docker-based simulation framework for evaluating autonomous underwater vehicle (AUV) fleets on a shared world and synchronized simulation timeline.
+MANTA is a ROS 2 and Docker simulation framework for evaluating autonomous underwater vehicle (AUV) missions on a shared world and synchronized simulation timeline.
 
 The current missions use Odyssey AUVs, stochastic North Atlantic right whale movement and calling, and simulated acoustic detection:
 
-- **Picket line:** vehicles patrol assigned line segments and record detections without leaving their patrols.
-- **Trailing:** vehicles use detected whale-call locations to update their tracking waypoints, according to the configured update interval.
+- **Picket line:** vehicles patrol assigned line segments and record whale-call detections.
+- **Trailing:** a vehicle follows detected whale-call locations, with configurable position uncertainty and waypoint-update intervals.
 
-MANTA supports mission generation, synchronized simulation stepping, repeated Monte Carlo realizations, mission-specific sweeps, and result review. The acoustics baseline uses a fixed three-dimensional detection radius; it does not model propagation, noise, receiver performance, or detector uncertainty. The trailing configuration can bypass the range threshold with `receive_all_calls: true`.
+Each mission owns its configuration, service definitions, mission generator, sweeps, and review scripts. Shared build, runtime, service construction, and Monte Carlo utilities live in `components/manta_core/scripts/`.
 
 ## Quick start
 
@@ -15,19 +15,21 @@ MANTA supports mission generation, synchronized simulation stepping, repeated Mo
 
 - Git
 - Docker Engine or Docker Desktop with Docker Compose
-- Python 3.10 or newer and virtual-environment support
+- Python 3.10 or newer with virtual-environment support
 
-The development image provides ROS 2 Jazzy and native build dependencies. Host-side Python dependencies are recorded in the root `requirements.txt`.
+The development image provides ROS 2 Jazzy and native build dependencies. Host Python dependencies are listed in `requirements.txt`.
 
 ```bash
 git clone <MANTA_REPOSITORY_URL>
 cd MANTA
+
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-source .venv/bin/activate
+
+chmod +x manta picket_line trailing
 ```
 
-MANTA currently keeps all components in one repository; cloning does not require submodules.
+Mission launchers use `.venv/bin/python`. All components currently reside in one repository.
 
 ### Build
 
@@ -35,138 +37,165 @@ MANTA currently keeps all components in one repository; cloning does not require
 ./manta build
 ```
 
-This builds the development image, generates Odyssey data structures, compiles Odyssey's native libraries, and builds the component ROS packages in Release mode. Shared ROS build output is stored in `.build/ros/`, including its `build/`, `install/`, and `log/` directories. Odyssey also creates native build products inside its component.
+This builds the development image, generates Odyssey data structures, compiles native libraries, and builds the ROS packages.
 
-The build command does not select a mission.
-
-### Generate mission files
-
-```bash
-./manta generate picket_line
-./manta generate trailing
-```
-
-The configured generator receives the mission config path and output directory. Generated Odyssey `.mi` files go to:
-
-- `output/picket_line/missions/`
-- `output/trailing/missions/`
-
-There is one mission file per configured vehicle. `generate` creates mission files only; it does not prepare Docker runtime files or start a simulation.
+Shared ROS build output is stored in `.build/ros/`. Odyssey native build products remain inside its component.
 
 ### Run
 
 ```bash
-./manta run picket_line
-# Or:
-./manta run trailing
+./picket_line run
+./trailing run
 ```
 
-`run` generates the selected mission files, prepares root-level `manta.env` and `compose.ros.yaml`, and starts the runtime services. These runtime files describe the most recently prepared normal run.
+Run one normal mission at a time. Both commands generate mission files, write root-level `manta.env` and `compose.ros.yaml`, and start the configured services.
+
+Stop the normal-run services with:
 
 ```bash
 ./manta down
 ```
 
+### Sweep
+
+```bash
+./picket_line sweep
+./trailing sweep accuracy
+./trailing sweep comms
+```
+
+Sweeps run repeated Monte Carlo realizations internally. There is no separate standalone Monte Carlo CLI command.
+
 ### Review
 
 ```bash
-./manta review picket_line tracks
-./manta review trailing tracks
-./manta review picket_line sweep
-./manta review trailing sweep
+./picket_line review tracks
+./picket_line review sweep
+
+./trailing review tracks
+./trailing review sweep accuracy
+./trailing review sweep comms
 ```
 
-Review scripts are selected from the mission config and run using `.venv/bin/python`. Track plots require simulation results; sweep plots require completed sweep summaries.
+Review commands plot existing results without preparing a new simulation.
 
-## Command reference
-
-```text
-./manta <command> [mission] [plot]
-```
-
-Mission names are discovered from `missions/*/config.yaml`. The Python CLI currently calls this argument `scenario` internally.
+## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `./manta build` | Build the Docker image and native/ROS components. |
-| `./manta dev` | Open a development container. |
-| `./manta down` | Stop and remove the generated runtime services and orphan containers. |
-| `./manta generate <mission>` | Generate files using the mission's configured generator. |
-| `./manta run <mission>` | Prepare and launch the selected simulation. |
-| `./manta review <mission> tracks` | Run its configured track-review script. |
-| `./manta review <mission> sweep` | Run its configured sweep-review script. |
-| `./manta monte_carlo <mission>` | Run repeated realizations using the current shared experiment machinery. |
-| `./manta monte_carlo_sweep <mission>` | Load and execute its configured sweep function. |
+| `./manta build` | Build the development image and native/ROS components. |
+| `./manta down` | Stop and remove the generated normal-run services. |
+| `./picket_line run` | Run the picket-line mission. |
+| `./picket_line sweep` | Sweep AUV fleet size. |
+| `./picket_line review tracks` | Plot picket-line trajectories and detections. |
+| `./picket_line review sweep` | Plot fleet-size sweep results. |
+| `./trailing run` | Run the trailing mission. |
+| `./trailing sweep accuracy` | Sweep call-position uncertainty. |
+| `./trailing sweep comms` | Sweep call waypoint-update intervals. |
+| `./trailing review tracks` | Plot trailing trajectories and tracking metrics. |
+| `./trailing review sweep accuracy` | Plot the accuracy sweep. |
+| `./trailing review sweep comms` | Plot the update-interval sweep. |
 
 ```bash
 ./manta --help
+./picket_line --help
+./trailing --help
 ```
+
+The `comms` experiment varies how often detected calls update the tracking waypoint. It does not currently simulate an acoustic communication channel.
 
 ## Repository organization
 
-**`components/` contains simulator capabilities. `missions/` contains experiment definitions and mission-specific tools.**
-
 | Location | Contents |
 | --- | --- |
-| `components/manta_core/ros/manta_interfaces/` | Shared stepping, world-state, and vehicle-state messages. |
-| `components/manta_core/ros/sim_orchestrator/` | Shared simulation clock, stepping, whale-call synchronization, and shutdown. |
-| `components/manta_odyssey/` | Odyssey native source, models, plugin manifest, and ROS adapter under `ros_ws/src/odyssey_sim/`. |
-| `components/manta_whale_sim/ros/` | `whale_interfaces` and `whale_sim`. |
-| `components/manta_acoustics/ros/` | `acoustics_interfaces` and `whale_detection_sim`. |
-| `missions/picket_line/` | Config, Odyssey generator, fleet-size sweep, and review scripts. |
-| `missions/trailing/` | Config, Odyssey generator, call-update-interval sweep, and review scripts. |
-| `scripts/manta_core/` | Current Python runner utilities, generation/review/sweep dispatch, and Monte Carlo machinery. |
-| `scripts/manta_runner.py` | CLI entry point used by `./manta`. |
-| `scripts/paths.py` | Main-project paths. |
-| `output/` | Generated mission files, simulation data, logs, and experiment results. |
-| `.build/ros/` | Generated shared ROS build workspace. |
-| `.venv/` | Shared host Python environment. |
-| `requirements.txt` | Python environment dependencies. |
+| `components/manta_core/scripts/` | Shared command entry point, paths, loading, service construction, runtime preparation, and Monte Carlo utilities. |
+| `components/manta_core/ros/manta_interfaces/` | Shared simulation messages. |
+| `components/manta_core/ros/sim_orchestrator/` | Simulation clock, stepping, call synchronization, and shutdown. |
+| `components/manta_odyssey/` | Odyssey native source, vehicle models, plugin manifest, and ROS adapter. |
+| `components/manta_whale_sim/ros/` | Whale simulation and interfaces. |
+| `components/manta_acoustics/ros/` | Acoustic detection simulation and interfaces. |
+| `missions/picket_line/scripts/` | Entry point, service definitions, mission generation, and fleet-size sweep. |
+| `missions/trailing/scripts/` | Entry point, service definitions, mission generation, and trailing sweeps. |
+| `missions/<mission>/review/` | Plotting scripts and result parsers. |
+| `missions/<mission>/config.yaml` | Mission configuration. |
+| `output/` | Generated missions, simulation data, logs, and sweep results. |
+| `.build/ros/` | Shared ROS build workspace. |
+| `.venv/` | Host Python environment. |
 | `compose.dev.yaml`, `Dockerfile.dev` | Development container definition. |
 | `compose.ros.yaml`, `manta.env` | Generated normal-run configuration. |
 
-The Python `scripts/manta_core/` directory and the component `components/manta_core/` are distinct locations. The Python-package relocation ZIP is not part of this layout.
+Root launchers dispatch to:
 
-## Mission configuration
+```text
+manta       → components/manta_core/scripts/manta_main.py
+picket_line → missions/picket_line/scripts/picket_line_main.py
+trailing    → missions/trailing/scripts/trailing_main.py
+```
 
-Each mission owns its config:
+### Shared Python utilities
+
+| Module | Responsibility |
+| --- | --- |
+| `manta_load.py` | Load YAML and plugin manifests, translate container paths, and load mission service builders. |
+| `manta_services.py` | Construct reusable ROS and vehicle Compose services. |
+| `manta_compose.py` | Write Compose documents from service dictionaries. |
+| `manta_environment.py` | Prepare environment settings. |
+| `manta_missions.py` | Invoke the configured mission generator. |
+| `manta_runtime.py` | Coordinate normal-run preparation. |
+| `manta_monte_carlo.py` | Execute repeated realizations and calculate statistics. |
+| `manta_realization.py` | Prepare isolated realizations, run containers, and collect results. |
+| `manta_dataclasses.py` | Configuration and result data structures. |
+| `paths.py` | Repository paths. |
+
+Mission service builders supply their settings to the shared utilities. Monte Carlo realizations use those same builders with realization-specific paths, seeds, and ROS domains.
+
+## Configuration
+
+Each mission owns its configuration:
 
 ```text
 missions/picket_line/config.yaml
 missions/trailing/config.yaml
 ```
 
-Paths in these configs are relative to the MANTA repository root, rather than the config's own directory.
+Configured file paths are relative to the repository root.
 
-### Script selection
+### Mission generation and review
 
 Picket line:
 
 ```yaml
 mission_generation:
-  generator: missions/picket_line/generate_odyssey_mission.py
+  generator: missions/picket_line/scripts/picket_line_mission.py
   output_directory: ./output/picket_line/missions
-  sweep: missions/picket_line/sweep.py
 
 review:
   tracks: missions/picket_line/review/plot_tracks.py
-  sweep: missions/picket_line/review/plot_sweep_metrics.py
+  sweep: missions/picket_line/review/plot_sweep_fleet_size.py
 ```
 
 Trailing:
 
 ```yaml
 mission_generation:
-  generator: missions/trailing/generate_odyssey_mission.py
+  generator: missions/trailing/scripts/trailing_mission.py
   output_directory: ./output/trailing/missions
-  sweep: missions/trailing/sweep.py
 
 review:
   tracks: missions/trailing/review/plot_tracks.py
-  sweep: missions/trailing/review/plot_sweep_metrics.py
+  sweep_accuracy: missions/trailing/review/plot_sweep_call_accuracy.py
+  sweep_comms: missions/trailing/review/plot_sweep_comms_freq.py
 ```
 
-The top-level `sweep:` section stores sweep parameters. The `mission_generation.sweep` entry selects the script. Both sweep scripts expose `run_monte_carlo_sweep(config)`; no function-name setting is needed.
+Mission entry points select sweep scripts directly. The top-level `sweep` section contains experiment parameters; `mission_generation.sweep` is no longer needed.
+
+Generators accept:
+
+```text
+<config_path> <output_directory>
+```
+
+They create one Odyssey `.mi` file per configured vehicle.
 
 ### Vehicles and output
 
@@ -185,9 +214,11 @@ output:
   whale_sample_period: 60.0
 ```
 
-For trailing, use the corresponding paths under `output/trailing/`. Vehicle IDs must be unique. The runner creates one service per configured vehicle; `type: odyssey` matches the ID in `components/manta_odyssey/manta_plugin.yaml`. An empty fault path disables fault injection.
+For trailing, use paths under `output/trailing/`.
 
-Sample periods control recorded trajectory sampling, not the internal physics timestep or event synchronization.
+Vehicle IDs must be unique. The `type` matches a vehicle plugin manifest. An empty fault path disables fault injection.
+
+Sample periods determine trajectory logging frequency, not the physics timestep.
 
 ### Simulation timing
 
@@ -202,149 +233,148 @@ simulation:
 - `timestep`: simulated seconds per physics step.
 - `control_period`: physics steps between vehicle sensor/control updates.
 - `max_steps`: maximum simulation cycles.
-- `steps_per_message`: normal maximum cycles in one batch.
+- `steps_per_message`: maximum cycles in a normal stepping batch.
 
-These example values allow up to three simulated days. The orchestrator shortens batches to reach a scheduled whale-call timestep or the remaining cycle limit. Simulations can end earlier when every vehicle mission completes.
+The example permits up to three simulated days. Batches are shortened to reach whale-call events or the cycle limit. Vehicle mission completion can end a run earlier.
 
-### Mission and component settings
+### Trailing assumptions
 
-The existing `scenario:` section contains mission geometry, patrol parameters, whale settings, and detection settings. Its `type` still selects supported behavior in parts of the launch and evaluation code. Keep the supported `picket_line` or `trailing` type when using those existing behaviors.
+Trailing service definitions specify:
 
-Changing script selection does not by itself make all runtime and evaluation behavior mission-independent.
+- One whale active throughout the mission.
+- Initial whale position at the origin, heading north.
+- Reception of every whale call.
+- Internal grouping parameters required by the shared whale movement model.
 
-## Shared simulation architecture
+Call-position uncertainty and waypoint-update interval remain configurable.
 
-Both current missions use the same orchestrator. It coordinates time and communication; each vehicle's generated `.mi` file and tracking parameters determine what the vehicle does.
+Whale motion and acoustic range calculations use the horizontal north/east plane. Odyssey retains depth for vehicle dynamics and control.
 
-| Runtime component | Responsibility |
+The detector models calls as events rather than acoustic waveforms. It does not currently model propagation, multipath, background noise, or hydrophone-array processing. Tracking uses reported call positions; bearing-based cooperative estimation is future work.
+
+## Simulation architecture
+
+Both missions use the same orchestrator.
+
+| Component | Responsibility |
 | --- | --- |
-| `SimOrchestratorNode` | Initialize time/world state, wait for vehicle readiness, select batches, coordinate whale calls, and request shutdown. |
-| `OdysseyNode` | Execute one vehicle's mission and dynamics, publish state and batch results, and write final metrics. |
-| `WhaleNode` | Generate movement/call schedules, update whale state, and answer `GetNextWhaleCall` requests. |
-| `WhaleDetectionNode` | Evaluate call-to-vehicle distances, publish detections, log results, and acknowledge processed calls. |
+| `SimOrchestratorNode` | Initialize the simulation, coordinate stepping and calls, and request shutdown. |
+| `OdysseyNode` | Execute one vehicle’s mission, dynamics, and control. |
+| `WhaleNode` | Manage all whale trajectories and call schedules. |
+| `WhaleDetectionNode` | Evaluate calls against vehicle states and publish detections. |
 
-The orchestrator does not switch between picket-line and trailing during a run. “All missions complete” means all vehicle mission files have finished executing.
+There is one container per AUV and one whale-simulator container for the entire whale population.
 
 ### Synchronization
 
-1. The orchestrator publishes startup information and waits for all vehicles to report ready.
+1. The orchestrator publishes startup information and waits for vehicle readiness.
 2. It requests the next scheduled whale call.
-3. It publishes a shared `SimStep` batch to vehicle and whale nodes. Those nodes process it asynchronously.
-4. Vehicles publish their state and `SimStepResult`; the orchestrator waits for active vehicles to finish.
-5. If the call has not been reached, another batch advances toward the same known event. The next call is not requested again after every batch.
-6. At the call timestep, the orchestrator publishes `WhaleCall`. The detector waits for matching vehicle-state cycles, evaluates detections, and publishes `WhaleCallProcessed`.
-7. After accepting that acknowledgement, the orchestrator requests the following call and continues.
+3. Vehicle and whale nodes advance on a shared stepping timeline.
+4. Vehicles publish states and batch completion results.
+5. At the call cycle, the orchestrator publishes the call.
+6. The detector evaluates matching vehicle states and acknowledges processing.
+7. The orchestrator requests the next call and continues.
 
-Trailing vehicles also consume detections for tracking. Picket-line vehicles retain their patrol behavior.
+Picket-line vehicles retain their patrol behavior. Trailing vehicles use detections to update their target waypoints.
 
-The current orchestrator intentionally remains coupled to the vehicle–whale–acoustics timing protocol. No orchestrator rewrite is required to run the two supported missions.
+## Sweeps and results
 
-## Monte Carlo and sweeps
-
-```bash
-./manta monte_carlo picket_line
-./manta monte_carlo trailing
-./manta monte_carlo_sweep picket_line
-./manta monte_carlo_sweep trailing
-```
-
-Realizations use deterministic seeds, separate Compose projects and ROS domains, independent data/log directories, and configured timeout/retry handling. Compatible saved results can be loaded to resume experiments. Current evaluation includes detection coverage and vehicle metrics; trailing also includes tracking-distance/error metrics. Convergence uses mission-dependent metrics.
-
-| Mission | Sweep |
+| Experiment | Output directory |
 | --- | --- |
-| Picket line | Fleet size, using `sweep.min_vehicles` and `sweep.max_vehicles`. |
-| Trailing | Call waypoint-update interval, using `sweep.call_update_intervals`. |
+| Picket-line fleet size | `output/picket_line/monte_carlo_sweep/` |
+| Trailing call accuracy | `output/trailing/sweep_accuracy/` |
+| Trailing update interval | `output/trailing/sweep_comms/` |
 
-Normal Monte Carlo results are written under `output/<mission>/monte_carlo/`. Sweep results are written under `output/<mission>/monte_carlo_sweep/`, including `sweep_summary.csv` and per-setting realization results.
+Each sweep writes `sweep_summary.csv` and per-setting realization results. Realizations use separate Compose projects, ROS domains, data directories, and logs.
 
-The shared `manta_sweep.py` loads the configured mission sweep function. Each mission owns the sweep implementation; the shared realization/evaluation code still contains mission-specific assumptions.
+Monte Carlo settings control seeds, worker counts, timeout/retry handling, and convergence. Resume behavior depends on saved results and the checks implemented by each sweep.
+
+Accuracy values specify Gaussian position-error standard deviation per horizontal axis, not a maximum error radius.
+
+### Metrics
+
+- **Detection fraction:** proportion of simulated whale IDs with at least one detected call.
+- **Mean distance:** time-weighted horizontal AUV–whale separation, in kilometres.
+- **Integrated tracking error:** horizontal separation integrated over time, in kilometre-hours.
+- **Vehicle metrics:** mass, energy consumption, and speed.
+
+Detection coverage uses simulator whale IDs. It does not represent acoustic identification of individual animals.
+
+Mean distance equals integrated tracking error divided by the evaluated duration in hours.
 
 ## Adding a mission
 
-1. Create `missions/<name>/config.yaml`. The CLI discovers it automatically.
-2. Add a generator accepting `<config_path> <output_directory>` and select it with `mission_generation.generator`.
-3. Configure vehicle mission paths and output directories consistently.
-4. Optionally provide a sweep exposing `run_monte_carlo_sweep(config)` and standalone review scripts; select them in the config.
-5. Verify generation and review, then test a short run before starting a sweep.
+1. Create `missions/<name>/config.yaml`.
+2. Add a mission generator accepting configuration and output-directory arguments.
+3. Add `<name>_services.py` with `create_services(config, ros_domain_id=1)`.
+4. Add a mission entry point and root launcher.
+5. Add any experiment sweeps and review scripts.
+6. Test a short normal run before repeated experiments.
 
-A new folder enables discovery and configured script dispatch. It does **not** guarantee that arbitrary new simulation behavior works: launch, realization evaluation, and convergence still assume the currently supported whale-monitoring workflows. Extending those behaviors requires corresponding Python changes. The orchestrator can stay unchanged while the same synchronization protocol is used.
-
-## Development and generated output
-
-```bash
-./manta dev
-```
-
-The development container provides ROS 2 Jazzy, mounts the repository at `/odyssey`, and uses the host UID/GID. Host edits are visible inside the container.
-
-Rebuild after native/ROS source, CMake, package metadata, or Docker changes. Python tools and YAML edits generally require regeneration or a new run, without rebuilding ROS.
-
-Runtime services source:
-
-```bash
-source /opt/ros/jazzy/setup.bash
-source /odyssey/.build/ros/install/setup.bash
-```
-
-Typical normal-run data includes `whales.csv`, `whale_calls.csv`, `whale_detections.csv`, vehicle `.obd` files, and vehicle metrics CSVs under `output/<mission>/Data/`, with logs under `Logs/`.
-
-Detection coverage counts unique simulated whale IDs with at least one detected call. It is ground-truth coverage, not acoustic identification of individual whales.
-
-Ignore `.venv/`, `.build/`, component build products, generated runtime files, and generated outputs in Git. Commit mission definitions, source, build manifests, and dependency files. Avoid committing code ZIP archives.
+Core execution utilities are shared, but some result collection and convergence logic still assumes the current whale-monitoring missions. Extend that logic when adding different metrics or mission types.
 
 ## Troubleshooting
 
-### Missing or stale ROS build output
+### Import errors after moving scripts
 
-```bash
-./manta build
+Mission entry points add the core scripts directory before importing shared modules:
+
+```python
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "components" / "manta_core" / "scripts"))
 ```
 
-After moving a ROS package, remove its old CMake cache from the active workspace before rebuilding:
+Core scripts use direct neighboring imports:
 
-```bash
-rm -rf .build/ros/build/<package-name>
-./manta build
+```python
+from paths import ROOT
+from manta_load import load_yaml
 ```
 
-For duplicate package names, keep only one source copy in the searched component directories.
+Remove imports targeting retired modules under `scripts/manta_core/`.
 
-### Generated mission files appear in the wrong directory
+### A sweep exits without running
 
-Check `mission_generation.output_directory` and confirm that the generation wrapper passes it as the second argument to the generator. The generators require explicit config and output paths.
+Confirm the script has a command-line entry point:
 
-### Runtime configuration is stale
-
-```bash
-./manta run trailing
+```python
+if __name__ == "__main__":
+    raise SystemExit(main())
 ```
 
-`run` regenerates the selected runtime configuration. `generate` only writes mission files.
+### Missing generator or plotting script
 
-### Whale-call scheduling service is unavailable
+Check the configured path against the actual file location. Paths are relative to the repository root.
+
+### Configuration snapshot mismatch
+
+Sweeps with snapshot validation reject changed configurations. Preserve the previous experiment by moving its output directory aside before starting a new one.
+
+### AUV initialization failure
+
+Inspect the realization’s console and vehicle logs. Verify that `MISSION_PATH` and `VEHICLE_PATH` point to existing files under the repository mounted at `/odyssey`.
+
+The configured mission path must match the directory passed to the mission generator.
+
+### Missing plotting dependencies
 
 ```bash
-docker compose -f compose.ros.yaml config --services
-docker compose -f compose.ros.yaml logs whale_sim
-```
-
-The current runtime needs `whale_sim`, `whale_detection_sim`, `sim_orchestrator`, and the configured vehicle services.
-
-### Review environment or dependencies are missing
-
-```bash
-python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m pip check
 ```
 
-Both `scripts/paths.py` and the realization metric launcher must use `.venv/bin/python`. Review scripts import their adjacent parser with `from parse_obd import read_obd` when executed directly.
+Mission launchers and plotting subprocesses should use the same virtual environment.
 
-### Incomplete Odyssey output
+### Stale ROS build output
 
-An `.obd` file without the expected mission-start marker may indicate failed initialization or an interrupted run. Inspect simulation logs before diagnosing the plotting code.
+```bash
+./manta build
+```
 
-## Documentation
+Rebuild after native source, ROS interfaces, CMake, or Docker changes. Python and YAML changes generally require a new run rather than a ROS rebuild.
 
-- `docs/manta_sim_sequence.puml`: ROS node interaction sequence. Show repeated stepping batches between call requests and conditional event processing.
-- `docs/Whale_Model_Memo.pdf`: whale-model assumptions, equations, parameters, and evidence.
+## Generated files and version control
+
+Normal-run data includes whale trajectories, calls, detections, vehicle `.obd` files, and vehicle metrics under `output/<mission>/Data/`. Logs are stored under `output/<mission>/Logs/`.
+
+Exclude virtual environments, build products, generated runtime files, and outputs from Git. Commit source, mission definitions, plugin manifests, and dependency files.
