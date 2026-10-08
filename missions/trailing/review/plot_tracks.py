@@ -49,7 +49,7 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> tuple[int, dict[str, str
     plotted = 0
     vehicle_colors = {}
 
-    for name, path in sorted(latest.items()):
+    for index, (name, path) in enumerate(sorted(latest.items())):
         print(f"Plotting vehicle {name}: {path.name}")
 
         try:
@@ -92,7 +92,7 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> tuple[int, dict[str, str
             print(f"Skipping {name}: no valid positions.")
             continue
 
-        line, = ax.plot(east, north, color=AUV_COLOR, linewidth=2.0, label=name, zorder=4)
+        line, = ax.plot(east, north, color=f"C{index % 10}", linewidth=2.0, label=name, zorder=4)
         color = line.get_color()
         vehicle_colors[name] = color
         ax.scatter(east[0], north[0], color=color, marker="o", s=40, zorder=6)  # Vehicle starting position
@@ -392,7 +392,8 @@ def main() -> int:
         print(f"Integrated tracking error: {integrated_error:.3f} km·h")
 
     if np.isfinite(integrated_error):
-        ax.set_title(f"Vehicle and Whale Tracks — Mean distance: {mean_distance / 1000.0:.2f} km")
+        metric_vehicle = sorted(latest)[0]
+        ax.set_title(f"Vehicle and Whale Tracks — {metric_vehicle} mean distance: {mean_distance / 1000.0:.2f} km")
     else:
         ax.set_title("Vehicle and Whale Tracks")
 

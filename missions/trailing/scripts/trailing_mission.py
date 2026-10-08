@@ -18,9 +18,7 @@ from textwrap import dedent
 
 
 if len(sys.argv) != 3:
-    raise SystemExit(
-        f"Usage: {Path(sys.argv[0]).name} <config_path> <output_directory>"
-    )
+    raise SystemExit(f"Usage: {Path(sys.argv[0]).name} <config_path> <output_directory>")
 
 config_path = Path(sys.argv[1]).resolve()
 OUTPUT_DIR = Path(sys.argv[2]).resolve()
@@ -30,12 +28,12 @@ class MissionConfig:
     """Configuration values needed to generate trailing missions."""
 
     vehicles: list[dict]
-    start_n: float
-    start_e: float
     mission_duration: float
     vehicle_speed: float
     vehicle_depth: float
     vehicle_capture: float
+    vehicle_separation_m: float
+    following_distance_m: float
 
     @property
     def fleet_size(self) -> int:
@@ -61,22 +59,34 @@ class MissionConfig:
             raise ValueError("Trailing depth must be greater than zero.")
         if self.vehicle_capture <= 0.0:
             raise ValueError("Trailing capture distance must be greater than zero.")
+        if self.fleet_size != 2:
+            raise ValueError("This formation requires exactly two vehicles.")
+        if self.vehicle_separation_m <= 0.0:
+            raise ValueError("Vehicle separation must be greater than zero.")
+        if self.following_distance_m <= 0.0:
+            raise ValueError("Following distance must be greater than zero.")
 
 
-def generate_mission_file(config: MissionConfig, vehicle_id: str) -> Path:
-    """Generate and write the trailing mission for one Odyssey."""
+def generate_mission_file(config: MissionConfig, vehicle: dict) -> Path:
+    """Generate a trailing mission using this vehicle's starting position."""
+    vehicle_id = vehicle["id"]
+    start = vehicle["start"]
+    start_n = float(start["north"])
+    start_e = float(start["east"])
+    vehicle_index = config.vehicles.index(vehicle)
+    side_offset_m = (-0.5 if vehicle_index == 0 else 0.5) * config.vehicle_separation_m
 
     mission = dedent(
         f"""\
         # Generated MANTA trailing mission for {vehicle_id}
         UseSim 1
 
-        # Start at the configured trailing location.
-        sensor: m_pos_n(m) {config.start_n:.6f}
-        sensor: m_pos_e(m) {config.start_e:.6f}
+        # Start at this vehicle's configured position.
+        sensor: m_pos_n(m) {start_n:.6f}
+        sensor: m_pos_e(m) {start_e:.6f}
         sensor: m_depth(m) {config.vehicle_depth:.6f}
-        sensor: real_x(m) {config.start_n:.6f}
-        sensor: real_y(m) {config.start_e:.6f}
+        sensor: real_x(m) {start_n:.6f}
+        sensor: real_y(m) {start_e:.6f}
         sensor: real_z(m) {config.vehicle_depth:.6f}
 
         state: picket_line
@@ -94,11 +104,13 @@ def generate_mission_file(config: MissionConfig, vehicle_id: str) -> Path:
           b_arg: depth_cutoff_active(bool) 0
           b_arg: cutoff_depth(m) {config.vehicle_depth + 25.0:.6f}
 
-        # Move toward the most recently detected whale-call location.
+        # Follow an assigned position behind the latest whale-call location.
         behavior: whale_trailing 3
           b_arg: depth(m) {config.vehicle_depth:.6f}
           b_arg: speed(m/s) {config.vehicle_speed:.6f}
           b_arg: capture(m) {config.vehicle_capture:.6f}
+          b_arg: following_distance(m) {config.following_distance_m:.6f}
+          b_arg: side_offset(m) {side_offset_m:.6f}
         """
     )
 
@@ -123,26 +135,26 @@ def load_mission_config() -> MissionConfig:
     # Load configuration values
     config = MissionConfig(
         vehicles=config.get("vehicles", []),
-        start_n=0.0,
-        start_e=0.0,
         mission_duration=float(scenario["duration"]),
         vehicle_speed=float(patrol["speed"]),
         vehicle_depth=float(patrol["depth"]),
         vehicle_capture=float(patrol.get("capture", 25.0)),
+        vehicle_separation_m=float(trailing["vehicle_separation_m"]),
+        following_distance_m=float(trailing["following_distance_m"]),
     )
 
     return config
 
 
 def main() -> int:
-    """Load the MANTA configuration and generate the Odyssey mission files."""
+    """Generate one whale-trailing mission per vehicle at its configured start."""
 
     config = load_mission_config()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Generate mission file for each vehicle
     for vehicle in config.vehicles:
-        mission_path = generate_mission_file(config=config, vehicle_id=vehicle["id"])
+        mission_path = generate_mission_file(config=config, vehicle=vehicle)
         print(f"Generated {mission_path}")
 
     return 0

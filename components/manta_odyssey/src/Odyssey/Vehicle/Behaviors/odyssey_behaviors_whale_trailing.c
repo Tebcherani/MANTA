@@ -22,13 +22,17 @@ behavior: whale_trailing
   b_arg: depth(m) 0
   b_arg: speed(m/s) 0
   b_arg: capture(m) 5
+  b_arg: following_distance(m) 0
+  b_arg: side_offset(m) 0
 */
 
 int whale_trailing(struct behavior *b, int priority, int level) {
     enum {
         DEPTH,
         SPEED,
-        CAPTURE
+        CAPTURE,
+        FOLLOWING_DISTANCE,
+        SIDE_OFFSET
     };
 
     struct command *cmd = &vvp->c[priority];
@@ -53,8 +57,14 @@ int whale_trailing(struct behavior *b, int priority, int level) {
         return 0;
     }
 
-    north_difference = target_north - read_sensor(M_POS_N);
-    east_difference = target_east - read_sensor(M_POS_E);
+    /* Fixed northward formation:
+    * stay behind the call in north and offset laterally in east.
+    */
+    const double formation_north = target_north - bArg(FOLLOWING_DISTANCE);
+    const double formation_east = target_east + bArg(SIDE_OFFSET);
+
+    north_difference = formation_north - read_sensor(M_POS_N);
+    east_difference = formation_east - read_sensor(M_POS_E);
     distance = sqrt(north_difference * north_difference + east_difference * east_difference);
 
     update_sensor(WP_DTW, distance);

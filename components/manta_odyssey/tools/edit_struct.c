@@ -647,6 +647,8 @@ behavior: whale_trailing
   b_arg:                       depth(m) 0
   b_arg:                     speed(m/s) 0
   b_arg:                     capture(m) 5
+  b_arg:         following_distance(m) 0
+  b_arg:                side_offset(m) 0
 
 END
  *----------------------------------------------------------------------*/

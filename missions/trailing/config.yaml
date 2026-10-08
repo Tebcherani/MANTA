@@ -77,6 +77,8 @@ scenario:
   trailing:
     call_update_interval: 0.0 #50000.0 # seconds
     call_position_std_m: 0.0
+    vehicle_separation_m: 2000.0
+    following_distance_m: 1000.0
 
   duration: 86400.0  # 1 day
 
@@ -124,3 +126,15 @@ vehicles:
     mission: ./output/trailing/missions/auv_1.mi
     model: ./components/manta_odyssey/config/Borealis.vd
     fault: ""
+    start:
+      north: -1000.0
+      east: -1000.0
+
+  - id: auv_2
+    type: odyssey
+    mission: ./output/trailing/missions/auv_2.mi
+    model: ./components/manta_odyssey/config/Borealis.vd
+    fault: ""
+    start:
+      north: -1000.0
+      east: 1000.0
