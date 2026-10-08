@@ -10,10 +10,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-#include "manta_interfaces/msg/vehicle_state.hpp"
-#include "whale_interfaces/msg/whale_call.hpp"
+#include "acoustics_interfaces/msg/bearing_observation.hpp"
 #include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "acoustics_interfaces/msg/whale_detection.hpp"
+#include "manta_interfaces/msg/vehicle_state.hpp"
+#include "whale_interfaces/msg/whale_call.hpp"
 
 class WhaleDetectionNode : public rclcpp::Node {
 public:
@@ -68,6 +69,7 @@ private:
     // ---------------------------------------------------------------------
 
     // Publishers
+    std::unordered_map<std::string, rclcpp::Publisher<acoustics_interfaces::msg::BearingObservation>::SharedPtr> bearing_pubs_;
     rclcpp::Publisher<acoustics_interfaces::msg::WhaleDetection>::SharedPtr detection_pub_;
     rclcpp::Publisher<acoustics_interfaces::msg::WhaleCallProcessed>::SharedPtr processed_pub_;
 

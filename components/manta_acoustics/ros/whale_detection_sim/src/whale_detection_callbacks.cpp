@@ -104,6 +104,22 @@ void WhaleDetectionNode::try_process_pending_call() {
         // Ignore vehicles outside the configured acoustic detection range.
         if (!receive_all_calls_ && distance > detection_range_) continue;
 
+        // Perfect bearing measurement: clockwise from north, in radians.
+        const double delta_north = pending_call_.north - vehicle.north;
+        const double delta_east = pending_call_.east - vehicle.east;
+
+        // Direction is undefined when receiver and whale occupy the same position.
+        if (std::hypot(delta_north, delta_east) > 1.0e-6) {
+            acoustics_interfaces::msg::BearingObservation observation;
+            observation.receiver_id = vehicle_id;
+            observation.call_cycle = pending_call_.cycle;
+            observation.sim_time = pending_call_.sim_time;
+            observation.bearing_rad = std::atan2(delta_east, delta_north);
+            observation.bearing_std_rad = 0.0;
+
+            bearing_pubs_.at(vehicle_id)->publish(observation);
+        }
+
         // Populate the detection with the exact vehicle and whale states used.
         acoustics_interfaces::msg::WhaleDetection detection;
         detection.vehicle_id = vehicle_id;
