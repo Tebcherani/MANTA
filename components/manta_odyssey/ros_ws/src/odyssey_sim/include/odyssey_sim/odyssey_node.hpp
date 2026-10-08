@@ -4,7 +4,9 @@
 #include <cstdint>
 #include <ctime>
 #include <deque>
+#include <map>
 #include <string>
+#include <unordered_map>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -71,6 +73,7 @@ class OdysseyNode : public rclcpp::Node {
         double pending_call_time_ = 0.0;
         double next_call_update_time_ = 0.0;
         std::deque<BearingPosition> bearing_positions_;
+        std::map<std::uint64_t, std::unordered_map<std::string, acoustics_interfaces::msg::BearingMsg>> bearing_pairs_;
 
         // Mission
         bool log_decimation_configured_ = false;

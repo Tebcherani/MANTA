@@ -28,9 +28,46 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
     try_finish_init();                                      // Complete startup if all other required initialization data is available.
 }
 
+/**
+ * Collect the shared bearings needed by this vehicle's estimator.
+ *
+ * Measurements are grouped by call cycle and receiver ID. Once both AUV
+ * measurements arrive, verify their call times before triangulation.
+ *
+ * @param msg Bearing and measurement-position data shared by an AUV.
+ */
 void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {
+    // Only tracking vehicles collect bearings for localization.
     if (!tracking_enabled_) return;
-    RCLCPP_INFO(get_logger(), "Shared bearing from %s: %.6f rad at simulation time %.3f", msg->receiver_id.c_str(), msg->bearing_rad, msg->sim_time);
+
+    // Retrieve or create the measurement pair for this call cycle.
+    auto &pair = bearing_pairs_[msg->call_cycle];
+
+    // Keep only the first measurement received from each AUV.
+    if (pair.find(msg->receiver_id) != pair.end()) return;
+
+    pair.emplace(msg->receiver_id, *msg);
+
+    // Wait until both vehicles have shared their measurements.
+    if (pair.count("auv_1") == 0 || pair.count("auv_2") == 0) return;
+
+    const auto &first = pair.at("auv_1");
+    const auto &second = pair.at("auv_2");
+
+    // Reject measurements with different call times.
+    if (std::abs(first.sim_time - second.sim_time) > 1.0e-9) {
+        RCLCPP_ERROR(get_logger(), "Bearings at cycle %llu have different call times.", static_cast<unsigned long long>(msg->call_cycle));
+        bearing_pairs_.erase(msg->call_cycle);
+        return;
+    }
+
+    // This vehicle now has the pair needed to estimate the whale position.
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' has both bearings for cycle %llu.", vehicle_id_.c_str(), static_cast<unsigned long long>(msg->call_cycle));
+
+    // Triangulation will go here next.
+
+    // Remove the collected pair after processing.
+    bearing_pairs_.erase(msg->call_cycle);
 }
 
 /**
