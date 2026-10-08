@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import yaml
 from matplotlib.ticker import FuncFormatter
 from parse_obd import read_obd
 
@@ -235,7 +236,24 @@ def compute_tracking_error(latest: dict[str, Path], name: str) -> tuple[float, f
 
     interpolated_north = np.interp(whale_time, vehicle_time, vehicle_north)
     interpolated_east = np.interp(whale_time, vehicle_time, vehicle_east)
-    distance = np.hypot(interpolated_north - whale_north, interpolated_east - whale_east)
+    
+    # Read the same formation settings used to generate the missions.
+    config_path = ROOT / "missions" / "trailing" / "config.yaml"
+    with config_path.open("r", encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
+    trailing = config["scenario"]["trailing"]
+    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
+    vehicle_index = vehicle_ids.index(name)
+
+    following_distance_m = float(trailing["following_distance_m"])
+    side_offset_m = (-0.5 if vehicle_index == 0 else 0.5) * float(trailing["vehicle_separation_m"])
+
+    # Remove the commanded offset before calculating distance.
+    north_error = interpolated_north - whale_north + following_distance_m
+    east_error = interpolated_east - whale_east - side_offset_m
+    distance = np.hypot(north_error, east_error)
+
     integrated_distance_m_seconds = float(np.trapezoid(distance, whale_time))
     duration = float(whale_time[-1] - whale_time[0])
     mean_distance_m = integrated_distance_m_seconds / duration
@@ -349,8 +367,8 @@ def main() -> int:
             distance_labels.append(f"{name}: unavailable")
             continue
 
-        print(f"{name} mean distance: {mean_distance / 1000.0:.3f} km")
-        print(f"{name} integrated distance: {integrated_distance:.3f} km·h")
+        print(f"{name} mean distance error: {mean_distance / 1000.0:.3f} km")
+        print(f"{name} integrated distance error: {integrated_distance:.3f} km·h")
         distance_labels.append(f"{name}: {mean_distance / 1000.0:.2f} km")
 
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -366,7 +384,7 @@ def main() -> int:
 
     title = "Vehicle and Whale Tracks"
     if distance_labels:
-        title += "\nMean distance — " + "; ".join(distance_labels)
+        title += "\nMean distance error — " + "; ".join(distance_labels)
 
     ax.set_title(title)
     km_formatter = FuncFormatter(lambda value, _: f"{value / 1000:g}")
