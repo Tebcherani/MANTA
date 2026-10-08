@@ -6,22 +6,21 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
-participant "OdysseyNode\n(one per vehicle)" as Odyssey
-participant "OdysseyDetectionNode" as Detection
+participant "WhaleDetectionNode" as Detection
+participant "OdysseyNode\nauv_1" as AUV1
+participant "OdysseyNode\nauv_2" as AUV2
 
-Orchestrator -> Detection : Whale call
+AUV1 ->> Detection : Vehicle state (cycle, time, position)
 activate Detection
-Odyssey ->> Detection : Vehicle state
-Detection -> Detection : Wait for all vehicle states
-Detection -> Detection : Evaluate detection for each vehicle
-note left
-    Detected if whale in detection range
-end note
-Detection -> Detection : Add noise to whale call readings
-note left
-    Normal(0.0, call_position_std_m)
-end note
-Detection ->> Orchestrator : Whale call processed signal
-deactivate Detection
+AUV2 ->> Detection : Vehicle state (cycle, time, position)
+Orchestrator ->> Detection : Whale call (cycle, time, position)
 
-@enduml
+Detection -> Detection : Wait for both vehicle states\nmatching the call cycle
+Detection -> Detection : Check range and calculate\nbearing for each receiver
+
+Detection ->> AUV1 : BearingObservation
+
+Detection ->> AUV2 : BearingObservation
+
+Detection ->> Orchestrator : WhaleCallProcessed\n(includes bearing receiver IDs)
+deactivate Detection
