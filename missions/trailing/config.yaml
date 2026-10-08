@@ -84,6 +84,7 @@ scenario:
 
   detection:
     radius: 11000.0 # meters
+    bearing_std_degrees: 0.0
 
   patrol:
     speed: 1.5

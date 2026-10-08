@@ -115,22 +115,25 @@ void WhaleDetectionNode::try_process_pending_call() {
         // A bearing is undefined at zero separation.
         if (distance <= 1.0e-6) continue;
 
-        // Perfect bearing measurement: clockwise from north, in radians.
-        const double delta_north = pending_call_.north - vehicle.north;
-        const double delta_east = pending_call_.east - vehicle.east;
-
         // Direction is undefined when receiver and whale occupy the same position.
-        if (std::hypot(delta_north, delta_east) > 1.0e-6) {
+        if (distance > 1.0e-6) {
             acoustics_interfaces::msg::BearingObservation observation;
             observation.receiver_id = vehicle_id;
             observation.call_cycle = pending_call_.cycle;
             observation.sim_time = pending_call_.sim_time;
-            observation.bearing_rad = std::atan2(delta_east, delta_north);
-            observation.bearing_std_rad = 0.0;
+            
+            // Add an independent Gaussian angular error to this receiver's bearing.
+            const double true_bearing = std::atan2(east_difference, north_difference);
+            const double bearing_error = bearing_std_rad_ > 0.0 ? bearing_std_rad_ * normal_(rng_) : 0.0;
+            const double measured_bearing = true_bearing + bearing_error;
 
+            // Wrap the measured angle to the interval [-pi, pi].
+            observation.bearing_rad = std::atan2(std::sin(measured_bearing), std::cos(measured_bearing));
+            observation.bearing_std_rad = bearing_std_rad_;
+                        
             bearing_pubs_.at(vehicle_id)->publish(observation);
             bearing_receiver_ids.push_back(vehicle_id);
-            
+
             last_received_call_times_[vehicle_id] = pending_call_.sim_time;
         }
 

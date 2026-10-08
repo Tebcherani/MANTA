@@ -23,6 +23,11 @@ void WhaleDetectionNode::load_config() {
     call_update_interval_ = declare_parameter<double>("call_update_interval", 0.0);
     if (!std::isfinite(call_update_interval_) || call_update_interval_ < 0.0) throw std::runtime_error("call_update_interval must be finite and nonnegative.");
 
+    // Configure angular measurement uncertainty.
+    const double bearing_std_degrees = declare_parameter<double>("bearing_std_degrees", 0.0);
+    if (!std::isfinite(bearing_std_degrees) || bearing_std_degrees < 0.0) throw std::runtime_error("bearing_std_degrees must be finite and nonnegative.");
+    bearing_std_rad_ = bearing_std_degrees * std::acos(-1.0) / 180.0;
+
     // Initialize detection noise parameters
     position_std_m_ = declare_parameter<double>("call_position_std_m", 0.0);
     if (!std::isfinite(position_std_m_) || position_std_m_ < 0.0) throw std::runtime_error("call_position_std_m must be finite and nonnegative.");
