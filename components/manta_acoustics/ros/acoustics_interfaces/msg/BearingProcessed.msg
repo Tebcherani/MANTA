@@ -1,0 +1,4 @@
+string vehicle_id
+uint64 call_cycle
+float64 sim_time
+bool estimate_valid

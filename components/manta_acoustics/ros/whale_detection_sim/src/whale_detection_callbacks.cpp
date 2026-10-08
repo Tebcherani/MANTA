@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iomanip>
+#include <vector>
 
 //----------------------------------------------------
 // Handle functions
@@ -92,6 +93,9 @@ void WhaleDetectionNode::try_process_pending_call() {
         }
     }
 
+    // Record which vehicles actually receive a bearing for this call.
+    std::vector<std::string> bearing_receiver_ids;
+
     // Every vehicle is at the call cycle, so evaluate its detection distance.
     for (const std::string &vehicle_id : vehicle_ids_) {
         const auto &vehicle = latest_vehicle_states_.at(vehicle_id);
@@ -118,6 +122,7 @@ void WhaleDetectionNode::try_process_pending_call() {
             observation.bearing_std_rad = 0.0;
 
             bearing_pubs_.at(vehicle_id)->publish(observation);
+            bearing_receiver_ids.push_back(vehicle_id);
         }
 
         // Populate the detection with the exact vehicle and whale states used.
@@ -150,6 +155,7 @@ void WhaleDetectionNode::try_process_pending_call() {
     processed.whale_id = pending_call_.whale_id;
     processed.cycle = pending_call_.cycle;
     processed.sim_time = pending_call_.sim_time;
+    processed.bearing_receiver_ids = bearing_receiver_ids;
 
     // Clear the pending state before publishing the acknowledgement.
     pending_call_available_ = false;

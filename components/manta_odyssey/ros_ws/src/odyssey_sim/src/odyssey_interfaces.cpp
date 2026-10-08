@@ -7,6 +7,7 @@
  * @param step_qos QoS used for simulation-step results and vehicle states.
  */
 void OdysseyNode::create_publishers(const rclcpp::QoS &qos) {
+    bearing_processed_pub_ = create_publisher<acoustics_interfaces::msg::BearingProcessed>("/sim/bearing_processed", rclcpp::QoS(100).reliable());
     bearing_pub_ = create_publisher<acoustics_interfaces::msg::BearingMsg>("/comms/bearings", rclcpp::QoS(100).reliable());
     ready_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", qos);
     step_result_pub_ = create_publisher<manta_interfaces::msg::SimStepResult>("/" + vehicle_id_ + "/step_result", qos);

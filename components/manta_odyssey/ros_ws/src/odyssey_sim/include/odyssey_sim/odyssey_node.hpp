@@ -16,8 +16,9 @@
 #include "manta_interfaces/msg/sim_step.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
 #include "manta_interfaces/msg/vehicle_state.hpp"
-#include "acoustics_interfaces/msg/bearing_observation.hpp"
 #include "acoustics_interfaces/msg/bearing_msg.hpp"
+#include "acoustics_interfaces/msg/bearing_observation.hpp"
+#include "acoustics_interfaces/msg/bearing_processed.hpp"
 
 class OdysseyNode : public rclcpp::Node {
     public:
@@ -103,6 +104,7 @@ class OdysseyNode : public rclcpp::Node {
         // ---------------------------------------------------------------------
 
         // Publishers
+        rclcpp::Publisher<acoustics_interfaces::msg::BearingProcessed>::SharedPtr bearing_processed_pub_;
         rclcpp::Publisher<acoustics_interfaces::msg::BearingMsg>::SharedPtr bearing_pub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
         rclcpp::Publisher<manta_interfaces::msg::SimStepResult>::SharedPtr step_result_pub_;

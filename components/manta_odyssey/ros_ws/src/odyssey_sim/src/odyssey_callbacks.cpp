@@ -54,9 +54,21 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     const auto &first = pair.at("auv_1");
     const auto &second = pair.at("auv_2");
 
+    // Report that this vehicle has finished processing this bearing pair.
+    const auto acknowledge = [this, &msg](bool estimate_valid) {
+        acoustics_interfaces::msg::BearingProcessed processed;
+        processed.vehicle_id = vehicle_id_;
+        processed.call_cycle = msg->call_cycle;
+        processed.sim_time = msg->sim_time;
+        processed.estimate_valid = estimate_valid;
+
+        bearing_processed_pub_->publish(processed);
+    };
+
     // Reject measurements with different call times.
     if (std::abs(first.sim_time - second.sim_time) > 1.0e-9) {
         RCLCPP_ERROR(get_logger(), "Bearings at cycle %llu have different call times.", static_cast<unsigned long long>(msg->call_cycle));
+        acknowledge(false);
         bearing_pairs_.erase(msg->call_cycle);
         return;
     }
@@ -79,6 +91,7 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
 
     if (!std::isfinite(determinant) || std::abs(determinant) < 1.0e-6) {
         RCLCPP_WARN(get_logger(), "Cannot triangulate nearly parallel bearings.");
+        acknowledge(false);
         bearing_pairs_.erase(msg->call_cycle);
         return;
     }
@@ -91,6 +104,7 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     if (!std::isfinite(first_range) || !std::isfinite(second_range) ||
         first_range < 0.0 || second_range < 0.0) {
         RCLCPP_WARN(get_logger(), "Bearing rays have no valid forward intersection.");
+        acknowledge(false);
         bearing_pairs_.erase(msg->call_cycle);
         return;
     }
@@ -110,6 +124,9 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
         pending_call_time_ = first.sim_time;
         pending_call_available_ = true;
     }
+
+    // Acknowledge after the estimated target has been applied or stored.
+    acknowledge(true);
 
     // Remove the collected pair after processing.
     bearing_pairs_.erase(msg->call_cycle);

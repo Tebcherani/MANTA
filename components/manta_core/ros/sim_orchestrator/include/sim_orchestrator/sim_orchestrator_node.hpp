@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -12,10 +13,11 @@
 #include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/int64.hpp"
 
+#include "acoustics_interfaces/msg/bearing_processed.hpp"
+#include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "manta_interfaces/msg/sim_step.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
 #include "whale_interfaces/msg/whale_call.hpp"
-#include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "whale_interfaces/srv/get_next_whale_call.hpp"
 
 extern "C" {
@@ -63,6 +65,7 @@ private:
     void create_subscribers(const rclcpp::QoS &qos);
 
     // Callbacks
+    void handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg);
     void handle_next_whale_call_response(rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future);
     void handle_shutdown_timer();
     void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id);
@@ -70,6 +73,7 @@ private:
     void handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
 
     void check_all_step_results_received();
+    void check_whale_call_processing_complete();
 
     // Outputs
     void publish_current_step();
@@ -105,6 +109,11 @@ private:
     bool next_whale_call_available_ = false;
     bool current_batch_reaches_whale_call_ = false;
     bool waiting_for_whale_call_processing_ = false;
+    bool whale_detection_complete_ = false;
+    bool wait_for_bearing_processing_ = false;
+
+    std::unordered_set<std::string> expected_bearing_processors_;
+    std::unordered_set<std::string> completed_bearing_processors_;
 
     whale_interfaces::msg::WhaleCall next_whale_call_;
     std::ofstream whale_call_log_;
@@ -125,6 +134,7 @@ private:
     rclcpp::Publisher<whale_interfaces::msg::WhaleCall>::SharedPtr whale_call_pub_;
 
     // Subscribers
+    rclcpp::Subscription<acoustics_interfaces::msg::BearingProcessed>::SharedPtr bearing_processed_sub_;
     std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
     std::vector<rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr> step_result_subs_;
     rclcpp::Subscription<acoustics_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;

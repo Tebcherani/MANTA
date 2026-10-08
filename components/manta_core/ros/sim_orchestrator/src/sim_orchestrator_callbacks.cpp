@@ -8,6 +8,32 @@
 //----------------------------------------------------
 
 /**
+ * Record one vehicle's completion of the current bearing estimate.
+ *
+ * Acknowledgments may arrive before the detector's completion message.
+ * Both valid and invalid estimates count as finished processing.
+ */
+void SimOrchestratorNode::handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {
+    // Accept acknowledgments only for the call currently being processed.
+    if (!waiting_for_whale_call_processing_) return;
+
+    if (msg->call_cycle != next_whale_call_.cycle ||
+        std::abs(msg->sim_time - next_whale_call_.sim_time) > 1.0e-9) {
+        return;
+    }
+
+    // Ignore messages from vehicles outside the configured fleet.
+    if (vehicle_states_.find(msg->vehicle_id) == vehicle_states_.end()) {
+        return;
+    }
+
+    // A set automatically ignores duplicate acknowledgments.
+    completed_bearing_processors_.insert(msg->vehicle_id);
+
+    check_whale_call_processing_complete();
+}
+
+/**
  * Process the whale simulator's response containing the next scheduled call.
  *
  * If no future call is available, the orchestrator resumes simulation stepping. If the returned call occurs at or before the current simulation time, it is
@@ -33,9 +59,14 @@ void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_i
     if (next_whale_call_.sim_time <= sim_state_.sim_time) {
         next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<std::uint64_t>(sim_state_.current_cycle - 1) : 0;
 
+        // Prepare the barrier before any acknowledgments can arrive.
+        whale_detection_complete_ = false;
+        expected_bearing_processors_.clear();
+        completed_bearing_processors_.clear();
+        waiting_for_whale_call_processing_ = true;
+
         publish_whale_call(next_whale_call_);
         next_whale_call_available_ = false;
-        waiting_for_whale_call_processing_ = true;
         return;
     }
 
@@ -180,16 +211,50 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
         return;
     }
 
-    // Allow the next whale call to be requested.
-    waiting_for_whale_call_processing_ = false;
+    // The detector has finished and reported which receivers got bearings.
+    whale_detection_complete_ = true;
 
-    // Search only after every vehicle has evaluated the previous call.
-    request_next_whale_call(msg->sim_time);
+    // The current estimator requires bearings from both named AUVs.
+    bool first_received = false;
+    bool second_received = false;
+
+    for (const auto &receiver_id : msg->bearing_receiver_ids) {
+        if (receiver_id == "auv_1") first_received = true;
+        if (receiver_id == "auv_2") second_received = true;
+    }
+
+    expected_bearing_processors_.clear();
+
+    if (wait_for_bearing_processing_ && first_received && second_received) {
+        expected_bearing_processors_.insert("auv_1");
+        expected_bearing_processors_.insert("auv_2");
+    }
+
+    // If fewer than two bearings were published, no pair can be estimated.
+    check_whale_call_processing_complete();
 }
 
 //----------------------------------------------------
 // Helper functions
 //----------------------------------------------------
+
+/**
+ * Continue only after detection and all required estimators finish.
+ */
+void SimOrchestratorNode::check_whale_call_processing_complete() {
+    if (!waiting_for_whale_call_processing_ ||
+        !whale_detection_complete_) {
+        return;
+    }
+
+    // Wait for every required vehicle, regardless of acknowledgment order.
+    for (const auto &vehicle_id : expected_bearing_processors_) {
+        if (completed_bearing_processors_.count(vehicle_id) == 0) return;
+    }
+
+    waiting_for_whale_call_processing_ = false;
+    request_next_whale_call(next_whale_call_.sim_time);
+}
 
 /**
  * Continue simulation coordination after all active vehicles finish a batch.
@@ -250,11 +315,16 @@ void SimOrchestratorNode::check_all_step_results_received() {
     if (current_batch_reaches_whale_call_) {
         next_whale_call_.cycle = static_cast<std::uint64_t>(sim_state_.current_cycle - 1);
 
+        // Prepare the barrier before any acknowledgments can arrive.
+        whale_detection_complete_ = false;
+        expected_bearing_processors_.clear();
+        completed_bearing_processors_.clear();
+        waiting_for_whale_call_processing_ = true;
+
         publish_whale_call(next_whale_call_);
 
         next_whale_call_available_ = false;
         current_batch_reaches_whale_call_ = false;
-        waiting_for_whale_call_processing_ = true;
         return;
     }
 
