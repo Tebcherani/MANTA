@@ -23,7 +23,12 @@ def main() -> int:
     sweep_parser.add_argument("experiment", choices=("accuracy", "comms"))
 
     review_parser = commands.add_parser("review", help="Review simulation results.")
-    review_parser.add_argument("plot", choices=("tracks",))
+    review_commands = review_parser.add_subparsers(dest="plot", required=True)
+
+    review_commands.add_parser("tracks", help="Plot vehicle and whale tracks.")
+
+    review_sweep_parser = review_commands.add_parser("sweep", help="Plot sweep results.")
+    review_sweep_parser.add_argument("experiment", choices=("accuracy", "comms"))
 
     args = parser.parse_args()
     config_path = ROOT / "missions" / "trailing" / "config.yaml"
@@ -35,7 +40,7 @@ def main() -> int:
             raise ValueError("Expected a trailing scenario.")
 
         if args.command == "sweep":
-            # Select the mission's accuracy or call-update interval sweep.
+            # Run the selected experiment with the current Python interpreter.
             sweep_scripts = {
                 "accuracy": "trailing_sweep_accuracy.py",
                 "comms": "trailing_sweep_comms.py",
@@ -49,8 +54,9 @@ def main() -> int:
             return subprocess.run(command, cwd=ROOT, check=False).returncode
 
         if args.command == "review":
-            # Review existing results without preparing a new simulation.
-            plot_path = (ROOT / config["review"][args.plot]).resolve()
+            # Select the configured track or sweep plotting script.
+            review_key = f"sweep_{args.experiment}" if args.plot == "sweep" else "tracks"
+            plot_path = (ROOT / config["review"][review_key]).resolve()
 
             if not plot_path.is_relative_to(ROOT):
                 raise ValueError("Review script must be inside MANTA.")
@@ -60,7 +66,7 @@ def main() -> int:
             command = [sys.executable, str(plot_path)]
             return subprocess.run(command, cwd=ROOT, check=False).returncode
 
-        # Load simulation helpers only for the run command.
+        # Prepare services only for a normal simulation run.
         from trailing_services import create_services
         from manta_runtime import prepare_runtime
 

@@ -13,7 +13,8 @@ mission_generation:
 
 review:
   tracks: missions/trailing/review/plot_tracks.py
-  sweep: missions/trailing/review/plot_sweep_comms_freq.py
+  sweep_comms: missions/trailing/review/plot_sweep_comms_freq.py
+  sweep_accuracy: missions/trailing/review/plot_sweep_call_accuracy.py
 
 #--------------------------------------------------
 # Output directories

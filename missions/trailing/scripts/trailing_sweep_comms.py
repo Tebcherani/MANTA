@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+"""Sweep the trailing mission's call-update interval."""
+
 import argparse
 import copy
 import csv
@@ -18,6 +21,7 @@ from manta_monte_carlo import compute_monte_carlo_statistics, load_completed_res
 
 def interval_directory_name(interval: float) -> str:
     """Create a stable directory name for one call-update interval."""
+    interval = float(interval)
 
     if interval.is_integer():
         return f"interval_{int(interval):06d}"
@@ -26,8 +30,7 @@ def interval_directory_name(interval: float) -> str:
 
 
 def load_completed_trailing_sweep_results(summary_path: Path) -> dict[float, TrailingSweepResult]:
-    """Load completed call-update interval results."""
-
+    """Load previously completed interval summaries."""
     if not summary_path.is_file():
         return {}
 
@@ -39,13 +42,13 @@ def load_completed_trailing_sweep_results(summary_path: Path) -> dict[float, Tra
 
 
 def prepare_interval_config(sim_config: dict, interval: float, interval_directory: Path, mission_directory: Path) -> tuple[dict, Path]:
-    """Create and save one trailing call-update interval configuration."""
-
+    """Create the configuration and mission paths for one interval."""
     interval_config = copy.deepcopy(sim_config)
     interval_config["scenario"]["trailing"]["call_update_interval"] = interval
 
     for vehicle in interval_config["vehicles"]:
-        vehicle["mission"] = f"./{(mission_directory / f'{vehicle['id']}.mi').relative_to(ROOT)}"
+        mission_path = mission_directory / f"{vehicle['id']}.mi"
+        vehicle["mission"] = f"./{mission_path.relative_to(ROOT).as_posix()}"
 
     interval_directory.mkdir(parents=True, exist_ok=True)
     interval_config_path = interval_directory / "simulation.yaml"
@@ -55,8 +58,7 @@ def prepare_interval_config(sim_config: dict, interval: float, interval_director
 
 
 def summarize_interval_results(interval: float, results: list[MonteCarloResult], confidence_level: float) -> TrailingSweepResult:
-    """Aggregate tracking metrics for one call-update interval."""
-
+    """Calculate tracking means and confidence intervals."""
     if not results:
         raise ValueError(f"Call-update interval {interval:g} s has no Monte Carlo results.")
 
@@ -88,72 +90,91 @@ def summarize_interval_results(interval: float, results: list[MonteCarloResult],
 
 
 def write_trailing_sweep_summary(path: Path, results: dict[float, TrailingSweepResult]) -> None:
-    """Write the call-update sweep summary."""
-
+    """Save interval summaries in ascending interval order."""
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    with path.open("w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(
-            file,
-            fieldnames=(
-                "call_update_interval",
-                "realizations",
-                "mean_distance_km",
-                "distance_ci_lower_km",
-                "distance_ci_upper_km",
-                "distance_ci_half_width_km",
-                "mean_integrated_tracking_error_km_hours",
-                "integrated_error_ci_lower_km_hours",
-                "integrated_error_ci_upper_km_hours",
-                "integrated_error_ci_half_width_km_hours",
-                "confidence_level",
-            ),
-        )
-        writer.writeheader()
+    fieldnames = (
+        "call_update_interval",
+        "realizations",
+        "mean_distance_km",
+        "distance_ci_lower_km",
+        "distance_ci_upper_km",
+        "distance_ci_half_width_km",
+        "mean_integrated_tracking_error_km_hours",
+        "integrated_error_ci_lower_km_hours",
+        "integrated_error_ci_upper_km_hours",
+        "integrated_error_ci_half_width_km_hours",
+        "confidence_level",
+    )
 
-        for interval in sorted(results):
-            writer.writerow(asdict(results[interval]))
+    with path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(asdict(results[interval]) for interval in sorted(results))
 
 
 def run_monte_carlo_sweep(sim_config: dict) -> int:
-    """Run one Monte Carlo experiment for every trailing call-update interval."""
-
+    """Run a Monte Carlo experiment for each configured update interval."""
     if sim_config.get("scenario", {}).get("type") != "trailing":
         raise ValueError("The call-update interval sweep requires the trailing scenario.")
 
-    vehicles = sim_config.get("vehicles", [])
-
-    if len(vehicles) != 1:
+    if len(sim_config.get("vehicles", [])) != 1:
         raise ValueError("The trailing call-update interval sweep requires exactly one vehicle.")
 
     sweep_config = TrailingSweepConfig.from_dict(sim_config.get("sweep", {}))
     monte_carlo_config = MonteCarloConfig.from_dict(sim_config.get("monte_carlo", {}))
+
     sweep_output_dir = ROOT / "output" / "trailing" / "sweep_comms"
+    sweep_output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Prevent results from different configurations being mixed on resume.
+    snapshot_path = sweep_output_dir / "sweep_config.yaml"
+
+    if snapshot_path.is_file():
+        if load_yaml(snapshot_path) != sim_config:
+            raise ValueError(f"Configuration changed. Move {sweep_output_dir} aside before starting a new experiment.")
+    else:
+        # Existing results without a snapshot cannot be verified.
+        if any(sweep_output_dir.iterdir()):
+            raise ValueError(f"Existing sweep data has no configuration snapshot. Move {sweep_output_dir} aside before starting.")
+
+        snapshot_path.write_text(yaml.safe_dump(sim_config, sort_keys=False), encoding="utf-8")
+
     summary_path = sweep_output_dir / "sweep_summary.csv"
     completed_results = load_completed_trailing_sweep_results(summary_path)
 
-    sweep_output_dir.mkdir(parents=True, exist_ok=True)
-
     for interval_index, interval in enumerate(sweep_config.call_update_intervals):
+        interval = float(interval)
         print(f"\n=== Trailing Monte Carlo sweep: {interval:g} s call-update interval ===")
 
         if interval in completed_results:
             print(f"Skipping {interval:g} s; sweep results already exist.")
             continue
 
+        # Keep generated missions and realization outputs within this sweep.
         interval_name = interval_directory_name(interval)
         interval_directory = sweep_output_dir / interval_name
         mission_directory = sweep_output_dir / "missions" / interval_name
-        interval_config, interval_config_path = prepare_interval_config(sim_config, interval, interval_directory, mission_directory)
+
+        interval_config, interval_config_path = prepare_interval_config(
+            sim_config, interval, interval_directory, mission_directory
+        )
         generate_missions(interval_config, interval_config_path, mission_directory)
+
         project_offset = (interval_index + 1) * 10000
         status = run_monte_carlo(interval_config, interval_directory, project_offset)
 
         if status != 0:
             return status
 
-        realization_results = list(load_completed_results(interval_directory / "summary.csv", monte_carlo_config.random_seed).values())
-        sweep_result = summarize_interval_results(interval, realization_results, monte_carlo_config.confidence_level)
+        # Aggregate the completed realizations and save the sweep checkpoint.
+        realization_results = list(
+            load_completed_results(interval_directory / "summary.csv", monte_carlo_config.random_seed).values()
+        )
+        sweep_result = summarize_interval_results(
+            interval, realization_results, monte_carlo_config.confidence_level
+        )
+
         completed_results[interval] = sweep_result
         write_trailing_sweep_summary(summary_path, completed_results)
 
@@ -165,6 +186,29 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
         )
 
     print(f"Sweep data: {summary_path}")
-    print("Run './manta review trailing sweep' to generate the sweep plots.")
+    print("Run './trailing review sweep comms' to generate the sweep plots.")
 
     return 0
+
+
+def main() -> int:
+    """Load the supplied configuration and start the sweep."""
+    parser = argparse.ArgumentParser(description="Sweep trailing call-update intervals.")
+    parser.add_argument("config_path", type=Path)
+    args = parser.parse_args()
+
+    try:
+        config = load_yaml(args.config_path.resolve())
+        return run_monte_carlo_sweep(config)
+
+    except (ValueError, KeyError, OSError) as error:
+        print(f"Trailing communications sweep error: {error}", file=sys.stderr)
+        return 1
+
+    except KeyboardInterrupt:
+        print("\nTrailing communications sweep interrupted.", file=sys.stderr)
+        return 130
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
