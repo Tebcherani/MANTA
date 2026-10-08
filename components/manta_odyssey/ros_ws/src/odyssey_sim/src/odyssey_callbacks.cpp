@@ -1,5 +1,7 @@
 #include "odyssey_sim/odyssey_node.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <stdexcept>
 
 extern "C" {
@@ -24,6 +26,11 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
     calendar_start_time_ = static_cast<time_t>(msg->data);  // Convert the timestamp carried by the ROS message to the native time type.
     calendar_start_time_received_ = true;                   // Record that this required startup value has been received.
     try_finish_init();                                      // Complete startup if all other required initialization data is available.
+}
+
+void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {
+    if (!tracking_enabled_) return;
+    RCLCPP_INFO(get_logger(), "Shared bearing from %s: %.6f rad at simulation time %.3f", msg->receiver_id.c_str(), msg->bearing_rad, msg->sim_time);
 }
 
 /**
@@ -214,23 +221,28 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
     try_finish_init();                                                                              // Complete startup if the required time values have also arrived.
 }
 
-/**
- * Store the latest whale-call location for the next waypoint update.
- */
-void OdysseyNode::handle_whale_detection(const acoustics_interfaces::msg::WhaleDetection::SharedPtr msg) {
-    if (!tracking_enabled_) return;
-    if (msg->vehicle_id != vehicle_id_) return;
+void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {
+    if (!tracking_enabled_ || msg->receiver_id != vehicle_id_) return;
 
-    if (call_update_interval_ <= 0.0) {
-        set_whale_trailing_target(msg->whale_north, msg->whale_east);
-        RCLCPP_INFO(get_logger(), "Vehicle '%s' updated its waypoint from the call at %.1f s.", vehicle_id_.c_str(), msg->sim_time);
+    // Find this vehicle's position at the measurement time.
+    const auto position = std::find_if(bearing_positions_.rbegin(), bearing_positions_.rend(), [&msg](const BearingPosition &sample) {return sample.cycle == msg->call_cycle;});
+
+    if (position == bearing_positions_.rend()) {
+        RCLCPP_ERROR(get_logger(), "No vehicle position available for bearing at cycle %llu.", static_cast<unsigned long long>(msg->call_cycle));
         return;
     }
 
-    pending_call_north_ = msg->whale_north;
-    pending_call_east_ = msg->whale_east;
-    pending_call_time_ = msg->sim_time;
-    pending_call_available_ = true;
+    // Share the sensor measurement with this vehicle's own position.
+    acoustics_interfaces::msg::BearingMsg shared;
+    shared.receiver_id = vehicle_id_;
+    shared.call_cycle = msg->call_cycle;
+    shared.sim_time = msg->sim_time;
+    shared.bearing_rad = msg->bearing_rad;
+    shared.bearing_std_rad = msg->bearing_std_rad;
+    shared.receiver_north = position->north;
+    shared.receiver_east = position->east;
+
+    bearing_pub_->publish(shared);
 }
 
 //----------------------------------------------------
