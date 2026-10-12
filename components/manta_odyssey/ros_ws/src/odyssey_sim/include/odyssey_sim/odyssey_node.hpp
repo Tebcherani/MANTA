@@ -69,7 +69,6 @@ class OdysseyNode : public rclcpp::Node {
 
         // Call detections
         std::deque<BearingPosition> bearing_positions_;
-        std::map<std::uint64_t, std::unordered_map<std::string, acoustics_interfaces::msg::BearingMsg>> bearing_pairs_;
         bool latest_bearing_available_ = false;
         acoustics_interfaces::msg::BearingMsg latest_bearing_;
         

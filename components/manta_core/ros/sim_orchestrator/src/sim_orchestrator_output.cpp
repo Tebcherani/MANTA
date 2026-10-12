@@ -26,6 +26,13 @@ void SimOrchestratorNode::publish_current_step() {
     const int remaining_cycles = sim_config_.num_cycles - sim_state_.current_cycle;
     int batch_steps = std::min(steps_per_message_, remaining_cycles);
 
+    // Stop at the next communication boundary anchored to time zero.
+    if (communication_steps_ > 0) {
+        const int steps_into_interval = sim_state_.current_cycle % communication_steps_;
+        const int steps_until_communication = communication_steps_ - steps_into_interval;
+        batch_steps = std::min(batch_steps, steps_until_communication);
+    }
+
     // Shorten the batch if it would pass the next scheduled whale call.
     current_batch_reaches_whale_call_ = false;
     if (next_whale_call_available_) {

@@ -1,6 +1,8 @@
 #include "sim_orchestrator/sim_orchestrator_node.hpp"
 
 #include <cstdint>
+#include <cmath>
+#include <limits>
 #include <filesystem>
 #include <stdexcept>
 
@@ -26,10 +28,28 @@ void SimOrchestratorNode::initialize_simulation_config() {
     sim_config_.timestep = declare_parameter<double>("timestep", sim_config_.timestep);
     sim_config_.control_period = static_cast<int>(declare_parameter<std::int64_t>("control_period", sim_config_.control_period));
     sim_config_.num_cycles = static_cast<int>(declare_parameter<std::int64_t>("max_steps", sim_config_.num_cycles));
+    
     steps_per_message_ = static_cast<int>(declare_parameter<std::int64_t>("steps_per_message", 1));
-
-    // Every published batch must contain at least one simulation step.
     if (steps_per_message_ < 1) throw std::runtime_error("steps_per_message must be at least 1.");
+
+    const double communication_interval = declare_parameter<double>("communication_interval", 0.0);
+    if (!std::isfinite(communication_interval) || communication_interval < 0.0) throw std::runtime_error("communication_interval must be finite and nonnegative.");
+
+    if (communication_interval > 0.0) {
+        if (!std::isfinite(sim_config_.timestep) || sim_config_.timestep <= 0.0) throw std::runtime_error("timestep must be finite and positive.");
+
+        const double interval_steps = communication_interval / sim_config_.timestep;
+        const double rounded_steps = std::round(interval_steps);
+
+        if (!std::isfinite(interval_steps) ||
+            rounded_steps < 1.0 ||
+            rounded_steps > std::numeric_limits<int>::max() ||
+            std::abs(interval_steps - rounded_steps) > 1.0e-6) {
+            throw std::runtime_error("communication_interval must be a whole number of simulation timesteps.");
+        }
+
+        communication_steps_ = static_cast<int>(rounded_steps);
+    }
 }
 
 /**

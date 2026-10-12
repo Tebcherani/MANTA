@@ -28,101 +28,66 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
     try_finish_init();                                      // Complete startup if all other required initialization data is available.
 }
 
-/**
- * Collect the shared bearings needed by this vehicle's estimator.
- *
- * Measurements are grouped by call cycle and receiver ID. Once both AUV
- * measurements arrive, verify their call times before triangulation.
- *
- * @param msg Bearing and measurement-position data shared by an AUV.
- */
 void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {
-    // Only tracking vehicles collect bearings for localization.
     if (!tracking_enabled_) return;
 
-    // Retrieve or create the measurement pair for this call cycle.
-    auto &pair = bearing_pairs_[msg->call_cycle];
+    // Estimate only upon receiving the other AUV's message.
+    if (msg->receiver_id == vehicle_id_) return;
 
-    // Keep only the first measurement received from each AUV.
-    if (pair.find(msg->receiver_id) != pair.end()) return;
+    if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
 
-    pair.emplace(msg->receiver_id, *msg);
+    // We need at least one local measurement.
+    if (!latest_bearing_available_) return;
 
-    // Wait until both vehicles have shared their measurements.
-    if (pair.count("auv_1") == 0 || pair.count("auv_2") == 0) return;
+    const auto &local = latest_bearing_;
+    const auto &remote = *msg;
 
-    const auto &first = pair.at("auv_1");
-    const auto &second = pair.at("auv_2");
-
-    // Report that this vehicle has finished processing this bearing pair.
-    const auto acknowledge = [this, &msg](bool estimate_valid) {
-        acoustics_interfaces::msg::BearingProcessed processed;
-        processed.vehicle_id = vehicle_id_;
-        processed.call_cycle = msg->call_cycle;
-        processed.sim_time = msg->sim_time;
-        processed.estimate_valid = estimate_valid;
-
-        bearing_processed_pub_->publish(processed);
-    };
-
-    // Reject measurements with different call times.
-    if (std::abs(first.sim_time - second.sim_time) > 1.0e-9) {
-        RCLCPP_ERROR(get_logger(), "Bearings at cycle %llu have different call times.", static_cast<unsigned long long>(msg->call_cycle));
-        acknowledge(false);
-        bearing_pairs_.erase(msg->call_cycle);
+    if (!std::isfinite(local.bearing_rad) || !std::isfinite(remote.bearing_rad) || !std::isfinite(local.receiver_north) || !std::isfinite(local.receiver_east) || !std::isfinite(remote.receiver_north) || !std::isfinite(remote.receiver_east)) {
+        RCLCPP_WARN(get_logger(), "Cannot estimate from non-finite bearings.");
         return;
     }
 
-    // This vehicle now has the pair needed to estimate the whale position.
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' has both bearings for cycle %llu.", vehicle_id_.c_str(), static_cast<unsigned long long>(msg->call_cycle));
+    // Bearing directions, clockwise from north.
+    const double local_n = std::cos(local.bearing_rad);
+    const double local_e = std::sin(local.bearing_rad);
 
-    // Convert bearings clockwise from north into unit direction vectors.
-    const double first_n = std::cos(first.bearing_rad);
-    const double first_e = std::sin(first.bearing_rad);
-    const double second_n = std::cos(second.bearing_rad);
-    const double second_e = std::sin(second.bearing_rad);
+    const double remote_n = std::cos(remote.bearing_rad);
+    const double remote_e = std::sin(remote.bearing_rad);
 
-    // Calculate the displacement between the two measurement positions.
-    const double baseline_n = second.receiver_north - first.receiver_north;
-    const double baseline_e = second.receiver_east - first.receiver_east;
+    // Use each receiver's position when its bearing was measured.
+    const double baseline_n = remote.receiver_north - local.receiver_north;
+    const double baseline_e = remote.receiver_east - local.receiver_east;
 
-    // Nearly parallel bearing lines do not give a stable intersection.
-    const double determinant = first_n * second_e - first_e * second_n;
+    const double determinant = local_n * remote_e - local_e * remote_n;
 
-    if (!std::isfinite(determinant) || std::abs(determinant) < 1.0e-6) {
-        RCLCPP_WARN(get_logger(), "Cannot triangulate nearly parallel bearings.");
-        acknowledge(false);
-        bearing_pairs_.erase(msg->call_cycle);
+    if (!std::isfinite(determinant) ||
+        std::abs(determinant) < 1.0e-6) {
+        RCLCPP_WARN(get_logger(), "Cannot triangulate nearly parallel bearing lines.");
         return;
     }
 
-    // Solve for the distance along each vehicle's bearing ray.
-    const double first_range = (baseline_n * second_e - baseline_e * second_n) / determinant;
-    const double second_range = (baseline_n * first_e - baseline_e * first_n) / determinant;
+    const double local_range = (baseline_n * remote_e - baseline_e * remote_n) / determinant;
+    const double remote_range = (baseline_n * local_e - baseline_e * local_n) / determinant;
 
-    // A valid intersection must lie ahead of both receivers.
-    if (!std::isfinite(first_range) || !std::isfinite(second_range) ||
-        first_range < 0.0 || second_range < 0.0) {
+    if (!std::isfinite(local_range) || !std::isfinite(remote_range) || local_range < 0.0 || remote_range < 0.0) {
         RCLCPP_WARN(get_logger(), "Bearing rays have no valid forward intersection.");
-        acknowledge(false);
-        bearing_pairs_.erase(msg->call_cycle);
         return;
     }
 
-    // Estimate the whale position from the intersection.
-    const double estimated_north = first.receiver_north + first_range * first_n;
-    const double estimated_east = first.receiver_east + first_range * first_e;
+    const double estimated_north = local.receiver_north + local_range * local_n;
+    const double estimated_east = local.receiver_east + local_range * local_e;
 
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' estimated whale position: north %.2f m, east %.2f m.",vehicle_id_.c_str(), estimated_north, estimated_east);
+    if (!std::isfinite(estimated_north) ||
+        !std::isfinite(estimated_east)) {
+        return;
+    }
 
-    // Reception has already been filtered by the detector.
-    set_whale_trailing_target(estimated_north, estimated_east, first.sim_time);
+    // Treat the intersection as an estimate at local reception time.
+    // The native function also updates velocity from successive estimates.
+    set_whale_trailing_target(estimated_north, estimated_east, sim_time_);
 
-    // Acknowledge after the estimated target has been applied or stored.
-    acknowledge(true);
-
-    // Remove the collected pair after processing.
-    bearing_pairs_.erase(msg->call_cycle);
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.",
+        vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_);
 }
 
 /**
@@ -246,6 +211,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             return;
         }
 
+        sim_time_ = next_sim_time;
         publish_bearing(next_sim_time);
     }
 
@@ -309,11 +275,10 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     shared.receiver_north = position->north;
     shared.receiver_east = position->east;
 
-    if (communication_interval_ > 0.0) {
-        // Retain only the latest measurement.
-        latest_bearing_ = shared;
-        latest_bearing_available_ = true;
+    latest_bearing_ = shared;
+    latest_bearing_available_ = true;
 
+    if (communication_interval_ > 0.0) {
         // Confirm local storage so the orchestrator can continue.
         acoustics_interfaces::msg::BearingProcessed stored;
         stored.vehicle_id = vehicle_id_;
@@ -326,7 +291,6 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     }
 
     // Zero interval preserves immediate sharing and estimation.
-    handle_shared_bearing(std::make_shared<acoustics_interfaces::msg::BearingMsg>(shared));
     bearing_pub_->publish(shared);
 
     // Acknowledge reception even when only one AUV detected the call.
@@ -385,14 +349,7 @@ void OdysseyNode::publish_bearing(double simulation_time) {
     if (!tracking_enabled_ || communication_interval_ <= 0.0) return;
 
     while (simulation_time + 1.0e-9 >= static_cast<double>(next_communication_index_) * communication_interval_) {
-        if (latest_bearing_available_) {
-            // Supply our own estimator with the transmitted measurement.
-            handle_shared_bearing(std::make_shared<acoustics_interfaces::msg::BearingMsg>(latest_bearing_));
-
-            // Transmit the latest measurement to the other AUV.
-            bearing_pub_->publish(latest_bearing_);
-        }
-
+        if (latest_bearing_available_) bearing_pub_->publish(latest_bearing_);
         ++next_communication_index_;
     }
 }

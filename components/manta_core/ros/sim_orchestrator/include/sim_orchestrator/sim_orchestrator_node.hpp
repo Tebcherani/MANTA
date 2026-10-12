@@ -95,6 +95,7 @@ private:
     bool simulation_failed_ = false;
 
     int steps_per_message_ = 1;
+    int communication_steps_ = 0;
     int current_batch_steps_ = 0;
     
     sim_config_t sim_config_;
