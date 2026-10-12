@@ -95,6 +95,7 @@ loop
     AUV1 -> AUV1 : Find own position snapshot\nmatching call cycle
     AUV1 ->> AUV2 : BearingMsg
     
+    Detection ->> AUV2 : BearingObservation
     AUV2 -> AUV2 : Find own position snapshot\nmatching call cycle
     AUV2 ->> AUV1 : BearingMsg
 

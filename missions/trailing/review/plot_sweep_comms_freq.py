@@ -1,150 +1,140 @@
 #!/usr/bin/env python3
+"""Plot each vehicle's mean distance from the whale."""
 
 import csv
 import math
-import matplotlib.pyplot as plt
-
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 
 
 ROOT = Path(__file__).resolve().parents[3]
-SUMMARY_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_summary.csv"
-OUTPUT_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_metrics.png"
-
-plt.rcParams.update({
-    "font.size": 14,
-    "axes.titlesize": 17,
-    "axes.labelsize": 15,
-    "xtick.labelsize": 13,
-    "ytick.labelsize": 13,
-    "legend.fontsize": 12,
-    "figure.titlesize": 18,
-})
+SUMMARY_PATH = ROOT / "output/trailing/sweep_comms/sweep_summary.csv"
+OUTPUT_PATH = ROOT / "output/trailing/sweep_comms/sweep_metrics.png"
 
 
-def read_sweep_summary() -> list[dict[str, float]]:
-    """Read and validate the trailing call-update sweep summary."""
-
+def read_sweep_summary() -> list[dict]:
     if not SUMMARY_PATH.is_file():
-        raise ValueError(f"Trailing sweep summary does not exist: {SUMMARY_PATH}")
+        raise ValueError(f"Sweep summary does not exist: {SUMMARY_PATH}")
 
-    required = {
+    numeric_fields = (
         "call_update_interval",
-        "realizations",
         "mean_distance_km",
         "distance_ci_lower_km",
         "distance_ci_upper_km",
-        "mean_integrated_tracking_error_km_hours",
-        "integrated_error_ci_lower_km_hours",
-        "integrated_error_ci_upper_km_hours",
-    }
-
+    )
+    required = {"vehicle_id", "realizations", *numeric_fields}
     rows = []
+    seen = set()
 
     with SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
 
-        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+        if not required.issubset(reader.fieldnames or []):
             missing = sorted(required.difference(reader.fieldnames or []))
-            raise ValueError(f"Trailing sweep summary is missing columns: {', '.join(missing)}")
+            raise ValueError(f"Missing columns: {', '.join(missing)}")
 
         for line_number, source in enumerate(reader, start=2):
             try:
                 row = {
-                    "call_update_interval": float(source["call_update_interval"]),
+                    "vehicle_id": source["vehicle_id"].strip(),
                     "realizations": int(source["realizations"]),
-                    "mean_distance_km": float(source["mean_distance_km"]),
-                    "distance_ci_lower_km": float(source["distance_ci_lower_km"]),
-                    "distance_ci_upper_km": float(source["distance_ci_upper_km"]),
-                    "mean_integrated_tracking_error_km_hours": float(source["mean_integrated_tracking_error_km_hours"]),
-                    "integrated_error_ci_lower_km_hours": float(source["integrated_error_ci_lower_km_hours"]),
-                    "integrated_error_ci_upper_km_hours": float(source["integrated_error_ci_upper_km_hours"]),
+                    **{
+                        field: float(source[field])
+                        for field in numeric_fields
+                    },
                 }
-            except (TypeError, ValueError) as error:
-                raise ValueError(f"Invalid value on line {line_number} of {SUMMARY_PATH}.") from error
+            except (TypeError, ValueError, AttributeError) as error:
+                raise ValueError(
+                    f"Invalid value on line {line_number}."
+                ) from error
 
-            if row["call_update_interval"] < 0.0:
-                raise ValueError(f"Negative call-update interval on line {line_number}.")
-            if row["realizations"] < 1:
-                raise ValueError(f"Invalid realization count on line {line_number}.")
-            if not all(math.isfinite(value) for name, value in row.items() if name != "realizations"):
-                raise ValueError(f"Non-finite sweep value on line {line_number}.")
+            if not row["vehicle_id"] or row["realizations"] < 1:
+                raise ValueError(f"Invalid vehicle or count on line {line_number}.")
 
+            if not all(math.isfinite(row[field]) for field in numeric_fields):
+                raise ValueError(f"Non-finite value on line {line_number}.")
+
+            if row["call_update_interval"] < 0:
+                raise ValueError(f"Negative interval on line {line_number}.")
+
+            if not (
+                0 <= row["distance_ci_lower_km"]
+                <= row["mean_distance_km"]
+                <= row["distance_ci_upper_km"]
+            ):
+                raise ValueError(f"Invalid confidence interval on line {line_number}.")
+
+            key = (row["call_update_interval"], row["vehicle_id"])
+            if key in seen:
+                raise ValueError(f"Duplicate interval/vehicle on line {line_number}.")
+            seen.add(key)
             rows.append(row)
 
     if not rows:
-        raise ValueError(f"Trailing sweep summary contains no results: {SUMMARY_PATH}")
-
-    rows.sort(key=lambda row: row["call_update_interval"])
+        raise ValueError("Sweep summary contains no results.")
 
     return rows
 
 
-def plot_metric(ax, intervals: list[float], means: list[float], lower: list[float], upper: list[float], color: str, title: str, ylabel: str) -> None:
-    """Plot one trailing metric with confidence-interval error bars."""
-
-    lower_error = [mean - bound for mean, bound in zip(means, lower)]
-    upper_error = [bound - mean for mean, bound in zip(means, upper)]
-
-    ax.errorbar(intervals, means, yerr=[lower_error, upper_error], fmt="o", color=color, markersize=7, elinewidth=1.8, capsize=5, capthick=1.5)
-    ax.set_title(title)
-    ax.set_xlabel("Call waypoint update interval (hours)")
-    ax.set_ylabel(ylabel)
-    ax.grid(True, alpha=0.3)
-
-
 def main() -> int:
-    """Plot tracking performance against whale-call update interval."""
-
     try:
         rows = read_sweep_summary()
     except (OSError, ValueError) as error:
         print(f"Could not plot trailing sweep: {error}")
         return 1
 
-    intervals_hours = [row["call_update_interval"] / 3600.0 for row in rows]
-    tick_labels = ["Every call" if row["call_update_interval"] == 0.0 else f"{row['call_update_interval'] / 3600.0:g}" for row in rows]
-
-    distance_means = [row["mean_distance_km"] for row in rows]
-    distance_lower = [row["distance_ci_lower_km"] for row in rows]
-    distance_upper = [row["distance_ci_upper_km"] for row in rows]
-
     fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
-    fig.suptitle("Effect of Whale-Call Update Interval on AUV Group Tracking", fontsize=14)
 
-    plot_metric(
-        ax,
-        intervals_hours,
-        distance_means,
-        distance_lower,
-        distance_upper,
-        "tab:blue",
-        "AUV Distance from Whale",
-        "Mean distance (km)",
+    for vehicle_id in sorted({row["vehicle_id"] for row in rows}):
+        vehicle_rows = sorted(
+            [row for row in rows if row["vehicle_id"] == vehicle_id],
+            key=lambda row: row["call_update_interval"],
+        )
+
+        means = [row["mean_distance_km"] for row in vehicle_rows]
+
+        ax.errorbar(
+            [row["call_update_interval"] / 3600 for row in vehicle_rows],
+            means,
+            yerr=[
+                [
+                    row["mean_distance_km"] - row["distance_ci_lower_km"]
+                    for row in vehicle_rows
+                ],
+                [
+                    row["distance_ci_upper_km"] - row["mean_distance_km"]
+                    for row in vehicle_rows
+                ],
+            ],
+            fmt="o-",
+            capsize=5,
+            label=vehicle_id,
+        )
+
+    intervals = sorted({row["call_update_interval"] for row in rows})
+    ax.set_xticks([interval / 3600 for interval in intervals])
+    ax.set_xticklabels(
+        [
+            "Every call" if interval == 0 else f"{interval / 3600:g}"
+            for interval in intervals
+        ],
+        rotation=45,
+        ha="right",
     )
 
+    ax.set_title("Effect of Call Update Interval on AUV Tracking")
     ax.set_xlabel("Call waypoint update interval (h)")
-    ax.set_xticks(intervals_hours)
-    ax.set_xticklabels(tick_labels, rotation=45, ha="right")
-    ax.set_ylim(bottom=0.0)
-
-    mission_duration_hours = 24.0
-
-    integrated_axis = ax.secondary_yaxis(
-        "right",
-        functions=(
-            lambda distance: distance * mission_duration_hours,
-            lambda integrated_error: integrated_error / mission_duration_hours,
-        ),
-    )
-
-    integrated_axis.set_ylabel("Integrated tracking error (km·h)")
+    ax.set_ylabel("Mean distance from whale (km)")
+    ax.set_ylim(bottom=0)
+    ax.grid(True, alpha=0.3)
+    ax.legend(title="Vehicle")
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved trailing sweep figure: {OUTPUT_PATH}")
 
+    print(f"Saved: {OUTPUT_PATH}")
     return 0
 
 

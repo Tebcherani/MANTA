@@ -35,10 +35,9 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
     integrated_tracking_error_km_hours = None
 
     if config["scenario"]["type"] == "trailing":
-        if len(vehicle_ids) != 1:
-            raise ValueError("Trailing Monte Carlo experiments require exactly one vehicle.")
-
-        mean_distance_km, integrated_tracking_error_km_hours = summarize_tracking_metrics(root, data_directory, vehicle_ids[0])
+        tracking = [summarize_tracking_metrics(root, data_directory, vehicle_id) for vehicle_id in vehicle_ids]
+        mean_distance_km = mean(value[0] for value in tracking)
+        integrated_tracking_error_km_hours = mean(value[1] for value in tracking)
 
     return MonteCarloResult(
         realization=realization,
