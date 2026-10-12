@@ -1,5 +1,5 @@
 @startuml
-title MANTA Vehicle Initialization and Stepping
+title MANTA Trailing Mission — Scheduled Bearing Communication
 
 skinparam monochrome true
 skinparam shadowing false
@@ -7,37 +7,33 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
-participant "OdysseyNode\n(one per vehicle)" as Odyssey
-participant "AcousticsNode" as Detection
+participant "AcousticDetectionNode" as Detection
+participant "OdysseyNode\nauv_1" as AUV1
+participant "OdysseyNode\nauv_2" as AUV2
 
-== Vehicle initialization ==
+Orchestrator ->> AUV1 : SimStep
+AUV1 -> AUV1 : Advance dynamics and simulation time
+AUV1 -> AUV1 : At control updates, predict whale position\nfrom stored position and velocity
+AUV1 -> AUV1 : Update trailing waypoint and control
 
-Orchestrator ->> Odyssey : Startup ready
-Orchestrator ->> Odyssey : Initial simulation time
-Orchestrator ->> Odyssey : Calendar start time
+opt Communication boundary reached and measurement available
+    AUV1 ->> AUV2 : Latest bearing, original receiver position and measurement time)
+end
 
-activate Odyssey
-Odyssey -> Odyssey : Initialize Odyssey simulation,\ntime, mission, vehicle, and world
-Odyssey ->> Orchestrator : Vehicle ready
-deactivate Odyssey
+AUV1 ->> Detection : VehicleState
+AUV1 ->> Orchestrator : SimStepResult
 
-Orchestrator -> Orchestrator : Wait until all vehicles are ready
+opt Remote bearing received by an AUV
+    AUV1 -> AUV1 : Intersect remote bearing with latest local bearing
+    AUV1 -> AUV1 : Store whale position at local reception time
+    AUV1 -> AUV1 : Update velocity from successive position estimates
+end
 
-== Simulation ==
-
-Orchestrator ->> Odyssey : SimStep (world state, start cycle/time,\ntimestep, control period, step count)
-activate Odyssey
-Odyssey -> Odyssey : Convert supplied world state
-
-Odyssey -> Odyssey : Advance vehicle dynamics
-Odyssey -> Odyssey : Update sensors and navigation
-Odyssey -> Odyssey : Predict whale position at current simulation time\nusing stored position and velocity
-Odyssey -> Odyssey : Set next waypoint
-Odyssey -> Odyssey : Update simulation time
-
-Odyssey -> Odyssey : Save completed position snapshot
-Odyssey ->> Detection : VehicleState (ID, cycle, time, position)
-Odyssey ->> Orchestrator : SimStepResult
-deactivate Odyssey
+opt AUV detects call
+    Detection ->> AUV1 : BearingObservation
+    AUV1 -> AUV1 : Find own position at call cycle
+    AUV1 -> AUV1 : Replace latest local measurement
+    AUV1 ->> Orchestrator : BearingProcessed (measurement stored)
+end
 
 @enduml

@@ -1,4 +1,5 @@
 @startuml
+title MANTA Trailing Mission — Scheduled Bearing Communication
 
 skinparam monochrome true
 skinparam shadowing false
@@ -6,21 +7,12 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
-participant "WhaleDetectionNode" as Detection
-participant "OdysseyNode\nauv_1" as AUV1
-participant "OdysseyNode\nauv_2" as AUV2
+participant "AcousticDetectionNode" as Detection
+participant "OdysseyNode" as AUV1
 
-AUV1 ->> Detection : Vehicle state (cycle, time, position)
-activate Detection
-AUV2 ->> Detection : Vehicle state (cycle, time, position)
-Orchestrator ->> Detection : Whale call (cycle, time, position)
-
-Detection -> Detection : Wait for both vehicle states\nmatching the call cycle
-Detection -> Detection : Check range and calculate\nbearing for each receiver
-
+AUV1 ->> Detection : VehicleState
+Detection -> Detection : Evaluate detection range and calculate bearings
 Detection ->> AUV1 : BearingObservation
+Detection ->> Orchestrator : WhaleCallProcessed (receiver IDs)
 
-Detection ->> AUV2 : BearingObservation
-
-Detection ->> Orchestrator : WhaleCallProcessed\n(includes bearing receiver IDs)
-deactivate Detection
+@enduml

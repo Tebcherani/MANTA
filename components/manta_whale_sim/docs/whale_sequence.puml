@@ -1,4 +1,5 @@
 @startuml
+title MANTA Trailing Mission — Scheduled Bearing Communication
 
 skinparam monochrome true
 skinparam shadowing false
@@ -8,20 +9,11 @@ skinparam responseMessageBelowArrow true
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
 
-    Orchestrator -> Whale : Request next whale call
-    deactivate Orchestrator
+Orchestrator -> Whale : Request next whale call
+Whale --> Orchestrator : Next call or no future call
 
-    activate Whale
-    Whale -> Whale : Find first call after current time
-    Whale --> Orchestrator : Next whale call
-    deactivate Whale
-
-    Orchestrator ->> Whale : Advance by the specified number of simulation cycles
-    activate Whale
-    Whale -> Whale : Update whale positions and lifecycle
-    Orchestrator -> Whale : Request next whale call
-    Whale -> Whale : Find first call after current time
-    Whale --> Orchestrator : Next whale call
-    deactivate Whale
+Orchestrator ->> Whale : SimStep
+Whale -> Whale : Update whale positions
+Whale -> Whale : Publish ground truth and log trajectory
 
 @enduml

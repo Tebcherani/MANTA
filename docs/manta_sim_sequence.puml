@@ -1,126 +1,83 @@
 @startuml
-title MANTA ROS 2 Simulation Sequence Diagram
+title MANTA Trailing Mission — Scheduled Bearing Communication
 
 skinparam monochrome true
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
-actor "Launch system" as Launcher
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
+participant "AcousticDetectionNode" as Detection
 participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
-participant "WhaleDetectionNode" as Detection
 
-== Node construction ==
-
-Launcher -> Orchestrator : Construct node
-Orchestrator -> Orchestrator : Load vehicle list and simulation configuration
-Orchestrator -> Orchestrator : Initialize simulation and world state
-Orchestrator -> Orchestrator : Create ROS interfaces
-
-Launcher -> Whale : Construct node
-Whale -> Whale : Load whale configuration
-Whale -> Whale : Generate groups and create whales
-Whale -> Whale : Generate trajectories and call times
-Whale -> Whale : Create ROS interfaces
-
-Launcher -> AUV1 : Construct node
-AUV1 -> AUV1 : Load vehicle configuration
-AUV1 -> AUV1 : Create ROS interfaces
-
-Launcher -> AUV2 : Construct node
-AUV2 -> AUV2 : Load vehicle configuration
-AUV2 -> AUV2 : Create ROS interfaces
-
-Launcher -> Detection : Construct node
-Detection -> Detection : Load detection configuration
-Detection -> Detection : Create ROS interfaces
-
-== Vehicle initialization ==
+== Initialization ==
 
 Orchestrator ->> AUV1 : Startup ready, initial time, calendar time
-AUV1 -> AUV1 : Initialize native simulation, time,\nmission, vehicle, and world
+AUV1 -> AUV1 : Initialize vehicle and trailing mission
 AUV1 ->> Orchestrator : Vehicle ready
 
 Orchestrator ->> AUV2 : Startup ready, initial time, calendar time
-AUV2 -> AUV2 : Initialize native simulation, time,\nmission, vehicle, and world
+AUV2 -> AUV2 : Initialize vehicle and trailing mission
 AUV2 ->> Orchestrator : Vehicle ready
 
 Orchestrator -> Orchestrator : Wait until both vehicles are ready
 
-== Simulation loop ==
+== Trailing simulation ==
 
 loop
 
-    Orchestrator -> Whale : Request first call after supplied time
-    Whale -> Whale : Find next scheduled call
+    Orchestrator -> Whale : Request next whale call
     Whale --> Orchestrator : Next call or no future call
 
-    Orchestrator ->> Whale : Simulation step 
-    Whale -> Whale : Update whale positions and lifecycle
+    par Whale simulation
+        Orchestrator ->> Whale : SimStep
+        Whale -> Whale : Update whale positions
+        Whale -> Whale : Publish ground truth and log trajectory
 
-    Orchestrator ->> AUV1 : Simulation step
-    AUV1 -> AUV1 : Advance vehicle dynamics
-    AUV1 -> AUV1 : Update sensors and navigation
-    AUV1 -> AUV1 : Predict whale position at current simulation time\nusing stored position and velocity
-    AUV1 -> AUV1 : Set next waypoint
-    AUV1 -> AUV1 : Update simulation time
-    AUV1 -> AUV1 : Save completed position snapshot
-    AUV1 ->> Detection : VehicleState (ID, cycle, time, position)
-    AUV1 ->> Orchestrator : SimStepResult
+    else AUV simulation
+        Orchestrator ->> AUV1 : SimStep
+        AUV1 -> AUV1 : Advance dynamics and simulation time
+        AUV1 -> AUV1 : At control updates, predict whale position\nfrom stored position and velocity
+        AUV1 -> AUV1 : Update trailing waypoint and control
 
-    Orchestrator ->> AUV2 : Simulation step 
-    AUV2 -> AUV2 : Advance vehicle dynamics
-    AUV2 -> AUV2 : Update sensors and navigation
-    AUV2 -> AUV2 : Predict whale position at current simulation time\nusing stored position and velocity
-    AUV2 -> AUV2 : Set next waypoint
-    AUV2 -> AUV2 : Update simulation time
-    AUV2 -> AUV2 : Save completed position snapshot
-    AUV2 ->> Detection : VehicleState (ID, cycle, time, position)
-    AUV2 ->> Orchestrator : SimStepResult
+        opt Communication boundary reached and measurement available
+            AUV1 ->> AUV2 : Latest bearing, original receiver position and measurement time)
+        end
 
-    Orchestrator -> Orchestrator : Record results and wait\nfor all active vehicles
-    Orchestrator -> Orchestrator : Check termination conditions and advance shared clock
+        AUV1 ->> Detection : VehicleState
+        AUV1 ->> Orchestrator : SimStepResult
 
-    Orchestrator ->> Detection : Whale call (ID, cycle, time, position)
+        opt Remote bearing received by an AUV
+            AUV1 -> AUV1 : Intersect remote bearing with latest local bearing
+            AUV1 -> AUV1 : Store whale position at local reception time
+            AUV1 -> AUV1 : Update velocity from successive position estimates
+        end
+    end
 
-    Detection -> Detection : Wait for all vehicle states\nmatching the call cycle
-    Detection -> Detection : Evaluate range 
-    Detection -> Detection : Check reception interval\nfor each in-range vehicle
-    Detection -> Detection : Calculate bearings for accepted calls
+    Orchestrator -> Orchestrator : Wait for all active vehicles' step results
+    Orchestrator -> Orchestrator : Check termination; advance shared clock if continuing
 
-    Detection ->> AUV1 : BearingObservation
-    AUV1 -> AUV1 : Find own position snapshot\nmatching call cycle
-    AUV1 ->> AUV2 : BearingMsg
-    
-    Detection ->> AUV2 : BearingObservation
-    AUV2 -> AUV2 : Find own position snapshot\nmatching call cycle
-    AUV2 ->> AUV1 : BearingMsg
+    Orchestrator ->> Detection : WhaleCall (position, cycle, time)
+    Detection -> Detection : Evaluate detection range and calculate bearings
 
-    Detection ->> Orchestrator : WhaleCallProcessed
+    opt AUV detects call
+        Detection ->> AUV1 : BearingObservation
+        AUV1 -> AUV1 : Find own position at call cycle
+        AUV1 -> AUV1 : Replace latest local measurement
+        AUV1 ->> Orchestrator : BearingProcessed (measurement stored)
+    end
 
-    AUV1 -> AUV1 : Supply own measurement locally
-    AUV1 -> AUV1 : Collect pair and triangulate
-    AUV1 -> AUV1 : Apply target
-    AUV1 ->> Orchestrator : BearingProcessed
-
-    AUV2 -> AUV2 : Supply own measurement locally
-    AUV2 -> AUV2 : Collect pair and triangulate
-    AUV2 -> AUV2 : Apply target
-    AUV2 ->> Orchestrator : BearingProcessed
-
-    Orchestrator -> Orchestrator : Wait for detector completion and estimator acknowledgments
+        Detection ->> Orchestrator : WhaleCallProcessed (receiver IDs)
+        Orchestrator -> Orchestrator : Wait for detector and local-storage acknowledgements
 end
 
 == Shutdown ==
 
-Orchestrator ->> Whale : Shutdown request
-Orchestrator ->> AUV1 : Shutdown request
-Orchestrator ->> AUV2 : Shutdown request
-Orchestrator ->> Detection : Shutdown request
-
-Orchestrator -> Orchestrator : Shutdown
+Orchestrator ->> Whale : Shutdown
+Orchestrator ->> Detection : Shutdown
+Orchestrator ->> AUV1 : Shutdown
+Orchestrator ->> AUV2 : Shutdown
 
 @enduml

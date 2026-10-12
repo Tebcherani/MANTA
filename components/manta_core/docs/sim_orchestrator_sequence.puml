@@ -1,5 +1,5 @@
 @startuml
-title MANTA ROS 2 Simulation Sequence Diagram
+title MANTA Trailing Mission — Scheduled Bearing Communication
 
 skinparam monochrome true
 skinparam shadowing false
@@ -8,46 +8,34 @@ skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
+participant "AcousticDetectionNode" as Detection
 participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
-participant "WhaleDetectionNode" as Detection
-
-== Vehicle initialization ==
-
-Orchestrator ->> AUV1 : Startup data (ready, initial time, calendar time)
-AUV1 -> AUV1 : Initialize vehicle simulation
-AUV1 ->> Orchestrator : Vehicle ready
-
-Orchestrator ->> AUV2 : Startup data (ready, initial time, calendar time)
-AUV2 -> AUV2 : Initialize vehicle simulation
-AUV2 ->> Orchestrator : Vehicle ready
-Orchestrator -> Orchestrator : Wait until both vehicles are ready
-
-== Simulation loop ==
 
 loop
+
     Orchestrator -> Whale : Request next whale call
     Whale --> Orchestrator : Next call or no future call
-    Orchestrator -> Orchestrator : Store scheduling response
 
-    Orchestrator ->> Whale : Simulation step 
+    par Whale simulation
+        Orchestrator ->> Whale : SimStep
 
-    Orchestrator ->> AUV1 : Simulation step
-    AUV1 ->> Orchestrator : Simulation step result
+    else AUV simulation
+        Orchestrator ->> AUV1 : SimStep
+        AUV1 ->> Orchestrator : SimStepResult
+    end
 
-    Orchestrator ->> AUV2 : Simulation step
-    AUV2 ->> Orchestrator : Simulation step result
+    Orchestrator -> Orchestrator : Wait for all active vehicles' step results
+    Orchestrator -> Orchestrator : Check termination; advance shared clock if continuing
 
-    Orchestrator -> Orchestrator : Wait for all active vehicle results
-    Orchestrator -> Orchestrator : Advance shared simulation clock
+    Orchestrator ->> Detection : WhaleCall (position, cycle, time)
 
-    Orchestrator ->> Detection : Whale call (ID, cycle, time, position)
-    Detection ->> Orchestrator : WhaleCallProcessed (bearing receiver IDs)
+    opt AUV detects call
+        AUV1 ->> Orchestrator : BearingProcessed (measurement stored)
+    end
 
-    AUV1 ->> Orchestrator : BearingProcessed
-    AUV2 ->> Orchestrator : BearingProcessed
-
-    Orchestrator -> Orchestrator : Wait for detector completion\nand required estimator acknowledgments
+        Detection ->> Orchestrator : WhaleCallProcessed (receiver IDs)
+        Orchestrator -> Orchestrator : Wait for detector and local-storage acknowledgements
 end
 
 @enduml
