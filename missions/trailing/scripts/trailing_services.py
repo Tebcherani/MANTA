@@ -26,6 +26,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     output = config["output"]
     simulation = config["simulation"]
     trailing = scenario["trailing"]
+    communication_interval = float(trailing.get("communication_interval", 0.0))
     whales = scenario["whales"]
     movement = whales["movement"]
     bouts = whales["calling"]["bouts"]
@@ -48,7 +49,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
             sample_period=sample_period,
             ros_domain_id=ros_domain_id,
             tracking_enabled=True,
-            call_update_interval=None,
+            communication_interval=communication_interval,
         )
         for vehicle in vehicles
     }

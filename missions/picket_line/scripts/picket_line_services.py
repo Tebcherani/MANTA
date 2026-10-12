@@ -45,7 +45,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
             sample_period=sample_period,
             ros_domain_id=ros_domain_id,
             tracking_enabled=False,
-            call_update_interval=None,
         )
         for vehicle in vehicles
     }

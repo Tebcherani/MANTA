@@ -40,7 +40,7 @@ def ros_service(package: str, executable: str, parameters: dict, log_dir: str, r
     }
 
 
-def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int, tracking_enabled: bool, call_update_interval: float | None) -> dict:
+def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int, tracking_enabled: bool, communication_interval: float | None = None) -> dict:
     """Create a vehicle service using its plugin manifest."""
     vehicle_id = vehicle["id"]
     vehicle_type = vehicle["type"]
@@ -82,8 +82,8 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
         "tracking_enabled": tracking_enabled,
     }
 
-    if call_update_interval is not None:
-        parameters["call_update_interval"] = call_update_interval
+    if communication_interval is not None:
+        parameters["communication_interval"] = communication_interval
 
     return ros_service(
         package=ros_package,

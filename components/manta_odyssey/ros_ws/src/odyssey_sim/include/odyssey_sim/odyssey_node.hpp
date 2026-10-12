@@ -59,6 +59,7 @@ class OdysseyNode : public rclcpp::Node {
         void try_finish_init();
 
         // Output
+        void publish_bearing(double simulation_time);
         void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time);
         bool write_final_metrics();
 
@@ -69,6 +70,11 @@ class OdysseyNode : public rclcpp::Node {
         // Call detections
         std::deque<BearingPosition> bearing_positions_;
         std::map<std::uint64_t, std::unordered_map<std::string, acoustics_interfaces::msg::BearingMsg>> bearing_pairs_;
+        bool latest_bearing_available_ = false;
+        acoustics_interfaces::msg::BearingMsg latest_bearing_;
+        
+        double communication_interval_ = 0.0;
+        std::uint64_t next_communication_index_ = 1;
 
         // Mission
         bool log_decimation_configured_ = false;

@@ -1,5 +1,6 @@
 #include "odyssey_sim/odyssey_node.hpp"
 
+#include <cmath>
 #include <cstdlib>
 #include <stdexcept>
 
@@ -22,4 +23,7 @@ void OdysseyNode::load_config() {
     if (output_sample_period_ <= 0.0) throw std::runtime_error("output_sample_period must be greater than zero.");
 
     tracking_enabled_ = declare_parameter<bool>("tracking_enabled", false);
+
+    communication_interval_ = declare_parameter<double>("communication_interval", 0.0);
+    if (!std::isfinite(communication_interval_) || communication_interval_ < 0.0) throw std::runtime_error("communication_interval must be finite and nonnegative.");
 }

@@ -214,23 +214,15 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
     // The detector has finished and reported which receivers got bearings.
     whale_detection_complete_ = true;
 
-    // The current estimator requires bearings from both named AUVs.
-    bool first_received = false;
-    bool second_received = false;
-
-    for (const auto &receiver_id : msg->bearing_receiver_ids) {
-        if (receiver_id == "auv_1") first_received = true;
-        if (receiver_id == "auv_2") second_received = true;
-    }
-
     expected_bearing_processors_.clear();
 
-    if (wait_for_bearing_processing_ && first_received && second_received) {
-        expected_bearing_processors_.insert("auv_1");
-        expected_bearing_processors_.insert("auv_2");
+    // Wait for local receipt/storage by every AUV that detected this call.
+    if (wait_for_bearing_processing_) {
+        for (const auto &receiver_id : msg->bearing_receiver_ids) {
+            expected_bearing_processors_.insert(receiver_id);
+        }
     }
-
-    // If fewer than two bearings were published, no pair can be estimated.
+    
     check_whale_call_processing_complete();
 }
 

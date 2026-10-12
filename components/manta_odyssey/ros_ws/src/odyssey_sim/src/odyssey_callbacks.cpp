@@ -245,6 +245,8 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             step_result_pub_->publish(result);
             return;
         }
+
+        publish_bearing(next_sim_time);
     }
 
     // Publish the vehicle state produced by the completed batch.
@@ -307,11 +309,33 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     shared.receiver_north = position->north;
     shared.receiver_east = position->east;
 
-    // Feed our own measurement directly into this vehicle's estimator.
-    handle_shared_bearing(std::make_shared<acoustics_interfaces::msg::BearingMsg>(shared));
+    if (communication_interval_ > 0.0) {
+        // Retain only the latest measurement.
+        latest_bearing_ = shared;
+        latest_bearing_available_ = true;
 
-    // Share the measurement with the other vehicle.
+        // Confirm local storage so the orchestrator can continue.
+        acoustics_interfaces::msg::BearingProcessed stored;
+        stored.vehicle_id = vehicle_id_;
+        stored.call_cycle = msg->call_cycle;
+        stored.sim_time = msg->sim_time;
+        stored.estimate_valid = false;
+        bearing_processed_pub_->publish(stored);
+
+        return;
+    }
+
+    // Zero interval preserves immediate sharing and estimation.
+    handle_shared_bearing(std::make_shared<acoustics_interfaces::msg::BearingMsg>(shared));
     bearing_pub_->publish(shared);
+
+    // Acknowledge reception even when only one AUV detected the call.
+    acoustics_interfaces::msg::BearingProcessed received;
+    received.vehicle_id = vehicle_id_;
+    received.call_cycle = msg->call_cycle;
+    received.sim_time = msg->sim_time;
+    received.estimate_valid = false;
+    bearing_processed_pub_->publish(received);
 }
 
 //----------------------------------------------------
@@ -354,5 +378,21 @@ void OdysseyNode::try_finish_init() {
         ready_pub_->publish(ready_message);
         ready_published_ = true;
         RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str()); 
+    }
+}
+
+void OdysseyNode::publish_bearing(double simulation_time) {
+    if (!tracking_enabled_ || communication_interval_ <= 0.0) return;
+
+    while (simulation_time + 1.0e-9 >= static_cast<double>(next_communication_index_) * communication_interval_) {
+        if (latest_bearing_available_) {
+            // Supply our own estimator with the transmitted measurement.
+            handle_shared_bearing(std::make_shared<acoustics_interfaces::msg::BearingMsg>(latest_bearing_));
+
+            // Transmit the latest measurement to the other AUV.
+            bearing_pub_->publish(latest_bearing_);
+        }
+
+        ++next_communication_index_;
     }
 }

@@ -79,6 +79,7 @@ scenario:
     call_position_std_m: 0.0
     vehicle_separation_m: 2000.0
     following_distance_m: 1000.0
+    communication_interval: 60.0 # simulated seconds; 0 means immediate
 
   duration: 86400.0  # 1 day
 
