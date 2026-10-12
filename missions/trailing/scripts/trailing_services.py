@@ -35,7 +35,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     data_dir = container_path(output["data_directory"])
     log_dir = container_path(output["log_directory"])
     sample_period = float(output.get("auv_sample_period", 2.0))
-    call_update_interval = float(trailing.get("call_update_interval", 0.0))
 
     vehicle_ids = [vehicle["id"] for vehicle in vehicles]
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
@@ -97,7 +96,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         "data_directory": data_dir,
         "call_position_std_m": float(trailing.get("call_position_std_m", 0.0)),
         "call_position_seed": int(monte_carlo.get("random_seed", 0)),
-        "call_update_interval": call_update_interval,
         "bearing_std_degrees": float(scenario["detection"].get("bearing_std_degrees", 0.0)),
     }
 
