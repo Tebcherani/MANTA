@@ -62,6 +62,7 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     * Define the 2D cross product:
     *   cross(a, b) = a_n * b_e - a_e * b_n
     * 
+    * Cross product measures how "parallel vs. perpendicular" two vectors are (0 = parallel). 
     * Take the cross product of both sides with u_remote:
     *   r_local * cross(u_local, u_remote) - r_remote * cross(u_remote, u_remote) = cross(disp, u_remote)
     *   => r_local * cross(u_local, u_rempte) - r_remote * 0 = cross(disp, u_remote)
