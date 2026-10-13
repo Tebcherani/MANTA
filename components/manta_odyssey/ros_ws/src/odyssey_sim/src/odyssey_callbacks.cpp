@@ -30,24 +30,53 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
 
 void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {
     if (!tracking_enabled_) return;
-
-    // Estimate only upon receiving the other AUV's message.
     if (msg->receiver_id == vehicle_id_) return;
-
     if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
-
-    // We need at least one local measurement.
     if (!latest_bearing_available_) return;
 
     const auto &local = latest_bearing_;
     const auto &remote = *msg;
+
+    // Ignore retransmissions of a pair already processed.
+    if (processed_bearing_pair_available_ && local.sim_time == processed_local_bearing_time_ && remote.sim_time == processed_remote_bearing_time_) return;
 
     if (!std::isfinite(local.bearing_rad) || !std::isfinite(remote.bearing_rad) || !std::isfinite(local.receiver_north) || !std::isfinite(local.receiver_east) || !std::isfinite(remote.receiver_north) || !std::isfinite(remote.receiver_east)) {
         RCLCPP_WARN(get_logger(), "Cannot estimate from non-finite bearings.");
         return;
     }
 
-    // Bearing directions, clockwise from north.
+    /*
+    * Intersect two bearing rays in the north/east plane.
+    *
+    * Let p_local and p_remote be the AUV positions at measurement time.
+    * A bearing theta, measured clockwise from north, gives the unit
+    * direction vector u = (cos(theta), sin(theta)).
+    *
+    * The rays are:
+    *   p_local  + r_local  * u_local
+    *   p_remote + r_remote * u_remote
+    *
+    * At their intersection:
+    *   p_remote - p_local = r_local * u_local - r_remote * u_remote = displacement
+    *
+    * Define the 2D cross product:
+    *   cross(a, b) = a_n * b_e - a_e * b_n
+    * 
+    * Take the cross product of both sides with u_remote:
+    *   r_local * cross(u_local, u_remote) - r_remote * cross(u_remote, u_remote) = cross(disp, u_remote)
+    *   => r_local * cross(u_local, u_rempte) - r_remote * 0 = cross(disp, u_remote)
+    *   => r_local * cross(u_local, u_remote) = cross(disp, u_remote)
+    *   => r_local = cross(disp, u_remote) / cross(u_local, u_remote)
+    * 
+    * Note that determinant = cross(u_local, u_remote). Then:
+    *   r_local  = cross(displacement, u_remote) / determinant
+    *   r_remote = cross(displacement, u_local)  / determinant
+    *
+    * The estimated position is:
+    *   p_estimated = p_local + r_local * u_local
+    */
+
+    // Bearing directions, clockwise from north. These are unit vectors in the north and east directions.
     const double local_n = std::cos(local.bearing_rad);
     const double local_e = std::sin(local.bearing_rad);
 
@@ -55,8 +84,8 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     const double remote_e = std::sin(remote.bearing_rad);
 
     // Use each receiver's position when its bearing was measured.
-    const double baseline_n = remote.receiver_north - local.receiver_north;
-    const double baseline_e = remote.receiver_east - local.receiver_east;
+    const double disp_n = remote.receiver_north - local.receiver_north;
+    const double disp_e = remote.receiver_east - local.receiver_east;
 
     const double determinant = local_n * remote_e - local_e * remote_n;
 
@@ -66,8 +95,8 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
         return;
     }
 
-    const double local_range = (baseline_n * remote_e - baseline_e * remote_n) / determinant;
-    const double remote_range = (baseline_n * local_e - baseline_e * local_n) / determinant;
+    const double local_range = (disp_n * remote_e - disp_e * remote_n) / determinant;
+    const double remote_range = (disp_n * local_e - disp_e * local_n) / determinant;
 
     if (!std::isfinite(local_range) || !std::isfinite(remote_range) || local_range < 0.0 || remote_range < 0.0) {
         RCLCPP_WARN(get_logger(), "Bearing rays have no valid forward intersection.");
@@ -81,6 +110,11 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
         !std::isfinite(estimated_east)) {
         return;
     }
+
+    // Record the pair only after triangulation succeeds.
+    processed_local_bearing_time_ = local.sim_time;
+    processed_remote_bearing_time_ = remote.sim_time;
+    processed_bearing_pair_available_ = true;
 
     // Treat the intersection as an estimate at local reception time.
     // The native function also updates velocity from successive estimates.

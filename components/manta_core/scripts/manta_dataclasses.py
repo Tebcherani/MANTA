@@ -128,11 +128,11 @@ class TrailingSweepConfig:
         if not isinstance(data, dict):
             raise ValueError("'sweep' must be a YAML mapping.")
 
-        intervals = data.get("call_update_intervals")
+        intervals = data.get("communication_intervals")
 
         if not isinstance(intervals, list):
-            raise ValueError("'sweep.call_update_intervals' must be a YAML list.")
-
+            raise ValueError("'sweep.communication_intervals' must be a YAML list.")
+        
         return cls(call_update_intervals=tuple(float(interval) for interval in intervals))
 
 

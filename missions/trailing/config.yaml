@@ -55,15 +55,8 @@ monte_carlo:
   random_seed: 42
 
 sweep:
-  call_update_intervals:
-    - 0.0      # Every call
-    - 5.0
-    - 10.0
-    - 30.0
-    - 60.0     # 1 minute
-    - 120.0
-    - 300.0    # 5 minutes
-    - 600.0    # 10 minutes
+  communication_intervals:
+    - 0.5
   accuracy:
     min_std_km: 0.0
     max_std_km: 150.0
@@ -80,7 +73,7 @@ scenario:
     call_position_std_m: 0.0
     vehicle_separation_m: 2000.0
     following_distance_m: 1000.0
-    communication_interval: 600.0 # simulated seconds; 0 means immediate
+    communication_interval: 10.0 # simulated seconds; 0 means immediate
 
   duration: 86400.0  # 1 day
 

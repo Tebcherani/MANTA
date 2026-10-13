@@ -52,7 +52,7 @@ def load_completed_trailing_sweep_results(summary_path: Path) -> dict:
 def prepare_interval_config(sim_config: dict, interval: float, interval_directory: Path, mission_directory: Path) -> tuple[dict, Path]:
     """Create the configuration and mission paths for one interval."""
     interval_config = copy.deepcopy(sim_config)
-    interval_config["scenario"]["trailing"]["call_update_interval"] = interval
+    interval_config["scenario"]["trailing"]["communication_interval"] = interval
 
     for vehicle in interval_config["vehicles"]:
         mission_path = mission_directory / f"{vehicle['id']}.mi"
