@@ -73,7 +73,7 @@ private:
     void seed_generator();
     void validate_config() const;
 
-    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double initial_heading, double speed);
+    std::vector<TrajectoryPoint> generate_trajectory(double speed);
     std::vector<double> generate_call_times(double start_time, double end_time);
     double sample_speed();
 
@@ -106,11 +106,6 @@ private:
     // Simulation
     std::mt19937 generator_;
     std::vector<Whale> whales_;
-
-    // Whale initialization
-    double initial_north_;
-    double initial_east_;
-    double initial_heading_degrees_;
 
     // Whale calling
     double bout_mean_duration_;

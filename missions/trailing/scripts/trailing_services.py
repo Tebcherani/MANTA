@@ -58,9 +58,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     # Fix its initial position and heading at the origin, facing north.
     whale_parameters = {
         "mission_duration": scenario["duration"],
-        "initial_north": 0.0,
-        "initial_east": 0.0,
-        "initial_heading_degrees": 0.0,
         "bout_mean_duration": bouts["mean_duration"],
         "bout_mean_silent_duration": bouts["mean_silent_duration"],
         "bout_active_call_rate_per_hour": bouts["active_call_rate_per_hour"],

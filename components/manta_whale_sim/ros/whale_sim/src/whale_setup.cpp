@@ -66,7 +66,7 @@ std::vector<double> WhaleNode::generate_call_times(double start_time, double end
 /**
  * Generate one whale's movement trajectory from its activation time to the end of the mission.
  */
-std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double initial_north, double initial_east, double initial_heading, double speed) {
+std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double speed) {
     std::vector<TrajectoryPoint> trajectory;
 
     const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
@@ -75,14 +75,13 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
     std::normal_distribution<double> standard_normal(0.0, 1.0);
 
     double time = 0.0;
-    double north = initial_north;
-    double east = initial_east;
+    double north = 0.0;
+    double east = 0.0;
     double heading_error = 0.0;
 
     while (true) {
-        const double heading = initial_heading + heading_error;
-        const double velocity_north = speed * std::cos(heading);
-        const double velocity_east = speed * std::sin(heading);
+        const double velocity_north = speed * std::cos(heading_error);
+        const double velocity_east = speed * std::sin(heading_error);
 
         trajectory.push_back({time, north, east, velocity_north, velocity_east});
 
@@ -119,10 +118,9 @@ void WhaleNode::initialize_whales() {
     whale.complete = false;
     whale.next_call_index = 0;
 
-    const double heading_radians = initial_heading_degrees_ * std::acos(-1.0) / 180.0;
     const double speed = sample_speed();
 
-    whale.trajectory = generate_trajectory(initial_north_, initial_east_, heading_radians, speed);
+    whale.trajectory = generate_trajectory(speed);
 
     if (whale.trajectory.empty()) throw std::runtime_error("Generated whale trajectory is empty.");
 
@@ -144,11 +142,6 @@ void WhaleNode::initialize_whales() {
 void WhaleNode::load_config() {
     // Scenario size and picket-line geometry.
     mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
-
-    // Whale config
-    initial_north_ = declare_parameter<double>("initial_north", 0.0);
-    initial_east_ = declare_parameter<double>("initial_east", 0.0);
-    initial_heading_degrees_ = declare_parameter<double>("initial_heading_degrees", 0.0);
 
     // Whale movement.
     speed_mean_ = declare_parameter<double>("speed_mean", 1.5);
@@ -209,8 +202,6 @@ void WhaleNode::seed_generator() {
 void WhaleNode::validate_config() const {
     if (mission_duration_ <= 0.0) throw std::runtime_error("mission_duration must be greater than zero.");
     if (whale_sample_period_ <= 0.0) throw std::runtime_error("sample_period must be greater than zero.");
-
-    if (!std::isfinite(initial_north_) || !std::isfinite(initial_east_) || !std::isfinite(initial_heading_degrees_)) throw std::runtime_error("Fixed whale initialization values must be finite.");
 
     if (speed_mean_ <= 0.0) throw std::runtime_error("speed_mean must be greater than zero.");
     if (turn_interval_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");
