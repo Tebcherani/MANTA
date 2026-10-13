@@ -57,7 +57,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     # Trailing uses one whale, active throughout the mission.
     # Fix its initial position and heading at the origin, facing north.
     whale_parameters = {
-        "count": 1,
         "mission_duration": scenario["duration"],
         "initial_north": 0.0,
         "initial_east": 0.0,
@@ -70,11 +69,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         "heading_std_degrees": movement["heading_std_degrees"],
         "speed_mean": movement["speed_mean"],
         "speed_std": movement["speed_std"],
-
-        # The shared whale simulator still uses group heading data.
-        "group_mean_size": 1.0,
-        "shared_heading_fraction": 0.75,
-
         "data_directory": data_dir,
         "random_seed": monte_carlo.get("random_seed", 42),
         "sample_period": output.get("whale_sample_period", 60.0),

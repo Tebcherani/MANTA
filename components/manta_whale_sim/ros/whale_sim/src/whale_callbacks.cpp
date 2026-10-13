@@ -185,7 +185,11 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         // Record every whale at the exact scheduled output time.
         for (const auto &whale : whales_) {
             const TrajectoryPoint sample = trajectory_at_time(whale, next_whale_log_time_);
-            whale_log_ << sample_cycle << ',' << next_whale_log_time_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.north << ',' << sample.east << ',' << '\n';
+            whale_log_ << sample_cycle << ','
+                << next_whale_log_time_ << ','
+                << whale.id << ','
+                << sample.north << ','
+                << sample.east << '\n';
         }
 
         next_whale_log_time_ += whale_sample_period_;

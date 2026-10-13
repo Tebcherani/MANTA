@@ -18,7 +18,7 @@ WhaleNode::WhaleNode() : rclcpp::Node("whale_node"), generator_(42) {
     initialize_whales();
     create_ros_interfaces();
 
-    RCLCPP_INFO(get_logger(), "Initialized %d whales.", whale_count_);
+    RCLCPP_INFO(get_logger(), "Initialized whale.");
 }
 
 int main(int argc, char **argv) {

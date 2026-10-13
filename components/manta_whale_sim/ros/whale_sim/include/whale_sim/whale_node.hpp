@@ -33,15 +33,9 @@ private:
         double velocity_east;
     };
 
-    // Shared movement and calling behavior for one group of whales.
-    struct WhaleGroup {
-        std::vector<double> heading_errors;
-    };
-
     // Simulation state and precomputed behavior for one whale.
     struct Whale {
         std::string id;
-        int group_index;
 
         double start_time;
 
@@ -61,15 +55,6 @@ private:
         bool complete;
     };
 
-    // Geometric properties of the picket line expressed in local north-east coordinates.
-    struct LineGeometry {
-        double length;
-        double along_north;
-        double along_east;
-        double perpendicular_north;
-        double perpendicular_east;
-    };
-
     // Initial whale position and direction of travel toward the picket line.
     struct WhaleInitialState {
         double north;
@@ -83,19 +68,13 @@ private:
 
     // Setup
     void load_config();
-    void initialize_whale_groups();
-    void initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const WhaleGroup &group);
     void initialize_whales();
     void open_whale_log();
     void seed_generator();
     void validate_config() const;
 
-    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double initial_heading, double speed, double start_time, const WhaleGroup &group);
-    Whale create_whale(std::size_t whale_index, std::size_t group_index, double start_time) const;
-    std::vector<double> generate_population_call_times(double start_time, double end_time);
-    void assign_population_call_times();
-    std::size_t get_group_index_for_whale(std::size_t whale_index) const;
-    const WhaleGroup &get_group_for_whale(std::size_t whale_index) const;
+    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double initial_heading, double speed);
+    std::vector<double> generate_call_times(double start_time, double end_time);
     double sample_speed();
 
     // ROS interfaces
@@ -122,13 +101,10 @@ private:
     double whale_sample_period_ = 60.0;
 
     // Scenario
-    int whale_count_;
-
     double mission_duration_;
 
     // Simulation
     std::mt19937 generator_;
-    std::vector<WhaleGroup> whale_groups_;
     std::vector<Whale> whales_;
 
     // Whale initialization
@@ -140,10 +116,6 @@ private:
     double bout_mean_duration_;
     double bout_mean_silent_duration_;
     double bout_active_call_rate_per_hour_;
-
-    // Whale grouping
-    double group_mean_size_;
-    double shared_heading_fraction_;
 
     // Whale movement
     double heading_correlation_;
