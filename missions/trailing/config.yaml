@@ -67,9 +67,9 @@ sweep:
     - 600.0
     - 900.0
   accuracy:
-    min_std_km: 0.0
-    max_std_km: 150.0
-    step_std_km: 10.0
+    min_std_degrees: 0.0
+    max_std_degrees: 10.0
+    step_std_degrees: 1.0
 
 
 #--------------------------------------------------
@@ -93,7 +93,7 @@ scenario:
   patrol:
     speed: 1.5
     depth: 50.0
-    capture: 5.0
+    capture: 1.0
 
   whales:
     start_distance: 25000.0

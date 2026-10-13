@@ -7,11 +7,15 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
+participant "WhaleNode" as Whale
 participant "AcousticDetectionNode" as Detection
 participant "OdysseyNode" as AUV1
 
+Whale ->> Detection : WhaleCall
 AUV1 ->> Detection : VehicleState
-Detection -> Detection : Evaluate detection range and calculate bearings
+Detection -> Detection : Evaluate detection range
+Detection -> Detection : Calculate bearings
+Detection -> Detection : Add noise to bearings
 Detection ->> AUV1 : BearingObservation
 Detection ->> Orchestrator : WhaleCallProcessed (receiver IDs)
 

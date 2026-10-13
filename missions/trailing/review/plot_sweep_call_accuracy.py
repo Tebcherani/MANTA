@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-SUMMARY_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_summary.csv"
-OUTPUT_PATH = ROOT / "output" / "trailing" / "monte_carlo_sweep" / "sweep_accuracy_metrics.png"
+SUMMARY_PATH = ROOT / "output/trailing/sweep_accuracy/sweep_summary.csv"
+OUTPUT_PATH = ROOT / "output/trailing/sweep_accuracy/sweep_accuracy_metrics.png"
 
 plt.rcParams.update({
     "font.size": 14,
