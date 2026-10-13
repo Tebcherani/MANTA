@@ -18,45 +18,30 @@ partition "WhaleNode()" {
     :Seed random number generator;
 
     partition "Initialize single whale" {
-        :Initialize lifecycle and call index;
-
-        :Sample positive swimming speed;
+        :Sample swimming speed;
         note right
             Normal(speed_mean, speed_std)
             Reject nonpositive draws
+            Speed remains fixed during the mission.
         end note
 
         partition "Generate movement trajectory" {
-            :Calculate AR(1) heading innovation scale;
+            :Calculate AR(1) innovation scale;
             note right
-                sigma_innovation =
-                sigma_heading * sqrt(1 - rho^2)
-
-                sigma_heading is converted to radians.
+                sigma_innovation = sigma_heading * sqrt(1 - rho^2)
             end note
 
-            :Initialize time and position;
-            :Set heading error to zero;
-
             while (Trajectory generation continues?) is (yes)
-                :Calculate heading;
+                :Calculate north/east velocity;
                 note right
-                    heading = initial heading + heading error
+                    velocity_north = speed * cos(heading_error)
+                    velocity_east = speed * sin(heading_error)
                 end note
 
-                :Calculate north/east velocity;
-                :Store trajectory point;
-
-                if (Mission duration reached?) then (yes)
-                    break
-                else (no)
-                    :Determine next heading-update boundary;
-                    :Limit next time to mission duration;
                     :Advance position using current velocity;
                     :Advance time;
 
                     if (Mission duration reached?) then (yes)
-                        :Store final trajectory point;
                         break
                     else (no)
                         :Update AR(1) heading error;
@@ -65,56 +50,49 @@ partition "WhaleNode()" {
                             + sigma_innovation * Normal(0, 1)
                         end note
                     endif
-                endif
             endwhile (no)
         }
 
-        :Verify trajectory is nonempty;
-
         partition "Generate whale call times" {
-            :Set calling interval to the full mission;
+            :Set calling interval from zero to mission duration;
+            :Create exponential duration and intercall distributions;
             :Select initial active or silent calling state;
             note right
                 Probability of active calling =
                 mean_active / (mean_active + mean_silent)
 
-                With configured means:
-                1842 / (1842 + 7860) = approximately 0.19
+                Calling state is separate from
+                the whale's lifecycle active flag.
             end note
 
             while (Calling interval remains?) is (yes)
+                :Sample positive duration for current calling state;
+                note right
+                    Active: mean = bout_mean_duration
+                    Silent: mean = bout_mean_silent_duration
+                end note
+
                 if (Active calling bout?) then (yes)
-                    :Sample positive active-bout duration;
-                    note right
-                        Exponential distribution
-                        Mean = bout_mean_duration
-                    end note
+                    :Sample positive intercall interval;
+                    :Calculate first call time;
 
-                    :Limit bout end to mission duration;
-                    :Generate and store calls before bout end;
-                    note right
-                        Positive exponential intercall intervals
+                    while (Call time precedes interval end?) is (yes)
+                        :Sample next positive intercall interval;
+                        :Advance call time;
+                    endwhile (no)
 
-                        Rate = bout_active_call_rate_per_hour
-                        converted to calls per second
+                    note right
+                        Exponential intercall intervals
+                        Rate = bout_active_call_rate_per_hour / 3600
                     end note
                 else (no)
-                    :Sample positive silent duration;
-                    note right
-                        Exponential distribution
-                        Mean = bout_mean_silent_duration
-                    end note
-
-                    :Limit silent interval end to mission duration;
+                    :Generate no calls during silence;
                 endif
 
                 :Advance to interval end;
                 :Switch active/silent calling state;
             endwhile (no)
         }
-
-        :Initialize published position and velocity\nfrom first trajectory point;
-        :Store exactly one whale;
     }
 
     partition "Create ROS interfaces" {
@@ -131,8 +109,6 @@ partition "WhaleNode()" {
 
         :Create next-whale-call service;
     }
-
-    :Log "Initialized one whale";
 }
 
 stop

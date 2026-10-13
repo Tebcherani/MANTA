@@ -69,9 +69,6 @@ class MonteCarloResult:
 
     realization: int
     seed: int
-    detected_whales: int
-    whale_count: int
-    detection_fraction: float
     total_mass: float
     total_energy: float
     mean_vehicle_speed: float
@@ -91,9 +88,6 @@ class MonteCarloResult:
         return cls(
             realization=realization,
             seed=seed,
-            detected_whales=int(row["detected_whales"]),
-            whale_count=int(row["whale_count"]),
-            detection_fraction=float(row["detection_fraction"]),
             total_mass=float(row["total_mass"]),
             total_energy=float(row["total_energy"]),
             mean_vehicle_speed=float(row["mean_vehicle_speed"]),
@@ -194,74 +188,3 @@ class SweepConfig:
             raise ValueError("'sweep' must be a YAML mapping.")
 
         return cls(min_vehicles=int(data.get("min_vehicles", 1)), max_vehicles=int(data.get("max_vehicles", 10)))
-
-
-@dataclass(frozen=True)
-class SweepResult:
-    """Aggregate Monte Carlo results for one fleet size."""
-
-    fleet_size: int
-    realizations: int
-    whale_count: int
-    mean_detected_whales: float
-    mean_detection: float
-    ci_lower: float
-    ci_upper: float
-    ci_half_width: float
-    confidence_level: float
-    mean_total_mass: float
-    mass_ci_lower: float
-    mass_ci_upper: float
-    mass_ci_half_width: float
-    mean_total_energy: float
-    energy_ci_lower: float
-    energy_ci_upper: float
-    energy_ci_half_width: float
-    mean_vehicle_speed: float
-    speed_ci_lower: float
-    speed_ci_upper: float
-    speed_ci_half_width: float
-
-    def __post_init__(self) -> None:
-        """Validate a completed fleet-size result."""
-
-        if self.fleet_size < 1:
-            raise ValueError("Sweep-result fleet size must be at least 1.")
-        if self.realizations < 1:
-            raise ValueError("Sweep result must contain at least one realization.")
-        if self.whale_count < 1:
-            raise ValueError("Sweep-result whale count must be at least 1.")
-        if not 0.0 <= self.mean_detection <= 1.0:
-            raise ValueError("Mean detection must be between 0 and 1.")
-        if not 0.0 <= self.ci_lower <= self.ci_upper <= 1.0:
-            raise ValueError("Detection confidence interval must remain between 0 and 1.")
-        if not 0.0 < self.confidence_level < 1.0:
-            raise ValueError("Confidence level must be between 0 and 1.")
-
-    @classmethod
-    def from_csv_row(cls, row: dict[str, str]) -> "SweepResult":
-        """Convert one sweep-summary CSV row into a typed result."""
-
-        return cls(
-            fleet_size=int(row["fleet_size"]),
-            realizations=int(row["realizations"]),
-            whale_count=int(row["whale_count"]),
-            mean_detected_whales=float(row["mean_detected_whales"]),
-            mean_detection=float(row["mean_detection"]),
-            ci_lower=float(row["ci_lower"]),
-            ci_upper=float(row["ci_upper"]),
-            ci_half_width=float(row["ci_half_width"]),
-            confidence_level=float(row["confidence_level"]),
-            mean_total_mass=float(row["mean_total_mass"]),
-            mass_ci_lower=float(row["mass_ci_lower"]),
-            mass_ci_upper=float(row["mass_ci_upper"]),
-            mass_ci_half_width=float(row["mass_ci_half_width"]),
-            mean_total_energy=float(row["mean_total_energy"]),
-            energy_ci_lower=float(row["energy_ci_lower"]),
-            energy_ci_upper=float(row["energy_ci_upper"]),
-            energy_ci_half_width=float(row["energy_ci_half_width"]),
-            mean_vehicle_speed=float(row["mean_vehicle_speed"]),
-            speed_ci_lower=float(row["speed_ci_lower"]),
-            speed_ci_upper=float(row["speed_ci_upper"]),
-            speed_ci_half_width=float(row["speed_ci_half_width"]),
-        )

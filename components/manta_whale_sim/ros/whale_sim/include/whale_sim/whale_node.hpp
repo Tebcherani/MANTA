@@ -45,10 +45,6 @@ private:
         double east;
         double velocity_north;
         double velocity_east;
-
-        // Whale lifecycle state.
-        bool active;
-        bool complete;
     };
 
     // Initial whale position and direction of travel toward the picket line.

@@ -28,8 +28,6 @@ def check_stop_requested() -> None:
 def collect_realization_result(config: dict, root: Path, data_directory: Path, vehicle_ids: list[str], realization: int, seed: int) -> MonteCarloResult:
     """Read simulation outputs and construct the completed realization result."""
 
-    whale_count = count_simulated_whales(data_directory / "whales.csv")
-    detected_count, detection_fraction = summarize_realization(data_directory, whale_count)
     total_mass, total_energy, mean_vehicle_speed = summarize_vehicle_metrics(data_directory, vehicle_ids)
     mean_distance_km = None
 
@@ -40,38 +38,11 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
     return MonteCarloResult(
         realization=realization,
         seed=seed,
-        detected_whales=detected_count,
-        whale_count=whale_count,
-        detection_fraction=detection_fraction,
         total_mass=total_mass,
         total_energy=total_energy,
         mean_vehicle_speed=mean_vehicle_speed,
         mean_distance_km=mean_distance_km,
     )
-
-
-def count_simulated_whales(path: Path) -> int:
-    """Verify output exists for the single simulated whale."""
-    if not path.is_file():
-        raise ValueError(f"Whale trajectory file does not exist: {path}")
-
-    with path.open("r", encoding="utf-8", newline="") as file:
-        reader = csv.DictReader(file)
-        required = {"sim_time", "north", "east"}
-
-        if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise ValueError("whales.csv must contain sim_time, north, and east columns.")
-
-        for row in reader:
-            try:
-                values = [float(row[key]) for key in ("sim_time", "north", "east")]
-            except (TypeError, ValueError):
-                continue
-
-            if all(math.isfinite(value) for value in values):
-                return 1
-
-    raise ValueError("whales.csv contains no valid trajectory samples.")
 
 
 def create_docker_commands(compose_path: Path, project_name: str) -> tuple[list[str], list[str]]:
@@ -157,42 +128,6 @@ def stop_compose_project(down_command: list[str], root: Path) -> str | None:
         return "Docker cleanup timed out"
 
     return None
-
-
-def summarize_realization(
-    data_directory: Path, whale_count: int
-) -> tuple[int, float]:
-    """Report whether the single whale was detected at least once."""
-    if whale_count != 1:
-        raise ValueError("Only one simulated whale is supported.")
-
-    path = data_directory / "whale_detections.csv"
-
-    if not path.is_file():
-        raise ValueError(f"Detection results were not created: {path}")
-
-    with path.open("r", encoding="utf-8", newline="") as file:
-        reader = csv.DictReader(file)
-        required = {"vehicle_id", "whale_north", "whale_east"}
-
-        if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise ValueError(f"Detection results lack required columns: {path}")
-
-        for row in reader:
-            try:
-                north = float(row["whale_north"])
-                east = float(row["whale_east"])
-            except (TypeError, ValueError):
-                continue
-
-            if (
-                row.get("vehicle_id", "").strip()
-                and math.isfinite(north)
-                and math.isfinite(east)
-            ):
-                return 1, 1.0
-
-    return 0, 0.0
 
 
 def summarize_vehicle_metrics(data_directory: Path, vehicle_ids: list[str]) -> tuple[float, float, float]:
@@ -320,14 +255,10 @@ def run_realization_attempt(config: dict, root: Path, realization: int, attempt:
         run_compose_attempt(up_command, root, console_log, timeout)
         check_stop_requested()
         result = collect_realization_result(config, root, data_directory, vehicle_ids, realization, seed)
-        if config["scenario"]["type"] == "trailing":
-            print(
-                f"Completed realization {realization}: "
-                f"mean formation error {result.mean_distance_km:.3f} km"
-            )
-        else:
-            print(f"Completed realization {realization}: {result.detected_whales}/{result.whale_count} whales ({result.detection_fraction:.1%})")
-        
+        print(
+            f"Completed realization {realization}: "
+            f"mean formation error {result.mean_distance_km:.3f} km"
+        )
         return result
     finally:
         cleanup_error = stop_compose_project(down_command, root)

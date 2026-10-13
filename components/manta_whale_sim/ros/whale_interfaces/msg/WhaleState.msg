@@ -1,4 +1,3 @@
-bool active
 bool calling
 
 uint64 cycle

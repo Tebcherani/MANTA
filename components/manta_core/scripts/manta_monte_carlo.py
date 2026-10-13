@@ -37,19 +37,17 @@ def check_monte_carlo_convergence(fractions: list[float], monte_carlo_config: Mo
     return converged, sample_mean, half_width, mean_change
 
 def get_convergence_values(completed: dict[int, MonteCarloResult], scenario_type: str) -> tuple[list[float], str, str]:
-    """Select the realization metric used to test Monte Carlo convergence."""
+    """Use mean formation error to test Monte Carlo convergence."""
+    if scenario_type != "trailing":
+        raise ValueError("Only trailing Monte Carlo experiments are supported.")
 
     results = [completed[index] for index in sorted(completed)]
 
-    if scenario_type == "trailing":
-        if any(result.mean_distance_km is None for result in results):
-            raise ValueError("Trailing Monte Carlo results are missing mean distances.")
+    if any(result.mean_distance_km is None for result in results):
+        raise ValueError("Trailing Monte Carlo results are missing mean distances.")
 
-        values = [result.mean_distance_km for result in results]
-        return values, "mean distance", "km"
-
-    values = [result.detection_fraction for result in results]
-    return values, "mean detection", "%"
+    values = [float(result.mean_distance_km) for result in results]
+    return values, "mean formation error", "km"
 
 def check_saved_result_convergence(completed: dict[int, MonteCarloResult], monte_carlo_config: MonteCarloConfig, summary_path: Path, scenario_type: str) -> bool:
     """Report whether previously completed realizations already satisfy convergence."""
@@ -80,19 +78,20 @@ def cleanup_monte_carlo_projects() -> None:
     if result.returncode != 0: raise ValueError("Failed to clean up MANTA Monte Carlo Docker projects.")
     
 
-def compute_monte_carlo_statistics(detection_fractions: list[float], confidence_level: float) -> tuple[float, float]:
-    """Return the sample mean and normal-approximation confidence-interval half-width."""
+def compute_monte_carlo_statistics(values: list[float], confidence_level: float) -> tuple[float, float]:
+    """Return the sample mean and normal-approximation CI half-width."""
+    if not values:
+        raise ValueError("At least one realization is required.")
 
-    if not detection_fractions: raise ValueError("At least one realization is required.")
+    sample_mean = statistics.mean(values)
 
-    sample_mean = statistics.mean(detection_fractions)
-    if len(detection_fractions) < 2: return sample_mean, math.inf
+    if len(values) < 2:
+        return sample_mean, math.inf
 
-    standard_error = statistics.stdev(detection_fractions) / math.sqrt(len(detection_fractions))
+    standard_error = statistics.stdev(values) / math.sqrt(len(values))
     z_score = statistics.NormalDist().inv_cdf(0.5 + confidence_level / 2.0)
-    half_width = z_score * standard_error
 
-    return sample_mean, half_width
+    return sample_mean, z_score * standard_error
 
 
 def compute_runs_to_next_checkpoint(completed_count: int, monte_carlo_config: MonteCarloConfig) -> int:
@@ -145,7 +144,7 @@ def load_completed_results(path: Path, base_seed: int) -> dict[int, MonteCarloRe
 
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
-        required = {"realization", "seed", "detected_whales", "whale_count", "detection_fraction", "total_mass", "total_energy", "mean_vehicle_speed"}
+        required = {"realization", "seed", "total_mass", "total_energy", "mean_vehicle_speed"}
         if not reader.fieldnames or not required.issubset(reader.fieldnames): raise ValueError(f"Monte Carlo summary has an invalid header: {path}")
 
         results = [MonteCarloResult.from_csv_row(row, base_seed) for row in reader]
@@ -253,9 +252,6 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
             fieldnames=(
                 "realization",
                 "seed",
-                "detected_whales",
-                "whale_count",
-                "detection_fraction",
                 "total_mass",
                 "total_energy",
                 "mean_vehicle_speed",
@@ -320,8 +316,13 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
             next_realization += 1
 
     # Monte carlo results after reaching max simulations
-    fractions = [completed_results[index].detection_fraction for index in sorted(completed_results)]
-    sample_mean, half_width = compute_monte_carlo_statistics(fractions, monte_carlo_config.confidence_level,)
-    print(f"Reached maximum of {len(completed_results)} realizations. Mean detection: {sample_mean:.2%}; CI half-width: {half_width:.2%}.\nSummary: {summary_path}")
-
+    values, metric_name, unit = get_convergence_values(completed_results, scenario_type)
+    sample_mean, half_width = compute_monte_carlo_statistics(values, monte_carlo_config.confidence_level)
+    print(
+        f"Reached maximum of {len(completed_results)} realizations. "
+        f"{metric_name}: {sample_mean:.3f} {unit}; "
+        f"CI half-width: {half_width:.3f} {unit}.\n"
+        f"Summary: {summary_path}"
+    )
+    
     return 0

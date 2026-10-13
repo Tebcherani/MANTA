@@ -24,19 +24,19 @@ std::vector<double> WhaleNode::generate_call_times(double start_time, double end
     const double active_probability = bout_mean_duration_ / (bout_mean_duration_ + bout_mean_silent_duration_);
     std::bernoulli_distribution initial_state(active_probability);
 
-    bool active = initial_state(generator_);
+    bool calling_active = initial_state(generator_);
     double interval_start = start_time;
 
     while (interval_start < end_time) {
         double duration;
 
         do {
-            duration = active ? active_duration(generator_) : silent_duration(generator_);
+            duration = calling_active ? active_duration(generator_) : silent_duration(generator_);
         } while (duration <= 0.0);
 
         const double interval_end = std::min(interval_start + duration, end_time);
 
-        if (active) {
+        if (calling_active) {
             double time_until_call;
 
             do {
@@ -57,7 +57,7 @@ std::vector<double> WhaleNode::generate_call_times(double start_time, double end
         }
 
         interval_start = interval_end;
-        active = !active;
+        calling_active = !calling_active;
     }
 
     return call_times;
@@ -112,8 +112,6 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double sp
 void WhaleNode::initialize_whales() {
     Whale whale{};
 
-    whale.active = true;
-    whale.complete = false;
     whale.next_call_index = 0;
 
     const double speed = sample_speed();
