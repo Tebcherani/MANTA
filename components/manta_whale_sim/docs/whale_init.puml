@@ -19,7 +19,6 @@ partition "WhaleNode()" {
 
     partition "Initialize single whale" {
         :Set ID to whale_1;
-        :Set start time to zero;
         :Initialize lifecycle and call index;
         :Convert initial heading to radians;
 
