@@ -18,7 +18,6 @@ partition "WhaleNode()" {
     :Seed random number generator;
 
     partition "Initialize single whale" {
-        :Set ID to whale_1;
         :Initialize lifecycle and call index;
 
         :Sample positive swimming speed;
