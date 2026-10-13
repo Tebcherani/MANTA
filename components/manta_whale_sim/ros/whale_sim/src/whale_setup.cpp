@@ -113,7 +113,6 @@ void WhaleNode::initialize_whales() {
     Whale whale{};
 
     whale.id = "whale_1";
-    whale.start_time = 0.0;
     whale.active = true;
     whale.complete = false;
     whale.next_call_index = 0;

@@ -151,7 +151,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         whale.east = position.east;
         whale.velocity_north = position.velocity_north;
         whale.velocity_east = position.velocity_east;
-        whale.active = batch_end_time >= whale.start_time && batch_end_time < whale.trajectory.back().time;
+        whale.active = batch_end_time >= 0.0 && batch_end_time < whale.trajectory.back().time;
         whale.complete = batch_end_time >= whale.trajectory.back().time;
 
         // Build and publish the ground-truth state at the completed batch time.

@@ -37,8 +37,6 @@ private:
     struct Whale {
         std::string id;
 
-        double start_time;
-
         std::vector<double> call_times;
         std::size_t next_call_index = 0;
 
