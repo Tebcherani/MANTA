@@ -260,7 +260,6 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
                 "total_energy",
                 "mean_vehicle_speed",
                 "mean_distance_km",
-                "integrated_tracking_error_km_hours",
             ),
         )
         writer.writeheader()

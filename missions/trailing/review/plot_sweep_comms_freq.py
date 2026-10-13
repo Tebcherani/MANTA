@@ -125,7 +125,7 @@ def main() -> int:
 
     ax.set_title("Effect of Communication Interval on Trailing")
     ax.set_xlabel("Communication Interval (min)")
-    ax.set_ylabel("Mean Distance from Whale (km)")
+    ax.set_ylabel("Mean Formation Trailing Error (km)")
     #ax.set_ylim(bottom=0)
     ax.grid(True, alpha=0.3)
     ax.legend(title="Vehicle")

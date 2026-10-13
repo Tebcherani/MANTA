@@ -76,7 +76,6 @@ class MonteCarloResult:
     total_energy: float
     mean_vehicle_speed: float
     mean_distance_km: float | None = None
-    integrated_tracking_error_km_hours: float | None = None
 
     @classmethod
     def from_csv_row(cls, row: dict[str, str], base_seed: int) -> "MonteCarloResult":
@@ -99,7 +98,6 @@ class MonteCarloResult:
             total_energy=float(row["total_energy"]),
             mean_vehicle_speed=float(row["mean_vehicle_speed"]),
             mean_distance_km=float(row["mean_distance_km"]) if row.get("mean_distance_km", "").strip() else None,
-            integrated_tracking_error_km_hours=float(row["integrated_tracking_error_km_hours"]) if row.get("integrated_tracking_error_km_hours", "").strip() else None,
         )
 
 
@@ -146,10 +144,6 @@ class TrailingSweepResult:
     distance_ci_lower_km: float
     distance_ci_upper_km: float
     distance_ci_half_width_km: float
-    mean_integrated_tracking_error_km_hours: float
-    integrated_error_ci_lower_km_hours: float
-    integrated_error_ci_upper_km_hours: float
-    integrated_error_ci_half_width_km_hours: float
     confidence_level: float
 
     def __post_init__(self) -> None:
@@ -161,8 +155,6 @@ class TrailingSweepResult:
             raise ValueError("Trailing sweep result must contain at least one realization.")
         if self.mean_distance_km < 0.0:
             raise ValueError("Mean distance cannot be negative.")
-        if self.mean_integrated_tracking_error_km_hours < 0.0:
-            raise ValueError("Integrated tracking error cannot be negative.")
         if not 0.0 < self.confidence_level < 1.0:
             raise ValueError("Confidence level must be between zero and one.")
 
@@ -177,10 +169,6 @@ class TrailingSweepResult:
             distance_ci_lower_km=float(row["distance_ci_lower_km"]),
             distance_ci_upper_km=float(row["distance_ci_upper_km"]),
             distance_ci_half_width_km=float(row["distance_ci_half_width_km"]),
-            mean_integrated_tracking_error_km_hours=float(row["mean_integrated_tracking_error_km_hours"]),
-            integrated_error_ci_lower_km_hours=float(row["integrated_error_ci_lower_km_hours"]),
-            integrated_error_ci_upper_km_hours=float(row["integrated_error_ci_upper_km_hours"]),
-            integrated_error_ci_half_width_km_hours=float(row["integrated_error_ci_half_width_km_hours"]),
             confidence_level=float(row["confidence_level"]),
         )
 

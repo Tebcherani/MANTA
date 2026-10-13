@@ -60,16 +60,12 @@ def summarize_accuracy_results(std_m, interval, results, confidence_level):
     if not results:
         raise ValueError(f"Position standard deviation {std_m:g} m has no results.")
     metrics = {}
-    for attribute, label in (
-        ("mean_distance_km", "centroid distance"),
-        ("integrated_tracking_error_km_hours", "integrated tracking error"),
-    ):
+    for attribute, label in (("mean_distance_km", "centroid distance")):
         samples = [getattr(result, attribute) for result in results]
         if any(value is None or not math.isfinite(value) or value < 0 for value in samples):
             raise ValueError(f"Position standard deviation {std_m:g} m has invalid {label} results.")
         metrics[attribute] = compute_monte_carlo_statistics(samples, confidence_level)
     distance, distance_half_width = metrics["mean_distance_km"]
-    error, error_half_width = metrics["integrated_tracking_error_km_hours"]
     return {
         "call_position_std_km": std_m / 1000.0,
         "call_position_std_m": std_m,
@@ -79,10 +75,6 @@ def summarize_accuracy_results(std_m, interval, results, confidence_level):
         "distance_ci_lower_km": max(0.0, distance - distance_half_width),
         "distance_ci_upper_km": distance + distance_half_width,
         "distance_ci_half_width_km": distance_half_width,
-        "mean_integrated_tracking_error_km_hours": error,
-        "integrated_error_ci_lower_km_hours": max(0.0, error - error_half_width),
-        "integrated_error_ci_upper_km_hours": error + error_half_width,
-        "integrated_error_ci_half_width_km_hours": error_half_width,
         "confidence_level": confidence_level,
     }
 
@@ -145,8 +137,7 @@ def run_monte_carlo_sweep(sim_config):
         row = summarize_accuracy_results(std_m, interval, results, mc.confidence_level)
         rows[std_m] = row
         write_summary(summary, rows)
-        print(f"Mean distance: {row['mean_distance_km']:.3f} km; "
-              f"integrated error: {row['mean_integrated_tracking_error_km_hours']:.3f} km h")
+        print(f"Mean formation error: {row['mean_distance_km']:.3f} km")
     print(f"Accuracy sweep data: {summary}")
     return 0
 

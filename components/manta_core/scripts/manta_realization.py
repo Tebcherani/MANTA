@@ -32,12 +32,10 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
     detected_count, detection_fraction = summarize_realization(data_directory, whale_count)
     total_mass, total_energy, mean_vehicle_speed = summarize_vehicle_metrics(data_directory, vehicle_ids)
     mean_distance_km = None
-    integrated_tracking_error_km_hours = None
 
     if config["scenario"]["type"] == "trailing":
-        tracking = [summarize_tracking_metrics(root, data_directory, vehicle_id) for vehicle_id in vehicle_ids]
-        mean_distance_km = mean(value[0] for value in tracking)
-        integrated_tracking_error_km_hours = mean(value[1] for value in tracking)
+        tracking = [summarize_tracking_metrics(root, data_directory, vehicle_id, config) for vehicle_id in vehicle_ids]
+        mean_distance_km = mean(tracking)
 
     return MonteCarloResult(
         realization=realization,
@@ -49,7 +47,6 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
         total_energy=total_energy,
         mean_vehicle_speed=mean_vehicle_speed,
         mean_distance_km=mean_distance_km,
-        integrated_tracking_error_km_hours=integrated_tracking_error_km_hours,
     )
 
 
@@ -223,8 +220,8 @@ def summarize_vehicle_metrics(data_directory: Path, vehicle_ids: list[str]) -> t
     return total_mass, total_energy, mean(vehicle_speeds)
 
 
-def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str) -> tuple[float, float]:
-    """Run the trailing metric calculator for one completed realization."""
+def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str, config: dict) -> float:
+    """Calculate mean formation error for one vehicle in a completed realization."""
 
     python_path = root / ".venv" / "bin" / "python"
     script_path = root / "missions" / "trailing" / "review" / "trailing_metrics.py"
@@ -234,8 +231,31 @@ def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str
     if not script_path.is_file():
         raise ValueError(f"Trailing metric script does not exist: {script_path}")
 
+    trailing = config["scenario"]["trailing"]
+    following_distance_m = float(trailing["following_distance_m"])
+    separation_m = float(trailing["vehicle_separation_m"])
+
+    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
+    if len(vehicle_ids) != 2:
+        raise ValueError("Trailing formation metrics require exactly two vehicles.")
+    if vehicle_id not in vehicle_ids:
+        raise ValueError(f"Vehicle '{vehicle_id}' is not in the configuration.")
+
+    vehicle_index = vehicle_ids.index(vehicle_id)
+
+    # Match the offsets assigned by trailing_mission.py.
+    side_offset_m = (-0.5 if vehicle_index == 0 else 0.5) * separation_m
+
     result = subprocess.run(
-        [str(python_path), str(script_path), str(data_directory), vehicle_id],
+        [
+            str(python_path),
+            str(script_path),
+            str(data_directory),
+            vehicle_id,
+            "--following-distance-m",
+            str(following_distance_m),
+            f"--side-offset-m={side_offset_m}",
+        ],
         cwd=root,
         capture_output=True,
         text=True,
@@ -243,22 +263,26 @@ def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str
     )
 
     if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip() or "unknown tracking-metric failure"
+        detail = (
+            result.stderr.strip()
+            or result.stdout.strip()
+            or "unknown tracking-metric failure"
+        )
         raise ValueError(f"Trailing metric calculation failed: {detail}")
 
     try:
         metrics = json.loads(result.stdout)
         mean_distance = float(metrics["mean_distance_km"])
-        integrated_error = float(metrics["integrated_tracking_error_km_hours"])
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
-        raise ValueError(f"Trailing metric script returned invalid output: {result.stdout.strip()}") from error
+        raise ValueError(
+            f"Trailing metric script returned invalid output: "
+            f"{result.stdout.strip()}"
+        ) from error
 
     if not math.isfinite(mean_distance) or mean_distance < 0.0:
-        raise ValueError("Mean distance must be finite and nonnegative.")
-    if not math.isfinite(integrated_error) or integrated_error < 0.0:
-        raise ValueError("Integrated tracking error must be finite and nonnegative.")
+        raise ValueError("Mean formation error must be finite and nonnegative.")
 
-    return mean_distance, integrated_error
+    return mean_distance
 
 
 #--------------------------------------------------
@@ -281,8 +305,7 @@ def run_realization_attempt(config: dict, root: Path, realization: int, attempt:
         if config["scenario"]["type"] == "trailing":
             print(
                 f"Completed realization {realization}: "
-                f"mean distance {result.mean_distance_km:.3f} km, "
-                f"integrated tracking error {result.integrated_tracking_error_km_hours:.3f} km·h"
+                f"mean formation error {result.mean_distance_km:.3f} km"
             )
         else:
             print(f"Completed realization {realization}: {result.detected_whales}/{result.whale_count} whales ({result.detection_fraction:.1%})")

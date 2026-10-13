@@ -66,33 +66,24 @@ def prepare_interval_config(sim_config: dict, interval: float, interval_director
 
 
 def summarize_interval_results(interval: float, results: list[MonteCarloResult], confidence_level: float) -> TrailingSweepResult:
-    """Calculate tracking means and confidence intervals."""
+    """Calculate mean formation error and its confidence interval."""
     if not results:
-        raise ValueError(f"Call-update interval {interval:g} s has no Monte Carlo results.")
+        raise ValueError(f"Interval {interval:g} s has no Monte Carlo results.")
 
     if any(result.mean_distance_km is None for result in results):
-        raise ValueError(f"Call-update interval {interval:g} s contains missing distance results.")
-
-    if any(result.integrated_tracking_error_km_hours is None for result in results):
-        raise ValueError(f"Call-update interval {interval:g} s contains missing integrated-error results.")
+        raise ValueError(f"Interval {interval:g} s contains missing mean errors.")
 
     distances = [result.mean_distance_km for result in results]
-    integrated_errors = [result.integrated_tracking_error_km_hours for result in results]
 
-    mean_distance, distance_half_width = compute_monte_carlo_statistics(distances, confidence_level)
-    mean_integrated_error, integrated_half_width = compute_monte_carlo_statistics(integrated_errors, confidence_level)
+    mean_distance, half_width = compute_monte_carlo_statistics(distances, confidence_level)
 
     return TrailingSweepResult(
         call_update_interval=interval,
         realizations=len(results),
         mean_distance_km=mean_distance,
-        distance_ci_lower_km=max(0.0, mean_distance - distance_half_width),
-        distance_ci_upper_km=mean_distance + distance_half_width,
-        distance_ci_half_width_km=distance_half_width,
-        mean_integrated_tracking_error_km_hours=mean_integrated_error,
-        integrated_error_ci_lower_km_hours=max(0.0, mean_integrated_error - integrated_half_width),
-        integrated_error_ci_upper_km_hours=mean_integrated_error + integrated_half_width,
-        integrated_error_ci_half_width_km_hours=integrated_half_width,
+        distance_ci_lower_km=max(0.0, mean_distance - half_width),
+        distance_ci_upper_km=mean_distance + half_width,
+        distance_ci_half_width_km=half_width,
         confidence_level=confidence_level,
     )
 
@@ -109,10 +100,6 @@ def write_trailing_sweep_summary(path: Path, results: dict) -> None:
         "distance_ci_lower_km",
         "distance_ci_upper_km",
         "distance_ci_half_width_km",
-        "mean_integrated_tracking_error_km_hours",
-        "integrated_error_ci_lower_km_hours",
-        "integrated_error_ci_upper_km_hours",
-        "integrated_error_ci_half_width_km_hours",
         "confidence_level",
     )
 
@@ -186,8 +173,8 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
 
             for result in realization_results:
                 data_directory = (interval_directory / f"realization_{result.realization:04d}" / "Data")
-                distance, integrated_error = summarize_tracking_metrics(ROOT, data_directory, vehicle_id)
-                vehicle_results.append(replace(result, mean_distance_km=distance, integrated_tracking_error_km_hours=integrated_error))
+                distance = summarize_tracking_metrics(ROOT, data_directory, vehicle_id, interval_config)
+                vehicle_results.append(replace(result, mean_distance_km=distance))
             
             sweep_result = summarize_interval_results(interval, vehicle_results, monte_carlo_config.confidence_level)
             completed_results[(interval, vehicle_id)] = sweep_result

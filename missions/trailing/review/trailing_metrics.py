@@ -49,7 +49,7 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
     return times, whale_north, whale_east
 
 
-def compute_tracking_metrics(data_directory: Path, vehicle_id: str) -> dict[str, float]:
+def compute_tracking_metrics(data_directory: Path, vehicle_id: str, following_distance_m: float, side_offset_m: float) -> dict[str, float]:
     """Calculate distance metrics for one trailing realization."""
 
     whale_path = data_directory / "whales.csv"
@@ -92,15 +92,15 @@ def compute_tracking_metrics(data_directory: Path, vehicle_id: str) -> dict[str,
 
     interpolated_north = np.interp(whale_time, vehicle_time, vehicle_north)
     interpolated_east = np.interp(whale_time, vehicle_time, vehicle_east)
-    distance = np.hypot(interpolated_north - whale_north, interpolated_east - whale_east)
 
-    integrated_error_m_seconds = float(np.trapezoid(distance, whale_time))
-    duration_seconds = float(whale_time[-1] - whale_time[0])
+    # Desired formation position relative to the true whale.
+    desired_north = whale_north - following_distance_m
+    desired_east = whale_east + side_offset_m
 
-    return {
-        "mean_distance_km": integrated_error_m_seconds / duration_seconds / 1000.0,
-        "integrated_tracking_error_km_hours": integrated_error_m_seconds / 3_600_000.0,
-    }
+    # Straight-line formation error at each whale timestamp.
+    distance = np.hypot(interpolated_north - desired_north, interpolated_east - desired_east)
+
+    return {"mean_distance_km": float(np.mean(distance)) / 1000.0}
 
 
 def main() -> int:
@@ -109,9 +109,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("data_directory", type=Path)
     parser.add_argument("vehicle_id")
+    parser.add_argument("--following-distance-m", type=float, required=True)
+    parser.add_argument("--side-offset-m", type=float, required=True)
     args = parser.parse_args()
 
-    metrics = compute_tracking_metrics(args.data_directory.resolve(), args.vehicle_id)
+    metrics = compute_tracking_metrics(
+        args.data_directory.resolve(),
+        args.vehicle_id,
+        args.following_distance_m,
+        args.side_offset_m,
+    )
     print(json.dumps(metrics))
 
     return 0

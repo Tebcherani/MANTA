@@ -36,9 +36,6 @@ def read_sweep_summary() -> list[dict[str, float]]:
         "mean_distance_km",
         "distance_ci_lower_km",
         "distance_ci_upper_km",
-        "mean_integrated_tracking_error_km_hours",
-        "integrated_error_ci_lower_km_hours",
-        "integrated_error_ci_upper_km_hours",
     }
 
     rows = []
@@ -62,15 +59,6 @@ def read_sweep_summary() -> list[dict[str, float]]:
                     "mean_distance_km": float(source["mean_distance_km"]),
                     "distance_ci_lower_km": float(source["distance_ci_lower_km"]),
                     "distance_ci_upper_km": float(source["distance_ci_upper_km"]),
-                    "mean_integrated_tracking_error_km_hours": float(
-                        source["mean_integrated_tracking_error_km_hours"]
-                    ),
-                    "integrated_error_ci_lower_km_hours": float(
-                        source["integrated_error_ci_lower_km_hours"]
-                    ),
-                    "integrated_error_ci_upper_km_hours": float(
-                        source["integrated_error_ci_upper_km_hours"]
-                    ),
                 }
             except (TypeError, ValueError) as error:
                 raise ValueError(
@@ -211,20 +199,6 @@ def main() -> int:
     )
 
     ax.set_ylim(bottom=0.0)
-
-    mission_duration_hours = 24.0
-
-    integrated_axis = ax.secondary_yaxis(
-        "right",
-        functions=(
-            lambda distance: distance * mission_duration_hours,
-            lambda integrated_error: integrated_error / mission_duration_hours,
-        ),
-    )
-
-    integrated_axis.set_ylabel(
-        "Integrated tracking error (km·h)"
-    )
 
     OUTPUT_PATH.parent.mkdir(
         parents=True,
