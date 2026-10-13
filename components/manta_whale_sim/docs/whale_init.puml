@@ -20,7 +20,6 @@ partition "WhaleNode()" {
     partition "Initialize single whale" {
         :Set ID to whale_1;
         :Initialize lifecycle and call index;
-        :Convert initial heading to radians;
 
         :Sample positive swimming speed;
         note right
