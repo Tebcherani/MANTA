@@ -93,7 +93,7 @@ def plot_vehicle_tracks(ax, latest: dict[str, Path]) -> int:
     return plotted
 
 
-def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, float]]]:
+def read_whale_detections() -> dict[int, list[tuple[str, float, float]]]:
     """Read logged detections grouped by cycle and whale ID."""
     detections_by_call = defaultdict(list)
 
@@ -104,14 +104,13 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
     try:
         with WHALE_DETECTIONS_PATH.open("r", encoding="utf-8", newline="") as file:
             reader = csv.DictReader(file)
-            required = {"cycle", "vehicle_id", "whale_id", "whale_north", "whale_east"}
+            required = {"cycle", "vehicle_id", "whale_north", "whale_east"}
 
             if not reader.fieldnames or not required.issubset(reader.fieldnames):
-                raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_id, whale_north, and whale_east columns.")
+                raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_north, and whale_east columns.")
 
             for row in reader:
                 name = row.get("vehicle_id", "")
-                whale = row.get("whale_id", "")
 
                 try:
                     cycle = int(row["cycle"])
@@ -120,8 +119,8 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
                 except (TypeError, ValueError):
                     continue
 
-                if name and whale and np.isfinite(north) and np.isfinite(east):
-                    detections_by_call[(cycle, whale)].append((name, north, east))
+                if name and np.isfinite(north) and np.isfinite(east):
+                    detections_by_call[cycle].append((name, north, east))
 
     except (OSError, ValueError) as error:
         print(f"Could not read whale detections: {error}")
@@ -129,38 +128,35 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
     return dict(detections_by_call)
 
 
-def read_whale_tracks(path: Path) -> dict[str, tuple[list[float], list[float]]]:
-    """Read whale trajectories grouped by whale ID."""
-    tracks = defaultdict(lambda: ([], []))
+def read_whale_tracks(path: Path) -> tuple[list[float], list[float]]:
+    """Read the single whale's trajectory."""
+    north = []
+    east = []
 
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
-        required = {"whale_id", "north", "east"}
+        required = {"north", "east"}
 
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise ValueError("whales.csv must contain whale_id, north, and east columns.")
+            raise ValueError("whales.csv must contain north and east columns.")
 
         for row in reader:
             try:
-                north = float(row["north"])
-                east = float(row["east"])
+                n = float(row["north"])
+                e = float(row["east"])
             except (TypeError, ValueError):
                 continue
 
-            if not row["whale_id"] or not np.isfinite(north) or not np.isfinite(east):
-                continue
+            if np.isfinite(n) and np.isfinite(e):
+                north.append(n)
+                east.append(e)
 
-            track_north, track_east = tracks[row["whale_id"]]
-            track_north.append(north)
-            track_east.append(east)
-
-    return dict(tracks)
+    return north, east
 
 
 def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Read the single trailing whale's position at each logged time."""
     positions_by_time = {}
-    whale_ids = set()
 
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
@@ -177,14 +173,13 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
             except (TypeError, ValueError):
                 continue
 
-            if not row["whale_id"] or not np.isfinite(sim_time) or not np.isfinite(north) or not np.isfinite(east):
+            if not np.isfinite(sim_time) or not np.isfinite(north) or not np.isfinite(east):
                 continue
 
-            whale_ids.add(row["whale_id"])
             positions_by_time[sim_time] = (north, east)
 
-    if len(whale_ids) != 1:
-        raise ValueError(f"Trailing distance metrics require exactly one whale; found {len(whale_ids)}.")
+    if not positions_by_time:
+        raise ValueError("whales.csv contains no valid trajectory samples.")
 
     times = np.asarray(sorted(positions_by_time), dtype=float)
     north = np.asarray([positions_by_time[time][0] for time in times], dtype=float)
@@ -263,33 +258,33 @@ def compute_tracking_error(latest: dict[str, Path], name: str) -> tuple[float, f
 
 
 def plot_whale_tracks(ax) -> int:
-    """Plot logged whale trajectories."""
+    """Plot the single whale's trajectory."""
     if not WHALE_TRAJECTORY_PATH.is_file():
         print(f"No whale trajectory file found: {WHALE_TRAJECTORY_PATH}")
         return 0
 
     try:
-        tracks = read_whale_tracks(WHALE_TRAJECTORY_PATH)
+        north, east = read_whale_tracks(WHALE_TRAJECTORY_PATH)
     except (OSError, ValueError) as error:
-        print(f"Could not read whale trajectories: {error}")
+        print(f"Could not read whale trajectory: {error}")
         return 0
 
-    plotted = 0
+    if not north:
+        return 0
 
-    for whale, (north, east) in sorted(tracks.items()):
-        if not north:
-            continue
+    ax.plot(
+        east, north, color=WHALE_COLOR, linestyle="--",
+        linewidth=1.0, alpha=0.55,
+        label="Whale trajectory", zorder=1,
+    )
+    ax.scatter(
+        east[0], north[0], color=WHALE_COLOR,
+        marker="x", s=25, alpha=0.7, zorder=2,
+    )
+    return 1
 
-        print(f"Plotting whale {whale}.")
-        label = "Whale trajectory" if plotted == 0 else None
-        ax.plot(east, north, color=WHALE_COLOR, linestyle="--", linewidth=1.0, alpha=0.55, label=label, zorder=1)
-        ax.scatter(east[0], north[0], color=WHALE_COLOR, marker="x", s=25, alpha=0.7, zorder=2)
-        plotted += 1
 
-    return plotted
-
-
-def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]]) -> int:
+def plot_whale_calls(ax, detections_by_call: dict[int, list[tuple[str, float, float]]]) -> int:
     """Plot calls without any logged detection as red dots."""
     if not WHALE_CALLS_PATH.is_file():
         print(f"No whale call file found: {WHALE_CALLS_PATH}")
@@ -307,8 +302,6 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
                 raise ValueError("whale_calls.csv must contain cycle, whale_id, north, and east columns.")
 
             for row in reader:
-                whale = row.get("whale_id", "")
-
                 try:
                     cycle = int(row["cycle"])
                     call_north = float(row["north"])
@@ -316,10 +309,10 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
                 except (TypeError, ValueError):
                     continue
 
-                if not whale or not np.isfinite(call_north) or not np.isfinite(call_east):
+                if not np.isfinite(call_north) or not np.isfinite(call_east):
                     continue
 
-                if (cycle, whale) not in detections_by_call:
+                if cycle not in detections_by_call:
                     north.append(call_north)
                     east.append(call_east)
 
@@ -334,7 +327,7 @@ def plot_whale_calls(ax, detections_by_call: dict[tuple[int, str], list[tuple[st
     return len(north)
 
 
-def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[tuple[str, float, float]]]) -> int:
+def plot_detection_locations(ax, detections_by_call: dict[int, list[tuple[str, float, float]]]) -> int:
     """Plot logged whale call locations, not triangulated estimates."""
     detections_by_vehicle = defaultdict(lambda: ([], []))
 

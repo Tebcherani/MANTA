@@ -35,8 +35,6 @@ private:
 
     // Simulation state and precomputed behavior for one whale.
     struct Whale {
-        std::string id;
-
         std::vector<double> call_times;
         std::size_t next_call_index = 0;
 

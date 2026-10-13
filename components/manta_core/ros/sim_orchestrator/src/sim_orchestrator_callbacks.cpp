@@ -199,15 +199,11 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
     }
 
     // Ensure the acknowledgement corresponds to the pending whale call.
-    const bool wrong_whale = msg->whale_id != next_whale_call_.whale_id;
     const bool wrong_cycle = msg->cycle != next_whale_call_.cycle;
     const bool wrong_time = std::fabs(msg->sim_time - next_whale_call_.sim_time) > 1.0e-9;
 
-    if (wrong_whale || wrong_cycle || wrong_time) {
-        RCLCPP_WARN(
-            get_logger(), "Ignored acknowledgement for unexpected whale call %s at cycle %llu.",
-            msg->whale_id.c_str(), static_cast<unsigned long long>(msg->cycle)
-        );
+    if (wrong_cycle || wrong_time) {
+        RCLCPP_WARN(get_logger(), "Ignored acknowledgement for unexpected whale call at cycle %llu.", static_cast<unsigned long long>(msg->cycle));
         return;
     }
 

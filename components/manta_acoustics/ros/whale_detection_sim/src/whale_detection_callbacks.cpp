@@ -45,10 +45,7 @@ void WhaleDetectionNode::handle_vehicle_state(const manta_interfaces::msg::Vehic
 void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCall::SharedPtr call) {
     // Reject a new call if the previous call has not yet been evaluated.
     if (pending_call_available_) {
-        RCLCPP_ERROR(
-            get_logger(), "Received whale call %s before the previous call was processed.",
-            call->whale_id.c_str()
-        );
+        RCLCPP_ERROR(get_logger(), "Received another whale call before the previous call was processed.");
         return;
     }
 
@@ -134,7 +131,6 @@ void WhaleDetectionNode::try_process_pending_call() {
         // Populate the detection with the exact vehicle and whale states used.
         acoustics_interfaces::msg::WhaleDetection detection;
         detection.vehicle_id = vehicle_id;
-        detection.whale_id = pending_call_.whale_id;
         detection.cycle = pending_call_.cycle;
         detection.sim_time = pending_call_.sim_time;
         detection.vehicle_north = vehicle.north;
@@ -144,12 +140,11 @@ void WhaleDetectionNode::try_process_pending_call() {
         detection.distance = distance;
 
         // Record the exact detection for later analysis and review.
-        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north << ',' << detection.vehicle_east << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.distance << '\n';
+        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time << ',' << detection.vehicle_id << ',' << detection.vehicle_north << ',' << detection.vehicle_east << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.distance << '\n';
     }
 
     // Acknowledge that every vehicle has evaluated the pending whale call.
     acoustics_interfaces::msg::WhaleCallProcessed processed;
-    processed.whale_id = pending_call_.whale_id;
     processed.cycle = pending_call_.cycle;
     processed.sim_time = pending_call_.sim_time;
     processed.bearing_receiver_ids = bearing_receiver_ids;

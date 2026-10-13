@@ -110,7 +110,7 @@ void SimOrchestratorNode::open_whale_call_log() {
     if (!whale_call_log_.is_open()) throw std::runtime_error("Failed to open whale call results file.");
 
     // Write the CSV header before any whale-call records are produced.
-    whale_call_log_ << "cycle,sim_time,whale_id,north,east,depth\n";
+    whale_call_log_ << "cycle,sim_time,north,east\n";
 }
 
 /**

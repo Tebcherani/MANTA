@@ -44,7 +44,6 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
 
     // Identify the next call and its scheduled simulation time.
     response.available = true;
-    response.call.whale_id = next_whale->id;
     response.call.cycle = 0;
     response.call.sim_time = next_time;
 
@@ -158,7 +157,6 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         whale_interfaces::msg::WhaleState state;
         state.active = whale.active;
         state.calling = false;
-        state.whale_id = whale.id;
         state.cycle = completed_cycle;
         state.north = whale.north;
         state.east = whale.east;
@@ -187,7 +185,6 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
             const TrajectoryPoint sample = trajectory_at_time(whale, next_whale_log_time_);
             whale_log_ << sample_cycle << ','
                 << next_whale_log_time_ << ','
-                << whale.id << ','
                 << sample.north << ','
                 << sample.east << '\n';
         }

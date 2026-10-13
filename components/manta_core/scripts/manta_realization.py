@@ -51,26 +51,27 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
 
 
 def count_simulated_whales(path: Path) -> int:
-    """Count distinct whales recorded in the simulation output."""
+    """Verify output exists for the single simulated whale."""
     if not path.is_file():
         raise ValueError(f"Whale trajectory file does not exist: {path}")
 
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
+        required = {"sim_time", "north", "east"}
 
-        if not reader.fieldnames or "whale_id" not in reader.fieldnames:
-            raise ValueError("whales.csv must contain a whale_id column.")
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError("whales.csv must contain sim_time, north, and east columns.")
 
-        whale_ids = {
-            row["whale_id"].strip()
-            for row in reader
-            if row.get("whale_id", "").strip()
-        }
+        for row in reader:
+            try:
+                values = [float(row[key]) for key in ("sim_time", "north", "east")]
+            except (TypeError, ValueError):
+                continue
 
-    if not whale_ids:
-        raise ValueError("whales.csv contains no whale IDs.")
+            if all(math.isfinite(value) for value in values):
+                return 1
 
-    return len(whale_ids)
+    raise ValueError("whales.csv contains no valid trajectory samples.")
 
 
 def create_docker_commands(compose_path: Path, project_name: str) -> tuple[list[str], list[str]]:
@@ -158,23 +159,40 @@ def stop_compose_project(down_command: list[str], root: Path) -> str | None:
     return None
 
 
-def summarize_realization(data_directory: Path, whale_count: int) -> tuple[int, float]:
-    """Count the unique whales detected during one realization."""
+def summarize_realization(
+    data_directory: Path, whale_count: int
+) -> tuple[int, float]:
+    """Report whether the single whale was detected at least once."""
+    if whale_count != 1:
+        raise ValueError("Only one simulated whale is supported.")
 
-    detections_path = data_directory / "whale_detections.csv"
+    path = data_directory / "whale_detections.csv"
 
-    if not detections_path.is_file(): raise ValueError(f"Detection results were not created: {detections_path}")
+    if not path.is_file():
+        raise ValueError(f"Detection results were not created: {path}")
 
-    with detections_path.open("r", encoding="utf-8", newline="") as file:
+    with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
+        required = {"vehicle_id", "whale_north", "whale_east"}
 
-        if not reader.fieldnames or "whale_id" not in reader.fieldnames: raise ValueError(f"Detection results do not contain a whale_id column: {detections_path}")
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError(f"Detection results lack required columns: {path}")
 
-        detected_whales = {row["whale_id"].strip() for row in reader if row.get("whale_id", "").strip()}
+        for row in reader:
+            try:
+                north = float(row["whale_north"])
+                east = float(row["whale_east"])
+            except (TypeError, ValueError):
+                continue
 
-    detected_count = len(detected_whales)
+            if (
+                row.get("vehicle_id", "").strip()
+                and math.isfinite(north)
+                and math.isfinite(east)
+            ):
+                return 1, 1.0
 
-    return detected_count, detected_count / whale_count
+    return 0, 0.0
 
 
 def summarize_vehicle_metrics(data_directory: Path, vehicle_ids: list[str]) -> tuple[float, float, float]:

@@ -112,7 +112,6 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double sp
 void WhaleNode::initialize_whales() {
     Whale whale{};
 
-    whale.id = "whale_1";
     whale.active = true;
     whale.complete = false;
     whale.next_call_index = 0;
@@ -168,7 +167,7 @@ void WhaleNode::open_whale_log() {
     std::filesystem::create_directories(data_directory);
         whale_log_.open(data_directory + "/whales.csv", std::ios::out | std::ios::trunc);
         if (!whale_log_.is_open()) throw std::runtime_error("Failed to open whale trajectory log.");
-        whale_log_ << "cycle,sim_time,whale_id,north,east\n";
+        whale_log_ << "sim_time,whale_id,north,east\n";
 }
 
 /** 

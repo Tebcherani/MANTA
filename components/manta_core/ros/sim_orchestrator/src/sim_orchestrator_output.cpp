@@ -71,5 +71,5 @@ void SimOrchestratorNode::publish_current_step() {
  */
 void SimOrchestratorNode::publish_whale_call(const whale_interfaces::msg::WhaleCall &call) {
     whale_call_pub_->publish(call); // Publish the event for the whale-detection node.
-    whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time << ',' << call.whale_id << ',' << call.north << ',' << call.east << '\n';   // Record the published event for simulation analysis and review.
+    whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time << ',' << call.north << ',' << call.east << '\n';   // Record the published event for simulation analysis and review.
 }
