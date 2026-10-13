@@ -95,7 +95,7 @@ def main() -> int:
         means = [row["mean_distance_km"] for row in vehicle_rows]
 
         ax.errorbar(
-            [row["call_update_interval"] / 3600 for row in vehicle_rows],
+            [row["call_update_interval"] / 60 for row in vehicle_rows],
             means,
             yerr=[
                 [
@@ -113,20 +113,20 @@ def main() -> int:
         )
 
     intervals = sorted({row["call_update_interval"] for row in rows})
-    ax.set_xticks([interval / 3600 for interval in intervals])
-    ax.set_xticklabels(
-        [
-            "Every call" if interval == 0 else f"{interval / 3600:g}"
-            for interval in intervals
-        ],
-        rotation=45,
-        ha="right",
-    )
+    #ax.set_xticks([interval / 60 for interval in intervals])
+    #ax.set_xticklabels(
+    #    [
+    #        "Every call" if interval == 0 else f"{interval / 60:g}"
+    #        for interval in intervals
+    #    ],
+    #    rotation=45,
+    #   ha="right",
+    #)
 
-    ax.set_title("Effect of Call Update Interval on AUV Tracking")
-    ax.set_xlabel("Call waypoint update interval (h)")
-    ax.set_ylabel("Mean distance from whale (km)")
-    ax.set_ylim(bottom=0)
+    ax.set_title("Effect of Communication Interval on Trailing")
+    ax.set_xlabel("Communication Interval (min)")
+    ax.set_ylabel("Mean Distance from Whale (km)")
+    #ax.set_ylim(bottom=0)
     ax.grid(True, alpha=0.3)
     ax.legend(title="Vehicle")
 
