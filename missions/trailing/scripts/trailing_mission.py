@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-
 """
 Generate one Odyssey whale-trailing mission file per configured vehicle.
 
-Each vehicle begins by patrolling an assigned section of the picket line.
-A vehicle can leave the line and follow an assigned whale after detecting
-its call.
+Each vehicle follows its assigned position behind the estimated whale location.
 """
-
 
 import sys
 import yaml
@@ -89,7 +85,7 @@ def generate_mission_file(config: MissionConfig, vehicle: dict) -> Path:
         sensor: real_y(m) {start_e:.6f}
         sensor: real_z(m) {config.vehicle_depth:.6f}
 
-        state: picket_line
+        state: trailing
 
         # Stop after the configured scenario duration.
         behavior: mission_timer 1
@@ -121,8 +117,8 @@ def generate_mission_file(config: MissionConfig, vehicle: dict) -> Path:
 
 
 def load_mission_config() -> MissionConfig:
-    """Load the picket-line mission settings from the MANTA YAML file."""
-
+    """Load the trailing mission settings from the MANTA YAML file."""
+    
     # Load configuration file
     with config_path.open("r", encoding="utf-8") as file:
         config = yaml.safe_load(file)

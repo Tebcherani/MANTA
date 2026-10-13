@@ -127,8 +127,7 @@ ODYSSEY_SRCS = \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behavior_registry.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_wiggle.c \
 	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_dock.c \
-	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_picket_line.c \
-		src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_whale_trailing.c \
+	src/Odyssey/Vehicle/Behaviors/odyssey_behaviors_whale_trailing.c \
 	src/Odyssey/Vehicle/Behaviors/waypoint.c \
 	src/Odyssey/Vehicle/Behaviors/whoi_homing.c \
 	src/Odyssey/Vehicle/Control/dynamic_control.c \

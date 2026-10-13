@@ -59,8 +59,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     whale_parameters = {
         "count": 1,
         "mission_duration": scenario["duration"],
-        "active_entire_mission": True,
-        "initialization_mode": "fixed",
         "initial_north": 0.0,
         "initial_east": 0.0,
         "initial_heading_degrees": 0.0,
@@ -75,8 +73,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
 
         # The shared whale simulator still uses group heading data.
         "group_mean_size": 1.0,
-        "group_position_std": 0.0,
-        "group_start_time_std": 0.0,
         "shared_heading_fraction": 0.75,
 
         "data_directory": data_dir,

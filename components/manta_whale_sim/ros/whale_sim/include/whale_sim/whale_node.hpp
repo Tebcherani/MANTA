@@ -35,9 +35,6 @@ private:
 
     // Shared movement and calling behavior for one group of whales.
     struct WhaleGroup {
-        double crossing_distance;
-        double side;
-        double start_time;
         std::vector<double> heading_errors;
     };
 
@@ -62,7 +59,6 @@ private:
         // Whale lifecycle state.
         bool active;
         bool complete;
-        double starting_side;
     };
 
     // Geometric properties of the picket line expressed in local north-east coordinates.
@@ -87,23 +83,19 @@ private:
 
     // Setup
     void load_config();
-    void initialize_whale_groups(double line_length);
-    void initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const LineGeometry &line, const WhaleGroup &group);
+    void initialize_whale_groups();
+    void initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const WhaleGroup &group);
     void initialize_whales();
     void open_whale_log();
     void seed_generator();
     void validate_config() const;
 
-    WhaleInitialState compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double crossing_distance, double speed) const;
-    LineGeometry compute_line_geometry() const;
-    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time, const LineGeometry &line, const WhaleGroup &group);
-    Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time) const;
+    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double initial_heading, double speed, double start_time, const WhaleGroup &group);
+    Whale create_whale(std::size_t whale_index, std::size_t group_index, double start_time) const;
     std::vector<double> generate_population_call_times(double start_time, double end_time);
     void assign_population_call_times();
     std::size_t get_group_index_for_whale(std::size_t whale_index) const;
     const WhaleGroup &get_group_for_whale(std::size_t whale_index) const;
-    double sample_crossing_distance(const WhaleGroup &group, double line_length);
-    double sample_start_time(const WhaleGroup &group);
     double sample_speed();
 
     // ROS interfaces
@@ -132,13 +124,7 @@ private:
     // Scenario
     int whale_count_;
 
-    double line_start_north_;
-    double line_start_east_;
-    double line_end_north_;
-    double line_end_east_;
-
     double mission_duration_;
-    double start_distance_;
 
     // Simulation
     std::mt19937 generator_;
@@ -146,8 +132,6 @@ private:
     std::vector<Whale> whales_;
 
     // Whale initialization
-    bool active_entire_mission_ = false;
-    std::string initialization_mode_;
     double initial_north_;
     double initial_east_;
     double initial_heading_degrees_;
@@ -159,8 +143,6 @@ private:
 
     // Whale grouping
     double group_mean_size_;
-    double group_position_std_;
-    double group_start_time_std_;
     double shared_heading_fraction_;
 
     // Whale movement

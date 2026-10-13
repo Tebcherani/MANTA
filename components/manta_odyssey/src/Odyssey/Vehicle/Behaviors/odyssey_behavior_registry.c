@@ -22,7 +22,6 @@ extern int waypoint_2d(struct behavior *, int, int);
 extern int wiggle(struct behavior *, int, int);
 extern int launch(struct behavior *, int, int);
 extern int yo_yo(struct behavior *, int, int);
-extern int picket_line(struct behavior *, int, int);
 extern int whale_trailing(struct behavior *, int, int);
 
 int assign_behavior_fcn_ptr(const char *name, struct behavior *b)
@@ -52,7 +51,6 @@ int assign_behavior_fcn_ptr(const char *name, struct behavior *b)
     if (strcmp("wiggle", name) == 0) b->fcn = wiggle;
     if (strcmp("launch", name) == 0) b->fcn = launch;
     if (strcmp("yo_yo", name) == 0) b->fcn = yo_yo;
-    if (strcmp("picket_line", name) == 0) b->fcn = picket_line;
     if (strcmp("whale_trailing", name) == 0) b->fcn = whale_trailing;
 
     if (b->fcn == NULL)
