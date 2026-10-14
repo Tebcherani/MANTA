@@ -137,7 +137,7 @@ vehicles:
     fault: ""
     start:
       north: -1000.0
-      east: -1000.0
+      east: -5000.0
 
   - id: auv_2
     type: odyssey
@@ -146,4 +146,4 @@ vehicles:
     fault: ""
     start:
       north: -1000.0
-      east: 1000.0
+      east: 5000.0

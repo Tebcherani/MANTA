@@ -117,8 +117,21 @@ int whale_trailing(struct behavior *b, int priority, int level) {
     cmd->speed_mode = 1;
 
     cmd->depth[0] = bArg(DEPTH);
-    cmd->heading[0] = wrap_angle(atan2(east_difference, north_difference));
-    cmd->speed[0] = distance <= fabs(bArg(CAPTURE)) ? 0.0 : bArg(SPEED);
+
+    const double capture_radius = fabs(bArg(CAPTURE));
+    const double max_speed = fabs(bArg(SPEED));
+
+    if (distance <= capture_radius) {
+        const double whale_speed = hypot(velocity_north, velocity_east);
+
+        if (whale_speed > 1.0e-6) {
+            cmd->heading[0] = wrap_angle(atan2(velocity_east, velocity_north));
+            cmd->speed[0] = fmin(whale_speed, max_speed);
+        } else cmd->speed[0] = 0.0;
+    } else {
+        cmd->heading[0] = wrap_angle(atan2(east_difference, north_difference));
+        cmd->speed[0] = bArg(SPEED);
+    }
 
     return 0;
 }
