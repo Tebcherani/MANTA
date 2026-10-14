@@ -1,134 +1,139 @@
 #!/usr/bin/env python3
-"""Plot each vehicle's mean distance from the whale."""
+"""Plot per-realization fleet-average formation errors by communication interval."""
 
 import csv
 import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[3]
-SUMMARY_PATH = ROOT / "output/trailing/sweep_comms/sweep_summary.csv"
-OUTPUT_PATH = ROOT / "output/trailing/sweep_comms/sweep_metrics.png"
+SWEEP_DIR = ROOT / "output" / "trailing" / "sweep_comms"
+OUTPUT_PATH = SWEEP_DIR / "sweep_metrics_boxplot.png"
 
 
-def read_sweep_summary() -> list[dict]:
-    if not SUMMARY_PATH.is_file():
-        raise ValueError(f"Sweep summary does not exist: {SUMMARY_PATH}")
+def read_interval_results(interval_directory: Path) -> tuple[float, list[float]]:
+    """Read an interval's communication period and per-realization errors."""
+    config_path = interval_directory / "simulation.yaml"
+    summary_path = interval_directory / "summary.csv"
 
-    numeric_fields = (
-        "call_update_interval",
-        "mean_distance_km",
-        "distance_ci_lower_km",
-        "distance_ci_upper_km",
-    )
-    required = {"vehicle_id", "realizations", *numeric_fields}
-    rows = []
-    seen = set()
+    if not config_path.is_file():
+        raise ValueError(f"Interval config does not exist: {config_path}")
+    if not summary_path.is_file():
+        raise ValueError(f"Realization summary does not exist: {summary_path}")
 
-    with SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
+    with config_path.open("r", encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
+    try:
+        interval = float(config["scenario"]["trailing"]["communication_interval"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError(f"Invalid communication interval in {config_path}") from error
+
+    if not math.isfinite(interval) or interval < 0:
+        raise ValueError(f"Invalid communication interval in {config_path}")
+
+    errors = []
+    seen_realizations = set()
+
+    with summary_path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
+        required = {"realization", "mean_distance_km"}
 
-        if not required.issubset(reader.fieldnames or []):
-            missing = sorted(required.difference(reader.fieldnames or []))
-            raise ValueError(f"Missing columns: {', '.join(missing)}")
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError(
+                f"{summary_path} must contain realization and mean_distance_km columns."
+            )
 
-        for line_number, source in enumerate(reader, start=2):
+        for line_number, row in enumerate(reader, start=2):
             try:
-                row = {
-                    "vehicle_id": source["vehicle_id"].strip(),
-                    "realizations": int(source["realizations"]),
-                    **{
-                        field: float(source[field])
-                        for field in numeric_fields
-                    },
-                }
-            except (TypeError, ValueError, AttributeError) as error:
+                realization = int(row["realization"])
+                error_km = float(row["mean_distance_km"])
+            except (TypeError, ValueError) as error:
                 raise ValueError(
-                    f"Invalid value on line {line_number}."
+                    f"Invalid value on line {line_number} of {summary_path}"
                 ) from error
 
-            if not row["vehicle_id"] or row["realizations"] < 1:
-                raise ValueError(f"Invalid vehicle or count on line {line_number}.")
+            if realization in seen_realizations:
+                raise ValueError(
+                    f"Duplicate realization {realization} in {summary_path}"
+                )
+            seen_realizations.add(realization)
 
-            if not all(math.isfinite(row[field]) for field in numeric_fields):
-                raise ValueError(f"Non-finite value on line {line_number}.")
+            if not math.isfinite(error_km) or error_km < 0:
+                raise ValueError(
+                    f"Invalid formation error on line {line_number} of {summary_path}"
+                )
 
-            if row["call_update_interval"] < 0:
-                raise ValueError(f"Negative interval on line {line_number}.")
+            errors.append(error_km)
 
-            if not (
-                0 <= row["distance_ci_lower_km"]
-                <= row["mean_distance_km"]
-                <= row["distance_ci_upper_km"]
-            ):
-                raise ValueError(f"Invalid confidence interval on line {line_number}.")
+    if not errors:
+        raise ValueError(f"No realization errors found in {summary_path}")
 
-            key = (row["call_update_interval"], row["vehicle_id"])
-            if key in seen:
-                raise ValueError(f"Duplicate interval/vehicle on line {line_number}.")
-            seen.add(key)
-            rows.append(row)
-
-    if not rows:
-        raise ValueError("Sweep summary contains no results.")
-
-    return rows
+    return interval, errors
 
 
 def main() -> int:
+    """Read interval summaries and save a box plot."""
+    if not SWEEP_DIR.is_dir():
+        print(f"Sweep output directory does not exist: {SWEEP_DIR}")
+        return 1
+
+    interval_directories = [
+        path
+        for path in SWEEP_DIR.glob("interval_*")
+        if path.is_dir()
+        and (path / "simulation.yaml").is_file()
+        and (path / "summary.csv").is_file()
+    ]
+
+    if not interval_directories:
+        print(f"No completed interval summaries found in {SWEEP_DIR}")
+        return 1
+
     try:
-        rows = read_sweep_summary()
-    except (OSError, ValueError) as error:
+        interval_results = [
+            read_interval_results(path)
+            for path in interval_directories
+        ]
+    except (OSError, ValueError, yaml.YAMLError) as error:
         print(f"Could not plot trailing sweep: {error}")
         return 1
 
-    fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
+    interval_results.sort(key=lambda result: result[0])
+    intervals = [result[0] for result in interval_results]
+    errors_by_interval = [result[1] for result in interval_results]
 
-    for vehicle_id in sorted({row["vehicle_id"] for row in rows}):
-        vehicle_rows = sorted(
-            [row for row in rows if row["vehicle_id"] == vehicle_id],
-            key=lambda row: row["call_update_interval"],
-        )
+    fig, ax = plt.subplots(figsize=(12, 6), constrained_layout=True)
 
-        means = [row["mean_distance_km"] for row in vehicle_rows]
+    ax.boxplot(
+        errors_by_interval,
+        showfliers=True,
+        patch_artist=True,
+        boxprops={"facecolor": "lightsteelblue", "edgecolor": "steelblue"},
+        medianprops={"color": "darkred", "linewidth": 1.5},
+        whiskerprops={"color": "steelblue"},
+        capprops={"color": "steelblue"},
+        flierprops={
+            "marker": ".",
+            "markerfacecolor": "darkorange",
+            "markeredgecolor": "darkorange",
+            "alpha": 0.5,
+        },
+    )
 
-        ax.errorbar(
-            [row["call_update_interval"] / 60 for row in vehicle_rows],
-            means,
-            yerr=[
-                [
-                    row["mean_distance_km"] - row["distance_ci_lower_km"]
-                    for row in vehicle_rows
-                ],
-                [
-                    row["distance_ci_upper_km"] - row["mean_distance_km"]
-                    for row in vehicle_rows
-                ],
-            ],
-            fmt="o-",
-            capsize=5,
-            label=vehicle_id,
-        )
-
-    intervals = sorted({row["call_update_interval"] for row in rows})
-    #ax.set_xticks([interval / 60 for interval in intervals])
-    #ax.set_xticklabels(
-    #    [
-    #        "Every call" if interval == 0 else f"{interval / 60:g}"
-    #        for interval in intervals
-    #    ],
-    #    rotation=45,
-    #   ha="right",
-    #)
-
-    ax.set_title("Effect of Communication Interval on Trailing")
+    ax.set_xticks(range(1, len(intervals) + 1))
+    ax.set_xticklabels(
+        [f"{interval / 60:g}" for interval in intervals],
+        rotation=45,
+        ha="right",
+    )
     ax.set_xlabel("Communication Interval (min)")
-    ax.set_ylabel("Mean Formation Trailing Error (km)")
-    #ax.set_ylim(bottom=0)
-    ax.grid(True, alpha=0.3)
-    ax.legend(title="Vehicle")
+    ax.set_ylabel("Per-Realization Fleet-Average Formation Error (km)")
+    ax.set_title("Formation Error Distribution by Communication Interval")
+    ax.grid(axis="y", alpha=0.3)
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")

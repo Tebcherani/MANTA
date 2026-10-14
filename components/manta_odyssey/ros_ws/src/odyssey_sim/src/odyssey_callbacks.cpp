@@ -117,12 +117,14 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     processed_remote_bearing_time_ = remote.sim_time;
     processed_bearing_pair_available_ = true;
 
-    // Treat the intersection as an estimate at local reception time.
-    // The native function also updates velocity from successive estimates.
-    set_whale_trailing_target(estimated_north, estimated_east, sim_time_);
+    // The bearing's sim_time is the whale-call measurement time, not its
+    // communication reception time.
+    const double estimate_time = local.sim_time;
 
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.",
-        vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_);
+    set_whale_trailing_target(estimated_north, estimated_east, estimate_time);
+
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m for call time %.2f s.",
+        vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, estimate_time);
 }
 
 /**
