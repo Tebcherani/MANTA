@@ -32,7 +32,11 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     if (!tracking_enabled_) return;
     if (msg->receiver_id == vehicle_id_) return;
     if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
-    if (!latest_bearing_available_) return;
+
+    if (!latest_bearing_available_) {
+        pending_shared_bearing_ = msg;
+        return;
+    }
 
     const auto &local = latest_bearing_;
     const auto &remote = *msg;
@@ -315,7 +319,16 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     latest_bearing_ = shared;
     latest_bearing_available_ = true;
 
+    // A partner's bearing may have arrived before this local bearing.
+    if (pending_shared_bearing_) {
+        const auto pending = pending_shared_bearing_;
+        pending_shared_bearing_.reset();
+        handle_shared_bearing(pending);
+    }
+
     if (communication_interval_ > 0.0) {
+        pending_bearings_.push_back(shared);
+
         // Confirm local storage so the orchestrator can continue.
         acoustics_interfaces::msg::BearingProcessed stored;
         stored.vehicle_id = vehicle_id_;
@@ -386,7 +399,11 @@ void OdysseyNode::publish_bearing(double simulation_time) {
     if (!tracking_enabled_ || communication_interval_ <= 0.0) return;
 
     while (simulation_time + 1.0e-9 >= static_cast<double>(next_communication_index_) * communication_interval_) {
-        if (latest_bearing_available_) bearing_pub_->publish(latest_bearing_);
+        if (!pending_bearings_.empty()) {
+            bearing_pub_->publish(pending_bearings_.back());
+            pending_bearings_.clear();
+        }
+        
         ++next_communication_index_;
     }
 }

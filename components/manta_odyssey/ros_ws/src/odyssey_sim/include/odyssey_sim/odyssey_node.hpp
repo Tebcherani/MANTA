@@ -69,8 +69,10 @@ class OdysseyNode : public rclcpp::Node {
 
         // Call detections
         std::deque<BearingPosition> bearing_positions_;
+        std::deque<acoustics_interfaces::msg::BearingTransmission> pending_bearings_;
         bool latest_bearing_available_ = false;
         acoustics_interfaces::msg::BearingTransmission latest_bearing_;
+        acoustics_interfaces::msg::BearingTransmission::SharedPtr pending_shared_bearing_;
         bool processed_bearing_pair_available_ = false;
         double processed_local_bearing_time_ = 0.0;
         double processed_remote_bearing_time_ = 0.0;

@@ -160,7 +160,7 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
 
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
-        required = {"whale_id", "sim_time", "north", "east"}
+        required = {"sim_time", "north", "east"}
 
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
             raise ValueError("whales.csv must contain whale_id, sim_time, north, and east columns.")
