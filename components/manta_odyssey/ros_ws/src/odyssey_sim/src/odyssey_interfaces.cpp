@@ -8,7 +8,7 @@
  */
 void OdysseyNode::create_publishers(const rclcpp::QoS &qos) {
     bearing_processed_pub_ = create_publisher<acoustics_interfaces::msg::BearingProcessed>("/sim/bearing_processed", rclcpp::QoS(100).reliable());
-    bearing_pub_ = create_publisher<acoustics_interfaces::msg::BearingMsg>("/comms/bearings", rclcpp::QoS(100).reliable());
+    bearing_pub_ = create_publisher<acoustics_interfaces::msg::BearingTransmission>("/comms/bearings", rclcpp::QoS(100).reliable());
     ready_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", qos);
     step_result_pub_ = create_publisher<manta_interfaces::msg::SimStepResult>("/" + vehicle_id_ + "/step_result", qos);
     vehicle_state_pub_ = create_publisher<manta_interfaces::msg::VehicleState>("/" + vehicle_id_ + "/state", qos);
@@ -62,7 +62,7 @@ void OdysseyNode::create_ros_interfaces() {
  */
 void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &whale_qos) {
     calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>( "/sim/calendar_start_time", qos, [this](const std_msgs::msg::Int64::SharedPtr msg) {handle_calendar_start_time(msg);});
-    shared_bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingMsg>("/comms/bearings", whale_qos, [this](const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {
+    shared_bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingTransmission>("/comms/bearings", whale_qos, [this](const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg) {
         if (msg->receiver_id == vehicle_id_) return;
         handle_shared_bearing(msg);
     });
