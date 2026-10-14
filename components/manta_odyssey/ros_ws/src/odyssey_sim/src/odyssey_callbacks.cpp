@@ -40,7 +40,7 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     // Ignore retransmissions of a pair already processed.
     if (processed_bearing_pair_available_ && local.sim_time == processed_local_bearing_time_ && remote.sim_time == processed_remote_bearing_time_) return;
 
-    if (!std::isfinite(local.bearing_rad) || !std::isfinite(remote.bearing_rad) || !std::isfinite(local.receiver_north) || !std::isfinite(local.receiver_east) || !std::isfinite(remote.receiver_north) || !std::isfinite(remote.receiver_east)) {
+    if (!std::isfinite(local.bearing_rad) || !std::isfinite(remote.bearing_rad) || !std::isfinite(local.receiver_north_m) || !std::isfinite(local.receiver_east_m) || !std::isfinite(remote.receiver_north_m) || !std::isfinite(remote.receiver_east_m)) {
         RCLCPP_WARN(get_logger(), "Cannot estimate from non-finite bearings.");
         return;
     }
@@ -85,8 +85,8 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     const double remote_e = std::sin(remote.bearing_rad);
 
     // Use each receiver's position when its bearing was measured.
-    const double disp_n = remote.receiver_north - local.receiver_north;
-    const double disp_e = remote.receiver_east - local.receiver_east;
+    const double disp_n = remote.receiver_north_m - local.receiver_north_m;
+    const double disp_e = remote.receiver_east_m - local.receiver_east_m;
 
     const double determinant = local_n * remote_e - local_e * remote_n;
 
@@ -104,8 +104,8 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
         return;
     }
 
-    const double estimated_north = local.receiver_north + local_range * local_n;
-    const double estimated_east = local.receiver_east + local_range * local_e;
+    const double estimated_north = local.receiver_north_m + local_range * local_n;
+    const double estimated_east = local.receiver_east_m + local_range * local_e;
 
     if (!std::isfinite(estimated_north) ||
         !std::isfinite(estimated_east)) {
@@ -307,8 +307,8 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     shared.sim_time = msg->sim_time;
     shared.bearing_rad = msg->bearing_rad;
     shared.bearing_std_rad = msg->bearing_std_rad;
-    shared.receiver_north = position->north;
-    shared.receiver_east = position->east;
+    shared.receiver_north_m = position->north;
+    shared.receiver_east_m = position->east;
 
     latest_bearing_ = shared;
     latest_bearing_available_ = true;
