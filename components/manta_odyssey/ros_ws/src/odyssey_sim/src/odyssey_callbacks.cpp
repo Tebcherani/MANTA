@@ -319,7 +319,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
         stored.vehicle_id = vehicle_id_;
         stored.call_cycle = msg->call_cycle;
         stored.sim_time = msg->sim_time;
-        stored.estimate_valid = false;
+        stored.estimate_valid_b = false;
         bearing_processed_pub_->publish(stored);
 
         return;
@@ -333,7 +333,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     received.vehicle_id = vehicle_id_;
     received.call_cycle = msg->call_cycle;
     received.sim_time = msg->sim_time;
-    received.estimate_valid = false;
+    received.estimate_valid_b = false;
     bearing_processed_pub_->publish(received);
 }
 
