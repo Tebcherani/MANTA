@@ -1,5 +1,4 @@
-bool active
-bool calling
+bool whale_active_b
 string whale_id
 uint64 cycle
 float64 whale_north_m

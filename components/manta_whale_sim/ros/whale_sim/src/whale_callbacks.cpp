@@ -156,8 +156,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
 
         // Build and publish the ground-truth state at the completed batch time.
         whale_interfaces::msg::WhaleState state;
-        state.active = whale.active;
-        state.calling = false;
+        state.whale_active_b = whale.active;
         state.whale_id = whale.id;
         state.cycle = completed_cycle;
         state.whale_north_m = whale.north;
