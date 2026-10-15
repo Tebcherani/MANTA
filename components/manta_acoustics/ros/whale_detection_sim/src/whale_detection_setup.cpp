@@ -48,5 +48,5 @@ void WhaleDetectionNode::open_detection_log() {
     if (!whale_detection_log_.is_open()) throw std::runtime_error("Failed to open whale detection results file.");
     
     // Write the column names before recording any detection events.
-    whale_detection_log_ << "cycle,sim_time_s,vehicle_id,whale_id,vehicle_north_m,vehicle_east_m,whale_north_m,whale_east_m,distance\n";
+    whale_detection_log_ << "cycle,sim_time_s,vehicle_id,whale_id,vehicle_north_m,vehicle_east_m,whale_north_m,whale_east_m,vehicle_to_whale_range_m\n";
 }

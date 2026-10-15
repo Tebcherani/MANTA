@@ -6,4 +6,4 @@ float64 vehicle_north_m
 float64 vehicle_east_m
 float64 whale_north_m
 float64 whale_east_m
-float64 distance
+float64 vehicle_to_whale_range_m
