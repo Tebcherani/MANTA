@@ -112,11 +112,11 @@ std::vector<double> WhaleNode::generate_population_call_times(double start_time,
 
     if (end_time <= start_time) return call_times;
 
-    std::exponential_distribution<double> active_duration(1.0 / bout_mean_duration_);
-    std::exponential_distribution<double> silent_duration(1.0 / bout_mean_silent_duration_);
-    std::exponential_distribution<double> call_interval(bout_active_call_rate_per_hour_ / 3600.0);
+    std::exponential_distribution<double> active_duration(1.0 / whale_call_bout_mean_duration_s_);
+    std::exponential_distribution<double> silent_duration(1.0 / whale_call_bout_mean_silent_duration_s_);
+    std::exponential_distribution<double> call_interval(whale_active_call_bout_rate_callph / 3600.0);
 
-    const double active_probability = bout_mean_duration_ / (bout_mean_duration_ + bout_mean_silent_duration_);
+    const double active_probability = whale_call_bout_mean_duration_s_ / (whale_call_bout_mean_duration_s_ + whale_call_bout_mean_silent_duration_s_);
     std::bernoulli_distribution initial_state(active_probability);
 
     bool active = initial_state(rng_);
@@ -165,13 +165,13 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
     std::vector<TrajectoryPoint> trajectory;
 
     // Calculate the individual AR(1) heading-error innovation scale.
-    const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
-    const double heading_innovation_scale = heading_std_radians * std::sqrt(1.0 - heading_correlation_ * heading_correlation_);
+    const double heading_std_radians = whale_heading_std_deg_ * std::acos(-1.0) / 180.0;
+    const double heading_innovation_scale = heading_std_radians * std::sqrt(1.0 - whale_heading_correlation_ * whale_heading_correlation_);
 
     // Weight the shared and individual heading processes so their combined
     // variance equals the configured heading variance.
-    const double group_weight = std::sqrt(shared_heading_fraction_);
-    const double individual_weight = std::sqrt(1.0 - shared_heading_fraction_);
+    const double group_weight = std::sqrt(whale_group_heading_fraction_);
+    const double individual_weight = std::sqrt(1.0 - whale_group_heading_fraction_);
 
     std::normal_distribution<double> standard_normal(0.0, 1.0);
 
@@ -182,7 +182,7 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
 
     while (true) {
         // Combine the group and individual heading errors for this interval.
-        const std::size_t group_heading_index = std::min(static_cast<std::size_t>(std::floor(time / turn_interval_)), group.heading_errors.size() - 1);
+        const std::size_t group_heading_index = std::min(static_cast<std::size_t>(std::floor(time / whale_turn_interval_s_)), group.heading_errors.size() - 1);
         const double combined_heading_error = group_weight * group.heading_errors[group_heading_index] + individual_weight * individual_heading_error;
         const double heading = crossing_heading + combined_heading_error;
 
@@ -196,7 +196,7 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
 
         // End the segment at the next shared movement boundary so all group
         // members respond to heading changes at the same simulation time.
-        const double next_turn_time = (std::floor(time / turn_interval_) + 1.0) * turn_interval_;
+        const double next_turn_time = (std::floor(time / whale_turn_interval_s_) + 1.0) * whale_turn_interval_s_;
         const double next_time = std::min(next_turn_time, mission_duration_s_);
         const double duration = next_time - time;
 
@@ -223,7 +223,7 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
         }
 
         // Advance the whale's individual correlated heading-error process.
-        individual_heading_error = heading_correlation_ * individual_heading_error + heading_innovation_scale * standard_normal(rng_);
+        individual_heading_error = whale_heading_correlation_ * individual_heading_error + heading_innovation_scale * standard_normal(rng_);
     }
 
     return trajectory;
@@ -253,14 +253,14 @@ std::size_t WhaleNode::get_group_index_for_whale(std::size_t whale_index) const 
  */
 void WhaleNode::initialize_whale_groups(double line_length) {
     // Choose enough groups to approximately satisfy the configured mean size.
-    const int group_count = std::max(1, static_cast<int>(std::ceil(static_cast<double>(whale_count_) / group_mean_size_)));
+    const int group_count = std::max(1, static_cast<int>(std::ceil(static_cast<double>(whale_count_) / whale_group_mean_size_)));
 
     // Calculate the number of shared heading intervals in the mission.
-    const std::size_t heading_count = static_cast<std::size_t>(std::ceil(mission_duration_s_ / turn_interval_)) + 1;
+    const std::size_t heading_count = static_cast<std::size_t>(std::ceil(mission_duration_s_ / whale_turn_interval_s_)) + 1;
 
     // Convert heading variation to radians and calculate the AR(1) innovation scale.
-    const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
-    const double heading_innovation_scale = heading_std_radians * std::sqrt(1.0 - heading_correlation_ * heading_correlation_);
+    const double heading_std_radians = whale_heading_std_deg_ * std::acos(-1.0) / 180.0;
+    const double heading_innovation_scale = heading_std_radians * std::sqrt(1.0 - whale_heading_correlation_ * whale_heading_correlation_);
 
     // Create distributions used to generate group-level properties.
     std::uniform_real_distribution<double> crossing_distance(0.0, line_length);
@@ -287,7 +287,7 @@ void WhaleNode::initialize_whale_groups(double line_length) {
         group.heading_errors.push_back(heading_error);
 
         for (std::size_t heading_index = 1; heading_index < heading_count; ++heading_index) {
-            heading_error = heading_correlation_ * heading_error + heading_innovation_scale * standard_normal(rng_);
+            heading_error = whale_heading_correlation_ * heading_error + heading_innovation_scale * standard_normal(rng_);
             group.heading_errors.push_back(heading_error);
         }
 
@@ -339,8 +339,8 @@ void WhaleNode::initialize_whales() {
         WhaleInitialState initial_state;
 
         if (whale_initialization_mode_ == "fixed") {
-            const double heading_radians = initial_heading_degrees_ * std::acos(-1.0) / 180.0;
-            initial_state = {initial_north_, initial_east_, heading_radians};
+            const double heading_radians = whale_initial_heading_deg_ * std::acos(-1.0) / 180.0;
+            initial_state = {whale_initial_north_m_, whale_initial_east_m_, heading_radians};
         } else {
             const double crossing_distance = sample_crossing_distance(group, line.length);
             initial_state = compute_initial_state(group, line, crossing_distance, whale_speed);
@@ -370,27 +370,27 @@ void WhaleNode::load_config() {
     // Whale config
     whales_active_entire_mission_b_ = declare_parameter<bool>("active_entire_mission", false);
     whale_initialization_mode_ = declare_parameter<std::string>("initialization_mode", "picket_line");
-    initial_north_ = declare_parameter<double>("initial_north", 0.0);
-    initial_east_ = declare_parameter<double>("initial_east", 0.0);
-    initial_heading_degrees_ = declare_parameter<double>("initial_heading_degrees", 0.0);
+    whale_initial_north_m_ = declare_parameter<double>("initial_north", 0.0);
+    whale_initial_east_m_ = declare_parameter<double>("initial_east", 0.0);
+    whale_initial_heading_deg_ = declare_parameter<double>("initial_heading_degrees", 0.0);
 
     // Whale movement.
-    speed_mean_ = declare_parameter<double>("speed_mean", 1.5);
-    speed_std_ = declare_parameter<double>("speed_std", 0.2);
-    turn_interval_ = declare_parameter<double>("turn_interval", 60.0);              // Update whale heading every turn_interval s
-    heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);  // Controls how strongly the whale’s next heading resembles its current heading
-    heading_std_degrees_ = declare_parameter<double>("heading_std_degrees", 15.0);
+    whale_speed_mean_mps_ = declare_parameter<double>("speed_mean", 1.5);
+    whale_speed_std_mps_ = declare_parameter<double>("speed_std", 0.2);
+    whale_turn_interval_s_ = declare_parameter<double>("turn_interval", 60.0);              // Update whale heading every turn_interval s
+    whale_heading_correlation_ = declare_parameter<double>("heading_correlation", 0.95);  // Controls how strongly the whale’s next heading resembles its current heading
+    whale_heading_std_deg_ = declare_parameter<double>("heading_std_degrees", 15.0);
 
     // Whale calling behavior.
-    bout_mean_duration_ = declare_parameter<double>("bout_mean_duration", 1842.0);
-    bout_mean_silent_duration_ = declare_parameter<double>("bout_mean_silent_duration", 7860.0);
-    bout_active_call_rate_per_hour_ = declare_parameter<double>("bout_active_call_rate_per_hour", 40.1);
+    whale_call_bout_mean_duration_s_ = declare_parameter<double>("bout_mean_duration", 1842.0);
+    whale_call_bout_mean_silent_duration_s_ = declare_parameter<double>("bout_mean_silent_duration", 7860.0);
+    whale_active_call_bout_rate_callph = declare_parameter<double>("bout_active_call_rate_per_hour", 40.1);
 
     // Whale grouping behavior.
-    group_mean_size_ = declare_parameter<double>("group_mean_size", 3.0);
-    group_position_std_ = declare_parameter<double>("group_position_std", 1000.0);
-    group_start_time_std_ = declare_parameter<double>("group_start_time_std", 600.0);
-    shared_heading_fraction_ = declare_parameter<double>("shared_heading_fraction", 0.75);
+    whale_group_mean_size_ = declare_parameter<double>("group_mean_size", 3.0);
+    whale_group_position_std_m_ = declare_parameter<double>("group_position_std", 1000.0);
+    whale_group_start_time_std_s_ = declare_parameter<double>("group_start_time_std", 600.0);
+    whale_group_heading_fraction_ = declare_parameter<double>("shared_heading_fraction", 0.75);
 
     // Output sampling.
     whale_sample_period_s_ = declare_parameter<double>("sample_period", 60.0);
@@ -413,7 +413,7 @@ void WhaleNode::open_whale_log() {
  * Draw a crossing location near the group center and within the picket line.
  */
 double WhaleNode::sample_crossing_distance(const WhaleGroup &group, double line_length) {
-    std::normal_distribution<double> offset(0.0, group_position_std_);
+    std::normal_distribution<double> offset(0.0, whale_group_position_std_m_);
     double distance;
 
     do {
@@ -427,7 +427,7 @@ double WhaleNode::sample_crossing_distance(const WhaleGroup &group, double line_
  * Draw a physically valid positive whale speed.
  */
 double WhaleNode::sample_speed() {
-    std::normal_distribution<double> distribution(speed_mean_, speed_std_);
+    std::normal_distribution<double> distribution(whale_speed_mean_mps_, whale_speed_std_mps_);
     double speed;
 
     do {
@@ -441,7 +441,7 @@ double WhaleNode::sample_speed() {
  * Draw an activation time near the group time and within the mission.
  */
 double WhaleNode::sample_start_time(const WhaleGroup &group) {
-    std::normal_distribution<double> offset(0.0, group_start_time_std_);
+    std::normal_distribution<double> offset(0.0, whale_group_start_time_std_s_);
     double time;
 
     do {
@@ -477,19 +477,19 @@ void WhaleNode::validate_config() const {
     if (whale_sample_period_s_ <= 0.0) throw std::runtime_error("sample_period must be greater than zero.");
 
     if (whale_initialization_mode_ != "picket_line" && whale_initialization_mode_ != "fixed") throw std::runtime_error("Whale initialization_mode must be 'picket_line' or 'fixed'.");
-    if (!std::isfinite(initial_north_) || !std::isfinite(initial_east_) || !std::isfinite(initial_heading_degrees_)) throw std::runtime_error("Fixed whale initialization values must be finite.");
+    if (!std::isfinite(whale_initial_north_m_) || !std::isfinite(whale_initial_east_m_) || !std::isfinite(whale_initial_heading_deg_)) throw std::runtime_error("Fixed whale initialization values must be finite.");
 
-    if (speed_mean_ <= 0.0) throw std::runtime_error("speed_mean must be greater than zero.");
-    if (turn_interval_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");
-    if (heading_correlation_ < 0.0 || heading_correlation_ >= 1.0) throw std::runtime_error("heading_correlation must be in [0, 1).");
-    if (heading_std_degrees_ < 0.0) throw std::runtime_error("heading_std_degrees cannot be negative.");
+    if (whale_speed_mean_mps_ <= 0.0) throw std::runtime_error("speed_mean must be greater than zero.");
+    if (whale_turn_interval_s_ <= 0.0) throw std::runtime_error("turn_interval must be greater than zero.");
+    if (whale_heading_correlation_ < 0.0 || whale_heading_correlation_ >= 1.0) throw std::runtime_error("heading_correlation must be in [0, 1).");
+    if (whale_heading_std_deg_ < 0.0) throw std::runtime_error("heading_std_degrees cannot be negative.");
 
-    if (bout_mean_duration_ <= 0.0) throw std::runtime_error("Mean calling-bout duration must be positive.");
-    if (bout_mean_silent_duration_ <= 0.0) throw std::runtime_error("Mean silent duration between calling bouts must be positive.");
-    if (bout_active_call_rate_per_hour_ <= 0.0) throw std::runtime_error("Active-bout call rate must be positive.");
+    if (whale_call_bout_mean_duration_s_ <= 0.0) throw std::runtime_error("Mean calling-bout duration must be positive.");
+    if (whale_call_bout_mean_silent_duration_s_ <= 0.0) throw std::runtime_error("Mean silent duration between calling bouts must be positive.");
+    if (whale_active_call_bout_rate_callph <= 0.0) throw std::runtime_error("Active-bout call rate must be positive.");
 
-    if (group_mean_size_ < 1.0) throw std::runtime_error("group_mean_size must be at least one.");
-    if (group_position_std_ < 0.0) throw std::runtime_error("group_position_std cannot be negative.");
-    if (group_start_time_std_ < 0.0) throw std::runtime_error("group_start_time_std cannot be negative.");
-    if (shared_heading_fraction_ < 0.0 || shared_heading_fraction_ > 1.0) throw std::runtime_error("shared_heading_fraction must be in [0, 1].");
+    if (whale_group_mean_size_ < 1.0) throw std::runtime_error("group_mean_size must be at least one.");
+    if (whale_group_position_std_m_ < 0.0) throw std::runtime_error("group_position_std cannot be negative.");
+    if (whale_group_start_time_std_s_ < 0.0) throw std::runtime_error("group_start_time_std cannot be negative.");
+    if (whale_group_heading_fraction_ < 0.0 || whale_group_heading_fraction_ > 1.0) throw std::runtime_error("shared_heading_fraction must be in [0, 1].");
 }

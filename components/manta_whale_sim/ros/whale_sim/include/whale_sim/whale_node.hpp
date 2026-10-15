@@ -148,27 +148,26 @@ private:
     std::string whale_initialization_mode_;
 
     double whale_start_distance_from_picket_line_m_;
-    double initial_north_;
-    double initial_east_;
-    double initial_heading_degrees_;
+    double whale_initial_north_m_;
+    double whale_initial_east_m_;
+    double whale_initial_heading_deg_;
 
-    // Whale calling
-    double bout_mean_duration_;
-    double bout_mean_silent_duration_;
-    double bout_active_call_rate_per_hour_;
+    double whale_call_bout_mean_duration_s_;
+    double whale_call_bout_mean_silent_duration_s_;
+    double whale_active_call_bout_rate_callph;
 
     // Whale grouping
-    double group_mean_size_;
-    double group_position_std_;
-    double group_start_time_std_;
-    double shared_heading_fraction_;
+    double whale_group_mean_size_;
+    double whale_group_position_std_m_;
+    double whale_group_start_time_std_s_;
+    double whale_group_heading_fraction_;
 
     // Whale movement
-    double heading_correlation_;
-    double heading_std_degrees_;
-    double speed_mean_;
-    double speed_std_;
-    double turn_interval_;
+    double whale_heading_correlation_;
+    double whale_heading_std_deg_;
+    double whale_speed_mean_mps_;
+    double whale_speed_std_mps_;
+    double whale_turn_interval_s_;
 
     // ---------------------------------------------------------------------
     // ROS interfaces

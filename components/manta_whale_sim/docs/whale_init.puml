@@ -40,7 +40,7 @@ partition "WhaleNode()" {
                     Gaussian AR(1) process
                     - rho = 0.95
                     - update interval = 60 s
-                    - stationary STD = heading_std_degrees_
+                    - stationary STD = whale_heading_std_deg_
                     - initial error = 0 degrees
                 end note
             }
