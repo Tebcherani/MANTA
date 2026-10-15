@@ -156,13 +156,11 @@ private:
     double whale_call_bout_mean_silent_duration_s_;
     double whale_active_call_bout_rate_callph;
 
-    // Whale grouping
     double whale_group_mean_size_;
     double whale_group_position_std_m_;
     double whale_group_start_time_std_s_;
     double whale_group_heading_fraction_;
 
-    // Whale movement
     double whale_heading_correlation_;
     double whale_heading_std_deg_;
     double whale_speed_mean_mps_;
@@ -177,10 +175,10 @@ private:
     rclcpp::Publisher<whale_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
     
     // Services
-    rclcpp::Service<whale_interfaces::srv::GetNextWhaleCall>::SharedPtr next_call_service_;
+    rclcpp::Service<whale_interfaces::srv::GetNextWhaleCall>::SharedPtr next_whale_call_service_;
 
     // Subscribers
-    rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr step_sub_;
+    rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
 };
 

@@ -20,7 +20,7 @@ void WhaleNode::create_publishers() {
  */
 void WhaleNode::create_subscribers() {
     // Receive simulation batches from the orchestrator.
-    step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
+    sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
         "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {handle_sim_step(step);}
     );
 
@@ -35,7 +35,7 @@ void WhaleNode::create_subscribers() {
  */
 void WhaleNode::create_services() {
     // Return the first scheduled whale call after a requested simulation time.
-    next_call_service_ = create_service<whale_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call", [this](
+    next_whale_call_service_ = create_service<whale_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call", [this](
         const std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Request> request,
         std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Response> response) {
         handle_get_next_call(*request, *response);

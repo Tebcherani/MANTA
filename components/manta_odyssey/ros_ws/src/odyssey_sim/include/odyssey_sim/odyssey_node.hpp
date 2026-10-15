@@ -130,7 +130,7 @@ class OdysseyNode : public rclcpp::Node {
         // Subscribers
         rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr calendar_start_time_sub_;
         rclcpp::Subscription<acoustics_interfaces::msg::BearingTransmission>::SharedPtr shared_bearing_sub_;
-        rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;
+        rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_sim_step_sub_;
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sim_time_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;

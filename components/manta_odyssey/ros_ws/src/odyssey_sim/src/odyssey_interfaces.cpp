@@ -67,7 +67,7 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &
         handle_shared_bearing(msg);
     });
     startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_startup(msg);});
-    sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {handle_sim_step(msg);});
+    sim_sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {handle_sim_step(msg);});
     sim_time_sub_ = create_subscription<std_msgs::msg::Float64>("/sim/time", qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {handle_sim_time(msg);});
     shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_shutdown(msg);});
     bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingObservation>("/" + vehicle_id_ + "/sensors/bearing", whale_qos, [this](const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {handle_bearing_observation(msg);});
