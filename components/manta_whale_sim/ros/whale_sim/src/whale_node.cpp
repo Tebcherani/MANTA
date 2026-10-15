@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <utility>
 
-WhaleNode::WhaleNode() : rclcpp::Node("whale_node"), generator_(42) {
+WhaleNode::WhaleNode() : rclcpp::Node("whale_node"), rng_(42) {
     load_config();
     validate_config();
     open_whale_log();

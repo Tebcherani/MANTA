@@ -130,24 +130,24 @@ private:
     double whale_sample_period_s_ = 60.0;
 
     // Scenario
-    int whale_count_;
-
     double picket_line_start_north_m_;
     double picket_line_start_east_m_;
     double picket_line_end_north_m_;
     double picket_line_end_east_m_;
 
     double mission_duration_s_;
-    double whale_start_distance_from_picket_line_m_;
 
     // Simulation
-    std::mt19937 generator_;
+    std::mt19937 rng_;
     std::vector<WhaleGroup> whale_groups_;
     std::vector<Whale> whales_;
 
     // Whale initialization
-    bool active_entire_mission_ = false;
-    std::string initialization_mode_;
+    int whale_count_;
+    bool whales_active_entire_mission_b_ = false;
+    std::string whale_initialization_mode_;
+
+    double whale_start_distance_from_picket_line_m_;
     double initial_north_;
     double initial_east_;
     double initial_heading_degrees_;

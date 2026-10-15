@@ -44,7 +44,7 @@ void WhaleNode::assign_population_call_times() {
         if (active_whales.empty()) continue;
 
         std::uniform_int_distribution<std::size_t> select_whale(0, active_whales.size() - 1);
-        whales_[active_whales[select_whale(generator_)]].call_times.push_back(call_time);
+        whales_[active_whales[select_whale(rng_)]].call_times.push_back(call_time);
     }
 }
 
@@ -119,14 +119,14 @@ std::vector<double> WhaleNode::generate_population_call_times(double start_time,
     const double active_probability = bout_mean_duration_ / (bout_mean_duration_ + bout_mean_silent_duration_);
     std::bernoulli_distribution initial_state(active_probability);
 
-    bool active = initial_state(generator_);
+    bool active = initial_state(rng_);
     double interval_start = start_time;
 
     while (interval_start < end_time) {
         double duration;
 
         do {
-            duration = active ? active_duration(generator_) : silent_duration(generator_);
+            duration = active ? active_duration(rng_) : silent_duration(rng_);
         } while (duration <= 0.0);
 
         const double interval_end = std::min(interval_start + duration, end_time);
@@ -135,7 +135,7 @@ std::vector<double> WhaleNode::generate_population_call_times(double start_time,
             double time_until_call;
 
             do {
-                time_until_call = call_interval(generator_);
+                time_until_call = call_interval(rng_);
             } while (time_until_call <= 0.0);
 
             double call_time = interval_start + time_until_call;
@@ -144,7 +144,7 @@ std::vector<double> WhaleNode::generate_population_call_times(double start_time,
                 call_times.push_back(call_time);
 
                 do {
-                    time_until_call = call_interval(generator_);
+                    time_until_call = call_interval(rng_);
                 } while (time_until_call <= 0.0);
 
                 call_time += time_until_call;
@@ -205,7 +205,7 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
         time = next_time;
 
         // End nonpersistent whale trajectories after crossing through the monitored corridor.
-        if (initialization_mode_ == "picket_line" && !active_entire_mission_) {
+        if (whale_initialization_mode_ == "picket_line" && !whales_active_entire_mission_b_) {
             const double relative_north = north - picket_line_start_north_m_;
             const double relative_east = east - picket_line_start_east_m_;
             const double signed_distance = relative_north * line.perpendicular_north + relative_east * line.perpendicular_east;
@@ -223,7 +223,7 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
         }
 
         // Advance the whale's individual correlated heading-error process.
-        individual_heading_error = heading_correlation_ * individual_heading_error + heading_innovation_scale * standard_normal(generator_);
+        individual_heading_error = heading_correlation_ * individual_heading_error + heading_innovation_scale * standard_normal(rng_);
     }
 
     return trajectory;
@@ -275,9 +275,9 @@ void WhaleNode::initialize_whale_groups(double line_length) {
         WhaleGroup group;
 
         // Generate the group's crossing location, starting side, and start time.
-        group.crossing_distance = crossing_distance(generator_);
-        group.side = starting_side(generator_) ? 1.0 : -1.0;
-        group.start_time = start_time(generator_);
+        group.crossing_distance = crossing_distance(rng_);
+        group.side = starting_side(rng_) ? 1.0 : -1.0;
+        group.start_time = start_time(rng_);
 
         // Generate the group's correlated heading-error process. Each group
         // initially travels directly toward its crossing location.
@@ -287,7 +287,7 @@ void WhaleNode::initialize_whale_groups(double line_length) {
         group.heading_errors.push_back(heading_error);
 
         for (std::size_t heading_index = 1; heading_index < heading_count; ++heading_index) {
-            heading_error = heading_correlation_ * heading_error + heading_innovation_scale * standard_normal(generator_);
+            heading_error = heading_correlation_ * heading_error + heading_innovation_scale * standard_normal(rng_);
             group.heading_errors.push_back(heading_error);
         }
 
@@ -321,7 +321,7 @@ void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState 
 void WhaleNode::initialize_whales() {
     LineGeometry line{};
 
-    if (initialization_mode_ == "picket_line") {
+    if (whale_initialization_mode_ == "picket_line") {
         line = compute_line_geometry();
         initialize_whale_groups(line.length);
     } 
@@ -333,12 +333,12 @@ void WhaleNode::initialize_whales() {
     for (int index = 0; index < whale_count_; ++index) {
         const std::size_t group_index = get_group_index_for_whale(index);
         const WhaleGroup &group = whale_groups_[group_index];
-        const double whale_start_time = active_entire_mission_ ? 0.0 : sample_start_time(group);
+        const double whale_start_time = whales_active_entire_mission_b_ ? 0.0 : sample_start_time(group);
         const double whale_speed = sample_speed();
 
         WhaleInitialState initial_state;
 
-        if (initialization_mode_ == "fixed") {
+        if (whale_initialization_mode_ == "fixed") {
             const double heading_radians = initial_heading_degrees_ * std::acos(-1.0) / 180.0;
             initial_state = {initial_north_, initial_east_, heading_radians};
         } else {
@@ -368,8 +368,8 @@ void WhaleNode::load_config() {
     mission_duration_s_ = declare_parameter<double>("mission_duration", 604800.0);
 
     // Whale config
-    active_entire_mission_ = declare_parameter<bool>("active_entire_mission", false);
-    initialization_mode_ = declare_parameter<std::string>("initialization_mode", "picket_line");
+    whales_active_entire_mission_b_ = declare_parameter<bool>("active_entire_mission", false);
+    whale_initialization_mode_ = declare_parameter<std::string>("initialization_mode", "picket_line");
     initial_north_ = declare_parameter<double>("initial_north", 0.0);
     initial_east_ = declare_parameter<double>("initial_east", 0.0);
     initial_heading_degrees_ = declare_parameter<double>("initial_heading_degrees", 0.0);
@@ -417,7 +417,7 @@ double WhaleNode::sample_crossing_distance(const WhaleGroup &group, double line_
     double distance;
 
     do {
-        distance = group.crossing_distance + offset(generator_);
+        distance = group.crossing_distance + offset(rng_);
     } while (distance < 0.0 || distance > line_length);
 
     return distance;
@@ -431,7 +431,7 @@ double WhaleNode::sample_speed() {
     double speed;
 
     do {
-        speed = distribution(generator_);
+        speed = distribution(rng_);
     } while (speed <= 0.0);
 
     return speed;
@@ -445,7 +445,7 @@ double WhaleNode::sample_start_time(const WhaleGroup &group) {
     double time;
 
     do {
-        time = group.start_time + offset(generator_);
+        time = group.start_time + offset(rng_);
     } while (time < 0.0 || time >= mission_duration_s_);
 
     return time;
@@ -456,7 +456,7 @@ double WhaleNode::sample_start_time(const WhaleGroup &group) {
  */
 void WhaleNode::seed_generator() {
     const int64_t random_seed = declare_parameter<int64_t>("random_seed", 42);
-    generator_.seed(static_cast<std::mt19937::result_type>(random_seed));
+    rng_.seed(static_cast<std::mt19937::result_type>(random_seed));
 }
 
 /**
@@ -476,7 +476,7 @@ void WhaleNode::validate_config() const {
     if (mission_duration_s_ <= 0.0) throw std::runtime_error("mission_duration must be greater than zero.");
     if (whale_sample_period_s_ <= 0.0) throw std::runtime_error("sample_period must be greater than zero.");
 
-    if (initialization_mode_ != "picket_line" && initialization_mode_ != "fixed") throw std::runtime_error("Whale initialization_mode must be 'picket_line' or 'fixed'.");
+    if (whale_initialization_mode_ != "picket_line" && whale_initialization_mode_ != "fixed") throw std::runtime_error("Whale initialization_mode must be 'picket_line' or 'fixed'.");
     if (!std::isfinite(initial_north_) || !std::isfinite(initial_east_) || !std::isfinite(initial_heading_degrees_)) throw std::runtime_error("Fixed whale initialization values must be finite.");
 
     if (speed_mean_ <= 0.0) throw std::runtime_error("speed_mean must be greater than zero.");
