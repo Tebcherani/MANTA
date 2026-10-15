@@ -94,10 +94,10 @@ scenario:
 
     movement:
       speed_mean: 1.0 #1.5 # m/s
-      speed_std: 0.2
+      speed_std: 0.0 #0.2
       turn_interval: 60.0
       heading_correlation: 0.95
-      heading_std_degrees: 15.0
+      heading_std_degrees: 0.0 #15.0
     
     # Reference paper: https://academic.oup.com/icesjms/article/82/4/fsad174/7341838
     calling:
