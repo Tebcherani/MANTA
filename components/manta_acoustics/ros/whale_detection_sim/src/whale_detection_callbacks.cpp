@@ -44,7 +44,7 @@ void WhaleDetectionNode::handle_vehicle_state(const manta_interfaces::msg::Vehic
  */
 void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCall::SharedPtr call) {
     // Reject a new call if the previous call has not yet been evaluated.
-    if (pending_call_available_) {
+    if (pending_whale_call_available_b_) {
         RCLCPP_ERROR(
             get_logger(), "Received whale call %s before the previous call was processed.",
             call->whale_id.c_str()
@@ -54,7 +54,7 @@ void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCal
 
     // Store the call until every configured vehicle reaches its event cycle.
     pending_call_ = *call;
-    pending_call_available_ = true;
+    pending_whale_call_available_b_ = true;
 
     // Process immediately if all required vehicle states are already available.
     try_process_pending_call();
@@ -72,7 +72,7 @@ void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCal
  */
 void WhaleDetectionNode::try_process_pending_call() {
     // Nothing can be processed until a whale call has been received.
-    if (!pending_call_available_) return;
+    if (!pending_whale_call_available_b_) return;
 
     // Wait until every configured vehicle has published its state for the exact cycle associated with the pending whale call.    
     for (const std::string &vehicle_id : vehicle_ids_) {
@@ -161,6 +161,6 @@ void WhaleDetectionNode::try_process_pending_call() {
     processed.bearing_receiver_ids = bearing_receiver_ids;
 
     // Clear the pending state before publishing the acknowledgement.
-    pending_call_available_ = false;
+    pending_whale_call_available_b_ = false;
     processed_pub_->publish(processed);
 }

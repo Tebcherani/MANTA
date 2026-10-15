@@ -57,7 +57,7 @@ private:
     double bearing_std_rad_ = 0.0;
 
     // Simulation
-    bool pending_call_available_ = false;
+    bool pending_whale_call_available_b_ = false;
     std::unordered_map<std::string, manta_interfaces::msg::VehicleState> latest_vehicle_states_;
     whale_interfaces::msg::WhaleCall pending_call_;
 
