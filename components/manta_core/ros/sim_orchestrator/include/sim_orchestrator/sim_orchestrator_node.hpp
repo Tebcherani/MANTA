@@ -84,7 +84,7 @@ private:
     void request_simulation_shutdown(bool failed = false);
 
     // Whale call coordination
-    void request_next_whale_call(double after_time);
+    void request_next_whale_call(double whale_call_after_time_s);
     
     // ---------------------------------------------------------------------
     // Variables

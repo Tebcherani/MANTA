@@ -7,7 +7,7 @@
 /**
  * Find the first scheduled whale call after a requested simulation time.
  *
- * Calls at or before `request.after_time` have already been processed and are discarded. The earliest remaining call across every whale is returned with
+ * Calls at or before `request.whale_call_after_time_s` have already been processed and are discarded. The earliest remaining call across every whale is returned with
  * the whale's position at that exact simulated time.
  *
  * @param request Request containing the last processed simulation time.
@@ -21,7 +21,7 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
     // Search every whale for its earliest unprocessed call.
     for (auto &whale : whales_) {
         // Discard calls that the orchestrator has already processed.
-        while (whale.next_call_index < whale.call_times.size() && whale.call_times[whale.next_call_index] <= request.after_time) {
+        while (whale.next_call_index < whale.call_times.size() && whale.call_times[whale.next_call_index] <= request.whale_call_after_time_s) {
             ++whale.next_call_index;
         }
 

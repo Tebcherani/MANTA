@@ -354,9 +354,9 @@ void SimOrchestratorNode::check_all_vehicles_initialized() {
  * The request is sent asynchronously so the orchestrator can continue processing ROS events while the whale node determines the next call.
  * If the scheduling service is unavailable, the simulation is stopped with an error.
  *
- * @param after_time Simulation time after which the requested call must occur.
+ * @param whale_call_after_time_s Simulation time after which the requested call must occur.
  */
-void SimOrchestratorNode::request_next_whale_call(double after_time) {
+void SimOrchestratorNode::request_next_whale_call(double whale_call_after_time_s) {
     // Wait briefly for the whale-call scheduling service to become available.
     if (!next_whale_call_client_->wait_for_service(std::chrono::seconds(5))) {
         RCLCPP_ERROR(get_logger(), "Whale-call scheduling service is unavailable.");
@@ -366,7 +366,7 @@ void SimOrchestratorNode::request_next_whale_call(double after_time) {
 
     // Request the first call strictly after the supplied simulation time.
     auto request = std::make_shared<whale_interfaces::srv::GetNextWhaleCall::Request>();
-    request->after_time = after_time;
+    request->whale_call_after_time_s = whale_call_after_time_s;
 
     // Forward the asynchronous response to the corresponding callback.
     next_whale_call_client_->async_send_request(

@@ -1,4 +1,4 @@
-float64 after_time
+float64 whale_call_after_time_s
 ---
 bool available
 WhaleCall call
