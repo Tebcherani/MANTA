@@ -162,8 +162,8 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         state.cycle = completed_cycle;
         state.whale_north_m = whale.north;
         state.whale_east_m = whale.east;
-        state.velocity_north = whale.velocity_north;
-        state.velocity_east = whale.velocity_east;
+        state.whale_velocity_north_mps = whale.velocity_north;
+        state.whale_velocity_east_mps = whale.velocity_east;
         msg.whales.push_back(state);
     }
 

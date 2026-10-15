@@ -4,5 +4,5 @@ string whale_id
 uint64 cycle
 float64 whale_north_m
 float64 whale_east_m
-float64 velocity_north
-float64 velocity_east
+float64 whale_velocity_north_mps
+float64 whale_velocity_east_mps
