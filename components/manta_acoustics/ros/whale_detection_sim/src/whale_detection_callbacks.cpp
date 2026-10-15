@@ -103,12 +103,12 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
             observation.sim_time_s = pending_whale_call_.sim_time_s;
             
             // Add an independent Gaussian angular error to this receiver's bearing.
-            const double true_bearing = std::atan2(vehicle_to_whale_east_distance_m, vehicle_to_whale_north_distance_m);
-            const double bearing_error = bearing_std_rad_ > 0.0 ? bearing_std_rad_ * normal_(rng_) : 0.0;
-            const double measured_bearing = true_bearing + bearing_error;
+            const double true_bearing_rad = std::atan2(vehicle_to_whale_east_distance_m, vehicle_to_whale_north_distance_m);
+            const double bearing_error_rad = bearing_std_rad_ > 0.0 ? bearing_std_rad_ * normal_(rng_) : 0.0;
+            const double measured_bearing_rad = true_bearing_rad + bearing_error_rad;
 
             // Wrap the measured angle to the interval [-pi, pi].
-            observation.bearing_rad = std::atan2(std::sin(measured_bearing), std::cos(measured_bearing));
+            observation.bearing_rad = std::atan2(std::sin(measured_bearing_rad), std::cos(measured_bearing_rad));
             observation.bearing_std_rad = bearing_std_rad_;
                         
             bearing_observation_pubs.at(vehicle_id)->publish(observation);
