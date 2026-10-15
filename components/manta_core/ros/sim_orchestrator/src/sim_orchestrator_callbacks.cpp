@@ -45,7 +45,7 @@ void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_i
     const auto response = future.get();
 
     // Continue normal stepping when no future whale call remains.
-    if (!response->available) {
+    if (!response->whale_call_available_b) {
         next_whale_call_available_ = false;
         publish_current_step();
         return;

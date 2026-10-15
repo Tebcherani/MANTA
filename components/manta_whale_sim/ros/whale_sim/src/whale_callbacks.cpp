@@ -38,12 +38,12 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
 
     // Report that no whale calls remain in the simulation.
     if (next_whale == nullptr) {
-        response.available = false;
+        response.whale_call_available_b = false;
         return;
     }
 
     // Identify the next call and its scheduled simulation time.
-    response.available = true;
+    response.whale_call_available_b = true;
     response.call.whale_id = next_whale->id;
     response.call.cycle = 0;
     response.call.sim_time_s = next_time;
