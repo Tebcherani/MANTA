@@ -127,7 +127,7 @@ void WhaleDetectionNode::try_process_pending_call() {
             observation.bearing_rad = std::atan2(std::sin(measured_bearing), std::cos(measured_bearing));
             observation.bearing_std_rad = bearing_std_rad_;
                         
-            bearing_pubs_.at(vehicle_id)->publish(observation);
+            bearing_observation_pubs.at(vehicle_id)->publish(observation);
             bearing_receiver_ids.push_back(vehicle_id);
         }
 
@@ -162,5 +162,5 @@ void WhaleDetectionNode::try_process_pending_call() {
 
     // Clear the pending state before publishing the acknowledgement.
     pending_whale_call_available_b_ = false;
-    processed_pub_->publish(processed);
+    whale_call_processed_pub_->publish(processed);
 }
