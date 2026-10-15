@@ -169,24 +169,24 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     whale_states_pub_->publish(msg);
 
     // Record every requested output time crossed by this batch.
-    while (next_whale_log_time_ <= batch_end_time + 1.0e-9) {
+    while (next_whale_log_time_s_ <= batch_end_time + 1.0e-9) {
         // Skip stale output boundaries that precede the current batch.
-        if (next_whale_log_time_ < step.sim_time_s) {
-            next_whale_log_time_ += whale_sample_period_;
+        if (next_whale_log_time_s_ < step.sim_time_s) {
+            next_whale_log_time_s_ += whale_sample_period_s_;
             continue;
         }
 
         // Map the requested sample time to the corresponding cycle in this batch.
-        const double cycle_offset = (next_whale_log_time_ - step.sim_time_s) / step.timestep;
+        const double cycle_offset = (next_whale_log_time_s_ - step.sim_time_s) / step.timestep;
         const std::uint64_t sample_offset = std::min<std::uint64_t>(step.step_count - 1, static_cast<std::uint64_t>(std::max(0.0, std::floor(cycle_offset))));
         const std::uint64_t sample_cycle = step.current_cycle + sample_offset;
 
         // Record every whale at the exact scheduled output time.
         for (const auto &whale : whales_) {
-            const TrajectoryPoint sample = trajectory_at_time(whale, next_whale_log_time_);
-            whale_log_ << sample_cycle << ',' << next_whale_log_time_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.north << ',' << sample.east << ',' << '\n';
+            const TrajectoryPoint sample = trajectory_at_time(whale, next_whale_log_time_s_);
+            whale_log_ << sample_cycle << ',' << next_whale_log_time_s_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.north << ',' << sample.east << ',' << '\n';
         }
 
-        next_whale_log_time_ += whale_sample_period_;
+        next_whale_log_time_s_ += whale_sample_period_s_;
     }
 }

@@ -125,20 +125,20 @@ private:
     // ---------------------------------------------------------------------
 
     // Output
-    double next_whale_log_time_ = 0.0;
+    double next_whale_log_time_s_ = 0.0;
     std::ofstream whale_log_;
-    double whale_sample_period_ = 60.0;
+    double whale_sample_period_s_ = 60.0;
 
     // Scenario
     int whale_count_;
 
-    double line_start_north_;
-    double line_start_east_;
-    double line_end_north_;
-    double line_end_east_;
+    double picket_line_start_north_m_;
+    double picket_line_start_east_m_;
+    double picket_line_end_north_m_;
+    double picket_line_end_east_m_;
 
-    double mission_duration_;
-    double start_distance_;
+    double mission_duration_s_;
+    double whale_start_distance_from_picket_line_m_;
 
     // Simulation
     std::mt19937 generator_;

@@ -16,7 +16,7 @@ void WhaleNode::assign_population_call_times() {
 
     if (whales_.empty()) return;
 
-    double first_start_time = mission_duration_;
+    double first_start_time = mission_duration_s_;
     double final_end_time = 0.0;
 
     for (const Whale &whale : whales_) {
@@ -52,10 +52,10 @@ void WhaleNode::assign_population_call_times() {
  * Calculate the whale's starting position and heading toward the picket line.
  */
 WhaleNode::WhaleInitialState WhaleNode::compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double crossing_distance, double speed) const {
-    const double crossing_north = line_start_north_ + line.along_north * crossing_distance;
-    const double crossing_east = line_start_east_ + line.along_east * crossing_distance;
-    const double initial_north = crossing_north + group.side * line.perpendicular_north * start_distance_;
-    const double initial_east = crossing_east + group.side * line.perpendicular_east * start_distance_;
+    const double crossing_north = picket_line_start_north_m_ + line.along_north * crossing_distance;
+    const double crossing_east = picket_line_start_east_m_ + line.along_east * crossing_distance;
+    const double initial_north = crossing_north + group.side * line.perpendicular_north * whale_start_distance_from_picket_line_m_;
+    const double initial_east = crossing_east + group.side * line.perpendicular_east * whale_start_distance_from_picket_line_m_;
     const double velocity_north = -group.side * line.perpendicular_north * speed;
     const double velocity_east = -group.side * line.perpendicular_east * speed;
 
@@ -67,8 +67,8 @@ WhaleNode::WhaleInitialState WhaleNode::compute_initial_state(const WhaleGroup &
  */
 WhaleNode::LineGeometry WhaleNode::compute_line_geometry() const {
     // Express the picket line as a north-east displacement vector.    
-    const double line_north = line_end_north_ - line_start_north_;
-    const double line_east = line_end_east_ - line_start_east_;
+    const double line_north = picket_line_end_north_m_ - picket_line_start_north_m_;
+    const double line_east = picket_line_end_east_m_ - picket_line_start_east_m_;
     const double line_length = std::hypot(line_north, line_east);
 
     // A zero-length line cannot define parallel or perpendicular directions.
@@ -192,12 +192,12 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
 
         trajectory.push_back({time, north, east, velocity_north, velocity_east});
 
-        if (time >= mission_duration_) break;
+        if (time >= mission_duration_s_) break;
 
         // End the segment at the next shared movement boundary so all group
         // members respond to heading changes at the same simulation time.
         const double next_turn_time = (std::floor(time / turn_interval_) + 1.0) * turn_interval_;
-        const double next_time = std::min(next_turn_time, mission_duration_);
+        const double next_time = std::min(next_turn_time, mission_duration_s_);
         const double duration = next_time - time;
 
         north += velocity_north * duration;
@@ -206,18 +206,18 @@ std::vector<WhaleNode::TrajectoryPoint> WhaleNode::generate_trajectory(double in
 
         // End nonpersistent whale trajectories after crossing through the monitored corridor.
         if (initialization_mode_ == "picket_line" && !active_entire_mission_) {
-            const double relative_north = north - line_start_north_;
-            const double relative_east = east - line_start_east_;
+            const double relative_north = north - picket_line_start_north_m_;
+            const double relative_east = east - picket_line_start_east_m_;
             const double signed_distance = relative_north * line.perpendicular_north + relative_east * line.perpendicular_east;
 
-            if (group.side * signed_distance <= -start_distance_) {
+            if (group.side * signed_distance <= -whale_start_distance_from_picket_line_m_) {
                 trajectory.push_back({time, north, east, 0.0, 0.0});
                 break;
             }
         }
 
         // Preserve the final mission position without extrapolating beyond it.
-        if (time >= mission_duration_) {
+        if (time >= mission_duration_s_) {
             trajectory.push_back({time, north, east, velocity_north, velocity_east});
             break;
         }
@@ -256,7 +256,7 @@ void WhaleNode::initialize_whale_groups(double line_length) {
     const int group_count = std::max(1, static_cast<int>(std::ceil(static_cast<double>(whale_count_) / group_mean_size_)));
 
     // Calculate the number of shared heading intervals in the mission.
-    const std::size_t heading_count = static_cast<std::size_t>(std::ceil(mission_duration_ / turn_interval_)) + 1;
+    const std::size_t heading_count = static_cast<std::size_t>(std::ceil(mission_duration_s_ / turn_interval_)) + 1;
 
     // Convert heading variation to radians and calculate the AR(1) innovation scale.
     const double heading_std_radians = heading_std_degrees_ * std::acos(-1.0) / 180.0;
@@ -264,7 +264,7 @@ void WhaleNode::initialize_whale_groups(double line_length) {
 
     // Create distributions used to generate group-level properties.
     std::uniform_real_distribution<double> crossing_distance(0.0, line_length);
-    std::uniform_real_distribution<double> start_time(0.0, mission_duration_);
+    std::uniform_real_distribution<double> start_time(0.0, mission_duration_s_);
     std::bernoulli_distribution starting_side(0.5);
     std::normal_distribution<double> standard_normal(0.0, 1.0);
 
@@ -360,12 +360,12 @@ void WhaleNode::initialize_whales() {
 void WhaleNode::load_config() {
     // Scenario size and picket-line geometry.
     whale_count_ = declare_parameter<int>("count", 46);
-    line_start_north_ = declare_parameter<double>("line_start_north", 0.0);
-    line_start_east_ = declare_parameter<double>("line_start_east", -63000.0);
-    line_end_north_ = declare_parameter<double>("line_end_north", 0.0);
-    line_end_east_ = declare_parameter<double>("line_end_east", 63000.0);
-    start_distance_ = declare_parameter<double>("start_distance", 2000.0);
-    mission_duration_ = declare_parameter<double>("mission_duration", 604800.0);
+    picket_line_start_north_m_ = declare_parameter<double>("line_start_north", 0.0);
+    picket_line_start_east_m_ = declare_parameter<double>("line_start_east", -63000.0);
+    picket_line_end_north_m_ = declare_parameter<double>("line_end_north", 0.0);
+    picket_line_end_east_m_ = declare_parameter<double>("line_end_east", 63000.0);
+    whale_start_distance_from_picket_line_m_ = declare_parameter<double>("start_distance", 2000.0);
+    mission_duration_s_ = declare_parameter<double>("mission_duration", 604800.0);
 
     // Whale config
     active_entire_mission_ = declare_parameter<bool>("active_entire_mission", false);
@@ -393,7 +393,7 @@ void WhaleNode::load_config() {
     shared_heading_fraction_ = declare_parameter<double>("shared_heading_fraction", 0.75);
 
     // Output sampling.
-    whale_sample_period_ = declare_parameter<double>("sample_period", 60.0);
+    whale_sample_period_s_ = declare_parameter<double>("sample_period", 60.0);
 }
 
 /**
@@ -446,7 +446,7 @@ double WhaleNode::sample_start_time(const WhaleGroup &group) {
 
     do {
         time = group.start_time + offset(generator_);
-    } while (time < 0.0 || time >= mission_duration_);
+    } while (time < 0.0 || time >= mission_duration_s_);
 
     return time;
 }
@@ -466,15 +466,15 @@ void WhaleNode::seed_generator() {
  */
 void WhaleNode::validate_config() const {
     const double line_length = std::hypot(
-        line_end_north_ - line_start_north_,
-        line_end_east_ - line_start_east_
+        picket_line_end_north_m_ - picket_line_start_north_m_,
+        picket_line_end_east_m_ - picket_line_start_east_m_
     );
 
     if (whale_count_ < 1) throw std::runtime_error("count must be at least one.");
     if (line_length <= 0.0) throw std::runtime_error("Picket line must have nonzero length.");
-    if (start_distance_ <= 0.0) throw std::runtime_error("start_distance must be greater than zero.");
-    if (mission_duration_ <= 0.0) throw std::runtime_error("mission_duration must be greater than zero.");
-    if (whale_sample_period_ <= 0.0) throw std::runtime_error("sample_period must be greater than zero.");
+    if (whale_start_distance_from_picket_line_m_ <= 0.0) throw std::runtime_error("start_distance must be greater than zero.");
+    if (mission_duration_s_ <= 0.0) throw std::runtime_error("mission_duration must be greater than zero.");
+    if (whale_sample_period_s_ <= 0.0) throw std::runtime_error("sample_period must be greater than zero.");
 
     if (initialization_mode_ != "picket_line" && initialization_mode_ != "fixed") throw std::runtime_error("Whale initialization_mode must be 'picket_line' or 'fixed'.");
     if (!std::isfinite(initial_north_) || !std::isfinite(initial_east_) || !std::isfinite(initial_heading_degrees_)) throw std::runtime_error("Fixed whale initialization values must be finite.");
