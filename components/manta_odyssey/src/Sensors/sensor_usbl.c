@@ -44,7 +44,7 @@ usbl_result_t update_usbl(const usbl_config_t *config, const usbl_input_t *input
     result.measurement.elevation = atan2(down_difference, horizontal_range);
 
     // Produces a hit once every hit_interval, provided the current timestep falls within hit_window
-    if (fmod(input->sim_time, config->hit_interval) >= config->hit_window) {
+    if (fmod(input->sim_time_s, config->hit_interval) >= config->hit_window) {
         result.success = 1;
         return result;
     }

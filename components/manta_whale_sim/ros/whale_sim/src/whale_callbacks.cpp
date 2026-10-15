@@ -46,7 +46,7 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
     response.available = true;
     response.call.whale_id = next_whale->id;
     response.call.cycle = 0;
-    response.call.sim_time = next_time;
+    response.call.sim_time_s = next_time;
 
     // Calculate the whale's location at the exact time of the call.
     const TrajectoryPoint call_position = trajectory_at_time(*next_whale, next_time);
@@ -137,7 +137,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     }
 
     // Calculate the time and cycle reached at the end of the batch.
-    const double batch_end_time = step.sim_time + static_cast<double>(step.step_count) * step.timestep;
+    const double batch_end_time = step.sim_time_s + static_cast<double>(step.step_count) * step.timestep;
     const std::uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
 
     whale_interfaces::msg::WhaleStateArray msg;
@@ -172,13 +172,13 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     // Record every requested output time crossed by this batch.
     while (next_whale_log_time_ <= batch_end_time + 1.0e-9) {
         // Skip stale output boundaries that precede the current batch.
-        if (next_whale_log_time_ < step.sim_time) {
+        if (next_whale_log_time_ < step.sim_time_s) {
             next_whale_log_time_ += whale_sample_period_;
             continue;
         }
 
         // Map the requested sample time to the corresponding cycle in this batch.
-        const double cycle_offset = (next_whale_log_time_ - step.sim_time) / step.timestep;
+        const double cycle_offset = (next_whale_log_time_ - step.sim_time_s) / step.timestep;
         const std::uint64_t sample_offset = std::min<std::uint64_t>(step.step_count - 1, static_cast<std::uint64_t>(std::max(0.0, std::floor(cycle_offset))));
         const std::uint64_t sample_cycle = step.current_cycle + sample_offset;
 

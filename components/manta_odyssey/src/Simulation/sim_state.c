@@ -13,7 +13,7 @@ int init_sim_state(sim_state_t *state) {
     }
 
     state->current_cycle = 0;
-    state->sim_time = 0.0;
+    state->sim_time_s = 0.0;
     state->calendar_start_time = time(NULL);
 
     if (state->calendar_start_time == (time_t)-1) {
@@ -29,7 +29,7 @@ int update_sim_state(sim_state_t *state, double timestep)
     if (state == NULL) return 0;
 
     state->current_cycle++;
-    state->sim_time += timestep;
+    state->sim_time_s += timestep;
 
     return 1;
 }

@@ -19,7 +19,7 @@ void SimOrchestratorNode::publish_current_step() {
 
     // Describe the first cycle, starting time, and physics timestep of the batch that the vehicle simulators are about to process.
     step.current_cycle = static_cast<std::uint64_t>(sim_state_.current_cycle);
-    step.sim_time = sim_state_.sim_time;
+    step.sim_time_s = sim_state_.sim_time_s;
     step.timestep = sim_config_.timestep;
 
     // Use the configured maximum batch size unless fewer simulation cycles remain.
@@ -37,7 +37,7 @@ void SimOrchestratorNode::publish_current_step() {
     current_batch_reaches_whale_call_ = false;
     if (next_whale_call_available_) {
         // Calculate how many simulated seconds remain before the next scheduled whale call.
-        const double time_until_call = next_whale_call_.sim_time - sim_state_.sim_time;
+        const double time_until_call = next_whale_call_.sim_time_s - sim_state_.sim_time_s;
 
         if (time_until_call > 0.0) {
             // Convert the remaining time to a number of physics steps. Every published batch must contain at least one step.
@@ -71,5 +71,5 @@ void SimOrchestratorNode::publish_current_step() {
  */
 void SimOrchestratorNode::publish_whale_call(const whale_interfaces::msg::WhaleCall &call) {
     whale_call_pub_->publish(call); // Publish the event for the whale-detection node.
-    whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time << ',' << call.whale_id << ',' << call.north << ',' << call.east << '\n';   // Record the published event for simulation analysis and review.
+    whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time_s << ',' << call.whale_id << ',' << call.north << ',' << call.east << '\n';   // Record the published event for simulation analysis and review.
 }

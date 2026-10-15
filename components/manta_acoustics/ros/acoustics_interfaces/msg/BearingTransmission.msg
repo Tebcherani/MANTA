@@ -1,6 +1,6 @@
 string receiver_id
 uint64 call_cycle
-float64 sim_time
+float64 sim_time_s
 float64 bearing_rad
 float64 bearing_std_rad
 float64 receiver_north_m

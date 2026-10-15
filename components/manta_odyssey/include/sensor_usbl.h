@@ -19,7 +19,7 @@ typedef struct {
     double target_east;
     double target_down;
 
-    double sim_time;
+    double sim_time_s;
 } usbl_input_t;
 
 typedef struct {

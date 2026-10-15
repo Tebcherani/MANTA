@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
     if (!init_odyssey_sim()) exit_sim(EXIT_FAILURE);
     if (!init_sim_state(&sim_state)) exit_sim(EXIT_FAILURE);
-    if (!update_odyssey_sim_time(sim_state.sim_time)) exit_sim(EXIT_FAILURE);
+    if (!update_odyssey_sim_time(sim_state.sim_time_s)) exit_sim(EXIT_FAILURE);
     if (!start_odyssey_sim(sim_state.calendar_start_time)) exit_sim(EXIT_FAILURE);
 
 /* 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 */
     while (sim_state.current_cycle < sim_config.num_cycles) {	    
         if (odyssey_abort_requested()) {
-            write_to_sim_log("%8.2f: Mission aborted.\n", sim_state.sim_time);
+            write_to_sim_log("%8.2f: Mission aborted.\n", sim_state.sim_time_s);
             exit_sim(EXIT_SUCCESS);
         }
 
@@ -51,13 +51,13 @@ int main(int argc, char *argv[]) {
             }
 
             if (cycle_status == ODYSSEY_UPDATE_MISSION_COMPLETE) {
-                write_to_sim_log("%8.2f: Mission completed.\n", sim_state.sim_time);
+                write_to_sim_log("%8.2f: Mission completed.\n", sim_state.sim_time_s);
                 exit_sim(EXIT_SUCCESS);
             }
 	    }
 	
         if (!update_sim_state(&sim_state, sim_config.timestep)) exit_sim(EXIT_FAILURE);
-        if (!update_odyssey_sim_time(sim_state.sim_time)) exit_sim(EXIT_FAILURE);
+        if (!update_odyssey_sim_time(sim_state.sim_time_s)) exit_sim(EXIT_FAILURE);
     }
 
     exit_sim(EXIT_SUCCESS);

@@ -34,7 +34,7 @@ class OdysseyNode : public rclcpp::Node {
 
         struct BearingPosition {
             std::uint64_t cycle;
-            double sim_time;
+            double sim_time_s;
             double north;
             double east;
         };
@@ -62,7 +62,7 @@ class OdysseyNode : public rclcpp::Node {
 
         // Output
         void publish_bearing(double simulation_time);
-        void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time);
+        void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time_s);
         bool write_final_metrics();
 
         void open_whale_prediction_log();
@@ -105,7 +105,7 @@ class OdysseyNode : public rclcpp::Node {
         bool sim_time_received_ = false;
 
         time_t calendar_start_time_ = 0;
-        double sim_time_ = 0.0;
+        double sim_time_s_ = 0.0;
 
         // Vehicle
         std::string vehicle_id_;

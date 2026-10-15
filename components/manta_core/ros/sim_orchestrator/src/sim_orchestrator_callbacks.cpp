@@ -18,7 +18,7 @@ void SimOrchestratorNode::handle_bearing_processed(const acoustics_interfaces::m
     if (!waiting_for_whale_call_processing_) return;
 
     if (msg->call_cycle != next_whale_call_.cycle ||
-        std::abs(msg->sim_time - next_whale_call_.sim_time) > 1.0e-9) {
+        std::abs(msg->sim_time_s - next_whale_call_.sim_time_s) > 1.0e-9) {
         return;
     }
 
@@ -56,7 +56,7 @@ void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_i
     next_whale_call_available_ = true;
 
     // Publish calls that fall within the timestep vehicles already reached.
-    if (next_whale_call_.sim_time <= sim_state_.sim_time) {
+    if (next_whale_call_.sim_time_s <= sim_state_.sim_time_s) {
         next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<std::uint64_t>(sim_state_.current_cycle - 1) : 0;
 
         // Prepare the barrier before any acknowledgments can arrive.
@@ -201,7 +201,7 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
     // Ensure the acknowledgement corresponds to the pending whale call.
     const bool wrong_whale = msg->whale_id != next_whale_call_.whale_id;
     const bool wrong_cycle = msg->cycle != next_whale_call_.cycle;
-    const bool wrong_time = std::fabs(msg->sim_time - next_whale_call_.sim_time) > 1.0e-9;
+    const bool wrong_time = std::fabs(msg->sim_time_s - next_whale_call_.sim_time_s) > 1.0e-9;
 
     if (wrong_whale || wrong_cycle || wrong_time) {
         RCLCPP_WARN(
@@ -245,7 +245,7 @@ void SimOrchestratorNode::check_whale_call_processing_complete() {
     }
 
     waiting_for_whale_call_processing_ = false;
-    request_next_whale_call(next_whale_call_.sim_time);
+    request_next_whale_call(next_whale_call_.sim_time_s);
 }
 
 /**
@@ -345,7 +345,7 @@ void SimOrchestratorNode::check_all_vehicles_initialized() {
     RCLCPP_INFO(get_logger(), "All %zu vehicles are initialized.", vehicle_states_.size());
     
     // Obtain the first whale call before selecting the first simulation batch.
-    request_next_whale_call(sim_state_.sim_time);
+    request_next_whale_call(sim_state_.sim_time_s);
 }
 
 /**

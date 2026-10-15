@@ -163,24 +163,24 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
 
     with path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
-        required = {"whale_id", "sim_time", "north", "east"}
+        required = {"whale_id", "sim_time_s", "north", "east"}
 
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise ValueError("whales.csv must contain whale_id, sim_time, north, and east columns.")
+            raise ValueError("whales.csv must contain whale_id, sim_time_s, north, and east columns.")
 
         for row in reader:
             try:
-                sim_time = float(row["sim_time"])
+                sim_time_s = float(row["sim_time_s"])
                 north = float(row["north"])
                 east = float(row["east"])
             except (TypeError, ValueError):
                 continue
 
-            if not row["whale_id"] or not np.isfinite(sim_time) or not np.isfinite(north) or not np.isfinite(east):
+            if not row["whale_id"] or not np.isfinite(sim_time_s) or not np.isfinite(north) or not np.isfinite(east):
                 continue
 
             whale_ids.add(row["whale_id"])
-            positions_by_time[sim_time] = (north, east)
+            positions_by_time[sim_time_s] = (north, east)
 
     if len(whale_ids) != 1:
         raise ValueError(f"Prediction error requires exactly one whale; found {len(whale_ids)}.")
@@ -216,7 +216,7 @@ def compute_prediction_error(
     with prediction_path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
         required = {
-            "sim_time",
+            "sim_time_s",
             "has_estimate",
             "predicted_north",
             "predicted_east",
@@ -225,23 +225,23 @@ def compute_prediction_error(
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
             raise ValueError(
                 f"{prediction_path.name} must contain "
-                "sim_time, has_estimate, predicted_north, and predicted_east."
+                "sim_time_s, has_estimate, predicted_north, and predicted_east."
             )
 
         for row in reader:
             total_samples += 1
 
             try:
-                sim_time = float(row["sim_time"])
+                sim_time_s = float(row["sim_time_s"])
                 has_estimate = int(row["has_estimate"])
             except (TypeError, ValueError):
                 continue
 
-            if has_estimate != 1 or not np.isfinite(sim_time):
+            if has_estimate != 1 or not np.isfinite(sim_time_s):
                 continue
 
             # Interpolate truth only within the logged whale trajectory.
-            if sim_time < whale_time[0] or sim_time > whale_time[-1]:
+            if sim_time_s < whale_time[0] or sim_time_s > whale_time[-1]:
                 continue
 
             try:
@@ -253,8 +253,8 @@ def compute_prediction_error(
             if not np.isfinite(predicted_north) or not np.isfinite(predicted_east):
                 continue
 
-            true_north = np.interp(sim_time, whale_time, whale_north)
-            true_east = np.interp(sim_time, whale_time, whale_east)
+            true_north = np.interp(sim_time_s, whale_time, whale_north)
+            true_east = np.interp(sim_time_s, whale_time, whale_east)
             errors_m.append(
                 np.hypot(predicted_north - true_north, predicted_east - true_east)
             )

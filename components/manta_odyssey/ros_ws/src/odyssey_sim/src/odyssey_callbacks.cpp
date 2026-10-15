@@ -127,10 +127,10 @@ void OdysseyNode::handle_shared_bearing(
     processed_bearing_cycles_.insert(call_cycle);
 
     // Both bearings describe the same call; use its measurement time.
-    set_whale_trailing_target(estimated_north, estimated_east, local.sim_time);
+    set_whale_trailing_target(estimated_north, estimated_east, local.sim_time_s);
 
     RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.",
-        vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_);
+        vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_s_);
 }
 
 /**
@@ -245,24 +245,24 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             }
         }
 
-        const double next_sim_time = msg->sim_time + static_cast<double>(offset + 1) * msg->timestep;
+        const double next_sim_time_s = msg->sim_time_s + static_cast<double>(offset + 1) * msg->timestep;
 
-        if (!update_odyssey_sim_time(next_sim_time)) {
+        if (!update_odyssey_sim_time(next_sim_time_s)) {
             result.status = manta_interfaces::msg::SimStepResult::ERROR;
             result.detail = "Failed to update Odyssey simulation time.";
             step_result_pub_->publish(result);
             return;
         }
 
-        sim_time_ = next_sim_time;
-        log_whale_prediction(next_sim_time);
-        publish_bearing(next_sim_time);
+        sim_time_s_ = next_sim_time_s;
+        log_whale_prediction(next_sim_time_s);
+        publish_bearing(next_sim_time_s);
     }
 
     // Publish the vehicle state produced by the completed batch.
     result.completed_cycle = msg->current_cycle + msg->step_count - 1;
-    const double completed_sim_time = msg->sim_time + static_cast<double>(msg->step_count) * msg->timestep;
-    publish_vehicle_state(result.completed_cycle, completed_sim_time);
+    const double completed_sim_time_s = msg->sim_time_s + static_cast<double>(msg->step_count) * msg->timestep;
+    publish_vehicle_state(result.completed_cycle, completed_sim_time_s);
 
     // Acknowledge the completed batch after publishing its resulting state.
     step_result_pub_->publish(result);
@@ -276,7 +276,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
  * @param msg ROS message containing the current simulation time in seconds.
  */
 void OdysseyNode::handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg) {
-    sim_time_ = msg->data;       // Store the initial simulated mission time.
+    sim_time_s_ = msg->data;       // Store the initial simulated mission time.
     sim_time_received_ = true;   // Record that this required startup value has arrived.
     try_finish_init();           // Complete startup if the other required values are available.
 }
@@ -313,7 +313,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     acoustics_interfaces::msg::BearingTransmission shared;
     shared.receiver_id = vehicle_id_;
     shared.call_cycle = msg->call_cycle;
-    shared.sim_time = msg->sim_time;
+    shared.sim_time_s = msg->sim_time_s;
     shared.bearing_rad = msg->bearing_rad;
     shared.bearing_std_rad = msg->bearing_std_rad;
     shared.receiver_north_m = position->north;
@@ -340,7 +340,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
         acoustics_interfaces::msg::BearingProcessed stored;
         stored.vehicle_id = vehicle_id_;
         stored.call_cycle = msg->call_cycle;
-        stored.sim_time = msg->sim_time;
+        stored.sim_time_s = msg->sim_time_s;
         stored.estimate_valid = false;
         bearing_processed_pub_->publish(stored);
 
@@ -355,7 +355,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     acoustics_interfaces::msg::BearingProcessed received;
     received.vehicle_id = vehicle_id_;
     received.call_cycle = msg->call_cycle;
-    received.sim_time = msg->sim_time;
+    received.sim_time_s = msg->sim_time_s;
     received.estimate_valid = false;
     bearing_processed_pub_->publish(received);
 }
@@ -379,7 +379,7 @@ void OdysseyNode::try_finish_init() {
 
     // Initialize the native Odyssey simulation clock once.
     if (!sim_time_initialized_) {
-        if (!update_odyssey_sim_time(sim_time_)) throw std::runtime_error("Failed to initialize " + vehicle_id_ + " simulation time.");
+        if (!update_odyssey_sim_time(sim_time_s_)) throw std::runtime_error("Failed to initialize " + vehicle_id_ + " simulation time.");
         sim_time_initialized_ = true;
         RCLCPP_INFO(get_logger(), "Initialized '%s' simulation time.", vehicle_id_.c_str());
     }

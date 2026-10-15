@@ -110,7 +110,7 @@ void SimOrchestratorNode::open_whale_call_log() {
     if (!whale_call_log_.is_open()) throw std::runtime_error("Failed to open whale call results file.");
 
     // Write the CSV header before any whale-call records are produced.
-    whale_call_log_ << "cycle,sim_time,whale_id,north,east,depth\n";
+    whale_call_log_ << "cycle,sim_time_s,whale_id,north,east,depth\n";
 }
 
 /**
@@ -127,7 +127,7 @@ void SimOrchestratorNode::publish_startup_state() {
     RCLCPP_INFO(get_logger(), "Ready to begin Odyssey initialization.");
 
     // Publish the initial elapsed simulation time.
-    sim_time_msg.data = sim_state_.sim_time;
+    sim_time_msg.data = sim_state_.sim_time_s;
     sim_time_pub_->publish(sim_time_msg);
 
     // Publish the calendar timestamp corresponding to simulation time zero.

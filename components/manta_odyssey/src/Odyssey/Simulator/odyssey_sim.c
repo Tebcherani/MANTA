@@ -105,10 +105,10 @@ odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *world_stat
     return update_odyssey(world_state->seawater_density, timestep);
 }
 
-int update_odyssey_sim_time(double sim_time) {
-    //update_sensor(M_PRESENT_TIME, sim_time);
-    vvp->s[M_PRESENT_TIME].x = sim_time;
-    sensor_time(M_PRESENT_TIME) = (long)(1000.0 * sim_time);
+int update_odyssey_sim_time(double sim_time_s) {
+    //update_sensor(M_PRESENT_TIME, sim_time_s);
+    vvp->s[M_PRESENT_TIME].x = sim_time_s;
+    sensor_time(M_PRESENT_TIME) = (long)(1000.0 * sim_time_s);
 
     return 1;
 }

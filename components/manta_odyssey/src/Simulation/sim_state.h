@@ -6,7 +6,7 @@
 typedef struct {
     int initialized;
     int current_cycle;
-    double sim_time;
+    double sim_time_s;
     time_t calendar_start_time;
 } sim_state_t;
 

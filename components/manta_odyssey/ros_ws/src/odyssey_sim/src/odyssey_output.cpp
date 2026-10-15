@@ -64,15 +64,15 @@ bool OdysseyNode::write_final_metrics() {
  * Publish the vehicle state after a completed simulation batch.
  *
  * @param completed_cycle Final simulation cycle completed by the vehicle.
- * @param completed_sim_time Simulation time corresponding to that cycle.
+ * @param completed_sim_time_s Simulation time corresponding to that cycle.
  */
-void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time) {
+void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time_s) {
     manta_interfaces::msg::VehicleState state;
 
     // Identify the vehicle and completed simulation point.
     state.vehicle_id = vehicle_id_;
     state.cycle = completed_cycle;
-    state.sim_time = completed_sim_time;
+    state.sim_time_s = completed_sim_time_s;
 
     // Read the vehicle's current position from the native Odyssey simulator.
     state.north = get_odyssey_sim_north();
@@ -80,7 +80,7 @@ void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double co
     state.depth = get_odyssey_sim_depth();
 
     // Save the position and time used by the bearing detector.
-    bearing_positions_.push_back({state.cycle, state.sim_time, state.north, state.east});
+    bearing_positions_.push_back({state.cycle, state.sim_time_s, state.north, state.east});
 
     // Make the completed state available to the detection node.
     vehicle_state_pub_->publish(state);
@@ -105,7 +105,7 @@ void OdysseyNode::open_whale_prediction_log() {
     }
 
     whale_prediction_log_
-        << "sim_time,has_estimate,measurement_time,predicted_north,predicted_east\n";
+        << "sim_time_s,has_estimate,measurement_time,predicted_north,predicted_east\n";
 }
 
 void OdysseyNode::log_whale_prediction(double simulation_time) {

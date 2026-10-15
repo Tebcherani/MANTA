@@ -116,7 +116,7 @@ void WhaleDetectionNode::try_process_pending_call() {
             acoustics_interfaces::msg::BearingObservation observation;
             observation.receiver_id = vehicle_id;
             observation.call_cycle = pending_call_.cycle;
-            observation.sim_time = pending_call_.sim_time;
+            observation.sim_time_s = pending_call_.sim_time_s;
             
             // Add an independent Gaussian angular error to this receiver's bearing.
             const double true_bearing = std::atan2(east_difference, north_difference);
@@ -136,7 +136,7 @@ void WhaleDetectionNode::try_process_pending_call() {
         detection.vehicle_id = vehicle_id;
         detection.whale_id = pending_call_.whale_id;
         detection.cycle = pending_call_.cycle;
-        detection.sim_time = pending_call_.sim_time;
+        detection.sim_time_s = pending_call_.sim_time_s;
         detection.vehicle_north = vehicle.north;
         detection.vehicle_east = vehicle.east;
         detection.whale_north = pending_call_.north;
@@ -150,14 +150,14 @@ void WhaleDetectionNode::try_process_pending_call() {
         }
 
         // Record the exact detection for later analysis and review.
-        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north << ',' << detection.vehicle_east << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.distance << '\n';
+        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north << ',' << detection.vehicle_east << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.distance << '\n';
     }
 
     // Acknowledge that every vehicle has evaluated the pending whale call.
     acoustics_interfaces::msg::WhaleCallProcessed processed;
     processed.whale_id = pending_call_.whale_id;
     processed.cycle = pending_call_.cycle;
-    processed.sim_time = pending_call_.sim_time;
+    processed.sim_time_s = pending_call_.sim_time_s;
     processed.bearing_receiver_ids = bearing_receiver_ids;
 
     // Clear the pending state before publishing the acknowledgement.

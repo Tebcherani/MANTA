@@ -22,7 +22,7 @@ int update_usbl_sensor(void)
     input.vehicle_down = read_sensor(REAL_Z);
     input.vehicle_yaw = read_sensor(M_YAW);
 
-    input.sim_time = read_sensor(M_PRESENT_TIME);
+    input.sim_time_s = read_sensor(M_PRESENT_TIME);
 
     result = update_usbl(&config, &input);
 
