@@ -59,7 +59,7 @@ private:
     // Simulation
     bool pending_whale_call_available_b_ = false;
     std::unordered_map<std::string, manta_interfaces::msg::VehicleState> latest_vehicle_states_;
-    whale_interfaces::msg::WhaleCall pending_call_;
+    whale_interfaces::msg::WhaleCall pending_whale_call_;
 
     // Output
     std::ofstream detection_log_;
