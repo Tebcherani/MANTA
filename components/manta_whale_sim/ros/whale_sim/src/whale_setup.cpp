@@ -23,7 +23,7 @@ void WhaleNode::assign_population_call_times() {
         if (whale.trajectory.empty()) continue;
 
         first_start_time = std::min(first_start_time, whale.start_time);
-        final_end_time = std::max(final_end_time, whale.trajectory.back().time);
+        final_end_time = std::max(final_end_time, whale.trajectory.back().sim_time_s);
     }
 
     const std::vector<double> population_calls = generate_population_call_times(first_start_time, final_end_time);
@@ -36,7 +36,7 @@ void WhaleNode::assign_population_call_times() {
 
             if (whale.trajectory.empty()) continue;
             if (call_time < whale.start_time) continue;
-            if (call_time > whale.trajectory.back().time) continue;
+            if (call_time > whale.trajectory.back().sim_time_s) continue;
 
             active_whales.push_back(whale_index);
         }
@@ -309,10 +309,10 @@ void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState 
     whale.next_call_index = 0;
 
     const TrajectoryPoint &first_point = whale.trajectory.front();
-    whale.north = first_point.north;
-    whale.east = first_point.east;
-    whale.velocity_north = first_point.velocity_north;
-    whale.velocity_east = first_point.velocity_east;
+    whale.north = first_point.whale_north_m;
+    whale.east = first_point.whale_east_m;
+    whale.velocity_north = first_point.whale_velocity_north_mps;
+    whale.velocity_east = first_point.whale_velocity_east_mps;
 }
 
 /**

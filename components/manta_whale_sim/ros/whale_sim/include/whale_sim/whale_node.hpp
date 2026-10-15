@@ -26,11 +26,11 @@ private:
 
     // One timestamped point in a precomputed whale trajectory.
     struct TrajectoryPoint {
-        double time;
-        double north;
-        double east;
-        double velocity_north;
-        double velocity_east;
+        double sim_time_s;
+        double whale_north_m;
+        double whale_east_m;
+        double whale_velocity_north_mps;
+        double whale_velocity_east_mps;
     };
 
     // Shared movement and calling behavior for one group of whales.

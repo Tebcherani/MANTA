@@ -51,8 +51,8 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
     // Calculate the whale's location at the exact time of the call.
     const TrajectoryPoint call_position = trajectory_at_time(*next_whale, next_time);
 
-    response.whale_call.whale_call_north_m = call_position.north;
-    response.whale_call.whale_call_east_m = call_position.east;
+    response.whale_call.whale_call_north_m = call_position.whale_north_m;
+    response.whale_call.whale_call_east_m = call_position.whale_east_m;
 }
 
 /**
@@ -101,26 +101,26 @@ WhaleNode::TrajectoryPoint WhaleNode::trajectory_at_time(const Whale &whale, dou
     const TrajectoryPoint &last = whale.trajectory.back();
 
     // Before activation, keep the whale stationary at its initial location.
-    if (time < first.time) return {time, first.north, first.east, 0.0, 0.0};
+    if (time < first.sim_time_s) return {time, first.whale_north_m, first.whale_east_m, 0.0, 0.0};
 
     // After the generated trajectory ends, keep the whale stationary at its final location rather than extrapolating beyond the monitored corridor.
-    if (time >= last.time) return {time, last.north, last.east, 0.0, 0.0};
+    if (time >= last.sim_time_s) return {time, last.whale_north_m, last.whale_east_m, 0.0, 0.0};
 
     // Find the first trajectory point after the requested time. The preceding point describes the active constant-velocity segment.
     const auto next = std::upper_bound(
-        whale.trajectory.begin(), whale.trajectory.end(), time, [](double requested_time, const TrajectoryPoint &point) {return requested_time < point.time;}
+        whale.trajectory.begin(), whale.trajectory.end(), time, [](double requested_time, const TrajectoryPoint &point) {return requested_time < point.sim_time_s;}
     );
 
     const TrajectoryPoint &segment = *(next - 1);
-    const double elapsed = time - segment.time;
+    const double elapsed = time - segment.sim_time_s;
 
     // Advance from the segment's starting position using its stored velocity.
     return {
         time,
-        segment.north + segment.velocity_north * elapsed,
-        segment.east + segment.velocity_east * elapsed,
-        segment.velocity_north,
-        segment.velocity_east,
+        segment.whale_north_m + segment.whale_velocity_north_mps * elapsed,
+        segment.whale_east_m + segment.whale_velocity_east_mps * elapsed,
+        segment.whale_velocity_north_mps,
+        segment.whale_velocity_east_mps,
     };
 }
 
@@ -147,12 +147,12 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     for (auto &whale : whales_) {
         // Update each whale from its precomputed trajectory. Absolute-time lookup keeps whale movement independent of the ROS batch size.
         const TrajectoryPoint position = trajectory_at_time(whale, batch_end_time);
-        whale.north = position.north;
-        whale.east = position.east;
-        whale.velocity_north = position.velocity_north;
-        whale.velocity_east = position.velocity_east;
-        whale.active = batch_end_time >= whale.start_time && batch_end_time < whale.trajectory.back().time;
-        whale.complete = batch_end_time >= whale.trajectory.back().time;
+        whale.north = position.whale_north_m;
+        whale.east = position.whale_east_m;
+        whale.velocity_north = position.whale_velocity_north_mps;
+        whale.velocity_east = position.whale_velocity_east_mps;
+        whale.active = batch_end_time >= whale.start_time && batch_end_time < whale.trajectory.back().sim_time_s;
+        whale.complete = batch_end_time >= whale.trajectory.back().sim_time_s;
 
         // Build and publish the ground-truth state at the completed batch time.
         whale_interfaces::msg::WhaleState state;
@@ -184,7 +184,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         // Record every whale at the exact scheduled output time.
         for (const auto &whale : whales_) {
             const TrajectoryPoint sample = trajectory_at_time(whale, next_whale_log_time_s_);
-            whale_log_ << sample_cycle << ',' << next_whale_log_time_s_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.north << ',' << sample.east << ',' << '\n';
+            whale_log_ << sample_cycle << ',' << next_whale_log_time_s_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.whale_north_m << ',' << sample.whale_east_m << ',' << '\n';
         }
 
         next_whale_log_time_s_ += whale_sample_period_s_;
