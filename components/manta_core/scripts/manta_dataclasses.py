@@ -75,7 +75,8 @@ class MonteCarloResult:
     total_mass: float
     total_energy: float
     mean_vehicle_speed: float
-    mean_distance_km: float | None = None
+    mean_prediction_error_km: float | None = None
+    prediction_coverage_fraction: float | None = None
 
     @classmethod
     def from_csv_row(cls, row: dict[str, str], base_seed: int) -> "MonteCarloResult":
@@ -97,7 +98,12 @@ class MonteCarloResult:
             total_mass=float(row["total_mass"]),
             total_energy=float(row["total_energy"]),
             mean_vehicle_speed=float(row["mean_vehicle_speed"]),
-            mean_distance_km=float(row["mean_distance_km"]) if row.get("mean_distance_km", "").strip() else None,
+            mean_prediction_error_km=float(row["mean_prediction_error_km"]) if row.get("mean_prediction_error_km", "").strip() else None,
+            prediction_coverage_fraction=(
+                float(row["prediction_coverage_fraction"])
+                if row.get("prediction_coverage_fraction", "").strip()
+                else None
+            ),
         )
 
 
@@ -140,11 +146,13 @@ class TrailingSweepResult:
 
     call_update_interval: float
     realizations: int
-    mean_distance_km: float
-    distance_ci_lower_km: float
-    distance_ci_upper_km: float
-    distance_ci_half_width_km: float
+    mean_prediction_error_km: float | None
+    prediction_error_ci_lower_km: float | None
+    prediction_error_ci_upper_km: float | None
+    prediction_error_ci_half_width_km: float | None
     confidence_level: float
+    prediction_realizations: int
+    prediction_coverage_fraction: float
 
     def __post_init__(self) -> None:
         """Validate a completed trailing-sweep result."""
@@ -153,8 +161,11 @@ class TrailingSweepResult:
             raise ValueError("Call-update interval cannot be negative.")
         if self.realizations < 1:
             raise ValueError("Trailing sweep result must contain at least one realization.")
-        if self.mean_distance_km < 0.0:
-            raise ValueError("Mean distance cannot be negative.")
+        if (
+            self.mean_prediction_error_km is not None
+            and self.mean_prediction_error_km < 0.0
+        ):
+            raise ValueError("Mean prediction error cannot be negative.")
         if not 0.0 < self.confidence_level < 1.0:
             raise ValueError("Confidence level must be between zero and one.")
 
@@ -165,11 +176,30 @@ class TrailingSweepResult:
         return cls(
             call_update_interval=float(row["call_update_interval"]),
             realizations=int(row["realizations"]),
-            mean_distance_km=float(row["mean_distance_km"]),
-            distance_ci_lower_km=float(row["distance_ci_lower_km"]),
-            distance_ci_upper_km=float(row["distance_ci_upper_km"]),
-            distance_ci_half_width_km=float(row["distance_ci_half_width_km"]),
+            mean_prediction_error_km=(
+                float(row["mean_prediction_error_km"])
+                if row.get("mean_prediction_error_km", "").strip()
+                else None
+            ),
+            prediction_error_ci_lower_km=(
+                float(row["prediction_error_ci_lower_km"])
+                if row.get("prediction_error_ci_lower_km", "").strip()
+                else None
+            ),
+            prediction_error_ci_upper_km=(
+                float(row["prediction_error_ci_upper_km"])
+                if row.get("prediction_error_ci_upper_km", "").strip()
+                else None
+            ),
+            prediction_error_ci_half_width_km=(
+                float(row["prediction_error_ci_half_width_km"])
+                if row.get("prediction_error_ci_half_width_km", "").strip()
+                else None
+            ),
             confidence_level=float(row["confidence_level"]),
+            prediction_realizations=int(row["prediction_realizations"]),
+            prediction_coverage_fraction=float(row["prediction_coverage_fraction"]),
+            
         )
 
 

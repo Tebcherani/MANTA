@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot trailing mission tracks and report distance metrics for every AUV."""
+"""Plot trailing mission tracks and report whale-prediction metrics."""
 
 import csv
 from collections import defaultdict
@@ -7,7 +7,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import yaml
 from matplotlib.ticker import FuncFormatter
 from parse_obd import read_obd
 
@@ -184,7 +183,7 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
             positions_by_time[sim_time] = (north, east)
 
     if len(whale_ids) != 1:
-        raise ValueError(f"Trailing distance metrics require exactly one whale; found {len(whale_ids)}.")
+        raise ValueError(f"Prediction error requires exactly one whale; found {len(whale_ids)}.")
 
     times = np.asarray(sorted(positions_by_time), dtype=float)
     north = np.asarray([positions_by_time[time][0] for time in times], dtype=float)
@@ -193,73 +192,82 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
     return times, north, east
 
 
-def compute_tracking_error(latest: dict[str, Path], name: str) -> tuple[float, float]:
-    """Return integrated distance (km·h) and time-weighted mean distance (m)."""
-    if not WHALE_TRAJECTORY_PATH.is_file():
-        raise ValueError(f"No whale trajectory file found: {WHALE_TRAJECTORY_PATH}")
-
+def compute_prediction_error(
+    latest: dict[str, Path],
+    name: str,
+) -> tuple[float, float, float]:
+    """Return mean error, RMSE, and coverage for logged whale predictions."""
     if name not in latest:
         raise ValueError(f"No Odyssey result file found for {name}.")
 
-    dataset = read_obd(latest[name])
+    data_directory = latest[name].parent
+    prediction_path = data_directory / f"{name}_whale_predictions.csv"
+    whale_path = data_directory / "whales.csv"
 
-    if "time" not in dataset.coords:
-        raise ValueError(f"Vehicle {name} has no simulation-time coordinate.")
+    if not prediction_path.is_file():
+        raise ValueError(f"No whale prediction file found: {prediction_path}")
+    if not whale_path.is_file():
+        raise ValueError(f"No whale trajectory file found: {whale_path}")
 
-    vehicle_north, vehicle_east = read_vehicle_positions(dataset, name)
-    vehicle_time = np.asarray(dataset.coords["time"].values, dtype=float)
-    valid = np.isfinite(vehicle_time) & np.isfinite(vehicle_north) & np.isfinite(vehicle_east)
-    vehicle_time = vehicle_time[valid]
-    vehicle_north = vehicle_north[valid]
-    vehicle_east = vehicle_east[valid]
+    whale_time, whale_north, whale_east = read_whale_positions(whale_path)
+    errors_m = []
+    total_samples = 0
 
-    # Interpolation requires ordered timestamps without duplicates.
-    order = np.argsort(vehicle_time, kind="stable")
-    vehicle_time = vehicle_time[order]
-    vehicle_north = vehicle_north[order]
-    vehicle_east = vehicle_east[order]
-    vehicle_time, indices = np.unique(vehicle_time, return_index=True)
-    vehicle_north = vehicle_north[indices]
-    vehicle_east = vehicle_east[indices]
+    with prediction_path.open("r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+        required = {
+            "sim_time",
+            "has_estimate",
+            "predicted_north",
+            "predicted_east",
+        }
 
-    if vehicle_time.size < 2:
-        raise ValueError(f"Vehicle {name} has insufficient position samples.")
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError(
+                f"{prediction_path.name} must contain "
+                "sim_time, has_estimate, predicted_north, and predicted_east."
+            )
 
-    whale_time, whale_north, whale_east = read_whale_positions(WHALE_TRAJECTORY_PATH)
-    overlap = (whale_time >= vehicle_time[0]) & (whale_time <= vehicle_time[-1])
-    whale_time = whale_time[overlap]
-    whale_north = whale_north[overlap]
-    whale_east = whale_east[overlap]
+        for row in reader:
+            total_samples += 1
 
-    if whale_time.size < 2:
-        raise ValueError(f"Vehicle {name} and whale trajectories have insufficient overlapping times.")
+            try:
+                sim_time = float(row["sim_time"])
+                has_estimate = int(row["has_estimate"])
+            except (TypeError, ValueError):
+                continue
 
-    interpolated_north = np.interp(whale_time, vehicle_time, vehicle_north)
-    interpolated_east = np.interp(whale_time, vehicle_time, vehicle_east)
-    
-    # Read the same formation settings used to generate the missions.
-    config_path = ROOT / "missions" / "trailing" / "config.yaml"
-    with config_path.open("r", encoding="utf-8") as file:
-        config = yaml.safe_load(file)
+            if has_estimate != 1 or not np.isfinite(sim_time):
+                continue
 
-    trailing = config["scenario"]["trailing"]
-    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
-    vehicle_index = vehicle_ids.index(name)
+            # Interpolate truth only within the logged whale trajectory.
+            if sim_time < whale_time[0] or sim_time > whale_time[-1]:
+                continue
 
-    following_distance_m = float(trailing["following_distance_m"])
-    side_offset_m = (-0.5 if vehicle_index == 0 else 0.5) * float(trailing["vehicle_separation_m"])
+            try:
+                predicted_north = float(row["predicted_north"])
+                predicted_east = float(row["predicted_east"])
+            except (TypeError, ValueError):
+                continue
 
-    # Remove the commanded offset before calculating distance.
-    north_error = interpolated_north - whale_north + following_distance_m
-    east_error = interpolated_east - whale_east - side_offset_m
-    distance = np.hypot(north_error, east_error)
+            if not np.isfinite(predicted_north) or not np.isfinite(predicted_east):
+                continue
 
-    integrated_distance_m_seconds = float(np.trapezoid(distance, whale_time))
-    duration = float(whale_time[-1] - whale_time[0])
-    mean_distance_m = integrated_distance_m_seconds / duration
-    integrated_distance_km_hours = integrated_distance_m_seconds / 3_600_000.0
+            true_north = np.interp(sim_time, whale_time, whale_north)
+            true_east = np.interp(sim_time, whale_time, whale_east)
+            errors_m.append(
+                np.hypot(predicted_north - true_north, predicted_east - true_east)
+            )
 
-    return integrated_distance_km_hours, mean_distance_m
+    if not errors_m:
+        raise ValueError(f"No valid whale predictions found for {name}.")
+
+    errors_m = np.asarray(errors_m, dtype=float)
+    return (
+        float(np.mean(errors_m)),
+        float(np.sqrt(np.mean(errors_m ** 2))),
+        float(len(errors_m) / total_samples),
+    )
 
 
 def plot_whale_tracks(ax) -> int:
@@ -354,22 +362,23 @@ def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[
 
 
 def main() -> int:
-    """Plot mission results and report separate distance metrics for all AUVs."""
+    """Plot mission tracks and report whale-prediction metrics for each AUV."""
     detections_by_call = read_whale_detections()
     latest = find_latest_vehicle_results()
-    distance_labels = []
+    prediction_labels = []
 
     for name in sorted(latest):
         try:
-            integrated_distance, mean_distance = compute_tracking_error(latest, name)
+            mean_error_m, rmse_m, coverage = compute_prediction_error(latest, name)
         except (OSError, ValueError) as error:
-            print(f"Could not calculate distance for {name}: {error}")
-            distance_labels.append(f"{name}: unavailable")
+            print(f"Could not calculate prediction error for {name}: {error}")
+            prediction_labels.append(f"{name}: unavailable")
             continue
 
-        print(f"{name} mean distance error: {mean_distance / 1000.0:.3f} km")
-        print(f"{name} integrated distance error: {integrated_distance:.3f} km·h")
-        distance_labels.append(f"{name}: {mean_distance / 1000.0:.2f} km")
+        print(f"{name} mean whale prediction error: {mean_error_m / 1000.0:.3f} km")
+        print(f"{name} whale prediction RMSE: {rmse_m / 1000.0:.3f} km")
+        print(f"{name} prediction coverage: {coverage:.1%}")
+        prediction_labels.append(f"{name}: {mean_error_m / 1000.0:.2f} km")
 
     fig, ax = plt.subplots(figsize=(10, 8))
     fleet_size = plot_vehicle_tracks(ax, latest)
@@ -383,8 +392,8 @@ def main() -> int:
         return 1
 
     title = "Vehicle and Whale Tracks"
-    if distance_labels:
-        title += "\nMean distance error — " + "; ".join(distance_labels)
+    if prediction_labels:
+        title += "\nMean whale prediction error — " + "; ".join(prediction_labels)
 
     ax.set_title(title)
     km_formatter = FuncFormatter(lambda value, _: f"{value / 1000:g}")

@@ -3,6 +3,7 @@
 
 #include "load_fault.h"
 #include "odyssey.h"
+#include "odyssey_behaviors.h"
 #include "odyssey_model.h"
 #include "odyssey_sensors.h"
 #include "odyssey_sim.h"
@@ -139,4 +140,8 @@ double get_odyssey_sim_east(void) {
 
 double get_odyssey_sim_depth(void) {
     return read_sensor(REAL_Z);
+}
+
+int get_odyssey_sim_whale_prediction(double prediction_time, double *measurement_time, double *north, double *east) {
+    return get_whale_trailing_prediction(prediction_time, measurement_time, north, east);
 }

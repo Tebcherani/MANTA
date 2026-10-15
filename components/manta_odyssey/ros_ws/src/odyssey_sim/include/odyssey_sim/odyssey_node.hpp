@@ -7,6 +7,8 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <fstream>
+#include <set>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -63,6 +65,9 @@ class OdysseyNode : public rclcpp::Node {
         void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time);
         bool write_final_metrics();
 
+        void open_whale_prediction_log();
+        void log_whale_prediction(double simulation_time);
+
         // ---------------------------------------------------------------------
         // Variables
         // ---------------------------------------------------------------------
@@ -70,10 +75,17 @@ class OdysseyNode : public rclcpp::Node {
         // Call detections
         std::deque<BearingPosition> bearing_positions_;
         bool latest_bearing_available_ = false;
+        bool latest_bearing_unsent_ = false;
         acoustics_interfaces::msg::BearingMsg latest_bearing_;
-        bool processed_bearing_pair_available_ = false;
-        double processed_local_bearing_time_ = 0.0;
-        double processed_remote_bearing_time_ = 0.0;
+
+        // Local measurements retained so delayed remote bearings can find their match.
+        std::map<std::uint64_t, acoustics_interfaces::msg::BearingMsg> local_bearings_by_cycle_;
+
+        // Remote measurements that arrived before the corresponding local measurement.
+        std::map<std::uint64_t, acoustics_interfaces::msg::BearingMsg::SharedPtr> pending_shared_bearings_;
+
+        // Calls already successfully triangulated.
+        std::set<std::uint64_t> processed_bearing_cycles_;
         
         double communication_interval_ = 0.0;
         std::uint64_t next_communication_index_ = 1;
@@ -99,6 +111,9 @@ class OdysseyNode : public rclcpp::Node {
         std::string vehicle_id_;
         std::string data_directory_;
         double output_sample_period_ = 2.0;
+
+        std::ofstream whale_prediction_log_;
+        double next_prediction_log_time_ = 0.0;
 
 
         // ---------------------------------------------------------------------

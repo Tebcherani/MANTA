@@ -10,6 +10,7 @@ extern "C" {
 
 OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
     load_config();
+    open_whale_prediction_log();
     create_ros_interfaces();
 
     RCLCPP_INFO(get_logger(), "%s waiting for simulation startup data.", vehicle_id_.c_str());

@@ -33,9 +33,9 @@ def read_sweep_summary() -> list[dict[str, float]]:
         "call_position_std_m",
         "call_update_interval",
         "realizations",
-        "mean_distance_km",
-        "distance_ci_lower_km",
-        "distance_ci_upper_km",
+        "mean_prediction_error_km",
+        "prediction_error_ci_lower_km",
+        "prediction_error_ci_upper_km",
     }
 
     rows = []
@@ -56,9 +56,9 @@ def read_sweep_summary() -> list[dict[str, float]]:
                     "call_position_std_m": float(source["call_position_std_m"]),
                     "call_update_interval": float(source["call_update_interval"]),
                     "realizations": int(source["realizations"]),
-                    "mean_distance_km": float(source["mean_distance_km"]),
-                    "distance_ci_lower_km": float(source["distance_ci_lower_km"]),
-                    "distance_ci_upper_km": float(source["distance_ci_upper_km"]),
+                    "mean_prediction_error_km": float(source["mean_prediction_error_km"]),
+                    "prediction_error_ci_lower_km": float(source["prediction_error_ci_lower_km"]),
+                    "prediction_error_ci_upper_km": float(source["prediction_error_ci_upper_km"]),
                 }
             except (TypeError, ValueError) as error:
                 raise ValueError(
@@ -156,17 +156,17 @@ def main() -> int:
     ]
 
     distance_means = [
-        row["mean_distance_km"]
+        row["mean_prediction_error_km"]
         for row in rows
     ]
 
     distance_lower = [
-        row["distance_ci_lower_km"]
+        row["prediction_error_ci_lower_km"]
         for row in rows
     ]
 
     distance_upper = [
-        row["distance_ci_upper_km"]
+        row["prediction_error_ci_upper_km"]
         for row in rows
     ]
 

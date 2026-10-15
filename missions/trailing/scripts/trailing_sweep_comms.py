@@ -7,6 +7,7 @@ import csv
 import sys
 from dataclasses import asdict, replace
 from pathlib import Path
+from statistics import mean
 
 import yaml
 
@@ -17,7 +18,7 @@ from manta_dataclasses import MonteCarloConfig, MonteCarloResult, TrailingSweepC
 from manta_load import load_yaml
 from manta_missions import generate_missions
 from manta_monte_carlo import compute_monte_carlo_statistics, load_completed_results, run_monte_carlo
-from manta_realization import summarize_tracking_metrics
+from manta_realization import summarize_prediction_metrics
 
 
 def interval_directory_name(interval: float) -> str:
@@ -65,25 +66,45 @@ def prepare_interval_config(sim_config: dict, interval: float, interval_director
     return interval_config, interval_config_path
 
 
-def summarize_interval_results(interval: float, results: list[MonteCarloResult], confidence_level: float) -> TrailingSweepResult:
-    """Calculate mean formation error and its confidence interval."""
+def summarize_interval_results(
+    interval: float,
+    results: list[MonteCarloResult],
+    confidence_level: float,
+) -> TrailingSweepResult:
+    """Summarize prediction error and coverage across realizations."""
+
     if not results:
         raise ValueError(f"Interval {interval:g} s has no Monte Carlo results.")
 
-    if any(result.mean_distance_km is None for result in results):
-        raise ValueError(f"Interval {interval:g} s contains missing mean errors.")
+    errors = [
+        result.mean_prediction_error_km
+        for result in results
+        if result.mean_prediction_error_km is not None
+    ]
 
-    distances = [result.mean_distance_km for result in results]
+    coverage = mean(
+        result.prediction_coverage_fraction or 0.0
+        for result in results
+    )
 
-    mean_distance, half_width = compute_monte_carlo_statistics(distances, confidence_level)
+    if errors:
+        mean_error, half_width = compute_monte_carlo_statistics(
+            errors, confidence_level
+        )
+        lower = max(0.0, mean_error - half_width)
+        upper = mean_error + half_width
+    else:
+        mean_error = lower = upper = half_width = None
 
     return TrailingSweepResult(
         call_update_interval=interval,
         realizations=len(results),
-        mean_distance_km=mean_distance,
-        distance_ci_lower_km=max(0.0, mean_distance - half_width),
-        distance_ci_upper_km=mean_distance + half_width,
-        distance_ci_half_width_km=half_width,
+        prediction_realizations=len(errors),
+        prediction_coverage_fraction=coverage,
+        mean_prediction_error_km=mean_error,
+        prediction_error_ci_lower_km=lower,
+        prediction_error_ci_upper_km=upper,
+        prediction_error_ci_half_width_km=half_width,
         confidence_level=confidence_level,
     )
 
@@ -96,11 +117,13 @@ def write_trailing_sweep_summary(path: Path, results: dict) -> None:
         "vehicle_id",
         "call_update_interval",
         "realizations",
-        "mean_distance_km",
-        "distance_ci_lower_km",
-        "distance_ci_upper_km",
-        "distance_ci_half_width_km",
+        "mean_prediction_error_km",
+        "prediction_error_ci_lower_km",
+        "prediction_error_ci_upper_km",
+        "prediction_error_ci_half_width_km",
         "confidence_level",
+        "prediction_realizations",
+        "prediction_coverage_fraction",
     )
 
     with path.open("w", encoding="utf-8", newline="") as file:
@@ -173,16 +196,31 @@ def run_monte_carlo_sweep(sim_config: dict) -> int:
 
             for result in realization_results:
                 data_directory = (interval_directory / f"realization_{result.realization:04d}" / "Data")
-                distance = summarize_tracking_metrics(ROOT, data_directory, vehicle_id, interval_config)
-                vehicle_results.append(replace(result, mean_distance_km=distance))
+                prediction_error, coverage = summarize_prediction_metrics(
+                    ROOT, data_directory, vehicle_id
+                )
+                vehicle_results.append(
+                    replace(
+                        result,
+                        mean_prediction_error_km=prediction_error,
+                        prediction_coverage_fraction=coverage,
+                    )
+                )
             
             sweep_result = summarize_interval_results(interval, vehicle_results, monte_carlo_config.confidence_level)
             completed_results[(interval, vehicle_id)] = sweep_result
 
+            error_text = (
+                f"{sweep_result.mean_prediction_error_km:.3f} km"
+                if sweep_result.mean_prediction_error_km is not None
+                else "undefined (no predictions)"
+            )
             print(
                 f"{vehicle_id}, interval {interval:g} s: "
-                f"mean distance {sweep_result.mean_distance_km:.3f} km "
-                f"from {sweep_result.realizations} realizations."
+                f"mean prediction error {error_text}; "
+                f"coverage {sweep_result.prediction_coverage_fraction:.1%}; "
+                f"{sweep_result.prediction_realizations}/"
+                f"{sweep_result.realizations} realizations had predictions."
             )
 
         write_trailing_sweep_summary(summary_path, completed_results)

@@ -48,79 +48,97 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
 
     return times, whale_north, whale_east
 
+def compute_prediction_metrics(data_directory: Path, vehicle_id: str) -> dict[str, float]:
+    """Compare logged whale predictions with whale truth at the same time."""
 
-def compute_tracking_metrics(data_directory: Path, vehicle_id: str, following_distance_m: float, side_offset_m: float) -> dict[str, float]:
-    """Calculate distance metrics for one trailing realization."""
+    whale_time, whale_north, whale_east = read_whale_positions(
+        data_directory / "whales.csv"
+    )
+    prediction_path = data_directory / f"{vehicle_id}_whale_predictions.csv"
 
-    whale_path = data_directory / "whales.csv"
-    vehicle_path = data_directory / f"{vehicle_id}.obd"
+    if not prediction_path.is_file():
+        raise ValueError(f"Prediction file does not exist: {prediction_path}")
 
-    if not vehicle_path.is_file():
-        raise ValueError(f"Vehicle result does not exist: {vehicle_path}")
+    total_samples = 0
+    errors_m = []
 
-    dataset = read_obd(vehicle_path)
+    with prediction_path.open("r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+        required = {
+            "sim_time",
+            "has_estimate",
+            "predicted_north",
+            "predicted_east",
+        }
 
-    if "time" not in dataset.coords:
-        raise ValueError(f"Vehicle {vehicle_id} has no simulation-time coordinate.")
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError(
+                f"{prediction_path.name} must contain "
+                "sim_time, has_estimate, predicted_north, and predicted_east."
+            )
 
-    if "real_x" in dataset and "real_y" in dataset:
-        vehicle_north = np.asarray(dataset["real_x"].values, dtype=float)
-        vehicle_east = np.asarray(dataset["real_y"].values, dtype=float)
-    elif "m_pos_n" in dataset and "m_pos_e" in dataset:
-        vehicle_north = np.asarray(dataset["m_pos_n"].values, dtype=float)
-        vehicle_east = np.asarray(dataset["m_pos_e"].values, dtype=float)
-    else:
-        raise ValueError(f"Vehicle {vehicle_id} has no position data.")
+        for row in reader:
+            total_samples += 1
 
-    vehicle_time = np.asarray(dataset.coords["time"].values, dtype=float)
-    valid_vehicle = np.isfinite(vehicle_time) & np.isfinite(vehicle_north) & np.isfinite(vehicle_east)
-    vehicle_time = vehicle_time[valid_vehicle]
-    vehicle_north = vehicle_north[valid_vehicle]
-    vehicle_east = vehicle_east[valid_vehicle]
+            try:
+                sim_time = float(row["sim_time"])
+                has_estimate = int(row["has_estimate"])
+            except (TypeError, ValueError):
+                continue
 
-    if vehicle_time.size < 2:
-        raise ValueError(f"Vehicle {vehicle_id} has insufficient position samples.")
+            if has_estimate != 1 or not np.isfinite(sim_time):
+                continue
 
-    whale_time, whale_north, whale_east = read_whale_positions(whale_path)
-    overlap = (whale_time >= vehicle_time[0]) & (whale_time <= vehicle_time[-1])
-    whale_time = whale_time[overlap]
-    whale_north = whale_north[overlap]
-    whale_east = whale_east[overlap]
+            if sim_time < whale_time[0] or sim_time > whale_time[-1]:
+                continue
 
-    if whale_time.size < 2:
-        raise ValueError("Vehicle and whale trajectories have insufficient overlapping times.")
+            try:
+                predicted_north = float(row["predicted_north"])
+                predicted_east = float(row["predicted_east"])
+            except (TypeError, ValueError):
+                continue
 
-    interpolated_north = np.interp(whale_time, vehicle_time, vehicle_north)
-    interpolated_east = np.interp(whale_time, vehicle_time, vehicle_east)
+            if not np.isfinite(predicted_north) or not np.isfinite(predicted_east):
+                continue
 
-    # Desired formation position relative to the true whale.
-    desired_north = whale_north - following_distance_m
-    desired_east = whale_east + side_offset_m
+            true_north = np.interp(sim_time, whale_time, whale_north)
+            true_east = np.interp(sim_time, whale_time, whale_east)
 
-    # Straight-line formation error at each whale timestamp.
-    distance = np.hypot(interpolated_north - desired_north, interpolated_east - desired_east)
+            errors_m.append(
+                np.hypot(predicted_north - true_north, predicted_east - true_east)
+            )
 
-    return {"mean_distance_km": float(np.mean(distance)) / 1000.0}
+    coverage = float(len(errors_m) / total_samples) if total_samples else 0.0
+
+    if not errors_m:
+        return {
+            "mean_prediction_error_km": None,
+            "rmse_prediction_error_km": None,
+            "prediction_coverage_fraction": 0.0,
+        }
+
+    errors_m = np.asarray(errors_m, dtype=float)
+
+    return {
+        "mean_prediction_error_km": float(np.mean(errors_m) / 1000.0),
+        "rmse_prediction_error_km": float(np.sqrt(np.mean(errors_m**2)) / 1000.0),
+        "prediction_coverage_fraction": coverage,
+    }
 
 
 def main() -> int:
-    """Calculate and print one trailing realization's tracking metrics."""
+    """Calculate one vehicle's whale-prediction metrics."""
 
     parser = argparse.ArgumentParser()
     parser.add_argument("data_directory", type=Path)
     parser.add_argument("vehicle_id")
-    parser.add_argument("--following-distance-m", type=float, required=True)
-    parser.add_argument("--side-offset-m", type=float, required=True)
     args = parser.parse_args()
 
-    metrics = compute_tracking_metrics(
+    metrics = compute_prediction_metrics(
         args.data_directory.resolve(),
         args.vehicle_id,
-        args.following_distance_m,
-        args.side_offset_m,
     )
     print(json.dumps(metrics))
-
     return 0
 
 

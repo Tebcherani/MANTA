@@ -14,18 +14,23 @@ OUTPUT_PATH = ROOT / "output/trailing/sweep_comms/sweep_metrics.png"
 
 
 def read_sweep_summary() -> list[dict]:
+    """Load and validate the trailing prediction-error summary."""
+
     if not SUMMARY_PATH.is_file():
         raise ValueError(f"Sweep summary does not exist: {SUMMARY_PATH}")
 
-    numeric_fields = (
+    required = {
+        "vehicle_id",
+        "realizations",
+        "prediction_realizations",
         "call_update_interval",
-        "mean_distance_km",
-        "distance_ci_lower_km",
-        "distance_ci_upper_km",
-    )
-    required = {"vehicle_id", "realizations", *numeric_fields}
+        "prediction_coverage_fraction",
+        "mean_prediction_error_km",
+        "prediction_error_ci_lower_km",
+        "prediction_error_ci_upper_km",
+    }
+
     rows = []
-    seen = set()
 
     with SUMMARY_PATH.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
@@ -39,36 +44,67 @@ def read_sweep_summary() -> list[dict]:
                 row = {
                     "vehicle_id": source["vehicle_id"].strip(),
                     "realizations": int(source["realizations"]),
-                    **{
-                        field: float(source[field])
-                        for field in numeric_fields
-                    },
+                    "prediction_realizations": int(source["prediction_realizations"]),
+                    "call_update_interval": float(source["call_update_interval"]),
+                    "prediction_coverage_fraction": float(
+                        source["prediction_coverage_fraction"]
+                    ),
+                    "mean_prediction_error_km": (
+                        float(source["mean_prediction_error_km"])
+                        if source["mean_prediction_error_km"].strip()
+                        else None
+                    ),
+                    "prediction_error_ci_lower_km": (
+                        float(source["prediction_error_ci_lower_km"])
+                        if source["prediction_error_ci_lower_km"].strip()
+                        else None
+                    ),
+                    "prediction_error_ci_upper_km": (
+                        float(source["prediction_error_ci_upper_km"])
+                        if source["prediction_error_ci_upper_km"].strip()
+                        else None
+                    ),
                 }
             except (TypeError, ValueError, AttributeError) as error:
-                raise ValueError(
-                    f"Invalid value on line {line_number}."
-                ) from error
+                raise ValueError(f"Invalid value on line {line_number}.") from error
 
             if not row["vehicle_id"] or row["realizations"] < 1:
-                raise ValueError(f"Invalid vehicle or count on line {line_number}.")
+                raise ValueError(f"Invalid vehicle or realization count on line {line_number}.")
 
-            if not all(math.isfinite(row[field]) for field in numeric_fields):
-                raise ValueError(f"Non-finite value on line {line_number}.")
+            if not 0 <= row["prediction_realizations"] <= row["realizations"]:
+                raise ValueError(f"Invalid prediction count on line {line_number}.")
 
-            if row["call_update_interval"] < 0:
-                raise ValueError(f"Negative interval on line {line_number}.")
+            if not math.isfinite(row["call_update_interval"]) or row["call_update_interval"] < 0:
+                raise ValueError(f"Invalid communication interval on line {line_number}.")
 
-            if not (
-                0 <= row["distance_ci_lower_km"]
-                <= row["mean_distance_km"]
-                <= row["distance_ci_upper_km"]
-            ):
-                raise ValueError(f"Invalid confidence interval on line {line_number}.")
+            coverage = row["prediction_coverage_fraction"]
+            if not math.isfinite(coverage) or not 0.0 <= coverage <= 1.0:
+                raise ValueError(f"Invalid prediction coverage on line {line_number}.")
 
-            key = (row["call_update_interval"], row["vehicle_id"])
-            if key in seen:
-                raise ValueError(f"Duplicate interval/vehicle on line {line_number}.")
-            seen.add(key)
+            error_fields = (
+                row["mean_prediction_error_km"],
+                row["prediction_error_ci_lower_km"],
+                row["prediction_error_ci_upper_km"],
+            )
+
+            if row["prediction_realizations"] == 0:
+                if any(value is not None for value in error_fields):
+                    raise ValueError(
+                        f"Expected blank prediction errors on line {line_number}."
+                    )
+            else:
+                if any(value is None for value in error_fields):
+                    raise ValueError(
+                        f"Missing prediction errors on line {line_number}."
+                    )
+
+                mean_error, lower, upper = error_fields
+                if not all(math.isfinite(value) for value in error_fields):
+                    raise ValueError(f"Non-finite prediction error on line {line_number}.")
+
+                if not 0.0 <= lower <= mean_error <= upper:
+                    raise ValueError(f"Invalid prediction-error interval on line {line_number}.")
+
             rows.append(row)
 
     if not rows:
@@ -86,30 +122,56 @@ def main() -> int:
 
     fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
+    plotted_vehicle = False
+
     for vehicle_id in sorted({row["vehicle_id"] for row in rows}):
         vehicle_rows = sorted(
-            [row for row in rows if row["vehicle_id"] == vehicle_id],
+            [
+                row
+                for row in rows
+                if row["vehicle_id"] == vehicle_id
+                and row["mean_prediction_error_km"] is not None
+            ],
             key=lambda row: row["call_update_interval"],
         )
 
-        means = [row["mean_distance_km"] for row in vehicle_rows]
+        if not vehicle_rows:
+            print(f"{vehicle_id}: no realizations had valid whale predictions.")
+            continue
+
+        means = [row["mean_prediction_error_km"] for row in vehicle_rows]
 
         ax.errorbar(
             [row["call_update_interval"] / 60 for row in vehicle_rows],
             means,
             yerr=[
                 [
-                    row["mean_distance_km"] - row["distance_ci_lower_km"]
+                    row["mean_prediction_error_km"]
+                    - row["prediction_error_ci_lower_km"]
                     for row in vehicle_rows
                 ],
                 [
-                    row["distance_ci_upper_km"] - row["mean_distance_km"]
+                    row["prediction_error_ci_upper_km"]
+                    - row["mean_prediction_error_km"]
                     for row in vehicle_rows
                 ],
             ],
             fmt="o-",
             capsize=5,
             label=vehicle_id,
+        )
+        plotted_vehicle = True
+
+    if plotted_vehicle:
+        ax.legend(title="Vehicle")
+    else:
+        ax.text(
+            0.5,
+            0.5,
+            "No valid whale predictions",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
         )
 
     intervals = sorted({row["call_update_interval"] for row in rows})
@@ -125,7 +187,7 @@ def main() -> int:
 
     ax.set_title("Effect of Communication Interval on Trailing")
     ax.set_xlabel("Communication Interval (min)")
-    ax.set_ylabel("Mean Formation Trailing Error (km)")
+    ax.set_ylabel("Mean Whale Prediction Error (km)")
     #ax.set_ylim(bottom=0)
     ax.grid(True, alpha=0.3)
     ax.legend(title="Vehicle")

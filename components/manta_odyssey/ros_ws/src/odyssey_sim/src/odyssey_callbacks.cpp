@@ -28,17 +28,28 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
     try_finish_init();                                      // Complete startup if all other required initialization data is available.
 }
 
-void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingMsg::SharedPtr msg) {
+void OdysseyNode::handle_shared_bearing(
+    const acoustics_interfaces::msg::BearingMsg::SharedPtr msg
+) {
     if (!tracking_enabled_) return;
     if (msg->receiver_id == vehicle_id_) return;
     if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
-    if (!latest_bearing_available_) return;
 
-    const auto &local = latest_bearing_;
+    const std::uint64_t call_cycle = msg->call_cycle;
+
+    // Process each call only once.
+    if (processed_bearing_cycles_.count(call_cycle) != 0) return;
+
+    const auto local_it = local_bearings_by_cycle_.find(call_cycle);
+
+    if (local_it == local_bearings_by_cycle_.end()) {
+        // Wait for our measurement of this exact call.
+        pending_shared_bearings_[call_cycle] = msg;
+        return;
+    }
+
+    const auto &local = local_it->second;
     const auto &remote = *msg;
-
-    // Ignore retransmissions of a pair already processed.
-    if (processed_bearing_pair_available_ && local.sim_time == processed_local_bearing_time_ && remote.sim_time == processed_remote_bearing_time_) return;
 
     if (!std::isfinite(local.bearing_rad) || !std::isfinite(remote.bearing_rad) || !std::isfinite(local.receiver_north) || !std::isfinite(local.receiver_east) || !std::isfinite(remote.receiver_north) || !std::isfinite(remote.receiver_east)) {
         RCLCPP_WARN(get_logger(), "Cannot estimate from non-finite bearings.");
@@ -112,14 +123,11 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
         return;
     }
 
-    // Record the pair only after triangulation succeeds.
-    processed_local_bearing_time_ = local.sim_time;
-    processed_remote_bearing_time_ = remote.sim_time;
-    processed_bearing_pair_available_ = true;
+    // Record the call only after triangulation succeeds.
+    processed_bearing_cycles_.insert(call_cycle);
 
-    // Treat the intersection as an estimate at local reception time.
-    // The native function also updates velocity from successive estimates.
-    set_whale_trailing_target(estimated_north, estimated_east, sim_time_);
+    // Both bearings describe the same call; use its measurement time.
+    set_whale_trailing_target(estimated_north, estimated_east, local.sim_time);
 
     RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.",
         vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_);
@@ -247,6 +255,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
         }
 
         sim_time_ = next_sim_time;
+        log_whale_prediction(next_sim_time);
         publish_bearing(next_sim_time);
     }
 
@@ -312,6 +321,19 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
 
     latest_bearing_ = shared;
     latest_bearing_available_ = true;
+    latest_bearing_unsent_ = true;
+
+    // Retain this local measurement for a matching remote bearing.
+    local_bearings_by_cycle_[shared.call_cycle] = shared;
+
+    // A remote measurement of this call may already be waiting.
+    const auto pending_it = pending_shared_bearings_.find(shared.call_cycle);
+
+    if (pending_it != pending_shared_bearings_.end()) {
+        auto pending = pending_it->second;
+        pending_shared_bearings_.erase(pending_it);
+        handle_shared_bearing(pending);
+    }
 
     if (communication_interval_ > 0.0) {
         // Confirm local storage so the orchestrator can continue.
@@ -327,6 +349,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
 
     // Zero interval preserves immediate sharing and estimation.
     bearing_pub_->publish(shared);
+    latest_bearing_unsent_ = false;
 
     // Acknowledge reception even when only one AUV detected the call.
     acoustics_interfaces::msg::BearingProcessed received;
@@ -383,8 +406,15 @@ void OdysseyNode::try_finish_init() {
 void OdysseyNode::publish_bearing(double simulation_time) {
     if (!tracking_enabled_ || communication_interval_ <= 0.0) return;
 
-    while (simulation_time + 1.0e-9 >= static_cast<double>(next_communication_index_) * communication_interval_) {
-        if (latest_bearing_available_) bearing_pub_->publish(latest_bearing_);
+    while (
+        simulation_time + 1.0e-9 >=
+        static_cast<double>(next_communication_index_) * communication_interval_
+    ) {
+        if (latest_bearing_available_ && latest_bearing_unsent_) {
+            bearing_pub_->publish(latest_bearing_);
+            latest_bearing_unsent_ = false;
+        }
+
         ++next_communication_index_;
     }
 }

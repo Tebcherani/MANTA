@@ -42,11 +42,12 @@ def get_convergence_values(completed: dict[int, MonteCarloResult], scenario_type
     results = [completed[index] for index in sorted(completed)]
 
     if scenario_type == "trailing":
-        if any(result.mean_distance_km is None for result in results):
-            raise ValueError("Trailing Monte Carlo results are missing mean distances.")
-
-        values = [result.mean_distance_km for result in results]
-        return values, "mean distance", "km"
+        values = [
+            result.mean_prediction_error_km
+            for result in results
+            if result.mean_prediction_error_km is not None
+        ]
+        return values, "mean prediction error", "km"
 
     values = [result.detection_fraction for result in results]
     return values, "mean detection", "%"
@@ -259,7 +260,8 @@ def write_monte_carlo_summary(path: Path, rows: list[dict]) -> None:
                 "total_mass",
                 "total_energy",
                 "mean_vehicle_speed",
-                "mean_distance_km",
+                "mean_prediction_error_km",
+                "prediction_coverage_fraction",
             ),
         )
         writer.writeheader()
@@ -319,9 +321,29 @@ def run_monte_carlo(sim_config: dict, output_dir: Path, project_offset: int=0) -
         while next_realization in completed_results:
             next_realization += 1
 
-    # Monte carlo results after reaching max simulations
-    fractions = [completed_results[index].detection_fraction for index in sorted(completed_results)]
-    sample_mean, half_width = compute_monte_carlo_statistics(fractions, monte_carlo_config.confidence_level,)
-    print(f"Reached maximum of {len(completed_results)} realizations. Mean detection: {sample_mean:.2%}; CI half-width: {half_width:.2%}.\nSummary: {summary_path}")
+        values, metric_name, unit = get_convergence_values(
+        completed_results, scenario_type
+    )
+
+    if values:
+        sample_mean, half_width = compute_monte_carlo_statistics(values, monte_carlo_config.confidence_level)
+
+        if unit == "%":
+            metric_text = (
+                f"{metric_name}: {sample_mean:.2%}; "
+                f"CI half-width: {half_width:.2%}"
+            )
+        else:
+            metric_text = (
+                f"{metric_name}: {sample_mean:.3f} {unit}; "
+                f"CI half-width: {half_width:.3f} {unit}"
+            )
+    else:
+        metric_text = f"{metric_name}: undefined (no valid predictions)"
+
+    print(
+        f"Reached maximum of {len(completed_results)} realizations. "
+        f"{metric_text}.\nSummary: {summary_path}"
+    )
 
     return 0

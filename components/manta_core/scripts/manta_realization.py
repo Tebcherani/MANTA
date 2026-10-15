@@ -31,11 +31,21 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
     whale_count = count_simulated_whales(data_directory / "whales.csv")
     detected_count, detection_fraction = summarize_realization(data_directory, whale_count)
     total_mass, total_energy, mean_vehicle_speed = summarize_vehicle_metrics(data_directory, vehicle_ids)
-    mean_distance_km = None
+    mean_prediction_error_km = None
+    prediction_coverage_fraction = None
 
     if config["scenario"]["type"] == "trailing":
-        tracking = [summarize_tracking_metrics(root, data_directory, vehicle_id, config) for vehicle_id in vehicle_ids]
-        mean_distance_km = mean(tracking)
+        prediction_metrics = [
+            summarize_prediction_metrics(root, data_directory, vehicle_id)
+            for vehicle_id in vehicle_ids
+        ]
+        valid_errors = [
+            error for error, _ in prediction_metrics if error is not None
+        ]
+        mean_prediction_error_km = mean(valid_errors) if valid_errors else None
+        prediction_coverage_fraction = mean(
+            coverage for _, coverage in prediction_metrics
+        )
 
     return MonteCarloResult(
         realization=realization,
@@ -46,7 +56,8 @@ def collect_realization_result(config: dict, root: Path, data_directory: Path, v
         total_mass=total_mass,
         total_energy=total_energy,
         mean_vehicle_speed=mean_vehicle_speed,
-        mean_distance_km=mean_distance_km,
+        mean_prediction_error_km=mean_prediction_error_km,
+        prediction_coverage_fraction=prediction_coverage_fraction,
     )
 
 
@@ -220,8 +231,12 @@ def summarize_vehicle_metrics(data_directory: Path, vehicle_ids: list[str]) -> t
     return total_mass, total_energy, mean(vehicle_speeds)
 
 
-def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str, config: dict) -> float:
-    """Calculate mean formation error for one vehicle in a completed realization."""
+def summarize_prediction_metrics(
+    root: Path,
+    data_directory: Path,
+    vehicle_id: str,
+) -> tuple[float | None, float]:
+    """Calculate mean whale-prediction error for one vehicle."""
 
     python_path = root / ".venv" / "bin" / "python"
     script_path = root / "missions" / "trailing" / "review" / "trailing_metrics.py"
@@ -231,30 +246,12 @@ def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str
     if not script_path.is_file():
         raise ValueError(f"Trailing metric script does not exist: {script_path}")
 
-    trailing = config["scenario"]["trailing"]
-    following_distance_m = float(trailing["following_distance_m"])
-    separation_m = float(trailing["vehicle_separation_m"])
-
-    vehicle_ids = [vehicle["id"] for vehicle in config["vehicles"]]
-    if len(vehicle_ids) != 2:
-        raise ValueError("Trailing formation metrics require exactly two vehicles.")
-    if vehicle_id not in vehicle_ids:
-        raise ValueError(f"Vehicle '{vehicle_id}' is not in the configuration.")
-
-    vehicle_index = vehicle_ids.index(vehicle_id)
-
-    # Match the offsets assigned by trailing_mission.py.
-    side_offset_m = (-0.5 if vehicle_index == 0 else 0.5) * separation_m
-
     result = subprocess.run(
         [
             str(python_path),
             str(script_path),
             str(data_directory),
             vehicle_id,
-            "--following-distance-m",
-            str(following_distance_m),
-            f"--side-offset-m={side_offset_m}",
         ],
         cwd=root,
         capture_output=True,
@@ -266,23 +263,32 @@ def summarize_tracking_metrics(root: Path, data_directory: Path, vehicle_id: str
         detail = (
             result.stderr.strip()
             or result.stdout.strip()
-            or "unknown tracking-metric failure"
+            or "unknown prediction-metric failure"
         )
-        raise ValueError(f"Trailing metric calculation failed: {detail}")
+        raise ValueError(f"Whale prediction metric calculation failed: {detail}")
 
     try:
         metrics = json.loads(result.stdout)
-        mean_distance = float(metrics["mean_distance_km"])
+        mean_value = metrics["mean_prediction_error_km"]
+        prediction_coverage = float(metrics["prediction_coverage_fraction"])
+        mean_prediction_error = (
+            None if mean_value is None else float(mean_value)
+        )
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
         raise ValueError(
-            f"Trailing metric script returned invalid output: "
+            f"Prediction metric script returned invalid output: "
             f"{result.stdout.strip()}"
         ) from error
 
-    if not math.isfinite(mean_distance) or mean_distance < 0.0:
-        raise ValueError("Mean formation error must be finite and nonnegative.")
+    if not math.isfinite(prediction_coverage) or not 0.0 <= prediction_coverage <= 1.0:
+        raise ValueError("Prediction coverage must be between zero and one.")
 
-    return mean_distance
+    if mean_prediction_error is not None and (
+        not math.isfinite(mean_prediction_error) or mean_prediction_error < 0.0
+    ):
+        raise ValueError("Mean prediction error must be finite and nonnegative.")
+
+    return mean_prediction_error, prediction_coverage
 
 
 #--------------------------------------------------
@@ -303,9 +309,15 @@ def run_realization_attempt(config: dict, root: Path, realization: int, attempt:
         check_stop_requested()
         result = collect_realization_result(config, root, data_directory, vehicle_ids, realization, seed)
         if config["scenario"]["type"] == "trailing":
+            error_text = (
+                f"{result.mean_prediction_error_km:.3f} km"
+                if result.mean_prediction_error_km is not None
+                else "undefined (no predictions)"
+            )
             print(
                 f"Completed realization {realization}: "
-                f"mean formation error {result.mean_distance_km:.3f} km"
+                f"mean prediction error {error_text}; "
+                f"coverage {result.prediction_coverage_fraction:.1%}"
             )
         else:
             print(f"Completed realization {realization}: {result.detected_whales}/{result.whale_count} whales ({result.detection_fraction:.1%})")

@@ -60,21 +60,21 @@ def summarize_accuracy_results(std_m, interval, results, confidence_level):
     if not results:
         raise ValueError(f"Position standard deviation {std_m:g} m has no results.")
     metrics = {}
-    for attribute, label in (("mean_distance_km", "centroid distance")):
+    for attribute, label in (("mean_prediction_error_km", "centroid distance")):
         samples = [getattr(result, attribute) for result in results]
         if any(value is None or not math.isfinite(value) or value < 0 for value in samples):
             raise ValueError(f"Position standard deviation {std_m:g} m has invalid {label} results.")
         metrics[attribute] = compute_monte_carlo_statistics(samples, confidence_level)
-    distance, distance_half_width = metrics["mean_distance_km"]
+    distance, distance_half_width = metrics["mean_prediction_error_km"]
     return {
         "call_position_std_km": std_m / 1000.0,
         "call_position_std_m": std_m,
         "call_update_interval": interval,
         "realizations": len(results),
-        "mean_distance_km": distance,
-        "distance_ci_lower_km": max(0.0, distance - distance_half_width),
-        "distance_ci_upper_km": distance + distance_half_width,
-        "distance_ci_half_width_km": distance_half_width,
+        "mean_prediction_error_km": distance,
+        "prediction_error_ci_lower_km": max(0.0, distance - distance_half_width),
+        "prediction_error_ci_upper_km": distance + distance_half_width,
+        "prediction_error_ci_half_width_km": distance_half_width,
         "confidence_level": confidence_level,
     }
 
@@ -137,7 +137,7 @@ def run_monte_carlo_sweep(sim_config):
         row = summarize_accuracy_results(std_m, interval, results, mc.confidence_level)
         rows[std_m] = row
         write_summary(summary, rows)
-        print(f"Mean formation error: {row['mean_distance_km']:.3f} km")
+        print(f"Mean formation error: {row['mean_prediction_error_km']:.3f} km")
     print(f"Accuracy sweep data: {summary}")
     return 0
 

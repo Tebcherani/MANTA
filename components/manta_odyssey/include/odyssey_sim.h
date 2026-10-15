@@ -25,5 +25,6 @@ int get_odyssey_metrics(odyssey_metrics_t *);
 double get_odyssey_sim_north(void);
 double get_odyssey_sim_east(void);
 double get_odyssey_sim_depth(void);
+int get_odyssey_sim_whale_prediction(double prediction_time, double *measurement_time, double *north, double *east);
 
 #endif /* ODYSSEY_SIM_H */

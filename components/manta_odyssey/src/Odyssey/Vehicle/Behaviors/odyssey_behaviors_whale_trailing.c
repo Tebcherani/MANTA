@@ -16,11 +16,10 @@ static double target_time = 0.0;
 static double velocity_north = 1.5;
 static double velocity_east = 0.0;
 
-void set_whale_trailing_target(
-    double north,
-    double east,
-    double measurement_time
-) {
+static double direction_north = 1.0;
+static double direction_east = 0.0;
+
+void set_whale_trailing_target(double north, double east, double measurement_time) {
     if (!isfinite(north) || !isfinite(east) ||
         !isfinite(measurement_time)) {
         return;
@@ -33,10 +32,8 @@ void set_whale_trailing_target(
         if (dt <= 1.0e-6) return;
 
         /* Estimate average velocity between the latest two calls. */
-        const double new_velocity_north =
-            (north - target_north) / dt;
-        const double new_velocity_east =
-            (east - target_east) / dt;
+        const double new_velocity_north = (north - target_north) / dt;
+        const double new_velocity_east = (east - target_east) / dt;
 
         if (!isfinite(new_velocity_north) ||
             !isfinite(new_velocity_east)) {
@@ -45,6 +42,12 @@ void set_whale_trailing_target(
 
         velocity_north = new_velocity_north;
         velocity_east = new_velocity_east;
+
+        const double speed = hypot(velocity_north, velocity_east);
+        if (speed > 1.0e-6) {
+            direction_north = velocity_north / speed;
+            direction_east = velocity_east / speed;
+        }
     }
 
     /* Store the latest measured position, not a predicted position. */
@@ -62,6 +65,18 @@ behavior: whale_trailing
   b_arg: following_distance(m) 0
   b_arg: side_offset(m) 0
 */
+
+int get_whale_trailing_prediction(double prediction_time, double *measurement_time, double *north, double *east) {
+    if (!target_available || !isfinite(prediction_time) || measurement_time == NULL || north == NULL || east == NULL) return 0;
+
+    const double elapsed = fmax(0.0, prediction_time - target_time);
+
+    *measurement_time = target_time;
+    *north = target_north + velocity_north * elapsed;
+    *east = target_east + velocity_east * elapsed;
+
+    return isfinite(*north) && isfinite(*east);
+}
 
 int whale_trailing(struct behavior *b, int priority, int level) {
     enum {
@@ -94,7 +109,7 @@ int whale_trailing(struct behavior *b, int priority, int level) {
         return 0;
     }
 
-        /* Predict the whale's position between calls. */
+    /* Predict the whale's position between calls. */
     const double now = read_sensor(M_PRESENT_TIME);
     const double elapsed = fmax(0.0, now - target_time);
 
@@ -102,8 +117,12 @@ int whale_trailing(struct behavior *b, int priority, int level) {
     const double predicted_east = target_east + velocity_east * elapsed;
 
     /* Apply the existing fixed north/east formation offsets. */
-    const double formation_north = predicted_north - bArg(FOLLOWING_DISTANCE);
-    const double formation_east = predicted_east + bArg(SIDE_OFFSET);
+    const double following = bArg(FOLLOWING_DISTANCE);
+    const double side = bArg(SIDE_OFFSET);
+
+    // direction_* points forward. The side vector (-direction_east, direction_north) points to the whale's right.
+    const double formation_north = predicted_north - following * direction_north - side * direction_east;
+    const double formation_east = predicted_east - following * direction_east + side * direction_north;
 
     north_difference = formation_north - read_sensor(M_POS_N);
     east_difference = formation_east - read_sensor(M_POS_E);
