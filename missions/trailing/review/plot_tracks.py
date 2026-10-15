@@ -103,10 +103,10 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
     try:
         with WHALE_DETECTIONS_PATH.open("r", encoding="utf-8", newline="") as file:
             reader = csv.DictReader(file)
-            required = {"cycle", "vehicle_id", "whale_id", "whale_north", "whale_east"}
+            required = {"cycle", "vehicle_id", "whale_id", "whale_north_m", "whale_east_m"}
 
             if not reader.fieldnames or not required.issubset(reader.fieldnames):
-                raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_id, whale_north, and whale_east columns.")
+                raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_id, whale_north_m, and whale_east_m columns.")
 
             for row in reader:
                 name = row.get("vehicle_id", "")
@@ -114,8 +114,8 @@ def read_whale_detections() -> dict[tuple[int, str], list[tuple[str, float, floa
 
                 try:
                     cycle = int(row["cycle"])
-                    north = float(row["whale_north"])
-                    east = float(row["whale_east"])
+                    north = float(row["whale_north_m"])
+                    east = float(row["whale_east_m"])
                 except (TypeError, ValueError):
                     continue
 
@@ -209,7 +209,7 @@ def compute_prediction_error(
     if not whale_path.is_file():
         raise ValueError(f"No whale trajectory file found: {whale_path}")
 
-    whale_time, whale_north, whale_east = read_whale_positions(whale_path)
+    whale_time, whale_north_m, whale_east_m = read_whale_positions(whale_path)
     errors_m = []
     total_samples = 0
 
@@ -253,8 +253,8 @@ def compute_prediction_error(
             if not np.isfinite(predicted_north) or not np.isfinite(predicted_east):
                 continue
 
-            true_north = np.interp(sim_time_s, whale_time, whale_north)
-            true_east = np.interp(sim_time_s, whale_time, whale_east)
+            true_north = np.interp(sim_time_s, whale_time, whale_north_m)
+            true_east = np.interp(sim_time_s, whale_time, whale_east_m)
             errors_m.append(
                 np.hypot(predicted_north - true_north, predicted_east - true_east)
             )

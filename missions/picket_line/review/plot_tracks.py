@@ -114,10 +114,10 @@ def read_whale_detections() -> tuple[set[str], dict[tuple[int, str], list[tuple[
     try:
         with WHALE_DETECTIONS_PATH.open("r", encoding="utf-8", newline="") as file:
             reader = csv.DictReader(file)
-            required = {"cycle", "vehicle_id", "whale_id", "whale_north", "whale_east"}
+            required = {"cycle", "vehicle_id", "whale_id", "whale_north_m", "whale_east_m"}
 
             if not reader.fieldnames or not required.issubset(reader.fieldnames):
-                raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_id, whale_north, and whale_east columns.")
+                raise ValueError("whale_detections.csv must contain cycle, vehicle_id, whale_id, whale_north_m, and whale_east_m columns.")
 
             for row in reader:
                 vehicle_id = row.get("vehicle_id", "")
@@ -125,8 +125,8 @@ def read_whale_detections() -> tuple[set[str], dict[tuple[int, str], list[tuple[
 
                 try:
                     cycle = int(row["cycle"])
-                    north = float(row["whale_north"])
-                    east = float(row["whale_east"])
+                    north = float(row["whale_north_m"])
+                    east = float(row["whale_east_m"])
                 except (TypeError, ValueError):
                     continue
 

@@ -139,18 +139,18 @@ void WhaleDetectionNode::try_process_pending_call() {
         detection.sim_time_s = pending_call_.sim_time_s;
         detection.vehicle_north_m = vehicle.north;
         detection.vehicle_east_m = vehicle.east;
-        detection.whale_north = pending_call_.north;
-        detection.whale_east = pending_call_.east;
+        detection.whale_north_m = pending_call_.north;
+        detection.whale_east_m = pending_call_.east;
         detection.distance = distance;
 
         // Add noise to the whale call
         if (position_std_m_ > 0.0) {
-            detection.whale_north += position_std_m_ * normal_(rng_);
-            detection.whale_east += position_std_m_ * normal_(rng_);
+            detection.whale_north_m += position_std_m_ * normal_(rng_);
+            detection.whale_east_m += position_std_m_ * normal_(rng_);
         }
 
         // Record the exact detection for later analysis and review.
-        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north_m << ',' << detection.vehicle_east_m << ',' << detection.whale_north << ',' << detection.whale_east << ',' << detection.distance << '\n';
+        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north_m << ',' << detection.vehicle_east_m << ',' << detection.whale_north_m << ',' << detection.whale_east_m << ',' << detection.distance << '\n';
     }
 
     // Acknowledge that every vehicle has evaluated the pending whale call.

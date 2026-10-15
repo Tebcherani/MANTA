@@ -43,15 +43,15 @@ def read_whale_positions(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray
     if times.size < 2:
         raise ValueError("Whale trajectory data contain insufficient time samples.")
 
-    whale_north = np.asarray([np.mean([position[0] for position in positions_by_time[time]]) for time in times], dtype=float)
-    whale_east = np.asarray([np.mean([position[1] for position in positions_by_time[time]]) for time in times], dtype=float)
+    whale_north_m = np.asarray([np.mean([position[0] for position in positions_by_time[time]]) for time in times], dtype=float)
+    whale_east_m = np.asarray([np.mean([position[1] for position in positions_by_time[time]]) for time in times], dtype=float)
 
-    return times, whale_north, whale_east
+    return times, whale_north_m, whale_east_m
 
 def compute_prediction_metrics(data_directory: Path, vehicle_id: str) -> dict[str, float]:
     """Compare logged whale predictions with whale truth at the same time."""
 
-    whale_time, whale_north, whale_east = read_whale_positions(
+    whale_time, whale_north_m, whale_east_m = read_whale_positions(
         data_directory / "whales.csv"
     )
     prediction_path = data_directory / f"{vehicle_id}_whale_predictions.csv"
@@ -101,8 +101,8 @@ def compute_prediction_metrics(data_directory: Path, vehicle_id: str) -> dict[st
             if not np.isfinite(predicted_north) or not np.isfinite(predicted_east):
                 continue
 
-            true_north = np.interp(sim_time_s, whale_time, whale_north)
-            true_east = np.interp(sim_time_s, whale_time, whale_east)
+            true_north = np.interp(sim_time_s, whale_time, whale_north_m)
+            true_east = np.interp(sim_time_s, whale_time, whale_east_m)
 
             errors_m.append(
                 np.hypot(predicted_north - true_north, predicted_east - true_east)

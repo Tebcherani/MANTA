@@ -4,6 +4,6 @@ uint64 cycle
 float64 sim_time_s
 float64 vehicle_north_m
 float64 vehicle_east_m
-float64 whale_north
-float64 whale_east
+float64 whale_north_m
+float64 whale_east_m
 float64 distance
