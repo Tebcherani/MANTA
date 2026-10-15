@@ -62,7 +62,7 @@ private:
     whale_interfaces::msg::WhaleCall pending_whale_call_;
 
     // Output
-    std::ofstream detection_log_;
+    std::ofstream whale_detection_log_;
 
     // ---------------------------------------------------------------------
     // ROS interfaces

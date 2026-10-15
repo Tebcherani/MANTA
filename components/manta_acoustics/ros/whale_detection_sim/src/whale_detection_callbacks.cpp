@@ -150,7 +150,7 @@ void WhaleDetectionNode::try_process_pending_call() {
         }
 
         // Record the exact detection for later analysis and review.
-        detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north_m << ',' << detection.vehicle_east_m << ',' << detection.whale_north_m << ',' << detection.whale_east_m << ',' << detection.distance << '\n';
+        whale_detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north_m << ',' << detection.vehicle_east_m << ',' << detection.whale_north_m << ',' << detection.whale_east_m << ',' << detection.distance << '\n';
     }
 
     // Acknowledge that every vehicle has evaluated the pending whale call.

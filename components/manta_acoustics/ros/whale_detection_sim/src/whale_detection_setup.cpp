@@ -44,9 +44,9 @@ void WhaleDetectionNode::open_detection_log() {
 
     // Ensure the output directory exists before opening the results file.
     std::filesystem::create_directories(data_directory);
-    detection_log_.open(data_directory + "/whale_detections.csv", std::ios::out | std::ios::trunc);
-    if (!detection_log_.is_open()) throw std::runtime_error("Failed to open whale detection results file.");
+    whale_detection_log_.open(data_directory + "/whale_detections.csv", std::ios::out | std::ios::trunc);
+    if (!whale_detection_log_.is_open()) throw std::runtime_error("Failed to open whale detection results file.");
     
     // Write the column names before recording any detection events.
-    detection_log_ << "cycle,sim_time_s,vehicle_id,whale_id,vehicle_north_m,vehicle_east_m,whale_north_m,whale_east_m,distance\n";
+    whale_detection_log_ << "cycle,sim_time_s,vehicle_id,whale_id,vehicle_north_m,vehicle_east_m,whale_north_m,whale_east_m,distance\n";
 }
