@@ -83,18 +83,21 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     )
     services["whale_sim"]["stop_grace_period"] = "5s"
 
-    # Always enforce the configured acoustic detection range.
+    # Mission-specific overrides for the acoustics config.
     detection_parameters = {
         "vehicle_ids": vehicle_list,
-        "detection_range": float(detection["radius"]),
+        "detection_range_m": float(detection["radius"]),
         "data_directory": data_dir,
-        "call_position_std_m": 0.0,
-        "call_position_seed": monte_carlo.get("random_seed", 0),
+        "bearing_noise_seed": int(monte_carlo.get("random_seed", 0)),
     }
 
     services["whale_detection_sim"] = ros_service(
-        "whale_detection_sim", "whale_detection_node",
-        detection_parameters, log_dir, ros_domain_id,
+        "whale_detection_sim",
+        "whale_detection_node",
+        detection_parameters,
+        log_dir,
+        ros_domain_id,
+        params_file=("/odyssey/components/manta_acoustics/ros/whale_detection_sim/config.yaml"),
     )
 
     # Orchestrator

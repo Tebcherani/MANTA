@@ -1,0 +1,7 @@
+whale_detection_node:
+  ros__parameters:
+    vehicle_ids: [auv_1]        # Vehicles evaluated for whale detections.
+    detection_range_m: 11000.0  # Maximum horizontal vehicle-to-whale detection range.
+    bearing_std_deg: 0.0        # Bearing measurement noise standard deviation.
+    bearing_noise_seed: 0       # Random seed used by the bearing noise generator.
+    data_directory: /odyssey/output/Data  # Directory for whale_detections.csv.

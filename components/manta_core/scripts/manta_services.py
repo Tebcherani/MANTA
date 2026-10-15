@@ -8,9 +8,12 @@ from manta_load import container_path, load_plugin
 ROOT = Path(__file__).resolve().parents[3]
 
 
-def ros_service(package: str, executable: str, parameters: dict, log_dir: str, ros_domain_id: int = 1, extra_environment: dict | None = None, image: str = "odyssey_sim_dev") -> dict:
+def ros_service(package: str, executable: str, parameters: dict, log_dir: str, ros_domain_id: int = 1, extra_environment: dict | None = None, image: str = "odyssey_sim_dev", params_file: str | None = None) -> dict:
     """Create a Compose service for a ROS simulation node."""
     arguments = []
+
+    if params_file is not None:
+        arguments.extend(["--params-file", params_file])
 
     for name, value in parameters.items():
         if isinstance(value, bool):

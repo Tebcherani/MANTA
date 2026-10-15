@@ -24,8 +24,8 @@ void WhaleDetectionNode::load_config() {
     if (!std::isfinite(bearing_std_deg) || bearing_std_deg < 0.0) throw std::runtime_error("bearing_std_deg must be finite and nonnegative.");
     bearing_std_rad_ = bearing_std_deg * std::acos(-1.0) / 180.0;
 
-    const auto seed = declare_parameter<int64_t>("call_position_seed", 0);
-    if (seed < 0) throw std::runtime_error("call_position_seed cannot be negative.");
+    const auto seed = declare_parameter<int64_t>("bearing_noise_seed", 0);
+    if (seed < 0) throw std::runtime_error("bearing_noise_seed cannot be negative.");
     rng_.seed(static_cast<std::uint64_t>(seed));
 }
 

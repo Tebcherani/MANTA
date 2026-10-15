@@ -80,9 +80,6 @@ scenario:
     depth: 50.0
     capture: 5.0
 
-  detection:
-    radius: 11000.0 # meters
-
   whales:
     count: 46
     active_entire_mission: false

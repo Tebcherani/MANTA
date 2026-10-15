@@ -80,10 +80,6 @@ scenario:
 
   duration: 86400.0  # 1 day
 
-  detection:
-    detection_range_m: 11000.0 # meters
-    bearing_std_deg: 0.0
-
   patrol:
     speed: 1.5
     depth: 50.0
