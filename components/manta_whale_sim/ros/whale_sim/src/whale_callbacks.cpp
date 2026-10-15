@@ -44,15 +44,15 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
 
     // Identify the next call and its scheduled simulation time.
     response.whale_call_available_b = true;
-    response.call.whale_id = next_whale->id;
-    response.call.cycle = 0;
-    response.call.sim_time_s = next_time;
+    response.whale_call.whale_id = next_whale->id;
+    response.whale_call.cycle = 0;
+    response.whale_call.sim_time_s = next_time;
 
     // Calculate the whale's location at the exact time of the call.
     const TrajectoryPoint call_position = trajectory_at_time(*next_whale, next_time);
 
-    response.call.whale_call_north_m = call_position.north;
-    response.call.whale_call_east_m = call_position.east;
+    response.whale_call.whale_call_north_m = call_position.north;
+    response.whale_call.whale_call_east_m = call_position.east;
 }
 
 /**

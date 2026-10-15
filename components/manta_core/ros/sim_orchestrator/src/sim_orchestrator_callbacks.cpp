@@ -52,7 +52,7 @@ void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_i
     }
 
     // Store the next scheduled whale call.
-    next_whale_call_ = response->call;
+    next_whale_call_ = response->whale_call;
     next_whale_call_available_ = true;
 
     // Publish calls that fall within the timestep vehicles already reached.
