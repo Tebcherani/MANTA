@@ -86,9 +86,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     # Mission-specific overrides for the acoustics config.
     detection_parameters = {
         "vehicle_ids": vehicle_list,
-        "detection_range_m": float(detection["radius"]),
         "data_directory": data_dir,
-        "bearing_noise_seed": int(monte_carlo.get("random_seed", 0)),
     }
 
     services["whale_detection_sim"] = ros_service(
