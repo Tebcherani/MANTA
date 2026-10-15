@@ -29,7 +29,7 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
 }
 
 void OdysseyNode::handle_shared_bearing(
-    const acoustics_interfaces::msg::BearingMsg::SharedPtr msg
+    const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg
 ) {
     if (!tracking_enabled_) return;
     if (msg->receiver_id == vehicle_id_) return;
@@ -310,7 +310,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     }
 
     // Share the sensor measurement with this vehicle's own position.
-    acoustics_interfaces::msg::BearingMsg shared;
+    acoustics_interfaces::msg::BearingTransmission shared;
     shared.receiver_id = vehicle_id_;
     shared.call_cycle = msg->call_cycle;
     shared.sim_time = msg->sim_time;

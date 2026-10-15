@@ -18,7 +18,7 @@
 #include "manta_interfaces/msg/sim_step.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
 #include "manta_interfaces/msg/vehicle_state.hpp"
-#include "acoustics_interfaces/msg/bearing_msg.hpp"
+#include "acoustics_interfaces/msg/bearing_transmission.hpp"
 #include "acoustics_interfaces/msg/bearing_observation.hpp"
 #include "acoustics_interfaces/msg/bearing_processed.hpp"
 
@@ -51,7 +51,7 @@ class OdysseyNode : public rclcpp::Node {
 
         // Callbacks
         void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
-        void handle_shared_bearing(const acoustics_interfaces::msg::BearingMsg::SharedPtr msg);
+        void handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg);
         void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
         void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr msg);
         void handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg);
@@ -76,13 +76,13 @@ class OdysseyNode : public rclcpp::Node {
         std::deque<BearingPosition> bearing_positions_;
         bool latest_bearing_available_ = false;
         bool latest_bearing_unsent_ = false;
-        acoustics_interfaces::msg::BearingMsg latest_bearing_;
+        acoustics_interfaces::msg::BearingTransmission latest_bearing_;
 
         // Local measurements retained so delayed remote bearings can find their match.
-        std::map<std::uint64_t, acoustics_interfaces::msg::BearingMsg> local_bearings_by_cycle_;
+        std::map<std::uint64_t, acoustics_interfaces::msg::BearingTransmission> local_bearings_by_cycle_;
 
         // Remote measurements that arrived before the corresponding local measurement.
-        std::map<std::uint64_t, acoustics_interfaces::msg::BearingMsg::SharedPtr> pending_shared_bearings_;
+        std::map<std::uint64_t, acoustics_interfaces::msg::BearingTransmission::SharedPtr> pending_shared_bearings_;
 
         // Calls already successfully triangulated.
         std::set<std::uint64_t> processed_bearing_cycles_;
@@ -122,14 +122,14 @@ class OdysseyNode : public rclcpp::Node {
 
         // Publishers
         rclcpp::Publisher<acoustics_interfaces::msg::BearingProcessed>::SharedPtr bearing_processed_pub_;
-        rclcpp::Publisher<acoustics_interfaces::msg::BearingMsg>::SharedPtr bearing_pub_;
+        rclcpp::Publisher<acoustics_interfaces::msg::BearingTransmission>::SharedPtr bearing_pub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
         rclcpp::Publisher<manta_interfaces::msg::SimStepResult>::SharedPtr step_result_pub_;
         rclcpp::Publisher<manta_interfaces::msg::VehicleState>::SharedPtr vehicle_state_pub_;
 
         // Subscribers
         rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr calendar_start_time_sub_;
-        rclcpp::Subscription<acoustics_interfaces::msg::BearingMsg>::SharedPtr shared_bearing_sub_;
+        rclcpp::Subscription<acoustics_interfaces::msg::BearingTransmission>::SharedPtr shared_bearing_sub_;
         rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sim_time_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
