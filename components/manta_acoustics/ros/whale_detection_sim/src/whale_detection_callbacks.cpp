@@ -16,9 +16,10 @@
  * @param msg Shutdown request published by the simulation orchestrator.
  */
 void WhaleDetectionNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg) {
-    if (!msg->data) return;                                     // Ignore messages that do not request a shutdown.
-    RCLCPP_INFO(get_logger(), "Shutting down whale detector."); // Report the shutdown before stopping the ROS context.
-    rclcpp::shutdown();                                         // Stop this node's executor and allow the process to exit normally.
+    const bool shutdown_requested = msg->data;
+    if (!shutdown_requested) return;                              
+    RCLCPP_INFO(get_logger(), "Shutting down whale detector.");
+    rclcpp::shutdown();
 }
 
 /**
