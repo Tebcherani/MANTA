@@ -43,7 +43,6 @@ private:
     void try_process_pending_whale_call();
 
     // Detection noise
-    double position_std_m_ = 0.0;
     std::mt19937_64 rng_;
     std::normal_distribution<double> normal_{0.0, 1.0};
 

@@ -127,12 +127,6 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         detection.whale_east_m = pending_whale_call_.whale_call_east_m;
         detection.vehicle_to_whale_range_m = distance;
 
-        // Add noise to the whale call
-        if (position_std_m_ > 0.0) {
-            detection.whale_north_m += position_std_m_ * normal_(rng_);
-            detection.whale_east_m += position_std_m_ * normal_(rng_);
-        }
-
         // Record the exact detection for later analysis and review.
         whale_detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north_m << ',' << detection.vehicle_east_m << ',' << detection.whale_north_m << ',' << detection.whale_east_m << ',' << detection.vehicle_to_whale_range_m << '\n';
     }
