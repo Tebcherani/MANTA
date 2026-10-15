@@ -40,7 +40,7 @@ private:
     void handle_whale_call(const whale_interfaces::msg::WhaleCall::SharedPtr call);
 
     // Detections
-    void try_process_pending_call();
+    void try_process_pending_whale_call();
 
     // Detection noise
     double position_std_m_ = 0.0;

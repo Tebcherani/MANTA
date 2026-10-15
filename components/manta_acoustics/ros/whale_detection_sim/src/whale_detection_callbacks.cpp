@@ -11,8 +11,6 @@
 /**
  * Shut down the whale-detection node when requested by the orchestrator.
  *
- * A message containing `false` is ignored because it does not request a shutdown. A message containing `true` stops the shared ROS context.
- *
  * @param msg Shutdown request published by the simulation orchestrator.
  */
 void WhaleDetectionNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg) {
@@ -25,40 +23,32 @@ void WhaleDetectionNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr ms
 /**
  * Store a vehicle's latest state and attempt to process a pending whale call.
  *
- * The whale detector must have the state of every configured vehicle at the whale call's simulation cycle before it can evaluate detection distances.
- *
  * @param msg Latest state published by the vehicle.
  * @param vehicle_id Configured identifier of the vehicle that published the state.
  */
 void WhaleDetectionNode::handle_vehicle_state(const manta_interfaces::msg::VehicleState::SharedPtr msg, const std::string &vehicle_id) {
     latest_vehicle_states_[vehicle_id] = *msg;  // Store or replace this vehicle's most recently received state.
-    try_process_pending_call();                 // Process the pending whale call if every vehicle has now reached its cycle.
+    try_process_pending_whale_call();                 
 }
 
 /**
  * Store a newly received whale call and attempt to process it.
  *
- * Only one whale call may be pending at a time. The orchestrator waits for a WhaleCallProcessed acknowledgement before publishing the next call, so
- * receiving another call while one is pending indicates a synchronization error.
- *
- * @param call Whale-call event published by the whale simulator.
+ * @param msg Whale-call event published by the whale simulator.
  */
-void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCall::SharedPtr call) {
-    // Reject a new call if the previous call has not yet been evaluated.
+void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCall::SharedPtr msg) {
+    // Reject a new call if the previous call has not yet been evaluated. This indicates a synchronization error.
     if (pending_whale_call_available_b_) {
-        RCLCPP_ERROR(
-            get_logger(), "Received whale call %s before the previous call was processed.",
-            call->whale_id.c_str()
-        );
+        RCLCPP_ERROR(get_logger(), "Received whale call %s before the previous call was processed.", msg->whale_id.c_str());
         return;
     }
 
     // Store the call until every configured vehicle reaches its event cycle.
-    pending_whale_call_ = *call;
+    pending_whale_call_ = *msg;
     pending_whale_call_available_b_ = true;
 
     // Process immediately if all required vehicle states are already available.
-    try_process_pending_call();
+    try_process_pending_whale_call();
 }
 
 //----------------------------------------------------
@@ -68,28 +58,21 @@ void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCal
 /**
  * Process the pending whale call once every vehicle has published its state for the call's simulation cycle.
  *
- * The method waits until all configured vehicle states exactly match the pending call cycle. It then calculates the three-dimensional distance from
+ * The method waits until all configured vehicle states exactly match the pending call cycle. It then calculates the two-dimensional distance from
  * each vehicle to the whale, publishes and records detections within range, and acknowledges that the call has been fully processed.
  */
-void WhaleDetectionNode::try_process_pending_call() {
+void WhaleDetectionNode::try_process_pending_whale_call() {
     // Nothing can be processed until a whale call has been received.
     if (!pending_whale_call_available_b_) return;
 
-    // Wait until every configured vehicle has published its state for the exact cycle associated with the pending whale call.    
-    for (const std::string &vehicle_id : vehicle_ids_) {
-        const auto iterator = latest_vehicle_states_.find(vehicle_id);
-        
-        // This vehicle has not published any state yet.
-        if (iterator == latest_vehicle_states_.end()) return;
-        
-        // This vehicle has not yet reached the whale-call cycle.
-        if (iterator->second.cycle < pending_whale_call_.cycle) return;
+    // Wait until every configured vehicle has published its state for the exact cycle associated with the pending whale call.   
+    for (const std::string &vehicle_id : vehicle_ids_) {                    // Loop through every vehicle ID
+        const auto vehicle_state = latest_vehicle_states_.find(vehicle_id); // Loop up the vehicle state of the vehicle with this vehicle ID
 
-        // Processing is no longer synchronized if a vehicle has already moved beyond the call cycle.
-        if (iterator->second.cycle > pending_whale_call_.cycle) {
-            RCLCPP_ERROR(get_logger(), "Vehicle %s advanced to cycle %llu before call cycle %llu was processed.",
-                vehicle_id.c_str(), static_cast<unsigned long long>(iterator->second.cycle), static_cast<unsigned long long>(pending_whale_call_.cycle)
-            );
+        if (vehicle_state == latest_vehicle_states_.end()) return;              // This vehicle has not published any state yet.
+        if (vehicle_state->second.cycle < pending_whale_call_.cycle) return;    // This vehicle has not yet reached the whale-call cycle.
+        if (vehicle_state->second.cycle > pending_whale_call_.cycle) {          // Processing is no longer synchronized if a vehicle has already moved beyond the call cycle.
+            RCLCPP_ERROR(get_logger(), "Vehicle %s advanced to cycle %llu before call cycle %llu was processed.", vehicle_id.c_str(), static_cast<unsigned long long>(vehicle_state->second.cycle), static_cast<unsigned long long>(pending_whale_call_.cycle));
             return;
         }
     }
@@ -98,12 +81,12 @@ void WhaleDetectionNode::try_process_pending_call() {
     std::vector<std::string> bearing_receiver_ids;
 
     // Every vehicle is at the call cycle, so evaluate its detection distance.
-    for (const std::string &vehicle_id : vehicle_ids_) {
-        const auto &vehicle = latest_vehicle_states_.at(vehicle_id);
+    for (const std::string &vehicle_id : vehicle_ids_) {                    // Loop through every vehicle ID
+        const auto &vehicle_state = latest_vehicle_states_.at(vehicle_id);  // Loop up the vehicle state of the vehicle with this vehicle ID
 
         // Calculate horizontal vehicle-to-whale distance.
-        const double north_difference = pending_whale_call_.north - vehicle.north;
-        const double east_difference = pending_whale_call_.east - vehicle.east;
+        const double north_difference = pending_whale_call_.north - vehicle_state.north;
+        const double east_difference = pending_whale_call_.east - vehicle_state.east;
         const double distance = std::hypot(north_difference, east_difference);
 
         // Ignore vehicles outside the configured acoustic detection range.
@@ -138,8 +121,8 @@ void WhaleDetectionNode::try_process_pending_call() {
         detection.whale_id = pending_whale_call_.whale_id;
         detection.cycle = pending_whale_call_.cycle;
         detection.sim_time_s = pending_whale_call_.sim_time_s;
-        detection.vehicle_north_m = vehicle.north;
-        detection.vehicle_east_m = vehicle.east;
+        detection.vehicle_north_m = vehicle_state.north;
+        detection.vehicle_east_m = vehicle_state.east;
         detection.whale_north_m = pending_whale_call_.north;
         detection.whale_east_m = pending_whale_call_.east;
         detection.vehicle_to_whale_range_m = distance;
