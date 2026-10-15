@@ -87,16 +87,16 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         // Calculate two-dimensional vehicle-to-whale distance.
         const double vehicle_to_whale_north_distance_m = pending_whale_call_.whale_call_north_m - vehicle_state.vehicle_north_m;
         const double vehicle_to_whale_east_distance_m = pending_whale_call_.whale_call_east_m - vehicle_state.vehicle_east_m;
-        const double distance = std::hypot(vehicle_to_whale_north_distance_m, vehicle_to_whale_east_distance_m);
+        const double vehicle_to_whale_range_m = std::hypot(vehicle_to_whale_north_distance_m, vehicle_to_whale_east_distance_m);
 
         // Ignore vehicles outside the configured acoustic detection range.
-        if (distance > detection_range_m_) continue;
+        if (vehicle_to_whale_range_m > detection_range_m_) continue;
 
         // A bearing is undefined at zero separation.
-        if (distance <= 1.0e-6) continue;
+        if (vehicle_to_whale_range_m <= 1.0e-6) continue;
 
         // Direction is undefined when receiver and whale occupy the same position.
-        if (distance > 1.0e-6) {
+        if (vehicle_to_whale_range_m > 1.0e-6) {
             acoustics_interfaces::msg::BearingObservation observation;
             observation.receiver_id = vehicle_id;
             observation.call_cycle = pending_whale_call_.cycle;
@@ -125,7 +125,7 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         detection.vehicle_east_m = vehicle_state.vehicle_east_m;
         detection.whale_north_m = pending_whale_call_.whale_call_north_m;
         detection.whale_east_m = pending_whale_call_.whale_call_east_m;
-        detection.vehicle_to_whale_range_m = distance;
+        detection.vehicle_to_whale_range_m = vehicle_to_whale_range_m;
 
         // Record the exact detection for later analysis and review.
         whale_detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north_m << ',' << detection.vehicle_east_m << ',' << detection.whale_north_m << ',' << detection.whale_east_m << ',' << detection.vehicle_to_whale_range_m << '\n';
