@@ -85,9 +85,9 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         const auto &vehicle_state = latest_vehicle_states_.at(vehicle_id);  // Loop up the vehicle state of the vehicle with this vehicle ID
 
         // Calculate two-dimensional vehicle-to-whale distance.
-        const double north_difference = pending_whale_call_.whale_call_north_m - vehicle_state.vehicle_north_m;
-        const double east_difference = pending_whale_call_.whale_call_east_m - vehicle_state.vehicle_east_m;
-        const double distance = std::hypot(north_difference, east_difference);
+        const double vehicle_to_whale_north_distance_m = pending_whale_call_.whale_call_north_m - vehicle_state.vehicle_north_m;
+        const double vehicle_to_whale_east_distance_m = pending_whale_call_.whale_call_east_m - vehicle_state.vehicle_east_m;
+        const double distance = std::hypot(vehicle_to_whale_north_distance_m, vehicle_to_whale_east_distance_m);
 
         // Ignore vehicles outside the configured acoustic detection range.
         if (distance > detection_range_m_) continue;
@@ -103,7 +103,7 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
             observation.sim_time_s = pending_whale_call_.sim_time_s;
             
             // Add an independent Gaussian angular error to this receiver's bearing.
-            const double true_bearing = std::atan2(east_difference, north_difference);
+            const double true_bearing = std::atan2(vehicle_to_whale_east_distance_m, vehicle_to_whale_north_distance_m);
             const double bearing_error = bearing_std_rad_ > 0.0 ? bearing_std_rad_ * normal_(rng_) : 0.0;
             const double measured_bearing = true_bearing + bearing_error;
 
