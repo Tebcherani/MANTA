@@ -1,5 +1,5 @@
 string whale_id
 uint64 cycle
 float64 sim_time_s
-float64 north
-float64 east
+float64 whale_call_north_m
+float64 whale_call_east_m

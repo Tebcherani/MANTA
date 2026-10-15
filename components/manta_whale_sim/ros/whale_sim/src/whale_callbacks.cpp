@@ -51,8 +51,8 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
     // Calculate the whale's location at the exact time of the call.
     const TrajectoryPoint call_position = trajectory_at_time(*next_whale, next_time);
 
-    response.call.north = call_position.north;
-    response.call.east = call_position.east;
+    response.call.whale_call_north_m = call_position.north;
+    response.call.whale_call_east_m = call_position.east;
 }
 
 /**
