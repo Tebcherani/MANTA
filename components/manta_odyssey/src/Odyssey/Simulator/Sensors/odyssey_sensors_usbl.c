@@ -17,8 +17,8 @@ int update_usbl_sensor(void)
     input.target_east = read_sensor(SIM_DOCK_E);
     input.target_down = read_sensor(SIM_DOCK_D);
 
-    input.vehicle_north = read_sensor(REAL_X);
-    input.vehicle_east = read_sensor(REAL_Y);
+    input.vehicle_north_m = read_sensor(REAL_X);
+    input.vehicle_east_m = read_sensor(REAL_Y);
     input.vehicle_down = read_sensor(REAL_Z);
     input.vehicle_yaw = read_sensor(M_YAW);
 

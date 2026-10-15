@@ -262,9 +262,9 @@ def plot_detection_locations(ax, detections_by_call: dict[tuple[int, str], list[
 
     for detections in detections_by_call.values():
         for vehicle_id, north, east in detections:
-            vehicle_north, vehicle_east = detections_by_vehicle[vehicle_id]
-            vehicle_north.append(north)
-            vehicle_east.append(east)
+            vehicle_north_m, vehicle_east_m = detections_by_vehicle[vehicle_id]
+            vehicle_north_m.append(north)
+            vehicle_east_m.append(east)
 
     detection_count = sum(len(north) for north, _ in detections_by_vehicle.values())
 

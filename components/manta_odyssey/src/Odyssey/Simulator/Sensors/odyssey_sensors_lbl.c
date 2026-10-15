@@ -49,8 +49,8 @@ void update_lbl_sensor(void) {
 
     input.present_time = read_sensor(M_PRESENT_TIME);
     input.enabled = read_sensor(C_LBL_CONTROL) > 0;
-    input.vehicle_north = read_sensor(REAL_X);
-    input.vehicle_east = read_sensor(REAL_Y);
+    input.vehicle_north_m = read_sensor(REAL_X);
+    input.vehicle_east_m = read_sensor(REAL_Y);
     input.vehicle_depth = read_sensor(REAL_Z);
 
     result = update_lbl(&lbl_state, &config, &input);

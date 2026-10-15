@@ -9,8 +9,8 @@ typedef struct {
 
 typedef struct {
     // True vehicle position
-    double vehicle_north;
-    double vehicle_east;
+    double vehicle_north_m;
+    double vehicle_east_m;
     double vehicle_down;
     double vehicle_yaw;
 

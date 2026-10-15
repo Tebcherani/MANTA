@@ -27,8 +27,8 @@ typedef struct {
 typedef struct {
     double present_time;
     int enabled;
-    double vehicle_north;
-    double vehicle_east;
+    double vehicle_north_m;
+    double vehicle_east_m;
     double vehicle_depth;
 } lbl_input_t;
 

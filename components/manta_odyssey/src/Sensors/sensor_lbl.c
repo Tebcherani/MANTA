@@ -82,8 +82,8 @@ lbl_result_t update_lbl(lbl_state_t *state, const lbl_config_t *config, const lb
             state->cycle_number++;
             state->update_pending = 1;
 
-            state->ping_north = input->vehicle_north;
-            state->ping_east = input->vehicle_east;
+            state->ping_north = input->vehicle_north_m;
+            state->ping_east = input->vehicle_east_m;
             state->ping_depth = input->vehicle_depth;
 
             memset(state->got_reply, 0, sizeof(state->got_reply));
@@ -102,7 +102,7 @@ lbl_result_t update_lbl(lbl_state_t *state, const lbl_config_t *config, const lb
             if (!state->got_reply[beacon_index]) {
                 outgoing_distance = calculate_distance(state->ping_north, state->ping_east, state->ping_depth,
                         config->beacons[beacon_index].north, config->beacons[beacon_index].east, config->beacons[beacon_index].depth);
-                return_distance = calculate_distance(input->vehicle_north, input->vehicle_east, input->vehicle_depth,
+                return_distance = calculate_distance(input->vehicle_north_m, input->vehicle_east_m, input->vehicle_depth,
                         config->beacons[beacon_index].north, config->beacons[beacon_index].east, config->beacons[beacon_index].depth);
 
                 time_of_flight = (outgoing_distance + return_distance) / config->sound_speed + config->beacons[beacon_index].turnaround_time;

@@ -33,8 +33,8 @@ usbl_result_t update_usbl(const usbl_config_t *config, const usbl_input_t *input
         return result;
     }
 
-    north_difference = input->target_north - input->vehicle_north;
-    east_difference = input->target_east - input->vehicle_east;
+    north_difference = input->target_north - input->vehicle_north_m;
+    east_difference = input->target_east - input->vehicle_east_m;
     down_difference = input->target_down - input->vehicle_down;
 
     horizontal_range = sqrt(north_difference * north_difference + east_difference * east_difference);
