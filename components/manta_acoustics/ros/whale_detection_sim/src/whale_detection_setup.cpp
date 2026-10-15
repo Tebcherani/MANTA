@@ -16,8 +16,8 @@ void WhaleDetectionNode::load_config() {
     if (vehicle_ids_.empty()) throw std::runtime_error("vehicle_ids must contain at least one vehicle.");
 
     // Load the maximum horizontal whale-detection distance in metres.
-    detection_range_ = declare_parameter<double>("detection_range", 11000.0);
-    if (!std::isfinite(detection_range_) || detection_range_ <= 0.0) throw std::runtime_error("detection_range must be finite and greater than zero.");
+    detection_range_m_ = declare_parameter<double>("detection_range", 11000.0);
+    if (!std::isfinite(detection_range_m_) || detection_range_m_ <= 0.0) throw std::runtime_error("detection_range must be finite and greater than zero.");
 
     // Configure angular measurement uncertainty.
     const double bearing_std_degrees = declare_parameter<double>("bearing_std_degrees", 0.0);

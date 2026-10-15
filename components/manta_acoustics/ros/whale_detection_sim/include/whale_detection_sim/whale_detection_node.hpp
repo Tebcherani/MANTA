@@ -53,7 +53,7 @@ private:
 
     // Configuration
     std::vector<std::string> vehicle_ids_;
-    double detection_range_ = 11000;
+    double detection_range_m_ = 11000;
     double bearing_std_rad_ = 0.0;
 
     // Simulation
