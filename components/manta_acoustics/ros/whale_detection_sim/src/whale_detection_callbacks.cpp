@@ -116,29 +116,29 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         }
 
         // Populate the detection with the exact vehicle and whale states used.
-        acoustics_interfaces::msg::WhaleDetection detection;
-        detection.vehicle_id = vehicle_id;
-        detection.whale_id = pending_whale_call_.whale_id;
-        detection.cycle = pending_whale_call_.cycle;
-        detection.sim_time_s = pending_whale_call_.sim_time_s;
-        detection.vehicle_north_m = vehicle_state.vehicle_north_m;
-        detection.vehicle_east_m = vehicle_state.vehicle_east_m;
-        detection.whale_north_m = pending_whale_call_.whale_call_north_m;
-        detection.whale_east_m = pending_whale_call_.whale_call_east_m;
-        detection.vehicle_to_whale_range_m = vehicle_to_whale_range_m;
+        acoustics_interfaces::msg::WhaleDetection whale_detection;
+        whale_detection.vehicle_id = vehicle_id;
+        whale_detection.whale_id = pending_whale_call_.whale_id;
+        whale_detection.cycle = pending_whale_call_.cycle;
+        whale_detection.sim_time_s = pending_whale_call_.sim_time_s;
+        whale_detection.vehicle_north_m = vehicle_state.vehicle_north_m;
+        whale_detection.vehicle_east_m = vehicle_state.vehicle_east_m;
+        whale_detection.whale_north_m = pending_whale_call_.whale_call_north_m;
+        whale_detection.whale_east_m = pending_whale_call_.whale_call_east_m;
+        whale_detection.vehicle_to_whale_range_m = vehicle_to_whale_range_m;
 
         // Record the exact detection for later analysis and review.
-        whale_detection_log_ << detection.cycle << ',' << std::setprecision(17) << detection.sim_time_s << ',' << detection.vehicle_id << ',' << detection.whale_id << ',' << detection.vehicle_north_m << ',' << detection.vehicle_east_m << ',' << detection.whale_north_m << ',' << detection.whale_east_m << ',' << detection.vehicle_to_whale_range_m << '\n';
+        whale_detection_log_ << whale_detection.cycle << ',' << std::setprecision(17) << whale_detection.sim_time_s << ',' << whale_detection.vehicle_id << ',' << whale_detection.whale_id << ',' << whale_detection.vehicle_north_m << ',' << whale_detection.vehicle_east_m << ',' << whale_detection.whale_north_m << ',' << whale_detection.whale_east_m << ',' << whale_detection.vehicle_to_whale_range_m << '\n';
     }
 
     // Acknowledge that every vehicle has evaluated the pending whale call.
-    acoustics_interfaces::msg::WhaleCallProcessed processed;
-    processed.whale_id = pending_whale_call_.whale_id;
-    processed.cycle = pending_whale_call_.cycle;
-    processed.sim_time_s = pending_whale_call_.sim_time_s;
-    processed.bearing_receiver_ids = bearing_receiver_ids;
+    acoustics_interfaces::msg::WhaleCallProcessed whale_call_processed_b;
+    whale_call_processed_b.whale_id = pending_whale_call_.whale_id;
+    whale_call_processed_b.cycle = pending_whale_call_.cycle;
+    whale_call_processed_b.sim_time_s = pending_whale_call_.sim_time_s;
+    whale_call_processed_b.bearing_receiver_ids = bearing_receiver_ids;
 
     // Clear the pending state before publishing the acknowledgement.
     pending_whale_call_available_b_ = false;
-    whale_call_processed_pub_->publish(processed);
+    whale_call_processed_pub_->publish(whale_call_processed_b);
 }
