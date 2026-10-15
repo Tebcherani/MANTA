@@ -27,7 +27,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     grouping = whales["grouping"]
     bouts = whales["calling"]["bouts"]
     line = scenario["picket_line"]
-    detection = scenario["detection"]
     monte_carlo = config.get("monte_carlo", {})
 
     data_dir = container_path(output["data_directory"])
@@ -83,7 +82,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     )
     services["whale_sim"]["stop_grace_period"] = "5s"
 
-    # Mission-specific overrides for the acoustics config.
     detection_parameters = {
         "vehicle_ids": vehicle_list,
         "data_directory": data_dir,
@@ -95,7 +93,10 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         detection_parameters,
         log_dir,
         ros_domain_id,
-        params_file=("/odyssey/components/manta_acoustics/ros/whale_detection_sim/config.yaml"),
+        params_file=(
+            "/odyssey/components/manta_acoustics/ros/"
+            "whale_detection_sim/config.yaml"
+        ),
     )
 
     # Orchestrator
