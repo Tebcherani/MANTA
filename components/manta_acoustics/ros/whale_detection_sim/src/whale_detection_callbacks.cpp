@@ -85,8 +85,8 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         const auto &vehicle_state = latest_vehicle_states_.at(vehicle_id);  // Loop up the vehicle state of the vehicle with this vehicle ID
 
         // Calculate two-dimensional vehicle-to-whale distance.
-        const double north_difference = pending_whale_call_.whale_call_north_m - vehicle_state.north;
-        const double east_difference = pending_whale_call_.whale_call_east_m - vehicle_state.east;
+        const double north_difference = pending_whale_call_.whale_call_north_m - vehicle_state.vehicle_north_m;
+        const double east_difference = pending_whale_call_.whale_call_east_m - vehicle_state.vehicle_east_m;
         const double distance = std::hypot(north_difference, east_difference);
 
         // Ignore vehicles outside the configured acoustic detection range.
@@ -121,8 +121,8 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         detection.whale_id = pending_whale_call_.whale_id;
         detection.cycle = pending_whale_call_.cycle;
         detection.sim_time_s = pending_whale_call_.sim_time_s;
-        detection.vehicle_north_m = vehicle_state.north;
-        detection.vehicle_east_m = vehicle_state.east;
+        detection.vehicle_north_m = vehicle_state.vehicle_north_m;
+        detection.vehicle_east_m = vehicle_state.vehicle_east_m;
         detection.whale_north_m = pending_whale_call_.whale_call_north_m;
         detection.whale_east_m = pending_whale_call_.whale_call_east_m;
         detection.vehicle_to_whale_range_m = distance;

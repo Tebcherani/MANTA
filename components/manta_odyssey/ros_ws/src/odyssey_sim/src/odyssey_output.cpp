@@ -75,12 +75,12 @@ void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double co
     state.sim_time_s = completed_sim_time_s;
 
     // Read the vehicle's current position from the native Odyssey simulator.
-    state.north = get_odyssey_sim_north();
-    state.east = get_odyssey_sim_east();
+    state.vehicle_north_m = get_odyssey_sim_north();
+    state.vehicle_east_m = get_odyssey_sim_east();
     state.depth = get_odyssey_sim_depth();
 
     // Save the position and time used by the bearing detector.
-    bearing_positions_.push_back({state.cycle, state.sim_time_s, state.north, state.east});
+    bearing_positions_.push_back({state.cycle, state.sim_time_s, state.vehicle_north_m, state.vehicle_east_m});
 
     // Make the completed state available to the detection node.
     vehicle_state_pub_->publish(state);

@@ -1,7 +1,6 @@
 string vehicle_id
 uint64 cycle
 float64 sim_time_s
-
-float64 north
-float64 east
+float64 vehicle_north_m
+float64 vehicle_east_m
 float64 depth
