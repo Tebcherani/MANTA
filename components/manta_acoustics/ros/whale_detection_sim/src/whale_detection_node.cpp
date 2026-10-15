@@ -20,7 +20,8 @@ int main(int argc, char **argv) {
 
     try {
         rclcpp::spin(std::make_shared<WhaleDetectionNode>());
-    } catch (const std::exception &error) {
+    }
+    catch (const std::exception &error) {
         RCLCPP_FATAL(rclcpp::get_logger("whale_detection_node"), "%s", error.what());
         rclcpp::shutdown();
         return EXIT_FAILURE;

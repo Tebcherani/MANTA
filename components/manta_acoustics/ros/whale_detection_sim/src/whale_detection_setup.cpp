@@ -16,13 +16,13 @@ void WhaleDetectionNode::load_config() {
     if (vehicle_ids_.empty()) throw std::runtime_error("vehicle_ids must contain at least one vehicle.");
 
     // Load the maximum horizontal whale-detection distance in metres.
-    detection_range_m_ = declare_parameter<double>("detection_range", 11000.0);
-    if (!std::isfinite(detection_range_m_) || detection_range_m_ <= 0.0) throw std::runtime_error("detection_range must be finite and greater than zero.");
+    detection_range_m_ = declare_parameter<double>("detection_range_m", 11000.0);
+    if (!std::isfinite(detection_range_m_) || detection_range_m_ <= 0.0) throw std::runtime_error("detection_range_m must be finite and greater than zero.");
 
     // Configure angular measurement uncertainty.
-    const double bearing_std_degrees = declare_parameter<double>("bearing_std_degrees", 0.0);
-    if (!std::isfinite(bearing_std_degrees) || bearing_std_degrees < 0.0) throw std::runtime_error("bearing_std_degrees must be finite and nonnegative.");
-    bearing_std_rad_ = bearing_std_degrees * std::acos(-1.0) / 180.0;
+    const double bearing_std_deg = declare_parameter<double>("bearing_std_deg", 0.0);
+    if (!std::isfinite(bearing_std_deg) || bearing_std_deg < 0.0) throw std::runtime_error("bearing_std_deg must be finite and nonnegative.");
+    bearing_std_rad_ = bearing_std_deg * std::acos(-1.0) / 180.0;
 
     const auto seed = declare_parameter<int64_t>("call_position_seed", 0);
     if (seed < 0) throw std::runtime_error("call_position_seed cannot be negative.");
