@@ -45,21 +45,14 @@ private:
     struct Whale {
         std::string id;
         int group_index;
-
         double start_time_s;
-
-        std::vector<double> call_times;
+        std::vector<double> whale_call_times_s;
         std::size_t next_call_index = 0;
-
         std::vector<WhaleWaypoint> trajectory;
-
-        // Current values published in WhaleState messages and written to CSV.
         double north;
         double east;
         double velocity_north;
         double velocity_east;
-
-        // Whale lifecycle state.
         bool active;
         bool complete;
         double starting_side;
@@ -98,8 +91,8 @@ private:
     LineGeometry compute_line_geometry() const;
     std::vector<WhaleWaypoint> generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time_s, const LineGeometry &line, const WhaleGroup &group);
     Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time_s) const;
-    std::vector<double> generate_population_call_times(double start_time_s, double end_time);
-    void assign_population_call_times();
+    std::vector<double> generate_population_whale_call_times_s(double start_time_s, double end_time);
+    void assign_population_whale_call_times_s();
     std::size_t get_group_index_for_whale(std::size_t whale_index) const;
     const WhaleGroup &get_group_for_whale(std::size_t whale_index) const;
     double sample_whale_group_crossing_distance_m(const WhaleGroup &group, double line_length);

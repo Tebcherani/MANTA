@@ -8,9 +8,9 @@
 /**
  * Assign each population-level call to one whale active at that call time.
  */
-void WhaleNode::assign_population_call_times() {
+void WhaleNode::assign_population_whale_call_times_s() {
     for (Whale &whale : whales_) {
-        whale.call_times.clear();
+        whale.whale_call_times_s.clear();
         whale.next_call_index = 0;
     }
 
@@ -26,7 +26,7 @@ void WhaleNode::assign_population_call_times() {
         final_end_time = std::max(final_end_time, whale.trajectory.back().sim_time_s);
     }
 
-    const std::vector<double> population_calls = generate_population_call_times(first_start_time, final_end_time);
+    const std::vector<double> population_calls = generate_population_whale_call_times_s(first_start_time, final_end_time);
 
     for (double call_time : population_calls) {
         std::vector<std::size_t> active_whales;
@@ -44,7 +44,7 @@ void WhaleNode::assign_population_call_times() {
         if (active_whales.empty()) continue;
 
         std::uniform_int_distribution<std::size_t> select_whale(0, active_whales.size() - 1);
-        whales_[active_whales[select_whale(rng_)]].call_times.push_back(call_time);
+        whales_[active_whales[select_whale(rng_)]].whale_call_times_s.push_back(call_time);
     }
 }
 
@@ -95,7 +95,7 @@ WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t gr
     whale.complete = false;
     whale.starting_side = group.whale_group_starting_side;
 
-    whale.call_times.clear();
+    whale.whale_call_times_s.clear();
     whale.next_call_index = 0;
 
     return whale;
@@ -107,10 +107,10 @@ WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t gr
  * The population alternates between exponentially distributed active and silent
  * periods. Calls within active bouts follow a homogeneous Poisson process.
  */
-std::vector<double> WhaleNode::generate_population_call_times(double start_time_s, double end_time) {
-    std::vector<double> call_times;
+std::vector<double> WhaleNode::generate_population_whale_call_times_s(double start_time_s, double end_time) {
+    std::vector<double> whale_call_times_s;
 
-    if (end_time <= start_time_s) return call_times;
+    if (end_time <= start_time_s) return whale_call_times_s;
 
     std::exponential_distribution<double> active_duration(1.0 / whale_call_bout_mean_duration_s_);
     std::exponential_distribution<double> silent_duration(1.0 / whale_call_bout_mean_silent_duration_s_);
@@ -141,7 +141,7 @@ std::vector<double> WhaleNode::generate_population_call_times(double start_time_
             double call_time = interval_start + time_until_call;
 
             while (call_time < interval_end) {
-                call_times.push_back(call_time);
+                whale_call_times_s.push_back(call_time);
 
                 do {
                     time_until_call = call_interval(rng_);
@@ -155,7 +155,7 @@ std::vector<double> WhaleNode::generate_population_call_times(double start_time_
         active = !active;
     }
 
-    return call_times;
+    return whale_call_times_s;
 }
 
 /**
@@ -305,7 +305,7 @@ void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState 
     
     if (whale.trajectory.empty()) throw std::runtime_error("Generated whale trajectory is empty.");
     
-    whale.call_times.clear();
+    whale.whale_call_times_s.clear();
     whale.next_call_index = 0;
 
     const WhaleWaypoint &first_point = whale.trajectory.front();
@@ -351,7 +351,7 @@ void WhaleNode::initialize_whales() {
         whales_.push_back(std::move(whale));
     }
 
-    assign_population_call_times();
+    assign_population_whale_call_times_s();
 }
 
 /**

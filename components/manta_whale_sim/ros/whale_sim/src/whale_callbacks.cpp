@@ -21,13 +21,13 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
     // Search every whale for its earliest unprocessed call.
     for (auto &whale : whales_) {
         // Discard calls that the orchestrator has already processed.
-        while (whale.next_call_index < whale.call_times.size() && whale.call_times[whale.next_call_index] <= request.whale_call_after_time_s) {
+        while (whale.next_call_index < whale.whale_call_times_s.size() && whale.whale_call_times_s[whale.next_call_index] <= request.whale_call_after_time_s) {
             ++whale.next_call_index;
         }
 
         // Skip whales that have no scheduled calls remaining.
-        if (whale.next_call_index >= whale.call_times.size()) continue;
-        const double candidate_time = whale.call_times[whale.next_call_index];
+        if (whale.next_call_index >= whale.whale_call_times_s.size()) continue;
+        const double candidate_time = whale.whale_call_times_s[whale.next_call_index];
 
         // Retain the earliest call found across all whales.
         if (candidate_time < next_time) {
