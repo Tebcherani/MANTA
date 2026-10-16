@@ -25,7 +25,7 @@ private:
     // ---------------------------------------------------------------------
 
     // One timestamped point in a precomputed whale trajectory.
-    struct TrajectoryPoint {
+    struct WhaleWaypoint {
         double sim_time_s;
         double whale_north_m;
         double whale_east_m;
@@ -35,9 +35,9 @@ private:
 
     // Shared movement and calling behavior for one group of whales.
     struct WhaleGroup {
-        double crossing_distance;
+        double crossing_distance_m;
         double side;
-        double start_time;
+        double start_time_s;
         std::vector<double> heading_errors;
     };
 
@@ -46,12 +46,12 @@ private:
         std::string id;
         int group_index;
 
-        double start_time;
+        double start_time_s;
 
         std::vector<double> call_times;
         std::size_t next_call_index = 0;
 
-        std::vector<TrajectoryPoint> trajectory;
+        std::vector<WhaleWaypoint> trajectory;
 
         // Current values published in WhaleState messages and written to CSV.
         double north;
@@ -94,15 +94,15 @@ private:
     void seed_generator();
     void validate_config() const;
 
-    WhaleInitialState compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double crossing_distance, double speed) const;
+    WhaleInitialState compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double crossing_distance_m, double speed) const;
     LineGeometry compute_line_geometry() const;
-    std::vector<TrajectoryPoint> generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time, const LineGeometry &line, const WhaleGroup &group);
-    Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time) const;
-    std::vector<double> generate_population_call_times(double start_time, double end_time);
+    std::vector<WhaleWaypoint> generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time_s, const LineGeometry &line, const WhaleGroup &group);
+    Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time_s) const;
+    std::vector<double> generate_population_call_times(double start_time_s, double end_time);
     void assign_population_call_times();
     std::size_t get_group_index_for_whale(std::size_t whale_index) const;
     const WhaleGroup &get_group_for_whale(std::size_t whale_index) const;
-    double sample_crossing_distance(const WhaleGroup &group, double line_length);
+    double sample_crossing_distance_m(const WhaleGroup &group, double line_length);
     double sample_start_time(const WhaleGroup &group);
     double sample_speed();
 
@@ -117,7 +117,7 @@ private:
     void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
     void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr step);
 
-    TrajectoryPoint trajectory_at_time(const Whale &whale, double time) const;
+    WhaleWaypoint trajectory_at_time(const Whale &whale, double time) const;
     void update_whales(const manta_interfaces::msg::SimStep &step);
 
     // ---------------------------------------------------------------------

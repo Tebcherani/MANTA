@@ -49,7 +49,7 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
     response.whale_call.sim_time_s = next_time;
 
     // Calculate the whale's location at the exact time of the call.
-    const TrajectoryPoint call_position = trajectory_at_time(*next_whale, next_time);
+    const WhaleWaypoint call_position = trajectory_at_time(*next_whale, next_time);
 
     response.whale_call.whale_call_north_m = call_position.whale_north_m;
     response.whale_call.whale_call_east_m = call_position.whale_east_m;
@@ -94,11 +94,11 @@ void WhaleNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr 
  * @param time Requested simulation time.
  * @return Whale position and velocity at the requested time.
  */
-WhaleNode::TrajectoryPoint WhaleNode::trajectory_at_time(const Whale &whale, double time) const {
+WhaleNode::WhaleWaypoint WhaleNode::trajectory_at_time(const Whale &whale, double time) const {
     if (whale.trajectory.empty()) throw std::runtime_error("Whale trajectory contains no points.");
 
-    const TrajectoryPoint &first = whale.trajectory.front();
-    const TrajectoryPoint &last = whale.trajectory.back();
+    const WhaleWaypoint &first = whale.trajectory.front();
+    const WhaleWaypoint &last = whale.trajectory.back();
 
     // Before activation, keep the whale stationary at its initial location.
     if (time < first.sim_time_s) return {time, first.whale_north_m, first.whale_east_m, 0.0, 0.0};
@@ -108,10 +108,10 @@ WhaleNode::TrajectoryPoint WhaleNode::trajectory_at_time(const Whale &whale, dou
 
     // Find the first trajectory point after the requested time. The preceding point describes the active constant-velocity segment.
     const auto next = std::upper_bound(
-        whale.trajectory.begin(), whale.trajectory.end(), time, [](double requested_time, const TrajectoryPoint &point) {return requested_time < point.sim_time_s;}
+        whale.trajectory.begin(), whale.trajectory.end(), time, [](double requested_time, const WhaleWaypoint &point) {return requested_time < point.sim_time_s;}
     );
 
-    const TrajectoryPoint &segment = *(next - 1);
+    const WhaleWaypoint &segment = *(next - 1);
     const double elapsed = time - segment.sim_time_s;
 
     // Advance from the segment's starting position using its stored velocity.
@@ -146,12 +146,12 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
 
     for (auto &whale : whales_) {
         // Update each whale from its precomputed trajectory. Absolute-time lookup keeps whale movement independent of the ROS batch size.
-        const TrajectoryPoint position = trajectory_at_time(whale, batch_end_time);
+        const WhaleWaypoint position = trajectory_at_time(whale, batch_end_time);
         whale.north = position.whale_north_m;
         whale.east = position.whale_east_m;
         whale.velocity_north = position.whale_velocity_north_mps;
         whale.velocity_east = position.whale_velocity_east_mps;
-        whale.active = batch_end_time >= whale.start_time && batch_end_time < whale.trajectory.back().sim_time_s;
+        whale.active = batch_end_time >= whale.start_time_s && batch_end_time < whale.trajectory.back().sim_time_s;
         whale.complete = batch_end_time >= whale.trajectory.back().sim_time_s;
 
         // Build and publish the ground-truth state at the completed batch time.
@@ -183,7 +183,7 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
 
         // Record every whale at the exact scheduled output time.
         for (const auto &whale : whales_) {
-            const TrajectoryPoint sample = trajectory_at_time(whale, next_whale_log_time_s_);
+            const WhaleWaypoint sample = trajectory_at_time(whale, next_whale_log_time_s_);
             whale_log_ << sample_cycle << ',' << next_whale_log_time_s_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.whale_north_m << ',' << sample.whale_east_m << ',' << '\n';
         }
 
