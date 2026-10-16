@@ -309,10 +309,10 @@ void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState 
     whale.next_call_index = 0;
 
     const WhaleWaypoint &first_point = whale.trajectory.front();
-    whale.north = first_point.whale_north_m;
-    whale.east = first_point.whale_east_m;
-    whale.velocity_north = first_point.whale_velocity_north_mps;
-    whale.velocity_east = first_point.whale_velocity_east_mps;
+    whale.whale_north_m = first_point.whale_north_m;
+    whale.whale_east_m = first_point.whale_east_m;
+    whale.whale_velocity_north_mps = first_point.whale_velocity_north_mps;
+    whale.whale_velocity_east_mps = first_point.whale_velocity_east_mps;
 }
 
 /**

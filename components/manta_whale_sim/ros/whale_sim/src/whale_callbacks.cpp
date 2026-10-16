@@ -147,10 +147,10 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     for (auto &whale : whales_) {
         // Update each whale from its precomputed trajectory. Absolute-time lookup keeps whale movement independent of the ROS batch size.
         const WhaleWaypoint position = trajectory_at_time(whale, batch_end_time);
-        whale.north = position.whale_north_m;
-        whale.east = position.whale_east_m;
-        whale.velocity_north = position.whale_velocity_north_mps;
-        whale.velocity_east = position.whale_velocity_east_mps;
+        whale.whale_north_m = position.whale_north_m;
+        whale.whale_east_m = position.whale_east_m;
+        whale.whale_velocity_north_mps = position.whale_velocity_north_mps;
+        whale.whale_velocity_east_mps = position.whale_velocity_east_mps;
         whale.active = batch_end_time >= whale.start_time_s && batch_end_time < whale.trajectory.back().sim_time_s;
         whale.complete = batch_end_time >= whale.trajectory.back().sim_time_s;
 
@@ -159,10 +159,10 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
         state.whale_active_b = whale.active;
         state.whale_id = whale.id;
         state.cycle = completed_cycle;
-        state.whale_north_m = whale.north;
-        state.whale_east_m = whale.east;
-        state.whale_velocity_north_mps = whale.velocity_north;
-        state.whale_velocity_east_mps = whale.velocity_east;
+        state.whale_north_m = whale.whale_north_m;
+        state.whale_east_m = whale.whale_east_m;
+        state.whale_velocity_north_mps = whale.whale_velocity_north_mps;
+        state.whale_velocity_east_mps = whale.whale_velocity_east_mps;
         msg.whales.push_back(state);
     }
 

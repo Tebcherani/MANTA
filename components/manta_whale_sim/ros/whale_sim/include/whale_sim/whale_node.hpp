@@ -49,10 +49,10 @@ private:
         std::vector<double> whale_call_times_s;
         std::size_t next_call_index = 0;
         std::vector<WhaleWaypoint> trajectory;
-        double north;
-        double east;
-        double velocity_north;
-        double velocity_east;
+        double whale_north_m;
+        double whale_east_m;
+        double whale_velocity_north_mps;
+        double whale_velocity_east_mps;
         bool active;
         bool complete;
         double starting_side;
