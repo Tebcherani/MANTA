@@ -51,13 +51,13 @@ void WhaleNode::assign_population_call_times() {
 /**
  * Calculate the whale's starting position and heading toward the picket line.
  */
-WhaleNode::WhaleInitialState WhaleNode::compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double crossing_distance_m, double speed) const {
-    const double crossing_north = picket_line_start_north_m_ + line.along_north * crossing_distance_m;
-    const double crossing_east = picket_line_start_east_m_ + line.along_east * crossing_distance_m;
-    const double initial_north = crossing_north + group.side * line.perpendicular_north * whale_start_distance_from_picket_line_m_;
-    const double initial_east = crossing_east + group.side * line.perpendicular_east * whale_start_distance_from_picket_line_m_;
-    const double velocity_north = -group.side * line.perpendicular_north * speed;
-    const double velocity_east = -group.side * line.perpendicular_east * speed;
+WhaleNode::WhaleInitialState WhaleNode::compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double whale_group_crossing_distance_m, double speed) const {
+    const double crossing_north = picket_line_start_north_m_ + line.along_north * whale_group_crossing_distance_m;
+    const double crossing_east = picket_line_start_east_m_ + line.along_east * whale_group_crossing_distance_m;
+    const double initial_north = crossing_north + group.whale_group_starting_side * line.perpendicular_north * whale_start_distance_from_picket_line_m_;
+    const double initial_east = crossing_east + group.whale_group_starting_side * line.perpendicular_east * whale_start_distance_from_picket_line_m_;
+    const double velocity_north = -group.whale_group_starting_side * line.perpendicular_north * speed;
+    const double velocity_east = -group.whale_group_starting_side * line.perpendicular_east * speed;
 
     return {initial_north, initial_east, std::atan2(velocity_east, velocity_north)};
 }
@@ -93,7 +93,7 @@ WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t gr
     whale.start_time_s = start_time_s;
     whale.active = false;
     whale.complete = false;
-    whale.starting_side = group.side;
+    whale.starting_side = group.whale_group_starting_side;
 
     whale.call_times.clear();
     whale.next_call_index = 0;
@@ -182,8 +182,8 @@ std::vector<WhaleNode::WhaleWaypoint> WhaleNode::generate_trajectory(double init
 
     while (true) {
         // Combine the group and individual heading errors for this interval.
-        const std::size_t group_heading_index = std::min(static_cast<std::size_t>(std::floor(time / whale_turn_interval_s_)), group.heading_errors.size() - 1);
-        const double combined_heading_error = group_weight * group.heading_errors[group_heading_index] + individual_weight * individual_heading_error;
+        const std::size_t group_heading_index = std::min(static_cast<std::size_t>(std::floor(time / whale_turn_interval_s_)), group.whale_group_heading_errors_rad.size() - 1);
+        const double combined_heading_error = group_weight * group.whale_group_heading_errors_rad[group_heading_index] + individual_weight * individual_heading_error;
         const double heading = crossing_heading + combined_heading_error;
 
         // Convert the whale's speed and heading into north/east velocity.
@@ -210,7 +210,7 @@ std::vector<WhaleNode::WhaleWaypoint> WhaleNode::generate_trajectory(double init
             const double relative_east = east - picket_line_start_east_m_;
             const double signed_distance = relative_north * line.perpendicular_north + relative_east * line.perpendicular_east;
 
-            if (group.side * signed_distance <= -whale_start_distance_from_picket_line_m_) {
+            if (group.whale_group_starting_side * signed_distance <= -whale_start_distance_from_picket_line_m_) {
                 trajectory.push_back({time, north, east, 0.0, 0.0});
                 break;
             }
@@ -263,7 +263,7 @@ void WhaleNode::initialize_whale_groups(double line_length) {
     const double heading_innovation_scale = heading_std_radians * std::sqrt(1.0 - whale_heading_correlation_ * whale_heading_correlation_);
 
     // Create distributions used to generate group-level properties.
-    std::uniform_real_distribution<double> crossing_distance_m(0.0, line_length);
+    std::uniform_real_distribution<double> whale_group_crossing_distance_m(0.0, line_length);
     std::uniform_real_distribution<double> start_time_distribution(0.0, mission_duration_s_);
     std::bernoulli_distribution starting_side(0.5);
     std::normal_distribution<double> standard_normal(0.0, 1.0);
@@ -275,20 +275,20 @@ void WhaleNode::initialize_whale_groups(double line_length) {
         WhaleGroup group;
 
         // Generate the group's crossing location, starting side, and start time.
-        group.crossing_distance_m = crossing_distance_m(rng_);
-        group.side = starting_side(rng_) ? 1.0 : -1.0;
-        group.start_time_s = start_time_distribution(rng_);
+        group.whale_group_crossing_distance_m = whale_group_crossing_distance_m(rng_);
+        group.whale_group_starting_side = starting_side(rng_) ? 1.0 : -1.0;
+        group.whale_group_start_time_s = start_time_distribution(rng_);
 
         // Generate the group's correlated heading-error process. Each group
         // initially travels directly toward its crossing location.
-        group.heading_errors.reserve(heading_count);
+        group.whale_group_heading_errors_rad.reserve(heading_count);
 
         double heading_error = 0.0;
-        group.heading_errors.push_back(heading_error);
+        group.whale_group_heading_errors_rad.push_back(heading_error);
 
         for (std::size_t heading_index = 1; heading_index < heading_count; ++heading_index) {
             heading_error = whale_heading_correlation_ * heading_error + heading_innovation_scale * standard_normal(rng_);
-            group.heading_errors.push_back(heading_error);
+            group.whale_group_heading_errors_rad.push_back(heading_error);
         }
 
         whale_groups_.push_back(std::move(group));
@@ -342,8 +342,8 @@ void WhaleNode::initialize_whales() {
             const double heading_radians = whale_initial_heading_deg_ * std::acos(-1.0) / 180.0;
             initial_state = {whale_initial_north_m_, whale_initial_east_m_, heading_radians};
         } else {
-            const double crossing_distance_m = sample_crossing_distance_m(group, line.length);
-            initial_state = compute_initial_state(group, line, crossing_distance_m, whale_speed);
+            const double whale_group_crossing_distance_m = sample_whale_group_crossing_distance_m(group, line.length);
+            initial_state = compute_initial_state(group, line, whale_group_crossing_distance_m, whale_speed);
         }
 
         Whale whale = create_whale(index, group_index, group, whale_start_time);
@@ -412,12 +412,12 @@ void WhaleNode::open_whale_log() {
 /**
  * Draw a crossing location near the group center and within the picket line.
  */
-double WhaleNode::sample_crossing_distance_m(const WhaleGroup &group, double line_length) {
+double WhaleNode::sample_whale_group_crossing_distance_m(const WhaleGroup &group, double line_length) {
     std::normal_distribution<double> offset(0.0, whale_group_position_std_m_);
     double distance;
 
     do {
-        distance = group.crossing_distance_m + offset(rng_);
+        distance = group.whale_group_crossing_distance_m + offset(rng_);
     } while (distance < 0.0 || distance > line_length);
 
     return distance;
@@ -445,7 +445,7 @@ double WhaleNode::sample_start_time(const WhaleGroup &group) {
     double time;
 
     do {
-        time = group.start_time_s + offset(rng_);
+        time = group.whale_group_start_time_s + offset(rng_);
     } while (time < 0.0 || time >= mission_duration_s_);
 
     return time;
