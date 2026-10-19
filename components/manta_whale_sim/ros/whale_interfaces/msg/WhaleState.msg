@@ -1,4 +1,4 @@
-bool whale_active_b
+bool whale_active_b_b
 string whale_id
 uint64 cycle
 float64 whale_north_m

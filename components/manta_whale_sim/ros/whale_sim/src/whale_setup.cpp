@@ -91,8 +91,8 @@ WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t gr
     whale.id = "whale_" + std::to_string(whale_index + 1);
     whale.group_index = group_index;
     whale.start_time_s = start_time_s;
-    whale.whale_active = false;
-    whale.whale_complete = false;
+    whale.whale_active_b = false;
+    whale.whale_complete_b = false;
     whale.whale_starting_side = group.whale_group_starting_side;
 
     whale.whale_call_times_s.clear();
@@ -114,7 +114,7 @@ std::vector<double> WhaleNode::generate_population_whale_call_times_s(double sta
 
     std::exponential_distribution<double> active_duration(1.0 / whale_call_bout_mean_duration_s_);
     std::exponential_distribution<double> silent_duration(1.0 / whale_call_bout_mean_silent_duration_s_);
-    std::exponential_distribution<double> call_interval(whale_active_call_bout_rate_callph / 3600.0);
+    std::exponential_distribution<double> call_interval(whale_active_b_call_bout_rate_callph / 3600.0);
 
     const double active_probability = whale_call_bout_mean_duration_s_ / (whale_call_bout_mean_duration_s_ + whale_call_bout_mean_silent_duration_s_);
     std::bernoulli_distribution initial_state(active_probability);
@@ -384,7 +384,7 @@ void WhaleNode::load_config() {
     // Whale calling behavior.
     whale_call_bout_mean_duration_s_ = declare_parameter<double>("bout_mean_duration", 1842.0);
     whale_call_bout_mean_silent_duration_s_ = declare_parameter<double>("bout_mean_silent_duration", 7860.0);
-    whale_active_call_bout_rate_callph = declare_parameter<double>("bout_active_call_rate_per_hour", 40.1);
+    whale_active_b_call_bout_rate_callph = declare_parameter<double>("bout_active_call_rate_per_hour", 40.1);
 
     // Whale grouping behavior.
     whale_group_mean_size_ = declare_parameter<double>("group_mean_size", 3.0);
@@ -486,7 +486,7 @@ void WhaleNode::validate_config() const {
 
     if (whale_call_bout_mean_duration_s_ <= 0.0) throw std::runtime_error("Mean calling-bout duration must be positive.");
     if (whale_call_bout_mean_silent_duration_s_ <= 0.0) throw std::runtime_error("Mean silent duration between calling bouts must be positive.");
-    if (whale_active_call_bout_rate_callph <= 0.0) throw std::runtime_error("Active-bout call rate must be positive.");
+    if (whale_active_b_call_bout_rate_callph <= 0.0) throw std::runtime_error("Active-bout call rate must be positive.");
 
     if (whale_group_mean_size_ < 1.0) throw std::runtime_error("group_mean_size must be at least one.");
     if (whale_group_position_std_m_ < 0.0) throw std::runtime_error("group_position_std cannot be negative.");

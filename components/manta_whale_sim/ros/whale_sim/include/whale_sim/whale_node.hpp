@@ -53,8 +53,8 @@ private:
         double whale_east_m;
         double whale_velocity_north_mps;
         double whale_velocity_east_mps;
-        bool whale_active;
-        bool whale_complete;
+        bool whale_active_b;
+        bool whale_complete_b;
         double whale_starting_side;
     };
 
@@ -147,7 +147,7 @@ private:
 
     double whale_call_bout_mean_duration_s_;
     double whale_call_bout_mean_silent_duration_s_;
-    double whale_active_call_bout_rate_callph;
+    double whale_active_b_call_bout_rate_callph;
 
     double whale_group_mean_size_;
     double whale_group_position_std_m_;
