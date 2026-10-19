@@ -53,9 +53,9 @@ private:
         double whale_east_m;
         double whale_velocity_north_mps;
         double whale_velocity_east_mps;
-        bool active;
-        bool complete;
-        double starting_side;
+        bool whale_active;
+        bool whale_complete;
+        double whale_starting_side;
     };
 
     // Geometric properties of the picket line expressed in local north-east coordinates.

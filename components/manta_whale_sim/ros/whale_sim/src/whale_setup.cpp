@@ -91,9 +91,9 @@ WhaleNode::Whale WhaleNode::create_whale(std::size_t whale_index, std::size_t gr
     whale.id = "whale_" + std::to_string(whale_index + 1);
     whale.group_index = group_index;
     whale.start_time_s = start_time_s;
-    whale.active = false;
-    whale.complete = false;
-    whale.starting_side = group.whale_group_starting_side;
+    whale.whale_active = false;
+    whale.whale_complete = false;
+    whale.whale_starting_side = group.whale_group_starting_side;
 
     whale.whale_call_times_s.clear();
     whale.next_call_index = 0;
