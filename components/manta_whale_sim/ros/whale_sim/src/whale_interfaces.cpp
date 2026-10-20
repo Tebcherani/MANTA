@@ -21,12 +21,12 @@ void WhaleNode::create_publishers() {
 void WhaleNode::create_subscribers() {
     // Receive simulation batches from the orchestrator.
     sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
-        "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {handle_sim_step(step);}
+        "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {handle_sim_step(step); log_state_if_changed();}
     );
 
     // Receive the orchestrator's request to stop the simulation.
     shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
-        "/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {handle_shutdown(message);}
+        "/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {handle_shutdown(message); log_state_if_changed();}
     );
 }
 
@@ -39,5 +39,6 @@ void WhaleNode::create_services() {
         const std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Request> request,
         std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Response> response) {
         handle_get_next_call(*request, *response);
+        log_state_if_changed();
     });
 }

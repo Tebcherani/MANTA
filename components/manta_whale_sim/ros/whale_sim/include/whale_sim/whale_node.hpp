@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <fstream>
+#include "manta_interfaces/state_log.hpp"
 #include <string>
 #include <vector>
 
@@ -29,6 +30,8 @@ private:
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
+
+    void log_state_if_changed();
 
     // Setup
     void load_config();
@@ -71,6 +74,7 @@ private:
 
     WhaleState sim_state_;
     std::ofstream whale_log_;
+    manta::StateLog state_log_;
 
     // ---------------------------------------------------------------------
     // ROS interfaces

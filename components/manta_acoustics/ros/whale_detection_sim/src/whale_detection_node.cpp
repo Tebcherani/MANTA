@@ -1,4 +1,5 @@
 #include "whale_detection_sim/whale_detection_node.hpp"
+#include "whale_detection_sim/whale_detection_state_json.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -10,9 +11,15 @@
 WhaleDetectionNode::WhaleDetectionNode() : rclcpp::Node("whale_detection_node") {
     load_config();
     open_detection_log();
+    state_log_.open(sim_state_.data_directory + "/whale_detection_state.jsonl");
+    log_state_if_changed();
     create_ros_interfaces();
     
     RCLCPP_INFO(get_logger(), "Whale detector initialized for %zu vehicles with a %.1f m detection range.", sim_state_.vehicle_ids.size(), sim_state_.detection_range_m);
+}
+
+void WhaleDetectionNode::log_state_if_changed() {
+    state_log_.record(sim_state_);
 }
 
 int main(int argc, char **argv) {

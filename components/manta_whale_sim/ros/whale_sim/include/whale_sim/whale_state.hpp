@@ -13,52 +13,52 @@
 struct WhaleState {
     // One timestamped point in a precomputed whale trajectory.
     struct WhaleWaypoint {
-        double sim_time_s;
-        double whale_north_m;
-        double whale_east_m;
-        double whale_velocity_north_mps;
-        double whale_velocity_east_mps;
+        double sim_time_s{};
+        double whale_north_m{};
+        double whale_east_m{};
+        double whale_velocity_north_mps{};
+        double whale_velocity_east_mps{};
     };
 
     // Shared movement and calling behavior for one group of whales.
     struct WhaleGroup {
-        double whale_group_crossing_distance_m;
-        double whale_group_starting_side;
-        double whale_group_start_time_s;
+        double whale_group_crossing_distance_m{};
+        double whale_group_starting_side{};
+        double whale_group_start_time_s{};
         std::vector<double> whale_group_heading_errors_rad;
     };
 
     // Simulation state and precomputed behavior for one whale.
     struct Whale {
         std::string id;
-        int group_index;
-        double start_time_s;
+        int group_index{};
+        double start_time_s{};
         std::vector<double> whale_call_times_s;
         std::size_t next_call_index = 0;
         std::vector<WhaleWaypoint> trajectory;
-        double whale_north_m;
-        double whale_east_m;
-        double whale_velocity_north_mps;
-        double whale_velocity_east_mps;
-        bool whale_active_b;
-        bool whale_complete_b;
-        double whale_starting_side;
+        double whale_north_m{};
+        double whale_east_m{};
+        double whale_velocity_north_mps{};
+        double whale_velocity_east_mps{};
+        bool whale_active_b{};
+        bool whale_complete_b{};
+        double whale_starting_side{};
     };
 
     // Geometric properties of the picket line expressed in local north-east coordinates.
     struct LineGeometry {
-        double picket_line_length_m;
-        double picket_line_unit_vector_north;
-        double picket_line_unit_vector_east;
-        double perpendicular_to_picket_line_unit_vector_north;
-        double perpendicular_to_picket_line_unit_vector_east;
+        double picket_line_length_m{};
+        double picket_line_unit_vector_north{};
+        double picket_line_unit_vector_east{};
+        double perpendicular_to_picket_line_unit_vector_north{};
+        double perpendicular_to_picket_line_unit_vector_east{};
     };
 
     // Initial whale position and direction of travel toward the picket line.
     struct WhaleInitialState {
-        double whale_north_m;
-        double whale_east_m;
-        double whale_heading_rad;
+        double whale_north_m{};
+        double whale_east_m{};
+        double whale_heading_rad{};
     };
 
     // Output

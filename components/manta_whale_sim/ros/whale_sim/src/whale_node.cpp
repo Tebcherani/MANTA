@@ -1,4 +1,5 @@
 #include "whale_sim/whale_node.hpp"
+#include "whale_sim/whale_state_json.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -16,9 +17,16 @@ WhaleNode::WhaleNode() : rclcpp::Node("whale_node") {
     open_whale_log();
     seed_generator();
     initialize_whales();
+    state_log_.open(sim_state_.data_directory + "/whale_state.jsonl");
+    log_state_if_changed();
     create_ros_interfaces();
 
     RCLCPP_INFO(get_logger(), "Initialized %d whales.", sim_state_.whale_count);
+}
+
+void WhaleNode::log_state_if_changed() {
+    state_log_.record(sim_state_, write_whale_runtime_json,
+        [](std::ostream &out, const WhaleState &state) { write_json(out, state); });
 }
 
 int main(int argc, char **argv) {

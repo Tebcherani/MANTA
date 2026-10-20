@@ -2,6 +2,7 @@
 #define WHALE_DETECTION_SIM__WHALE_DETECTION_NODE_HPP_
 
 #include <fstream>
+#include "manta_interfaces/state_log.hpp"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -24,6 +25,8 @@ private:
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
+
+    void log_state_if_changed();
 
     // Setup
     void load_config();
@@ -51,6 +54,7 @@ private:
 
     // Output
     std::ofstream whale_detection_log_;
+    manta::StateLog state_log_;
 
     // ---------------------------------------------------------------------
     // ROS interfaces
