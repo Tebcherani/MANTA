@@ -5,7 +5,7 @@ MANTA is a ROS 2 and Docker simulation framework for evaluating autonomous under
 The current missions use Odyssey AUVs, stochastic North Atlantic right whale movement and calling, and simulated acoustic detection:
 
 - **Picket line:** vehicles patrol assigned line segments and record whale-call detections.
-- **Trailing:** a vehicle follows detected whale-call locations, with configurable position uncertainty and waypoint-update intervals.
+- **Trailing:** a vehicle follows detected whale-call locations, with configurable waypoint-update intervals.
 
 Each mission owns its configuration, service definitions, mission generator, sweeps, and review scripts. Shared build, runtime, service construction, and Monte Carlo utilities live in `components/manta_core/scripts/`.
 
@@ -60,7 +60,6 @@ Stop the normal-run services with:
 
 ```bash
 ./picket_line sweep
-./trailing sweep accuracy
 ./trailing sweep comms
 ```
 
@@ -73,7 +72,6 @@ Sweeps run repeated Monte Carlo realizations internally. There is no separate st
 ./picket_line review sweep
 
 ./trailing review tracks
-./trailing review sweep accuracy
 ./trailing review sweep comms
 ```
 
@@ -90,10 +88,8 @@ Review commands plot existing results without preparing a new simulation.
 | `./picket_line review tracks` | Plot picket-line trajectories and detections. |
 | `./picket_line review sweep` | Plot fleet-size sweep results. |
 | `./trailing run` | Run the trailing mission. |
-| `./trailing sweep accuracy` | Sweep call-position uncertainty. |
 | `./trailing sweep comms` | Sweep call waypoint-update intervals. |
 | `./trailing review tracks` | Plot trailing trajectories and tracking metrics. |
-| `./trailing review sweep accuracy` | Plot the accuracy sweep. |
 | `./trailing review sweep comms` | Plot the update-interval sweep. |
 
 ```bash
@@ -183,7 +179,6 @@ mission_generation:
 
 review:
   tracks: missions/trailing/review/plot_tracks.py
-  sweep_accuracy: missions/trailing/review/plot_sweep_call_accuracy.py
   sweep_comms: missions/trailing/review/plot_sweep_comms_freq.py
 ```
 
@@ -211,12 +206,22 @@ output:
   data_directory: ./output/picket_line/Data
   log_directory: ./output/picket_line/Logs
   auv_sample_period: 5.0
-  whale_sample_period: 60.0
 ```
 
 For trailing, use paths under `output/trailing/`.
 
 Vehicle IDs must be unique. The `type` matches a vehicle plugin manifest. An empty fault path disables fault injection.
+
+Whale behavior and trajectory sampling are configured in
+`components/manta_whale_sim/ros/whale_sim/config.yaml`. Acoustic detection settings
+are configured in `components/manta_acoustics/ros/whale_detection_sim/config.yaml`.
+Both missions load these component files. The shared whale settings use one whale,
+active throughout the mission, initialized at the origin heading north, with the
+trailing movement and grouping parameters.
+
+Mission services supply runtime output directories, vehicle IDs, mission duration,
+and Monte Carlo realization seeds. These runtime values override the corresponding
+component defaults; whale behavior and detection settings come from the component files.
 
 Sample periods determine trajectory logging frequency, not the physics timestep.
 
@@ -239,14 +244,15 @@ The example permits up to three simulated days. Batches are shortened to reach w
 
 ### Trailing assumptions
 
-Trailing service definitions specify:
+The shared whale component configuration specifies:
 
 - One whale active throughout the mission.
 - Initial whale position at the origin, heading north.
-- Reception of every whale call.
 - Internal grouping parameters required by the shared whale movement model.
 
-Call-position uncertainty and waypoint-update interval remain configurable.
+The waypoint-update interval remains configurable.
+
+Calls are received only within the configured acoustic detection range.
 
 Whale motion and acoustic range calculations use the horizontal north/east plane. Odyssey retains depth for vehicle dynamics and control.
 
@@ -282,14 +288,11 @@ Picket-line vehicles retain their patrol behavior. Trailing vehicles use detecti
 | Experiment | Output directory |
 | --- | --- |
 | Picket-line fleet size | `output/picket_line/monte_carlo_sweep/` |
-| Trailing call accuracy | `output/trailing/sweep_accuracy/` |
 | Trailing update interval | `output/trailing/sweep_comms/` |
 
 Each sweep writes `sweep_summary.csv` and per-setting realization results. Realizations use separate Compose projects, ROS domains, data directories, and logs.
 
 Monte Carlo settings control seeds, worker counts, timeout/retry handling, and convergence. Resume behavior depends on saved results and the checks implemented by each sweep.
-
-Accuracy values specify Gaussian position-error standard deviation per horizontal axis, not a maximum error radius.
 
 ### Metrics
 

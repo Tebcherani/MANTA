@@ -1,0 +1,41 @@
+whale_node:
+  ros__parameters:
+    # Shared whale behavior uses the trailing scenario parameters.
+    # Population and mission geometry (metres, seconds).
+    count: 1
+    line_start_north: 0.0
+    line_start_east: -63000.0
+    line_end_north: 0.0
+    line_end_east: 63000.0
+    start_distance: 25000.0
+    mission_duration: 86400.0
+
+    # Initialization mode: picket_line or fixed.
+    active_entire_mission: true
+    initialization_mode: fixed
+    initial_north: 0.0
+    initial_east: 0.0
+    initial_heading_degrees: 0.0
+
+    # Movement: speed in m/s, turn interval in seconds, angles in degrees.
+    speed_mean: 1.0
+    speed_std: 0.0
+    turn_interval: 60.0
+    heading_correlation: 0.95
+    heading_std_degrees: 0.0
+
+    # Calling: bout durations in seconds, active call rate in calls/hour.
+    bout_mean_duration: 1842.0
+    bout_mean_silent_duration: 7860.0
+    bout_active_call_rate_per_hour: 40.1
+
+    # Grouping: position spread in metres, start-time spread in seconds.
+    group_mean_size: 1.0
+    group_position_std: 0.0
+    group_start_time_std: 0.0
+    shared_heading_fraction: 0.75
+
+    # Reproducibility and trajectory output.
+    random_seed: 42
+    sample_period: 5.0  # Simulated seconds between trajectory samples.
+    data_directory: /odyssey/output/Data  # Directory for whales.csv.

@@ -21,15 +21,12 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     if scenario["type"] != "trailing":
         raise ValueError("Expected a trailing scenario.")
 
-    # Read configurable movement, calling, and observation settings.
+    # Read mission and vehicle settings.
     vehicles = config["vehicles"]
     output = config["output"]
     simulation = config["simulation"]
     trailing = scenario["trailing"]
     communication_interval = float(trailing.get("communication_interval", 0.0))
-    whales = scenario["whales"]
-    movement = whales["movement"]
-    bouts = whales["calling"]["bouts"]
     monte_carlo = config.get("monte_carlo", {})
 
     # Translate output paths into container paths.
@@ -54,39 +51,17 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         for vehicle in vehicles
     }
 
-    # Trailing uses one whale, active throughout the mission.
-    # Fix its initial position and heading at the origin, facing north.
+    # Whale behavior comes from the shared component configuration.
     whale_parameters = {
-        "count": 1,
         "mission_duration": scenario["duration"],
-        "active_entire_mission": True,
-        "initialization_mode": "fixed",
-        "initial_north": 0.0,
-        "initial_east": 0.0,
-        "initial_heading_degrees": 0.0,
-        "bout_mean_duration": bouts["mean_duration"],
-        "bout_mean_silent_duration": bouts["mean_silent_duration"],
-        "bout_active_call_rate_per_hour": bouts["active_call_rate_per_hour"],
-        "turn_interval": movement["turn_interval"],
-        "heading_correlation": movement["heading_correlation"],
-        "heading_std_degrees": movement["heading_std_degrees"],
-        "speed_mean": movement["speed_mean"],
-        "speed_std": movement["speed_std"],
-
-        # The shared whale simulator still uses group heading data.
-        "group_mean_size": 1.0,
-        "group_position_std": 0.0,
-        "group_start_time_std": 0.0,
-        "shared_heading_fraction": 0.75,
-
         "data_directory": data_dir,
         "random_seed": monte_carlo.get("random_seed", 42),
-        "sample_period": output.get("whale_sample_period", 60.0),
     }
 
     services["whale_sim"] = ros_service(
         "whale_sim", "whale_node",
         whale_parameters, log_dir, ros_domain_id,
+        params_file="/odyssey/components/manta_whale_sim/ros/whale_sim/config.yaml",
     )
     services["whale_sim"]["stop_grace_period"] = "5s"
 

@@ -14,12 +14,16 @@
  * @param response Response populated with the next available whale call.
  */
 void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCall::Request &request, whale_interfaces::srv::GetNextWhaleCall::Response &response) {
+    // Clear the previous result before searching for the next call.
+    sim_state_.next_whale_call = whale_interfaces::msg::WhaleCall{};
+    sim_state_.next_whale_call_available_b = false;
+
     // No whale has been selected yet.
     Whale *next_whale = nullptr;
     double next_time_s = std::numeric_limits<double>::infinity();
 
     // Search every whale for its earliest unprocessed call.
-    for (auto &whale : whales_) {
+    for (auto &whale : sim_state_.whales) {
         // Discard calls that the orchestrator has already processed.
         while (whale.next_call_index < whale.whale_call_times_s.size() && whale.whale_call_times_s[whale.next_call_index] <= request.whale_call_after_time_s) {
             ++whale.next_call_index;
@@ -38,21 +42,25 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
 
     // Report that no whale calls remain in the simulation.
     if (next_whale == nullptr) {
-        response.whale_call_available_b = false;
+        response.whale_call_available_b = sim_state_.next_whale_call_available_b;
+        response.whale_call = sim_state_.next_whale_call;
         return;
     }
 
     // Identify the next call and its scheduled simulation time.
-    response.whale_call_available_b = true;
-    response.whale_call.whale_id = next_whale->id;
-    response.whale_call.cycle = 0;
-    response.whale_call.sim_time_s = next_time_s;
+    sim_state_.next_whale_call_available_b = true;
+    sim_state_.next_whale_call.whale_id = next_whale->id;
+    sim_state_.next_whale_call.cycle = 0;
+    sim_state_.next_whale_call.sim_time_s = next_time_s;
 
     // Calculate the whale's location at the exact time of the call.
     const WhaleWaypoint call_position = trajectory_at_time(*next_whale, next_time_s);
 
-    response.whale_call.whale_call_north_m = call_position.whale_north_m;
-    response.whale_call.whale_call_east_m = call_position.whale_east_m;
+    sim_state_.next_whale_call.whale_call_north_m = call_position.whale_north_m;
+    sim_state_.next_whale_call.whale_call_east_m = call_position.whale_east_m;
+
+    response.whale_call_available_b = sim_state_.next_whale_call_available_b;
+    response.whale_call = sim_state_.next_whale_call;
 }
 
 /**
@@ -64,6 +72,7 @@ void WhaleNode::handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCa
  */
 void WhaleNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg) {
     if (!msg->data) return;                             // Ignore messages that do not request shutdown.
+    sim_state_.shutdown_requested_b = true;
     RCLCPP_INFO(get_logger(), "Shutting down whale node."); // Report the shutdown before stopping the ROS context.
     rclcpp::shutdown();                                     // Stop the ROS executor and allow the process to exit normally.
 }
@@ -139,28 +148,28 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     }
 
     // Calculate the time and cycle reached at the end of the batch.
-    const double batch_end_time_s = step.sim_time_s + static_cast<double>(step.step_count) * step.timestep;
-    const std::uint64_t completed_cycle = step.current_cycle + step.step_count - 1;
+    sim_state_.sim_time_s = step.sim_time_s + static_cast<double>(step.step_count) * step.timestep;
+    sim_state_.completed_cycle = step.current_cycle + step.step_count - 1;
 
     whale_interfaces::msg::WhaleStateArray msg;
-    msg.cycle = completed_cycle;
-    msg.whales.reserve(whales_.size());
+    msg.cycle = sim_state_.completed_cycle;
+    msg.whales.reserve(sim_state_.whales.size());
 
-    for (auto &whale : whales_) {
+    for (auto &whale : sim_state_.whales) {
         // Update each whale from its precomputed trajectory. Absolute-time lookup keeps whale movement independent of the ROS batch size.
-        const WhaleWaypoint position = trajectory_at_time(whale, batch_end_time_s);
+        const WhaleWaypoint position = trajectory_at_time(whale, sim_state_.sim_time_s);
         whale.whale_north_m = position.whale_north_m;
         whale.whale_east_m = position.whale_east_m;
         whale.whale_velocity_north_mps = position.whale_velocity_north_mps;
         whale.whale_velocity_east_mps = position.whale_velocity_east_mps;
-        whale.whale_active_b = batch_end_time_s >= whale.start_time_s && batch_end_time_s < whale.trajectory.back().sim_time_s;
-        whale.whale_complete_b = batch_end_time_s >= whale.trajectory.back().sim_time_s;
+        whale.whale_active_b = sim_state_.sim_time_s >= whale.start_time_s && sim_state_.sim_time_s < whale.trajectory.back().sim_time_s;
+        whale.whale_complete_b = sim_state_.sim_time_s >= whale.trajectory.back().sim_time_s;
 
         // Build and publish the ground-truth state at the completed batch time.
         whale_interfaces::msg::WhaleState state;
         state.whale_active_b_b = whale.whale_active_b;
         state.whale_id = whale.id;
-        state.cycle = completed_cycle;
+        state.cycle = sim_state_.completed_cycle;
         state.whale_north_m = whale.whale_north_m;
         state.whale_east_m = whale.whale_east_m;
         state.whale_velocity_north_mps = whale.whale_velocity_north_mps;
@@ -171,24 +180,24 @@ void WhaleNode::update_whales(const manta_interfaces::msg::SimStep &step) {
     whale_states_pub_->publish(msg);
 
     // Record every requested output time crossed by this batch.
-    while (next_whale_log_time_s_ <= batch_end_time_s + 1.0e-9) {
+    while (sim_state_.next_whale_log_time_s <= sim_state_.sim_time_s + 1.0e-9) {
         // Skip stale output boundaries that precede the current batch.
-        if (next_whale_log_time_s_ < step.sim_time_s) {
-            next_whale_log_time_s_ += whale_sample_period_s_;
+        if (sim_state_.next_whale_log_time_s < step.sim_time_s) {
+            sim_state_.next_whale_log_time_s += sim_state_.whale_sample_period_s;
             continue;
         }
 
         // Map the requested sample time to the corresponding cycle in this batch.
-        const double cycle_offset = (next_whale_log_time_s_ - step.sim_time_s) / step.timestep;
+        const double cycle_offset = (sim_state_.next_whale_log_time_s - step.sim_time_s) / step.timestep;
         const std::uint64_t sample_offset = std::min<std::uint64_t>(step.step_count - 1, static_cast<std::uint64_t>(std::max(0.0, std::floor(cycle_offset))));
         const std::uint64_t sample_cycle = step.current_cycle + sample_offset;
 
         // Record every whale at the exact scheduled output time.
-        for (const auto &whale : whales_) {
-            const WhaleWaypoint sample = trajectory_at_time(whale, next_whale_log_time_s_);
-            whale_log_ << sample_cycle << ',' << next_whale_log_time_s_ << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.whale_north_m << ',' << sample.whale_east_m << ',' << '\n';
+        for (const auto &whale : sim_state_.whales) {
+            const WhaleWaypoint sample = trajectory_at_time(whale, sim_state_.next_whale_log_time_s);
+            whale_log_ << sample_cycle << ',' << sim_state_.next_whale_log_time_s << ',' << whale.id << ',' << whale.group_index + 1 << ',' << sample.whale_north_m << ',' << sample.whale_east_m << ',' << '\n';
         }
 
-        next_whale_log_time_s_ += whale_sample_period_s_;
+        sim_state_.next_whale_log_time_s += sim_state_.whale_sample_period_s;
     }
 }

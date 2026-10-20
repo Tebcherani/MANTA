@@ -14,7 +14,6 @@ mission_generation:
 review:
   tracks: missions/trailing/review/plot_tracks.py
   sweep_comms: missions/trailing/review/plot_sweep_comms_freq.py
-  sweep_accuracy: missions/trailing/review/plot_sweep_call_accuracy.py
 
 #--------------------------------------------------
 # Output directories
@@ -23,7 +22,6 @@ output:
   data_directory: ./output/trailing/Data
   log_directory: ./output/trailing/Logs
   auv_sample_period: 5.0    # Sample AUV's state every X simulated seconds
-  whale_sample_period: 5.0 # Sample whale state every X simulated seconds
 
 
 #--------------------------------------------------
@@ -60,10 +58,6 @@ sweep:
     - 60.0
     - 900.0
     - 3000.0
-  accuracy:
-    min_std_km: 0.0
-    max_std_km: 150.0
-    step_std_km: 10.0
 
 
 #--------------------------------------------------
@@ -73,7 +67,6 @@ scenario:
   type: trailing
 
   trailing:
-    call_position_std_m: 0.0
     vehicle_separation_m: 2000.0
     following_distance_m: 1000.0
     communication_interval: 0.0 # simulated seconds; 0 means immediate
@@ -84,35 +77,6 @@ scenario:
     speed: 1.5
     depth: 50.0
     capture: 1000.0
-
-  whales:
-    start_distance: 25000.0
-
-    movement:
-      speed_mean: 1.0 #1.5 # m/s
-      speed_std: 0.0 #0.2
-      turn_interval: 60.0
-      heading_correlation: 0.95
-      heading_std_degrees: 0.0 #15.0
-    
-    # Reference paper: https://academic.oup.com/icesjms/article/82/4/fsad174/7341838
-    calling:
-      bouts:
-        # Mean observed upcalling-bout duration across the three full-year
-        # monitoring sites: 30.7 min × 60 s/min = 1,842 s.
-        mean_duration: 1842.0
-
-        # Approximate mean silent time between bouts, derived from 3,847 bouts
-        # observed over 432 acoustically positive recorder-days. The resulting
-        # 2.70 h mean active-silent cycle minus the 30.7 min mean bout duration
-        # gives approximately 2.18 h, or 7,860 s, of silence.
-        mean_silent_duration: 7860.0
-
-        # Aggregate active-bout rate derived from 79,032 confirmed upcalls across
-        # 3,847 bouts: 20.54 calls per bout divided by the 30.7 min mean bout
-        # duration gives approximately 40.1 calls/h. This is a recorder-level
-        # population rate, not an independent rate for each group or whale.
-        active_call_rate_per_hour: 40.1
 
 
 #--------------------------------------------------

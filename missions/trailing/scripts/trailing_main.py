@@ -20,7 +20,7 @@ def main() -> int:
     commands.add_parser("run", help="Run the simulation.")
 
     sweep_parser = commands.add_parser("sweep", help="Run a trailing experiment sweep.")
-    sweep_parser.add_argument("experiment", choices=("accuracy", "comms"))
+    sweep_parser.add_argument("experiment", choices=("comms",))
 
     review_parser = commands.add_parser("review", help="Review simulation results.")
     review_commands = review_parser.add_subparsers(dest="plot", required=True)
@@ -28,7 +28,7 @@ def main() -> int:
     review_commands.add_parser("tracks", help="Plot vehicle and whale tracks.")
 
     review_sweep_parser = review_commands.add_parser("sweep", help="Plot sweep results.")
-    review_sweep_parser.add_argument("experiment", choices=("accuracy", "comms"))
+    review_sweep_parser.add_argument("experiment", choices=("comms",))
 
     args = parser.parse_args()
     config_path = ROOT / "missions" / "trailing" / "config.yaml"
@@ -42,7 +42,6 @@ def main() -> int:
         if args.command == "sweep":
             # Run the selected experiment with the current Python interpreter.
             sweep_scripts = {
-                "accuracy": "trailing_sweep_accuracy.py",
                 "comms": "trailing_sweep_comms.py",
             }
             sweep_path = ROOT / "missions" / "trailing" / "scripts" / sweep_scripts[args.experiment]

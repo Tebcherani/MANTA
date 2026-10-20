@@ -1,6 +1,5 @@
 """Compose service definitions for the picket-line mission."""
 
-import shlex
 import sys
 
 from pathlib import Path
@@ -22,11 +21,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     vehicles = config["vehicles"]
     output = config["output"]
     simulation = config["simulation"]
-    whales = scenario["whales"]
-    movement = whales["movement"]
-    grouping = whales["grouping"]
-    bouts = whales["calling"]["bouts"]
-    line = scenario["picket_line"]
     monte_carlo = config.get("monte_carlo", {})
 
     data_dir = container_path(output["data_directory"])
@@ -50,35 +44,15 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
 
     # Whales
     whale_parameters = {
-        "count": int(whales["count"]),
         "mission_duration": scenario["duration"],
-        "active_entire_mission": bool(whales.get("active_entire_mission", False)),
-        "initialization_mode": "picket_line",
-        "line_start_north": line["start"]["north"],
-        "line_start_east": line["start"]["east"],
-        "line_end_north": line["end"]["north"],
-        "line_end_east": line["end"]["east"],
-        "start_distance": whales["start_distance"],
-        "bout_mean_duration": bouts["mean_duration"],
-        "bout_mean_silent_duration": bouts["mean_silent_duration"],
-        "bout_active_call_rate_per_hour": bouts["active_call_rate_per_hour"],
-        "turn_interval": movement["turn_interval"],
-        "heading_correlation": movement["heading_correlation"],
-        "heading_std_degrees": movement["heading_std_degrees"],
-        "speed_mean": movement["speed_mean"],
-        "speed_std": movement["speed_std"],
-        "group_mean_size": grouping["mean_group_size"],
-        "group_position_std": grouping["position_std"],
-        "group_start_time_std": grouping["start_time_std"],
-        "shared_heading_fraction": grouping["shared_heading_fraction"],
         "data_directory": data_dir,
         "random_seed": monte_carlo.get("random_seed", 42),
-        "sample_period": output.get("whale_sample_period", 60.0),
     }
 
     services["whale_sim"] = ros_service(
         "whale_sim", "whale_node",
         whale_parameters, log_dir, ros_domain_id,
+        params_file="/odyssey/components/manta_whale_sim/ros/whale_sim/config.yaml",
     )
     services["whale_sim"]["stop_grace_period"] = "5s"
 

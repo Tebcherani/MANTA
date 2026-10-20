@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <utility>
 
-WhaleNode::WhaleNode() : rclcpp::Node("whale_node"), rng_(42) {
+WhaleNode::WhaleNode() : rclcpp::Node("whale_node") {
     load_config();
     validate_config();
     open_whale_log();
@@ -18,7 +18,7 @@ WhaleNode::WhaleNode() : rclcpp::Node("whale_node"), rng_(42) {
     initialize_whales();
     create_ros_interfaces();
 
-    RCLCPP_INFO(get_logger(), "Initialized %d whales.", whale_count_);
+    RCLCPP_INFO(get_logger(), "Initialized %d whales.", sim_state_.whale_count);
 }
 
 int main(int argc, char **argv) {
