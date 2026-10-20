@@ -60,11 +60,11 @@ private:
 
     // Geometric properties of the picket line expressed in local north-east coordinates.
     struct LineGeometry {
-        double length;
-        double along_north;
-        double along_east;
-        double perpendicular_north;
-        double perpendicular_east;
+        double picket_line_length_m;
+        double picket_line_unit_vector_north;
+        double picket_line_unit_vector_east;
+        double perpendicular_to_picket_line_unit_vector_north;
+        double perpendicular_to_picket_line_unit_vector_east;
     };
 
     // Initial whale position and direction of travel toward the picket line.
