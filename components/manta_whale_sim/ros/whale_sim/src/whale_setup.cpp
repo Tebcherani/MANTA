@@ -301,7 +301,7 @@ void WhaleNode::initialize_whale_groups(double line_length) {
  * Generate the whale's movement and calls and set its initial published state.
  */
 void WhaleNode::initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const LineGeometry &line, const WhaleGroup &group) {
-    whale.trajectory = generate_trajectory(initial_state.north, initial_state.east, initial_state.heading, speed, whale.start_time_s, line, group);
+    whale.trajectory = generate_trajectory(initial_state.whale_north_m, initial_state.whale_east_m, initial_state.whale_heading_rad, speed, whale.start_time_s, line, group);
     
     if (whale.trajectory.empty()) throw std::runtime_error("Generated whale trajectory is empty.");
     

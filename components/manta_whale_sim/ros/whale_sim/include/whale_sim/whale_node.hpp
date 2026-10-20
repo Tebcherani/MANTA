@@ -69,9 +69,9 @@ private:
 
     // Initial whale position and direction of travel toward the picket line.
     struct WhaleInitialState {
-        double north;
-        double east;
-        double heading;
+        double whale_north_m;
+        double whale_east_m;
+        double whale_heading_rad;
     };
 
     // ---------------------------------------------------------------------
