@@ -2,7 +2,6 @@
 #define WHALE_DETECTION_SIM__WHALE_DETECTION_NODE_HPP_
 
 #include <fstream>
-#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -15,6 +14,7 @@
 #include "acoustics_interfaces/msg/whale_detection.hpp"
 #include "manta_interfaces/msg/vehicle_state.hpp"
 #include "whale_interfaces/msg/whale_call.hpp"
+#include "whale_detection_sim/whale_detection_state.hpp"
 
 class WhaleDetectionNode : public rclcpp::Node {
 public:
@@ -42,23 +42,12 @@ private:
     // Detections
     void try_process_pending_whale_call();
 
-    // Detection noise
-    std::mt19937_64 rng_;
-    std::normal_distribution<double> normal_{0.0, 1.0};
-
     // ---------------------------------------------------------------------
     // Variables
     // ---------------------------------------------------------------------
 
-    // Configuration
-    std::vector<std::string> vehicle_ids_;
-    double detection_range_m_ = 11000;
-    double bearing_std_rad_ = 0.0;
-
     // Simulation
-    bool pending_whale_call_available_b_ = false;
-    std::unordered_map<std::string, manta_interfaces::msg::VehicleState> latest_vehicle_states_;
-    whale_interfaces::msg::WhaleCall pending_whale_call_;
+    WhaleDetectionState sim_state_;
 
     // Output
     std::ofstream whale_detection_log_;

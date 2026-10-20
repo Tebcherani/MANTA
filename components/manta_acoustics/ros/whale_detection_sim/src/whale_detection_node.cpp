@@ -12,7 +12,7 @@ WhaleDetectionNode::WhaleDetectionNode() : rclcpp::Node("whale_detection_node") 
     open_detection_log();
     create_ros_interfaces();
     
-    RCLCPP_INFO(get_logger(), "Whale detector initialized for %zu vehicles with a %.1f m detection range.", vehicle_ids_.size(), detection_range_m_);
+    RCLCPP_INFO(get_logger(), "Whale detector initialized for %zu vehicles with a %.1f m detection range.", sim_state_.vehicle_ids.size(), sim_state_.detection_range_m);
 }
 
 int main(int argc, char **argv) {
