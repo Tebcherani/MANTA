@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <limits>
@@ -87,6 +89,13 @@ template<class T> void json_field(std::ostream &out, const char *name, const T &
 // One complete JSON object per changed state, flushed before returning.
 class StateLog {
 public:
+    void open_in_log_directory(const std::string &filename) {
+        const char *configured = std::getenv("ROS_LOG_DIR");
+        const std::filesystem::path directory = configured && *configured
+            ? configured : "/odyssey/output/Logs";
+        std::filesystem::create_directories(directory);
+        open((directory / filename).string());
+    }
     void open(const std::string &path) {
         stream_.open(path, std::ios::out | std::ios::trunc);
         if (!stream_) throw std::runtime_error("Cannot open state log: " + path);

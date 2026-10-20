@@ -11,7 +11,7 @@
 WhaleDetectionNode::WhaleDetectionNode() : rclcpp::Node("whale_detection_node") {
     load_config();
     open_detection_log();
-    state_log_.open(sim_state_.data_directory + "/whale_detection_state.jsonl");
+    state_log_.open_in_log_directory("whale_detection_state.jsonl");
     log_state_if_changed();
     create_ros_interfaces();
     

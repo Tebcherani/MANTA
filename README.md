@@ -381,7 +381,8 @@ Rebuild after native source, ROS interfaces, CMake, or Docker changes. Python an
 Normal-run data includes whale trajectories, calls, detections, vehicle `.obd` files, and vehicle metrics under `output/<mission>/Data/`. Logs are stored under `output/<mission>/Logs/`.
 
 The whale simulator and acoustic detector also write `whale_state.jsonl` and
-`whale_detection_state.jsonl` in the run's data directory. Each line is a
+`whale_detection_state.jsonl` in the run's Logs directory, using `ROS_LOG_DIR`
+from the mission service (including each realization's isolated Logs directory). Each line is a
 state snapshot, including configuration, nested population or vehicle data, and
 random seeds. Whale trajectories, call schedules, and precomputed group headings
 appear only in the initial snapshot; subsequent records contain current runtime

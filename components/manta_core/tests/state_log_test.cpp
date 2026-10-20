@@ -98,6 +98,13 @@ int main(int argc, char **argv) {
     assert(update_line.find("\"whale_group_heading_errors_rad\"") == std::string::npos);
     assert(update_line.find("\"whale_north_m\":12") != std::string::npos);
 
+    const std::string log_directory = std::string(argv[1]) + ".logs";
+    assert(setenv("ROS_LOG_DIR", log_directory.c_str(), 1) == 0);
+    manta::StateLog routed_log;
+    routed_log.open_in_log_directory("whale_state.jsonl");
+    routed_log.record(whale);
+    assert(std::filesystem::is_regular_file(std::filesystem::path(log_directory) / "whale_state.jsonl"));
+
     // Log failures must be reported instead of silently losing records.
     manta::StateLog unopened;
     bool failed = false;

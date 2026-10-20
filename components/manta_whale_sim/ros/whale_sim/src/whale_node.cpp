@@ -17,7 +17,7 @@ WhaleNode::WhaleNode() : rclcpp::Node("whale_node") {
     open_whale_log();
     seed_generator();
     initialize_whales();
-    state_log_.open(sim_state_.data_directory + "/whale_state.jsonl");
+    state_log_.open_in_log_directory("whale_state.jsonl");
     log_state_if_changed();
     create_ros_interfaces();
 

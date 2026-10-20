@@ -28,7 +28,6 @@ void WhaleDetectionNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr ms
  */
 void WhaleDetectionNode::handle_vehicle_state(const manta_interfaces::msg::VehicleState::SharedPtr msg, const std::string &vehicle_id) {
     sim_state_.latest_vehicle_states[vehicle_id] = *msg;  // Store or replace this vehicle's most recently received state.
-    log_state_if_changed();
     try_process_pending_whale_call();                 
 }
 
@@ -49,7 +48,6 @@ void WhaleDetectionNode::handle_whale_call(const whale_interfaces::msg::WhaleCal
     sim_state_.pending_whale_call_available_b = true;
 
     // Process immediately if all required vehicle states are already available.
-    log_state_if_changed();
     try_process_pending_whale_call();
 }
 
@@ -81,7 +79,6 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
 
     // The retained detection is valid only if this call produces a detection.
     sim_state_.whale_detection_available_b = false;
-    log_state_if_changed();
 
     // Record which vehicles actually receive a bearing for this call.
     std::vector<std::string> bearing_receiver_ids;
@@ -134,6 +131,7 @@ void WhaleDetectionNode::try_process_pending_whale_call() {
         whale_detection.whale_east_m = sim_state_.pending_whale_call.whale_call_east_m;
         whale_detection.vehicle_to_whale_range_m = vehicle_to_whale_range_m;
         sim_state_.whale_detection_available_b = true;
+        // Preserve each receiver's detection before the next receiver overwrites it.
         log_state_if_changed();
 
         // Record the exact detection for later analysis and review.
