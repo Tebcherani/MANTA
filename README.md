@@ -252,6 +252,18 @@ The shared whale component configuration specifies:
 
 The waypoint-update interval remains configurable.
 
+The vehicle estimator fits north/east velocity over up to five recent position
+fixes, excluding fixes older than 30 simulated minutes. Once three fixes are
+available, this rolling linear fit supplies velocity; before then, the Kalman
+update supplies it. Position remains anchored to the latest exact fix. Rolling-fit
+velocity uncertainty uses residuals plus a process-noise allowance for turns.
+Between fixes, the estimator gradually returns its predicted whale velocity toward
+1.5 m/s north and 0 m/s east between fixes. The return time constant is 1,800
+simulated seconds (`WHALE_VELOCITY_RETURN_TIME_S` in the whale-trailing behavior).
+Position predictions integrate this changing velocity, and the Kalman update uses
+the same mean-reverting motion model. This affects estimates and guidance only;
+the whale simulator retains its configured movement model.
+
 Calls are received only within the configured acoustic detection range.
 
 Whale motion and acoustic range calculations use the horizontal north/east plane. Odyssey retains depth for vehicle dynamics and control.

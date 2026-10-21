@@ -19,10 +19,10 @@ whale_node:
 
     # Movement: speed in m/s, turn interval in seconds, angles in degrees.
     speed_mean: 1.0
-    speed_std: 0.0
+    speed_std: 0.2
     turn_interval: 60.0
     heading_correlation: 0.95
-    heading_std_degrees: 0.0
+    heading_std_degrees: 15.0
 
     # Calling: bout durations in seconds, active call rate in calls/hour.
     bout_mean_duration: 1842.0
