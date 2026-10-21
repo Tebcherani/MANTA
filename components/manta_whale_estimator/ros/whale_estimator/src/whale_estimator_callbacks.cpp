@@ -12,12 +12,12 @@ namespace {
  * A rolling fit replaces velocity after three recent fixes are available.
  */
 
-static double predict_whale_axis_position(const whale_axis_filter_t *axis, double elapsed, double nominal_velocity, double tau) {
+static double predict_whale_axis_position(const whale_estimate_one_axis_t *axis, double elapsed, double nominal_velocity, double tau) {
     const double travel_time = -tau * std::expm1(-elapsed / tau);
     return axis->position + nominal_velocity * elapsed + (axis->velocity - nominal_velocity) * travel_time;
 }
 
-static double predict_whale_axis_velocity(const whale_axis_filter_t *axis, double elapsed, double nominal_velocity, double tau) {
+static double predict_whale_axis_velocity(const whale_estimate_one_axis_t *axis, double elapsed, double nominal_velocity, double tau) {
     return nominal_velocity + (axis->velocity - nominal_velocity) * std::exp(-elapsed / tau);
 }
 
@@ -26,7 +26,7 @@ static double predict_whale_axis_velocity(const whale_axis_filter_t *axis, doubl
  * (R = 0). Position covariance and position/velocity covariance vanish after
  * each fix, so only posterior velocity variance is retained between fixes.
  */
-static int update_whale_axis(whale_axis_filter_t *axis, double measured_position, double dt, double nominal_velocity, const whale_estimator_config_t *config) {
+static int update_whale_axis(whale_estimate_one_axis_t *axis, double measured_position, double dt, double nominal_velocity, const whale_estimator_config_t *config) {
     const double tau = config->velocity_return_time_s;
     const double u = dt / tau;
     const double decay = std::exp(-u);
@@ -97,17 +97,17 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
         for (i = 1; i < count; ++i) estimator->recent_fixes[i - 1] = estimator->recent_fixes[i];
         --count;
     }
-    estimator->recent_fixes[count++] = whale_position_fix_t{time, north, east};
+    estimator->recent_fixes[count++] = whale_bearing_position_t{time, north, east};
     estimator->recent_fix_count = count;
     /* Leave the Kalman/prior velocity in place until a fit has residual degrees of freedom. */
     if (count < 3) return;
 
     /* Center relative coordinates to preserve precision at large positions/times. */
-    const whale_position_fix_t origin = estimator->recent_fixes[count - 1];
+    const whale_bearing_position_t origin = estimator->recent_fixes[count - 1];
     double mean_t = 0.0;
     double mean_position[2] = {0.0, 0.0};
     for (i = 0; i < count; ++i) {
-        const whale_position_fix_t *fix = &estimator->recent_fixes[i];
+        const whale_bearing_position_t *fix = &estimator->recent_fixes[i];
         mean_t += (fix->time - origin.time) / count;
         mean_position[0] += (fix->north - origin.north) / count;
         mean_position[1] += (fix->east - origin.east) / count;
@@ -116,7 +116,7 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
     double time_ss = 0.0;
     double cross[2] = {0.0, 0.0};
     for (i = 0; i < count; ++i) {
-        const whale_position_fix_t *fix = &estimator->recent_fixes[i];
+        const whale_bearing_position_t *fix = &estimator->recent_fixes[i];
         const double t = fix->time - origin.time - mean_t;
         time_ss += t * t;
         cross[0] += t * (fix->north - origin.north - mean_position[0]);
@@ -127,7 +127,7 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
     /* Residuals describe how poorly a constant-velocity line fits this window. */
     double residual_ss[2] = {0.0, 0.0};
     for (i = 0; i < count; ++i) {
-        const whale_position_fix_t *fix = &estimator->recent_fixes[i];
+        const whale_bearing_position_t *fix = &estimator->recent_fixes[i];
         const double t = fix->time - origin.time - mean_t;
         const double residual[2] = {
             fix->north - origin.north - mean_position[0] - velocity[0] * t,
@@ -155,7 +155,7 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
 int WhaleEstimatorNode::update_estimator_state() {
     whale_estimator_state_t *state = &state_;
     double north, east, measurement_time;
-    
+
     if (state == NULL) return 0;
     state->fix_accepted_b = 0;
     if (!state->configured_b) return 0;
@@ -170,13 +170,13 @@ int WhaleEstimatorNode::update_estimator_state() {
         !std::isfinite(state->config.nominal_north_velocity_mps) || !std::isfinite(state->config.nominal_east_velocity_mps)) return 0;
 
     if (!state->initialized_b) {
-        state->north = whale_axis_filter_t{north, state->config.nominal_north_velocity_mps, state->config.initial_velocity_variance_m2ps2};
-        state->east = whale_axis_filter_t{east, state->config.nominal_east_velocity_mps, state->config.initial_velocity_variance_m2ps2};
+        state->north = whale_estimate_one_axis_t{north, state->config.nominal_north_velocity_mps, state->config.initial_velocity_variance_m2ps2};
+        state->east = whale_estimate_one_axis_t{east, state->config.nominal_east_velocity_mps, state->config.initial_velocity_variance_m2ps2};
         state->measurement_time_s = measurement_time;
         state->initialized_b = 1;
     } else {
         const double dt = measurement_time - state->measurement_time_s;
-        whale_axis_filter_t next_north, next_east;
+        whale_estimate_one_axis_t next_north, next_east;
         if (!std::isfinite(dt) || dt <= 1.0e-6) return 0;
         next_north = state->north;
         next_east = state->east;

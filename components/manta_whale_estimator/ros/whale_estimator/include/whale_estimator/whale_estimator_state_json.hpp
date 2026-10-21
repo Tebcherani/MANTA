@@ -3,7 +3,7 @@
 
 #include "manta_interfaces/state_log.hpp"
 
-inline void write_json(std::ostream &out, const whale_axis_filter_t &axis) {
+inline void write_json(std::ostream &out, const whale_estimate_one_axis_t &axis) {
     bool first = true;
     out << '{';
     manta::json_field(out, "position", axis.position, first);
@@ -12,7 +12,7 @@ inline void write_json(std::ostream &out, const whale_axis_filter_t &axis) {
     out << '}';
 }
 
-inline void write_json(std::ostream &out, const whale_position_fix_t &fix) {
+inline void write_json(std::ostream &out, const whale_bearing_position_t &fix) {
     bool first = true;
     out << '{';
     manta::json_field(out, "time", fix.time, first);
@@ -30,18 +30,6 @@ inline void write_json(std::ostream &out, const whale_estimator_config_t &config
     manta::json_field(out, "nominal_north_velocity_mps", config.nominal_north_velocity_mps, first);
     manta::json_field(out, "nominal_east_velocity_mps", config.nominal_east_velocity_mps, first);
     manta::json_field(out, "initial_velocity_variance_m2ps2", config.initial_velocity_variance_m2ps2, first);
-    out << '}';
-}
-
-inline void write_json(std::ostream &out, const whale_prediction_t &prediction) {
-    bool first = true;
-    out << '{';
-    manta::json_field(out, "available_b", prediction.available_b != 0, first);
-    manta::json_field(out, "measurement_time_s", prediction.measurement_time_s, first);
-    manta::json_field(out, "north_m", prediction.north_m, first);
-    manta::json_field(out, "east_m", prediction.east_m, first);
-    manta::json_field(out, "velocity_north_mps", prediction.velocity_north_mps, first);
-    manta::json_field(out, "velocity_east_mps", prediction.velocity_east_mps, first);
     out << '}';
 }
 
@@ -67,8 +55,6 @@ inline void write_json(std::ostream &out, const whale_estimator_state_t &state) 
     manta::json_field(out, "received_vehicle_id", state.received_vehicle_id, first);
     manta::json_field(out, "received_call_cycle", state.received_call_cycle, first);
     manta::json_field(out, "fix_accepted_b", state.fix_accepted_b != 0, first);
-    manta::json_field(out, "prediction_time_s", state.prediction_time_s, first);
-    manta::json_field(out, "prediction", state.prediction, first);
     out << '}';
 }
 

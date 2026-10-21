@@ -15,17 +15,15 @@ typedef struct {
 
     int initialized_b;
     double measurement_time_s;
-    whale_axis_filter_t north;
-    whale_axis_filter_t east;
-    whale_position_fix_t recent_fixes[WHALE_VELOCITY_WINDOW_SIZE];
+    whale_estimate_one_axis_t north;
+    whale_estimate_one_axis_t east;
+    whale_bearing_position_t recent_fixes[WHALE_VELOCITY_WINDOW_SIZE];
     int recent_fix_count;
 
-    whale_position_fix_t received_fix;
+    whale_bearing_position_t received_fix;
     std::string received_vehicle_id;
     std::uint64_t received_call_cycle;
     int fix_accepted_b;
-    double prediction_time_s;
-    whale_prediction_t prediction;
 } whale_estimator_state_t;
 
 #endif /* MANTA_WHALE_ESTIMATOR_STATE_HPP */
