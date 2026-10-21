@@ -20,6 +20,9 @@ private:
     void load_config();
     void create_ros_interfaces();
     void log_state_if_changed();
+    double predict_whale_axis_position();
+    double predict_whale_axis_velocity();
+    int update_whale_axis();
     int update_estimator_state();
     void handle_whale_bearing_position();
     void handle_shutdown();

@@ -35,5 +35,5 @@ void WhaleEstimatorNode::load_config() {
         throw std::runtime_error("Invalid whale estimator configuration.");
     }
 
-    state_.configured_b = 1;
+    state_.estimator_configured_b = 1;
 }

@@ -13,15 +13,15 @@ participant "whale_estimator_state_t" as State
 participant "Odyssey guidance snapshot" as Cached
 
 Odyssey -> RosEstimator : Publish per-vehicle position fix from paired bearings
-RosEstimator -> State : Store triangulated position and time in received_fix
+RosEstimator -> State : Store triangulated position and time in received_bearing_whale_position
 RosEstimator -> Estimator : whale_estimator_update(state)
-Estimator -> State : Clear fix_accepted_b
+Estimator -> State : Clear bearing_whale_position_accepted_b
 Estimator -> Estimator : Validate configuration, finite fix,
 and strictly increasing timestamp
 alt First accepted fix
     Estimator -> State : Set north/east positions,
 nominal velocities, initial velocity variances,
-measurement time, initialized_b
+measurement time, estimator_initialized_b
 else Later accepted fix
     Estimator -> Estimator : Predict mean-reverting position and velocity
     Estimator -> Estimator : Propagate covariance using acceleration process noise Q
@@ -33,7 +33,7 @@ opt At least three recent fixes
     Estimator -> Estimator : Fit north/east velocity using actual timestamps
     Estimator -> State : Replace velocity and variance with rolling-fit result
 end
-Estimator -> State : Set fix_accepted_b
+Estimator -> State : Set bearing_whale_position_accepted_b
 Estimator -->> RosEstimator : Accepted
 RosEstimator -> Odyssey : Publish filter estimate with velocity and model tuning
 Odyssey -> Cached : Store estimate for guidance between fixes

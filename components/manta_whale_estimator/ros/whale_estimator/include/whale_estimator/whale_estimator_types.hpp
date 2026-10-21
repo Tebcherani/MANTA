@@ -3,10 +3,12 @@
 
 #define WHALE_VELOCITY_WINDOW_SIZE 5
 
-/* An exact position fix leaves only velocity variance after each update. */
+/* Position, velocity, and their covariance for one north/east filter axis. */
 typedef struct {
     double position;
     double velocity;
+    double position_variance;
+    double position_velocity_covariance;
     double velocity_variance;
 } whale_estimate_one_axis_t;
 
@@ -14,6 +16,8 @@ typedef struct {
     double time;
     double north;
     double east;
+    double north_variance;
+    double east_variance;
 } whale_bearing_position_t;
 
 typedef struct {

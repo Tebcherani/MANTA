@@ -8,7 +8,9 @@ void WhaleEstimatorNode::create_ros_interfaces() {
     fix_sub_ = create_subscription<odyssey_interfaces::msg::WhaleBearingPositionEstimate>("/" + vehicle_id_ + "/whale/bearing_position_estimate", qos,[this](const odyssey_interfaces::msg::WhaleBearingPositionEstimate::SharedPtr msg) {
         state_.received_vehicle_id = msg->vehicle_id;
         state_.received_call_cycle = msg->call_cycle;
-        state_.received_fix = whale_bearing_position_t{msg->sim_time_s, msg->north_m, msg->east_m};
+        state_.received_bearing_whale_position = whale_bearing_position_t{
+            msg->sim_time_s, msg->north_m, msg->east_m,
+            msg->north_variance_m2, msg->east_variance_m2};
         handle_whale_bearing_position();
         log_state_if_changed();
     });

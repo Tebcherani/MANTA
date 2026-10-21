@@ -8,6 +8,8 @@ inline void write_json(std::ostream &out, const whale_estimate_one_axis_t &axis)
     out << '{';
     manta::json_field(out, "position", axis.position, first);
     manta::json_field(out, "velocity", axis.velocity, first);
+    manta::json_field(out, "position_variance", axis.position_variance, first);
+    manta::json_field(out, "position_velocity_covariance", axis.position_velocity_covariance, first);
     manta::json_field(out, "velocity_variance", axis.velocity_variance, first);
     out << '}';
 }
@@ -18,6 +20,8 @@ inline void write_json(std::ostream &out, const whale_bearing_position_t &fix) {
     manta::json_field(out, "time", fix.time, first);
     manta::json_field(out, "north", fix.north, first);
     manta::json_field(out, "east", fix.east, first);
+    manta::json_field(out, "north_variance", fix.north_variance, first);
+    manta::json_field(out, "east_variance", fix.east_variance, first);
     out << '}';
 }
 
@@ -37,10 +41,10 @@ inline void write_json(std::ostream &out, const whale_estimator_state_t &state) 
     bool first = true;
     out << '{';
     manta::json_field(out, "config", state.config, first);
-    manta::json_field(out, "configured_b", state.configured_b != 0, first);
+    manta::json_field(out, "estimator_configured_b", state.estimator_configured_b != 0, first);
     manta::json_field(out, "shutdown_requested_b", state.shutdown_requested_b != 0, first);
     manta::json_field(out, "received_shutdown_b", state.received_shutdown_b != 0, first);
-    manta::json_field(out, "initialized_b", state.initialized_b != 0, first);
+    manta::json_field(out, "estimator_initialized_b", state.estimator_initialized_b != 0, first);
     manta::json_field(out, "measurement_time_s", state.measurement_time_s, first);
     manta::json_field(out, "north", state.north, first);
     manta::json_field(out, "east", state.east, first);
@@ -51,10 +55,13 @@ inline void write_json(std::ostream &out, const whale_estimator_state_t &state) 
     }
     out << ']';
     manta::json_field(out, "recent_fix_count", state.recent_fix_count, first);
-    manta::json_field(out, "received_fix", state.received_fix, first);
+    manta::json_field(out, "received_bearing_whale_position", state.received_bearing_whale_position, first);
     manta::json_field(out, "received_vehicle_id", state.received_vehicle_id, first);
     manta::json_field(out, "received_call_cycle", state.received_call_cycle, first);
-    manta::json_field(out, "fix_accepted_b", state.fix_accepted_b != 0, first);
+    manta::json_field(out, "bearing_whale_position_accepted_b", state.bearing_whale_position_accepted_b != 0, first);
+    manta::json_field(out, "axis_update", state.axis_update, first);
+    manta::json_field(out, "axis_update_elapsed_s", state.axis_update_elapsed_s, first);
+    manta::json_field(out, "axis_update_is_north_b", state.axis_update_is_north_b != 0, first);
     out << '}';
 }
 

@@ -53,6 +53,11 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
         RCLCPP_WARN(get_logger(), "Cannot estimate from non-finite bearings.");
         return;
     }
+    if (!std::isfinite(local.bearing_std_rad) || local.bearing_std_rad < 0.0 ||
+        !std::isfinite(remote.bearing_std_rad) || remote.bearing_std_rad < 0.0) {
+        RCLCPP_WARN(get_logger(), "Cannot estimate position uncertainty from invalid bearing standard deviations.");
+        return;
+    }
 
     /*
     * Intersect two bearing rays in the north/east plane.
@@ -116,8 +121,34 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     const double estimated_north = local.receiver_north_m + local_range * local_n;
     const double estimated_east = local.receiver_east_m + local_range * local_e;
 
+    // Propagate each independent bearing's angular variance through the
+    // intersection equations to get north/east position measurement variance.
+    const double local_tangent_n = -local_e;
+    const double local_tangent_e = local_n;
+    const double remote_tangent_n = -remote_e;
+    const double remote_tangent_e = remote_n;
+    const double range_numerator = disp_n * remote_e - disp_e * remote_n;
+    const double range_numerator_remote_derivative = disp_n * remote_n + disp_e * remote_e;
+    const double determinant_local_derivative = local_tangent_n * remote_e - local_tangent_e * remote_n;
+    const double determinant_remote_derivative = local_n * remote_tangent_e - local_e * remote_tangent_n;
+    const double determinant_squared = determinant * determinant;
+    const double local_range_local_derivative = -range_numerator * determinant_local_derivative / determinant_squared;
+    const double local_range_remote_derivative =
+        (range_numerator_remote_derivative * determinant - range_numerator * determinant_remote_derivative) / determinant_squared;
+    const double north_local_derivative = local_range_local_derivative * local_n + local_range * local_tangent_n;
+    const double east_local_derivative = local_range_local_derivative * local_e + local_range * local_tangent_e;
+    const double north_remote_derivative = local_range_remote_derivative * local_n;
+    const double east_remote_derivative = local_range_remote_derivative * local_e;
+    const double local_bearing_variance = local.bearing_std_rad * local.bearing_std_rad;
+    const double remote_bearing_variance = remote.bearing_std_rad * remote.bearing_std_rad;
+    const double north_variance = north_local_derivative * north_local_derivative * local_bearing_variance +
+        north_remote_derivative * north_remote_derivative * remote_bearing_variance;
+    const double east_variance = east_local_derivative * east_local_derivative * local_bearing_variance +
+        east_remote_derivative * east_remote_derivative * remote_bearing_variance;
+
     if (!std::isfinite(estimated_north) ||
-        !std::isfinite(estimated_east)) {
+        !std::isfinite(estimated_east) || !std::isfinite(north_variance) ||
+        !std::isfinite(east_variance) || north_variance < 0.0 || east_variance < 0.0) {
         return;
     }
 
@@ -131,6 +162,8 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     fix.sim_time_s = local.sim_time_s;
     fix.north_m = estimated_north;
     fix.east_m = estimated_east;
+    fix.north_variance_m2 = north_variance;
+    fix.east_variance_m2 = east_variance;
     whale_fix_pub_->publish(fix);
 
     RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.", vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_s_);
