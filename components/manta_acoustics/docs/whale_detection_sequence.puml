@@ -10,20 +10,23 @@ participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleDetectionNode" as Detection
 participant "OdysseyNode\n(each configured vehicle)" as Vehicle
 
+note over Detection: Vehicle states and whale call may arrive in either order.
 Vehicle ->> Detection : Vehicle state
 Detection -> Detection : Store vehicle state
 Orchestrator ->> Detection : Whale call
 Detection -> Detection : Store whale call
-Detection -> Detection : Check if every vehicle state matches the call cycle
+Detection -> Detection : Wait until every vehicle state matches the call cycle
 
 loop Each configured vehicle
     Detection -> Detection : Calculate distance to the whale
     Detection -> Detection : Check if vehicle is outside detection range; skip if so
     Detection -> Detection : Calculate bearing to whale
-    Detection -> Detection : Add Gaussian noise to bearing
-    Detection -> Detection : Bearing observation
+    Detection -> Detection : Add configured bearing noise and wrap angle
+    Detection ->> Vehicle : Bearing observation
+    Detection -> Detection : Record detection
 end
 
 Detection ->> Orchestrator : Whale call processed
+note over Detection: Acknowledge even when no vehicle was in range.
 
 @enduml

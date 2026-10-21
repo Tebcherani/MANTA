@@ -13,6 +13,8 @@ partition "OdysseyNode()" {
         - Vehicle ID
     end note
 
+    :Open whale prediction log;
+
     partition "Create ROS interfaces" {
         :Create QoS configuration;
 

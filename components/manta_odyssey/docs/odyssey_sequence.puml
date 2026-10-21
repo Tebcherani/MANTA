@@ -7,7 +7,7 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
-participant "AcousticDetectionNode" as Detection
+participant "WhaleDetectionNode" as Detection
 participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
 
@@ -17,16 +17,16 @@ AUV1 -> AUV1 : At control updates, predict whale position\nfrom stored position 
 AUV1 -> AUV1 : Update trailing waypoint and control
 
 opt Communication boundary reached and measurement available
-    AUV1 ->> AUV2 : Latest bearing, original receiver position and measurement time)
+    AUV1 ->> AUV2 : Latest bearing, receiver position, and measurement time
 end
 
 AUV1 ->> Detection : VehicleState
 AUV1 ->> Orchestrator : SimStepResult
 
-opt Remote bearing received by an AUV
-    AUV1 -> AUV1 : Intersect remote bearing with latest local bearing
-    AUV1 -> AUV1 : Store whale position at local reception time
-    AUV1 -> AUV1 : Update velocity from successive position estimates
+opt Matching local and remote bearings available
+    AUV1 -> AUV1 : Intersect same-cycle bearings
+    AUV1 -> AUV1 : Store whale position at call time
+    AUV1 -> AUV1 : Update position and recent-measurement velocity estimate
 end
 
 opt AUV detects call

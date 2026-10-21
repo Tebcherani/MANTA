@@ -10,14 +10,14 @@ partition "WhaleDetectionNode()" {
     :Load configuration;
     note right
         - Vehicle IDs
-        - Detection range: 11000
+        - Detection range and bearing noise
+        - Bearing noise seed
     end note
 
-    :Open detection log;
+    :Open detection CSV and state log;
+    :Write initial state log;
 
     partition "Create ROS interfaces" {
-        :Create QoS configuration;
-
         :Create publisher;
         note right
             - Bearing observations (one for each vehicle)

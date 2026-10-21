@@ -8,7 +8,7 @@ skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
-participant "AcousticDetectionNode" as Detection
+participant "WhaleDetectionNode" as Detection
 participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
 
@@ -35,7 +35,7 @@ loop
     end
 
         Detection ->> Orchestrator : WhaleCallProcessed (receiver IDs)
-        Orchestrator -> Orchestrator : Wait for detector and local-storage acknowledgements
+    Orchestrator -> Orchestrator : Wait for detector and bearing acknowledgements
 end
 
 @enduml

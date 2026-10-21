@@ -34,8 +34,6 @@ partition "SimOrchestratorNode()" {
         :Create service clients;
         note right: - Request next whale call
 
-        :Create timers;
-        note right: - Shutdown timer
     }
     
     :Open simulation log;
