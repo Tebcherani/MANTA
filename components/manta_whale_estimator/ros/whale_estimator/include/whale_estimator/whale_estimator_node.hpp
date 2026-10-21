@@ -7,19 +7,19 @@
 #include "rclcpp/rclcpp.hpp"
 #include "odyssey_interfaces/msg/whale_bearing_position_estimate.hpp"
 #include "whale_estimator_interfaces/msg/whale_kalman_estimate.hpp"
+#include "whale_estimator/whale_estimator_state.hpp"
 #include "manta_interfaces/state_log.hpp"
 #include "std_msgs/msg/bool.hpp"
-
-extern "C" {
-#include "whale_estimator.h"
-}
 
 class WhaleEstimatorNode : public rclcpp::Node {
 public:
     WhaleEstimatorNode();
 
 private:
+    void setup();
     void load_config();
+    void create_ros_interfaces();
+    int update_estimator_state();
     void handle_position_fix(const odyssey_interfaces::msg::WhaleBearingPositionEstimate::SharedPtr msg);
     void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
 

@@ -1,27 +1,24 @@
-#include "whale_estimator.h"
+#include "whale_estimator/whale_estimator_node.hpp"
+#include "whale_estimator/whale_estimator_state_json.hpp"
 
-#include <math.h>
-#include <stddef.h>
-#include <string.h>
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+
+namespace {
 
 /* Positions are local north/east metres and times are simulated seconds.
  * Exact position fixes (R = 0) update a mean-reverting Kalman velocity.
  * A rolling fit replaces velocity after three recent fixes are available.
  */
 
-/*
- * Integrate v(t) = nominal + (initial - nominal) * exp(-t / tau).
- * Integrating the changing velocity avoids a jump in position as velocity
- * returns to nominal. expm1 preserves precision for very small elapsed times.
- */
 static double predict_whale_axis_position(const whale_axis_filter_t *axis, double elapsed, double nominal_velocity, double tau) {
-    const double travel_time = -tau * expm1(-elapsed / tau);
+    const double travel_time = -tau * std::expm1(-elapsed / tau);
     return axis->position + nominal_velocity * elapsed + (axis->velocity - nominal_velocity) * travel_time;
 }
 
-/* Query the model velocity without advancing the stored measurement state. */
 static double predict_whale_axis_velocity(const whale_axis_filter_t *axis, double elapsed, double nominal_velocity, double tau) {
-    return nominal_velocity + (axis->velocity - nominal_velocity) * exp(-elapsed / tau);
+    return nominal_velocity + (axis->velocity - nominal_velocity) * std::exp(-elapsed / tau);
 }
 
 /*
@@ -32,29 +29,29 @@ static double predict_whale_axis_velocity(const whale_axis_filter_t *axis, doubl
 static int update_whale_axis(whale_axis_filter_t *axis, double measured_position, double dt, double nominal_velocity, const whale_estimator_config_t *config) {
     const double tau = config->velocity_return_time_s;
     const double u = dt / tau;
-    const double decay = exp(-u);
-    const double one_minus_decay = -expm1(-u);
+    const double decay = std::exp(-u);
+    const double one_minus_decay = -std::expm1(-u);
     const double travel_time = tau * one_minus_decay;
     const double q = config->acceleration_psd_m2_s3;
 
     /* Integrated acceleration-noise covariance: vv is velocity variance,
      * pv is position/velocity covariance, and pp is position variance.
      */
-    const double noise_vv = -0.5 * q * tau * expm1(-2.0 * u);
+    const double noise_vv = -0.5 * q * tau * std::expm1(-2.0 * u);
     const double noise_pv = 0.5 * q * travel_time * travel_time;
     double noise_pp;
     if (u < 0.01) {
         /* Avoid cancellation in the integrated process noise at small dt. */
         noise_pp = q * dt * dt * dt * (1.0 / 3.0 + u * (-1.0 / 4.0 + u * (7.0 / 60.0 + u * (-1.0 / 24.0 + u * 31.0 / 2520.0))));
     } else {
-        noise_pp = q * tau * tau * (dt - 2.0 * travel_time - 0.5 * tau * expm1(-2.0 * u));
+        noise_pp = q * tau * tau * (dt - 2.0 * travel_time - 0.5 * tau * std::expm1(-2.0 * u));
     }
 
     /* Propagate the previous velocity uncertainty through the same motion model. */
     const double predicted_pp = travel_time * travel_time * axis->velocity_variance + noise_pp;
     const double predicted_pv = travel_time * decay * axis->velocity_variance + noise_pv;
     const double predicted_vv = decay * decay * axis->velocity_variance + noise_vv;
-    if (!isfinite(predicted_pp) || predicted_pp <= 0.0 || !isfinite(predicted_pv) || !isfinite(predicted_vv)) return 0;
+    if (!std::isfinite(predicted_pp) || predicted_pp <= 0.0 || !std::isfinite(predicted_pv) || !std::isfinite(predicted_vv)) return 0;
 
     /* With R = 0, position gain is one. This is the velocity gain: it turns
      * the position prediction error into a correction to predicted velocity.
@@ -64,9 +61,9 @@ static int update_whale_axis(whale_axis_filter_t *axis, double measured_position
     const double predicted_velocity = predict_whale_axis_velocity(axis, dt, nominal_velocity, tau);
     const double updated_velocity = predicted_velocity + gain * (measured_position - predicted_position);
     double updated_variance = predicted_vv - gain * predicted_pv;
-    if (!isfinite(updated_velocity) || !isfinite(updated_variance) || updated_variance < -1.0e-12 * fmax(1.0, predicted_vv)) return 0;
+    if (!std::isfinite(updated_velocity) || !std::isfinite(updated_variance) || updated_variance < -1.0e-12 * std::fmax(1.0, predicted_vv)) return 0;
     /* Permit tiny negative roundoff, but reject materially invalid covariance. */
-    updated_variance = fmax(0.0, updated_variance);
+    updated_variance = std::fmax(0.0, updated_variance);
 
     /* Anchor position exactly to the fix; velocity remains an estimate. */
     axis->position = measured_position;
@@ -102,7 +99,7 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
         }
         --count;
     }
-    estimator->recent_fixes[count++] = (whale_position_fix_t){time, north, east};
+    estimator->recent_fixes[count++] = whale_position_fix_t{time, north, east};
     estimator->recent_fix_count = count;
     /* Leave the Kalman/prior velocity in place until a fit has residual degrees of freedom. */
     if (count < 3) return;
@@ -127,7 +124,7 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
         cross[0] += t * (fix->north - origin.north - mean_position[0]);
         cross[1] += t * (fix->east - origin.east - mean_position[1]);
     }
-    if (!isfinite(time_ss) || time_ss <= 0.0) return;
+    if (!std::isfinite(time_ss) || time_ss <= 0.0) return;
     double velocity[2] = {cross[0] / time_ss, cross[1] / time_ss};
     /* Residuals describe how poorly a constant-velocity line fits this window. */
     double residual_ss[2] = {0.0, 0.0};
@@ -147,7 +144,7 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
          * This is a rolling-fit heuristic, not an independent Kalman observation.
          */
         variance[j] = residual_ss[j] / (count - 2) / time_ss + estimator->config.acceleration_psd_m2_s3 * span / 3.0;
-        if (!isfinite(velocity[j]) || !isfinite(variance[j])) return;
+        if (!std::isfinite(velocity[j]) || !std::isfinite(variance[j])) return;
     }
     estimator->north.velocity = velocity[0];
     estimator->east.velocity = velocity[1];
@@ -155,22 +152,11 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
     estimator->east.velocity_variance = variance[1];
 }
 
-void whale_estimator_init(whale_estimator_state_t *state) {
-    if (state == NULL) return;
-    memset(state, 0, sizeof(*state));
-    state->config.velocity_window_max_age_s = WHALE_VELOCITY_WINDOW_MAX_AGE_S;
-    state->config.acceleration_psd_m2_s3 = WHALE_ACCELERATION_PSD;
-    state->config.velocity_return_time_s = WHALE_VELOCITY_RETURN_TIME_S;
-    state->config.nominal_north_velocity_mps = WHALE_NOMINAL_NORTH_VELOCITY;
-    state->config.nominal_east_velocity_mps = WHALE_NOMINAL_EAST_VELOCITY;
-    state->config.initial_velocity_variance_m2ps2 = WHALE_INITIAL_VELOCITY_VARIANCE;
-    state->configured_b = 1;
 }
 
-/* Accept the latest triangulated fix stored in state. Repeated or older
- * timestamps leave the filter and recent-fix window unchanged.
- */
-int whale_estimator_update(whale_estimator_state_t *state) {
+int WhaleEstimatorNode::update_estimator_state() {
+
+    whale_estimator_state_t *state = &state_;
     double north, east, measurement_time;
     if (state == NULL) return 0;
     state->fix_accepted_b = 0;
@@ -178,22 +164,22 @@ int whale_estimator_update(whale_estimator_state_t *state) {
     north = state->received_fix.north;
     east = state->received_fix.east;
     measurement_time = state->received_fix.time;
-    if (!isfinite(north) || !isfinite(east) || !isfinite(measurement_time)) return 0;
-    if (!isfinite(state->config.velocity_return_time_s) || state->config.velocity_return_time_s <= 0.0 ||
-        !isfinite(state->config.acceleration_psd_m2_s3) || state->config.acceleration_psd_m2_s3 < 0.0 ||
-        !isfinite(state->config.velocity_window_max_age_s) || state->config.velocity_window_max_age_s <= 0.0 ||
-        !isfinite(state->config.initial_velocity_variance_m2ps2) || state->config.initial_velocity_variance_m2ps2 < 0.0 ||
-        !isfinite(state->config.nominal_north_velocity_mps) || !isfinite(state->config.nominal_east_velocity_mps)) return 0;
+    if (!std::isfinite(north) || !std::isfinite(east) || !std::isfinite(measurement_time)) return 0;
+    if (!std::isfinite(state->config.velocity_return_time_s) || state->config.velocity_return_time_s <= 0.0 ||
+        !std::isfinite(state->config.acceleration_psd_m2_s3) || state->config.acceleration_psd_m2_s3 < 0.0 ||
+        !std::isfinite(state->config.velocity_window_max_age_s) || state->config.velocity_window_max_age_s <= 0.0 ||
+        !std::isfinite(state->config.initial_velocity_variance_m2ps2) || state->config.initial_velocity_variance_m2ps2 < 0.0 ||
+        !std::isfinite(state->config.nominal_north_velocity_mps) || !std::isfinite(state->config.nominal_east_velocity_mps)) return 0;
 
     if (!state->initialized_b) {
-        state->north = (whale_axis_filter_t){north, state->config.nominal_north_velocity_mps, state->config.initial_velocity_variance_m2ps2};
-        state->east = (whale_axis_filter_t){east, state->config.nominal_east_velocity_mps, state->config.initial_velocity_variance_m2ps2};
+        state->north = whale_axis_filter_t{north, state->config.nominal_north_velocity_mps, state->config.initial_velocity_variance_m2ps2};
+        state->east = whale_axis_filter_t{east, state->config.nominal_east_velocity_mps, state->config.initial_velocity_variance_m2ps2};
         state->measurement_time_s = measurement_time;
         state->initialized_b = 1;
     } else {
         const double dt = measurement_time - state->measurement_time_s;
         whale_axis_filter_t next_north, next_east;
-        if (!isfinite(dt) || dt <= 1.0e-6) return 0;
+        if (!std::isfinite(dt) || dt <= 1.0e-6) return 0;
         next_north = state->north;
         next_east = state->east;
         if (!update_whale_axis(&next_north, north, dt, state->config.nominal_north_velocity_mps, &state->config) ||
@@ -208,22 +194,31 @@ int whale_estimator_update(whale_estimator_state_t *state) {
     return 1;
 }
 
-/* Predict from the last accepted fix without advancing the filter. */
-int whale_estimator_predict(whale_estimator_state_t *state) {
-    double elapsed, predicted_north, predicted_east, velocity_north, velocity_east;
-    if (state == NULL) return 0;
-    state->prediction = (whale_prediction_t){0};
-    if (!state->configured_b || !state->initialized_b || !isfinite(state->prediction_time_s) ||
-        !isfinite(state->config.velocity_return_time_s) || state->config.velocity_return_time_s <= 0.0) return 0;
-    elapsed = state->prediction_time_s - state->measurement_time_s;
-    if (!isfinite(elapsed) || elapsed < 0.0) return 0;
-    predicted_north = predict_whale_axis_position(&state->north, elapsed, state->config.nominal_north_velocity_mps, state->config.velocity_return_time_s);
-    predicted_east = predict_whale_axis_position(&state->east, elapsed, state->config.nominal_east_velocity_mps, state->config.velocity_return_time_s);
-    velocity_north = predict_whale_axis_velocity(&state->north, elapsed, state->config.nominal_north_velocity_mps, state->config.velocity_return_time_s);
-    velocity_east = predict_whale_axis_velocity(&state->east, elapsed, state->config.nominal_east_velocity_mps, state->config.velocity_return_time_s);
-    if (!isfinite(predicted_north) || !isfinite(predicted_east) || !isfinite(velocity_north) || !isfinite(velocity_east)) return 0;
-
-    state->prediction = (whale_prediction_t){1, state->measurement_time_s, predicted_north, predicted_east, velocity_north, velocity_east};
-    return 1;
+void WhaleEstimatorNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg) {
+    if (!msg->data) return;
+    state_.shutdown_requested_b = 1;
+    state_log_.record(state_);
+    rclcpp::shutdown();
 }
 
+void WhaleEstimatorNode::handle_position_fix(const odyssey_interfaces::msg::WhaleBearingPositionEstimate::SharedPtr msg) {
+    if (msg->vehicle_id != vehicle_id_) return;
+    state_.received_fix = whale_position_fix_t{msg->sim_time_s, msg->north_m, msg->east_m};
+    const bool accepted = update_estimator_state();
+    state_log_.record(state_);
+    if (!accepted) return;
+    whale_estimator_interfaces::msg::WhaleKalmanEstimate estimate;
+    estimate.vehicle_id = vehicle_id_;
+    estimate.call_cycle = msg->call_cycle;
+    estimate.measurement_time_s = state_.measurement_time_s;
+    estimate.whale_kalman_north_m = state_.north.position;
+    estimate.whale_kalman_east_m = state_.east.position;
+    estimate.whale_kalman_velocity_north_mps = state_.north.velocity;
+    estimate.whale_kalman_velocity_east_mps = state_.east.velocity;
+    estimate.whale_kalman_velocity_variance_north_m2ps2 = state_.north.velocity_variance;
+    estimate.whale_kalman_velocity_variance_east_m2ps2 = state_.east.velocity_variance;
+    estimate.whale_baseline_velocity_north_mps = state_.config.nominal_north_velocity_mps;
+    estimate.whale_baseline_velocity_east_mps = state_.config.nominal_east_velocity_mps;
+    estimate.whale_velocity_return_time_s = state_.config.velocity_return_time_s;
+    estimate_pub_->publish(estimate);
+}

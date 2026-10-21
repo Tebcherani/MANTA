@@ -8,7 +8,12 @@ find_package(whale_estimator_interfaces REQUIRED)
 find_package(odyssey_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 
-add_executable(whale_estimator_node src/whale_estimator_node.cpp src/whale_estimator.c)
+add_executable(whale_estimator_node
+  src/whale_estimator_node.cpp
+  src/whale_estimator_callbacks.cpp
+  src/whale_estimator_interfaces.cpp
+  src/whale_estimator_setup.cpp
+)
 target_include_directories(whale_estimator_node PRIVATE include include/whale_estimator)
 target_compile_features(whale_estimator_node PUBLIC cxx_std_17)
 ament_target_dependencies(whale_estimator_node rclcpp manta_interfaces whale_estimator_interfaces odyssey_interfaces std_msgs)

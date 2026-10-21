@@ -1,5 +1,5 @@
-#ifndef MANTA_WHALE_ESTIMATOR_TYPES_H
-#define MANTA_WHALE_ESTIMATOR_TYPES_H
+#ifndef MANTA_WHALE_ESTIMATOR_TYPES_HPP
+#define MANTA_WHALE_ESTIMATOR_TYPES_HPP
 
 #define WHALE_VELOCITY_WINDOW_SIZE 5
 
@@ -35,4 +35,4 @@ typedef struct {
     double velocity_east_mps;
 } whale_prediction_t;
 
-#endif /* MANTA_WHALE_ESTIMATOR_TYPES_H */
+#endif /* MANTA_WHALE_ESTIMATOR_TYPES_HPP */

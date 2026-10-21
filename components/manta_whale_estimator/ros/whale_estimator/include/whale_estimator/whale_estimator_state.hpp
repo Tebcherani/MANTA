@@ -1,7 +1,7 @@
-#ifndef MANTA_WHALE_ESTIMATOR_STATE_H
-#define MANTA_WHALE_ESTIMATOR_STATE_H
+#ifndef MANTA_WHALE_ESTIMATOR_STATE_HPP
+#define MANTA_WHALE_ESTIMATOR_STATE_HPP
 
-#include "whale_estimator_types.h"
+#include "whale_estimator_types.hpp"
 
 /* Configuration, latest input/output, and filter history for one vehicle. */
 typedef struct {
@@ -22,4 +22,4 @@ typedef struct {
     whale_prediction_t prediction;
 } whale_estimator_state_t;
 
-#endif /* MANTA_WHALE_ESTIMATOR_STATE_H */
+#endif /* MANTA_WHALE_ESTIMATOR_STATE_HPP */
