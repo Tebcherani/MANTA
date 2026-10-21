@@ -10,187 +10,145 @@ start
 partition "WhaleNode()" {
     :Load whale-model configuration;
     note right
-        - Mission geometry and duration
-        - Whale count, distance, grouping, movement, and calling
+        - Picket-line endpoints and mission duration
+        - Whale count and initialization mode
+        - Grouping, movement, and calling parameters
     end note
 
-    :Open whale state log;
-    :Seed random number generator;
+    :Seed random-number generator;
 
     partition "Initialize whales" {
-        :Compute picket line geometry;
+        if (Picket-line initialization?) then (yes)
+            :Calculate line length and parallel/perpendicular unit vectors;
+        endif
 
-        partition "Place whales in groups" {
-            :Calculate number of groups;
-            :Calculate number of heading changes;
-            :Create probability distributions;
+        partition "Generate whale groups" {
+            :Calculate group count;
+            note right: max(1, ceil(whale count / group mean size))
 
-            partition "Generate whale groups" {
-                :Generate groups' crossing location;
-                note right: Uni(0, 126km)
+            :Calculate number of heading intervals;
+            note right: ceil(mission duration / turn interval) + 1
 
-                :Generate groups' starting side;
-                note right: Bernoulli(0.5)
+            while (More groups?) is (yes)
+                :Sample group crossing location;
+                note right: Uniform(0, line length); fixed mode uses length 0
 
-                :Generate groups' start time;
-                note right: Uni(0, 3 days)
-
-                :Generate groups' heading changes;
+                :Sample starting side and group start time;
                 note right
-                    Gaussian AR(1) process
-                    - rho = 0.95
-                    - update interval = 60 s
-                    - stationary STD = whale_heading_std_deg_
-                    - initial error = 0 degrees
+                    Side: Bernoulli(0.5) -> +1 or -1
+                    Time: Uniform(0, mission duration)
                 end note
-            }
+
+                :Generate shared heading errors;
+                note right
+                    Initial error = 0
+                    AR(1): next = correlation * current
+                    + heading STD * sqrt(1 - correlation^2) * Normal(0, 1)
+                end note
+            endwhile (no)
         }
 
         partition "Create individual whales" {
-            :Create distributions;
-
-            :Select whale group;
-            :Sample crossing distance;
-            note right: Normal(0, 1000km)
-
-            :Sample start time;
-            note right: Normal(0, 10 min)
-
-            :Sample swimming speed;
-            note right: Normal(1.5, 0.2m/s)
-
-            :Sample baseline call rate;
-            note right: Uni(4.8, 8.0 calls/hr)
-
-            :Compute initial position and heading;
-            :Create whale and assign properties;
-
-            partition "Generate movement trajectory" {
-                :Calculate individual AR(1) heading innovation scale;
+            while (More whales?) is (yes)
+                :Assign group round-robin;
+                :Choose start time;
                 note right
-                    - Heading STD = 15 deg
-                    - Heading correlation = 0.95
+                    Active entire mission: time 0
+                    Otherwise: sample around group start time,
+                    within the mission
                 end note
 
-                :Calculate group and individual\nheading weights;
-                note right
-                    - Shared heading fraction = 0.75
-                    - Group weight = sqrt(0.75)
-                    - Individual weight = sqrt(0.25)
-                end note
+                :Sample positive swimming speed;
+                note right: Normal(speed mean, speed STD); redraw if <= 0
 
-                :Initialize time and position;
+                if (Fixed initialization?) then (yes)
+                    :Use configured north/east position and heading;
+                    note right: Heading converted from degrees to radians on load
+                else (picket line)
+                    :Sample crossing distance near group location;
+                    note right: Normal(group crossing, position STD); redraw outside line
+                    :Calculate initial position and heading toward line;
+                    note right: Offset by start distance on the group's side
+                endif
 
-                while (Trajectory complete?) is (no)
-                    :Calculate heading;
-                    note right: - Shared heading fraction = 0.75
+                :Create whale with ID, group, start time, and side;
 
-                    :Calculate velocity;
-                    :Store next trajectory point;
+                partition "Generate movement trajectory" {
+                    :Calculate shared/individual heading weights;
+                    note right
+                        Group weight = sqrt(shared heading fraction)
+                        Individual weight = sqrt(1 - fraction)
+                    end note
 
-                    if (Mission duration reached?) then (yes)
-                        break
-                    else (no)
-                        :Determine next heading update;
-                        :Move using current velocity until next update time;
-                        :Calculate distance from picket line;
+                    :Initialize time, position, and individual heading error;
 
-                        if (Whale exited corridor?) then (yes)
-                            :Store final position with zero velocity;
+                    while (Trajectory complete?) is (no)
+                        :Combine shared and individual heading errors;
+                        :Calculate north/east velocity from speed and heading;
+                        :Store trajectory point;
+
+                        if (Mission duration reached?) then (yes)
                             break
                         else (no)
-                            :Update individual AR(1) heading error;
+                            :Move at current velocity to next heading boundary;
+                            if (Nonpersistent picket-line whale exits corridor?) then (yes)
+                                :Store final point with zero velocity;
+                                break
+                            else (no)
+                                if (Mission duration reached after move?) then (yes)
+                                    :Store final point at mission end;
+                                    break
+                                else (no)
+                                    :Update individual AR(1) heading error;
+                                endif
+                            endif
                         endif
-                    endif
-                endwhile(no)
-            }
-
-            :Initialize published position\nand velocity;
-            :Store whale in population;
-
-            partition "Generate population call times" {
-                :Determine population activity interval;
-                note right
-                    From first whale activation
-                    through last whale's trajectory end
-                end note
-
-                :Select initial active or silent state;
-                note right
-                    The simulation begins active with probability 0.19.
-
-                    This probability is the estimated fraction of time
-                    spent in active calling bouts:
-
-                    30.7 min active / (30.7 min active + 131 min silent) = 0.19
-
-                    The 30.7 min active duration is reported by the paper.
-                    The 131 min silent duration is derived from the paper's
-                    total bouts and acoustically positive recorder-days.
-                end note
-
-                    while (Population calling interval remains?) is (yes)
-                        if (Population is in an active bout?) then (yes)
-                            :Sample active-bout duration;
-                            note right
-                                Exponential distribution
-                                Mean = 1,842 s (30.7 min)
-                            end note
-
-                            :Generate calls during active bout;
-                            note right
-                                Poisson process
-                                Rate = 40.1 calls/h
-                            end note
-                        else (no)
-                            :Sample silent duration;
-                            note right
-                                Exponential distribution
-                                Mean = 7,860 s (approximately 2.18 h)
-                            end note
-                        endif
-
-                        :Switch between active and silent states;
-                    endwhile (no)
+                    endwhile (yes)
                 }
 
-                partition "Assign calls to whales" {
-                    while (More population calls?) is (yes)
-                        :Find whales active at call time;
+                :Set whale's initial published position and velocity;
+            endwhile (no)
+        }
 
-                        if (At least one whale is active?) then (yes)
-                            :Select one active whale uniformly;
-                            :Add call time to selected whale;
-                        else (no)
-                            :Discard call;
-                        endif
-                    endwhile (no)
-                }
+        partition "Generate population call times" {
+            :Find first whale activation and last trajectory end;
+            :Choose initial active/silent bout;
+            note right
+                P(active) = mean active duration /
+                (mean active duration + mean silent duration)
+            end note
+
+            while (Calling interval remains?) is (yes)
+                if (Active bout?) then (yes)
+                    :Sample active duration from exponential distribution;
+                    :Generate calls from a Poisson process;
+                    note right: Rate = configured active calls per hour
+                else (silent)
+                    :Sample silent duration from exponential distribution;
+                endif
+                :Switch between active and silent bouts;
+            endwhile (no)
+        }
+
+        partition "Assign calls to whales" {
+            while (More population calls?) is (yes)
+                :Find whales active at this call time;
+                if (Any active whales?) then (yes)
+                    :Choose one uniformly and store its call time;
+                else (no)
+                    :Discard call;
+                endif
+            endwhile (no)
         }
     }
 
+    :Open state log and record initialized whale state;
+
     partition "Create ROS interfaces" {
-        :Create publisher;
-        note right
-            - Whale states
-        end note
-
-        :Create subscribers;
-        note right
-            - Simulation step
-            - Shutdown request
-        end note
-
-        :Create service;
-        note right
-            - Get next whale call
-        end note
+        :Create whale-state publisher;
+        :Subscribe to simulation steps and shutdown;
+        :Create next-whale-call service;
     }
-
-    #A8DFA8:Whale population initialized;
-    note right
-        Log the number of initialized whales.
-    end note
 }
 
 stop
