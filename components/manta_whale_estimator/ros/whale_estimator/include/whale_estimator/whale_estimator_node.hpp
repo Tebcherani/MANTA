@@ -19,9 +19,10 @@ private:
     void setup();
     void load_config();
     void create_ros_interfaces();
+    void log_state_if_changed();
     int update_estimator_state();
-    void handle_position_fix(const odyssey_interfaces::msg::WhaleBearingPositionEstimate::SharedPtr msg);
-    void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
+    void handle_whale_bearing_position();
+    void handle_shutdown();
 
     whale_estimator_state_t state_{};
     manta::StateLog state_log_;

@@ -51,6 +51,7 @@ inline void write_json(std::ostream &out, const whale_estimator_state_t &state) 
     manta::json_field(out, "config", state.config, first);
     manta::json_field(out, "configured_b", state.configured_b != 0, first);
     manta::json_field(out, "shutdown_requested_b", state.shutdown_requested_b != 0, first);
+    manta::json_field(out, "received_shutdown_b", state.received_shutdown_b != 0, first);
     manta::json_field(out, "initialized_b", state.initialized_b != 0, first);
     manta::json_field(out, "measurement_time_s", state.measurement_time_s, first);
     manta::json_field(out, "north", state.north, first);
@@ -63,6 +64,8 @@ inline void write_json(std::ostream &out, const whale_estimator_state_t &state) 
     out << ']';
     manta::json_field(out, "recent_fix_count", state.recent_fix_count, first);
     manta::json_field(out, "received_fix", state.received_fix, first);
+    manta::json_field(out, "received_vehicle_id", state.received_vehicle_id, first);
+    manta::json_field(out, "received_call_cycle", state.received_call_cycle, first);
     manta::json_field(out, "fix_accepted_b", state.fix_accepted_b != 0, first);
     manta::json_field(out, "prediction_time_s", state.prediction_time_s, first);
     manta::json_field(out, "prediction", state.prediction, first);

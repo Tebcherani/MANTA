@@ -1,6 +1,4 @@
 #include "whale_estimator/whale_estimator_node.hpp"
-#include "whale_estimator/whale_estimator_state_json.hpp"
-
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -8,7 +6,7 @@
 void WhaleEstimatorNode::setup() {
     load_config();
     state_log_.open_in_log_directory(vehicle_id_ + "_whale_estimator_state.jsonl");
-    state_log_.record(state_);
+    log_state_if_changed();
 }
 
 /**
@@ -36,6 +34,6 @@ void WhaleEstimatorNode::load_config() {
         !std::isfinite(config.initial_velocity_variance_m2ps2) || config.initial_velocity_variance_m2ps2 < 0.0) {
         throw std::runtime_error("Invalid whale estimator configuration.");
     }
-    
+
     state_.configured_b = 1;
 }

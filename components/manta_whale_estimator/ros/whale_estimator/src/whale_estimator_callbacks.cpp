@@ -94,9 +94,7 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
     }
     /* If still full, remove the oldest remaining fix before appending this one. */
     if (count == WHALE_VELOCITY_WINDOW_SIZE) {
-        for (i = 1; i < count; ++i) {
-            estimator->recent_fixes[i - 1] = estimator->recent_fixes[i];
-        }
+        for (i = 1; i < count; ++i) estimator->recent_fixes[i - 1] = estimator->recent_fixes[i];
         --count;
     }
     estimator->recent_fixes[count++] = whale_position_fix_t{time, north, east};
@@ -155,9 +153,9 @@ static void update_recent_whale_velocity(whale_estimator_state_t *estimator) {
 }
 
 int WhaleEstimatorNode::update_estimator_state() {
-
     whale_estimator_state_t *state = &state_;
     double north, east, measurement_time;
+    
     if (state == NULL) return 0;
     state->fix_accepted_b = 0;
     if (!state->configured_b) return 0;
@@ -194,31 +192,34 @@ int WhaleEstimatorNode::update_estimator_state() {
     return 1;
 }
 
-void WhaleEstimatorNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg) {
-    if (!msg->data) return;
+
+//----------------------------------------------------
+// Handle functions
+//----------------------------------------------------
+
+void WhaleEstimatorNode::handle_shutdown() {
+    if (!state_.received_shutdown_b) return;
     state_.shutdown_requested_b = 1;
-    state_log_.record(state_);
     rclcpp::shutdown();
 }
 
-void WhaleEstimatorNode::handle_position_fix(const odyssey_interfaces::msg::WhaleBearingPositionEstimate::SharedPtr msg) {
-    if (msg->vehicle_id != vehicle_id_) return;
-    state_.received_fix = whale_position_fix_t{msg->sim_time_s, msg->north_m, msg->east_m};
+void WhaleEstimatorNode::handle_whale_bearing_position() {
+    if (state_.received_vehicle_id != vehicle_id_) return;
     const bool accepted = update_estimator_state();
-    state_log_.record(state_);
-    if (!accepted) return;
-    whale_estimator_interfaces::msg::WhaleKalmanEstimate estimate;
-    estimate.vehicle_id = vehicle_id_;
-    estimate.call_cycle = msg->call_cycle;
-    estimate.measurement_time_s = state_.measurement_time_s;
-    estimate.whale_kalman_north_m = state_.north.position;
-    estimate.whale_kalman_east_m = state_.east.position;
-    estimate.whale_kalman_velocity_north_mps = state_.north.velocity;
-    estimate.whale_kalman_velocity_east_mps = state_.east.velocity;
-    estimate.whale_kalman_velocity_variance_north_m2ps2 = state_.north.velocity_variance;
-    estimate.whale_kalman_velocity_variance_east_m2ps2 = state_.east.velocity_variance;
-    estimate.whale_baseline_velocity_north_mps = state_.config.nominal_north_velocity_mps;
-    estimate.whale_baseline_velocity_east_mps = state_.config.nominal_east_velocity_mps;
-    estimate.whale_velocity_return_time_s = state_.config.velocity_return_time_s;
-    estimate_pub_->publish(estimate);
+    if (accepted) {
+        whale_estimator_interfaces::msg::WhaleKalmanEstimate estimate;
+        estimate.vehicle_id = vehicle_id_;
+        estimate.call_cycle = state_.received_call_cycle;
+        estimate.measurement_time_s = state_.measurement_time_s;
+        estimate.whale_kalman_north_m = state_.north.position;
+        estimate.whale_kalman_east_m = state_.east.position;
+        estimate.whale_kalman_velocity_north_mps = state_.north.velocity;
+        estimate.whale_kalman_velocity_east_mps = state_.east.velocity;
+        estimate.whale_kalman_velocity_variance_north_m2ps2 = state_.north.velocity_variance;
+        estimate.whale_kalman_velocity_variance_east_m2ps2 = state_.east.velocity_variance;
+        estimate.whale_baseline_velocity_north_mps = state_.config.nominal_north_velocity_mps;
+        estimate.whale_baseline_velocity_east_mps = state_.config.nominal_east_velocity_mps;
+        estimate.whale_velocity_return_time_s = state_.config.velocity_return_time_s;
+        estimate_pub_->publish(estimate);
+    }
 }
