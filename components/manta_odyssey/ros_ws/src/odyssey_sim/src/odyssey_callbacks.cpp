@@ -28,9 +28,7 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
     try_finish_init();                                      // Complete startup if all other required initialization data is available.
 }
 
-void OdysseyNode::handle_shared_bearing(
-    const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg
-) {
+void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg) {
     if (!tracking_enabled_) return;
     if (msg->receiver_id == vehicle_id_) return;
     if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
@@ -135,8 +133,7 @@ void OdysseyNode::handle_shared_bearing(
     fix.east_m = estimated_east;
     whale_fix_pub_->publish(fix);
 
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.",
-        vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_s_);
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.", vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_s_);
 }
 
 void OdysseyNode::handle_whale_estimate(const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg) {
