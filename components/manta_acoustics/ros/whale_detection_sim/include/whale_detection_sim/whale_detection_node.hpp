@@ -44,6 +44,17 @@ private:
 
     // Detections
     void try_process_pending_whale_call();
+    bool vehicle_states_match_call_cycle() const;
+    void acknowledge_whale_call(const std::vector<std::string> &receiver_ids);
+    void record_detection(const std::string &vehicle_id,
+                          const manta_interfaces::msg::VehicleState &vehicle_state,
+                          const whale_interfaces::msg::WhaleCall &whale_call,
+                          double range_m);
+    static double calculate_range(const manta_interfaces::msg::VehicleState &vehicle_state,
+                                   const whale_interfaces::msg::WhaleCall &whale_call);
+    acoustics_interfaces::msg::BearingObservation calculate_bearing(const std::string &vehicle_id,
+                                   const manta_interfaces::msg::VehicleState &vehicle_state,
+                                   const whale_interfaces::msg::WhaleCall &whale_call);
 
     // ---------------------------------------------------------------------
     // Variables
