@@ -21,12 +21,20 @@ void WhaleNode::create_publishers() {
 void WhaleNode::create_subscribers() {
     // Receive simulation batches from the orchestrator.
     sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
-        "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {handle_sim_step(step); log_state_if_changed();}
+        "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {
+            sim_state_.pending_sim_step = {step->current_cycle, step->sim_time_s, step->timestep, step->step_count};
+            update_whales();
+            log_state_if_changed();
+        }
     );
 
     // Receive the orchestrator's request to stop the simulation.
     shutdown_sub_ = create_subscription<std_msgs::msg::Bool>(
-        "/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {handle_shutdown(message); log_state_if_changed();}
+        "/sim/shutdown", 10, [this](const std_msgs::msg::Bool::SharedPtr message) {
+            if (message->data) sim_state_.shutdown_requested_b = true;
+            handle_shutdown();
+            log_state_if_changed();
+        }
     );
 }
 
@@ -38,7 +46,10 @@ void WhaleNode::create_services() {
     next_whale_call_service_ = create_service<whale_interfaces::srv::GetNextWhaleCall>("/sim/whales/get_next_call", [this](
         const std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Request> request,
         std::shared_ptr<whale_interfaces::srv::GetNextWhaleCall::Response> response) {
-        handle_get_next_call(*request, *response);
+        sim_state_.whale_call_after_time_s = request->whale_call_after_time_s;
+        handle_get_next_call();
+        response->whale_call_available_b = sim_state_.next_whale_call_available_b;
+        response->whale_call = sim_state_.next_whale_call;
         log_state_if_changed();
     });
 }

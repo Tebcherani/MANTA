@@ -21,12 +21,6 @@ public:
     WhaleNode();
 
 private:
-    using WhaleWaypoint = WhaleState::WhaleWaypoint;
-    using WhaleGroup = WhaleState::WhaleGroup;
-    using Whale = WhaleState::Whale;
-    using LineGeometry = WhaleState::LineGeometry;
-    using WhaleInitialState = WhaleState::WhaleInitialState;
-
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
@@ -35,23 +29,22 @@ private:
 
     // Setup
     void load_config();
-    void initialize_whale_groups(double line_length);
-    void initialize_whale_dynamics(Whale &whale, const WhaleInitialState &initial_state, double speed, const LineGeometry &line, const WhaleGroup &group);
+    void initialize_whale_groups();
+    void initialize_whale_dynamics();
     void initialize_whales();
     void open_whale_log();
     void seed_generator();
     void validate_config() const;
 
-    WhaleInitialState compute_initial_state(const WhaleGroup &group, const LineGeometry &line, double whale_group_crossing_distance_m, double speed) const;
+    WhaleInitialState compute_initial_state() const;
     LineGeometry compute_line_geometry() const;
-    std::vector<WhaleWaypoint> generate_trajectory(double initial_north, double initial_east, double crossing_heading, double speed, double start_time_s, const LineGeometry &line, const WhaleGroup &group);
-    Whale create_whale(std::size_t whale_index, std::size_t group_index, const WhaleGroup &group, double start_time_s) const;
-    std::vector<double> generate_population_whale_call_times_s(double start_time_s, double end_time);
+    std::vector<WhaleWaypoint> generate_trajectory();
+    Whale create_whale() const;
+    std::vector<double> generate_population_whale_call_times_s();
     void assign_population_whale_call_times_s();
-    std::size_t get_group_index_for_whale(std::size_t whale_index) const;
-    const WhaleGroup &get_group_for_whale(std::size_t whale_index) const;
-    double sample_whale_group_crossing_distance_m(const WhaleGroup &group, double line_length);
-    double sample_start_time(const WhaleGroup &group);
+    std::size_t get_group_index_for_whale() const;
+    double sample_whale_group_crossing_distance_m();
+    double sample_start_time();
     double sample_speed();
 
     // ROS interfaces
@@ -61,12 +54,11 @@ private:
     void create_services();
     
     // Callbacks
-    void handle_get_next_call(const whale_interfaces::srv::GetNextWhaleCall::Request &request, whale_interfaces::srv::GetNextWhaleCall::Response &response);
-    void handle_shutdown(const std_msgs::msg::Bool::SharedPtr message);
-    void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr step);
+    void handle_get_next_call();
+    void handle_shutdown();
 
-    WhaleWaypoint trajectory_at_time(const Whale &whale, double time) const;
-    void update_whales(const manta_interfaces::msg::SimStep &step);
+    WhaleWaypoint trajectory_at_time() const;
+    void update_whales();
 
     // ---------------------------------------------------------------------
     // Variables

@@ -29,6 +29,15 @@ int main(int argc, char **argv) {
     check_change(whale, [](auto &s) { s.whales.front().next_call_index++; });
     check_change(whale, [](auto &s) { s.whales.front().whale_call_times_s.push_back(1.0); });
     check_change(whale, [](auto &s) { s.whale_groups.front().whale_group_heading_errors_rad.push_back(0.1); });
+    check_change(whale, [](auto &s) { s.whale_group_config.whale_group_mean_size = 2.0; });
+    check_change(whale, [](auto &s) { s.whale_motion_config.whale_speed_mean_mps = 1.5; });
+    check_change(whale, [](auto &s) { s.whale_call_config.whale_call_bout_mean_duration_s = 60.0; });
+    check_change(whale, [](auto &s) { s.pending_sim_step.step_count = 2; });
+    check_change(whale, [](auto &s) { s.whale_call_after_time_s = 10.0; });
+    check_change(whale, [](auto &s) { s.whale_generation.speed_mps = 1.5; });
+    check_change(whale, [](auto &s) { s.trajectory_query.sim_time_s = 10.0; });
+    check_change(whale, [](auto &s) { s.call_schedule_window.end_time_s = 60.0; });
+    check_change(whale, [](auto &s) { s.current_whale_states.whales.emplace_back(); });
     check_change(whale, [](auto &s) { ++s.random_seed; });
     auto advanced_whale = whale;
     advanced_whale.rng();
