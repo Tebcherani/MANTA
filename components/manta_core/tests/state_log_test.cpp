@@ -38,6 +38,11 @@ int main(int argc, char **argv) {
     check_change(whale, [](auto &s) { s.sim_time_s = std::nextafter(0.0, 1.0); });
 
     WhaleDetectionState detector;
+    check_change(detector, [](auto &s) { s.current_vehicle_id = "auv_2"; });
+    check_change(detector, [](auto &s) { s.vehicle_to_whale_range_m = 42.0; });
+    check_change(detector, [](auto &s) { s.bearing_observation.bearing_rad = 0.5; });
+    check_change(detector, [](auto &s) { s.bearing_observation_available_b = true; });
+    check_change(detector, [](auto &s) { s.whale_call_processed.bearing_receiver_ids.push_back("auv_1"); });
     detector.latest_vehicle_states["auv_1"].vehicle_id = "auv_1";
     check_change(detector, [](auto &s) { s.latest_vehicle_states.at("auv_1").depth = 4.0; });
     check_change(detector, [](auto &s) { ++s.bearing_noise_seed; });

@@ -54,6 +54,28 @@ inline void write_json(std::ostream &out, const WhaleDetection &state) {
 }
 }}
 
+namespace acoustics_interfaces { namespace msg {
+inline void write_json(std::ostream &out, const BearingObservation &state) {
+    bool first = true;
+    out << '{';
+    manta::json_field(out, "receiver_id", state.receiver_id, first);
+    manta::json_field(out, "call_cycle", state.call_cycle, first);
+    manta::json_field(out, "sim_time_s", state.sim_time_s, first);
+    manta::json_field(out, "bearing_rad", state.bearing_rad, first);
+    manta::json_field(out, "bearing_std_rad", state.bearing_std_rad, first);
+    out << '}';
+}
+inline void write_json(std::ostream &out, const WhaleCallProcessed &state) {
+    bool first = true;
+    out << '{';
+    manta::json_field(out, "whale_id", state.whale_id, first);
+    manta::json_field(out, "cycle", state.cycle, first);
+    manta::json_field(out, "sim_time_s", state.sim_time_s, first);
+    manta::json_field(out, "bearing_receiver_ids", state.bearing_receiver_ids, first);
+    out << '}';
+}
+}}
+
 inline void write_json(std::ostream &out, const WhaleDetectionState &state) {
     using manta::write_json;
     bool first = true;
@@ -65,8 +87,15 @@ inline void write_json(std::ostream &out, const WhaleDetectionState &state) {
     manta::json_field(out, "data_directory", state.data_directory, first);
     manta::json_field(out, "shutdown_requested_b", state.shutdown_requested_b, first);
     manta::json_field(out, "pending_whale_call_available_b", state.pending_whale_call_available_b, first);
+    manta::json_field(out, "bearing_receiver_ids", state.bearing_receiver_ids, first);
     manta::json_field(out, "latest_vehicle_states", state.latest_vehicle_states, first);
+    manta::json_field(out, "received_whale_call", state.received_whale_call, first);
     manta::json_field(out, "pending_whale_call", state.pending_whale_call, first);
+    manta::json_field(out, "current_vehicle_id", state.current_vehicle_id, first);
+    manta::json_field(out, "vehicle_to_whale_range_m", state.vehicle_to_whale_range_m, first);
+    manta::json_field(out, "bearing_observation_available_b", state.bearing_observation_available_b, first);
+    manta::json_field(out, "bearing_observation", state.bearing_observation, first);
+    manta::json_field(out, "whale_call_processed", state.whale_call_processed, first);
     manta::json_field(out, "whale_detection_available_b", state.whale_detection_available_b, first);
     manta::json_field(out, "whale_detection", state.whale_detection, first);
     out << '}';
