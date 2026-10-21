@@ -13,6 +13,8 @@
   <depend>std_msgs</depend>
   <depend>acoustics_interfaces</depend>
   <depend>manta_interfaces</depend>
+  <depend>whale_estimator_interfaces</depend>
+  <depend>odyssey_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>whale_estimator</name>
+  <version>0.0.0</version>
+  <description>Per-vehicle whale position and velocity estimator</description>
+  <maintainer email="odyssey@todo.todo">odyssey</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>manta_interfaces</depend>
+  <depend>whale_estimator_interfaces</depend>
+  <depend>odyssey_interfaces</depend>
+  <depend>std_msgs</depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

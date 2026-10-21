@@ -51,6 +51,13 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         for vehicle in vehicles
     }
 
+    for vehicle_id in vehicle_ids:
+        services[f"{vehicle_id}_whale_estimator"] = ros_service(
+            "whale_estimator", "whale_estimator_node",
+            {"vehicle_id": vehicle_id}, log_dir, ros_domain_id,
+            params_file="/odyssey/components/manta_whale_estimator/ros/whale_estimator/config.yaml",
+        )
+
     # Whale behavior comes from the shared component configuration.
     whale_parameters = {
         "mission_duration": scenario["duration"],

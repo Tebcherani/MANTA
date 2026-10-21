@@ -127,10 +127,25 @@ void OdysseyNode::handle_shared_bearing(
     processed_bearing_cycles_.insert(call_cycle);
 
     // Both bearings describe the same call; use its measurement time.
-    set_whale_trailing_target(estimated_north, estimated_east, local.sim_time_s);
+    odyssey_interfaces::msg::WhaleBearingPositionEstimate fix;
+    fix.vehicle_id = vehicle_id_;
+    fix.call_cycle = call_cycle;
+    fix.sim_time_s = local.sim_time_s;
+    fix.north_m = estimated_north;
+    fix.east_m = estimated_east;
+    whale_fix_pub_->publish(fix);
 
     RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.",
         vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north, estimated_east, sim_time_s_);
+}
+
+void OdysseyNode::handle_whale_estimate(const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg) {
+    if (msg->vehicle_id != vehicle_id_) return;
+    set_whale_trailing_estimate(msg->whale_kalman_north_m, msg->whale_kalman_east_m, msg->measurement_time_s,
+        msg->whale_kalman_velocity_north_mps, msg->whale_kalman_velocity_east_mps,
+        msg->whale_kalman_velocity_variance_north_m2ps2, msg->whale_kalman_velocity_variance_east_m2ps2,
+        msg->whale_baseline_velocity_north_mps, msg->whale_baseline_velocity_east_mps,
+        msg->whale_velocity_return_time_s);
 }
 
 /**

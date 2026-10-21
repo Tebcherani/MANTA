@@ -11,6 +11,8 @@ participant "WhaleNode" as Whale
 participant "WhaleDetectionNode" as Detection
 participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
+participant "WhaleEstimatorNode\nauv_1" as Estimator1
+participant "WhaleEstimatorNode\nauv_2" as Estimator2
 
 == Initialization ==
 
@@ -51,8 +53,10 @@ loop
 
         opt Matching local and remote bearings available
             AUV1 -> AUV1 : Intersect same-cycle bearings
-            AUV1 -> AUV1 : Store whale position at call time
-            AUV1 -> AUV1 : Update position and recent-measurement velocity estimate
+            AUV1 ->> Estimator1 : Position fix at call time
+            Estimator1 -> Estimator1 : Update filter and recent-measurement velocity estimate
+            Estimator1 ->> AUV1 : Filtered position, velocity, and model tuning
+            AUV1 -> AUV1 : Cache estimate for guidance between fixes
         end
     end
 

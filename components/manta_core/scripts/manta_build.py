@@ -34,6 +34,7 @@ def run_build() -> int:
         "/odyssey/components/manta_acoustics/ros "
         "/odyssey/components/manta_core/ros "
         "/odyssey/components/manta_whale_sim/ros "
+        "/odyssey/components/manta_whale_estimator/ros "
         "/odyssey/components/manta_odyssey/ros_ws/src "
         "--cmake-args -DCMAKE_BUILD_TYPE=Release",
     ]

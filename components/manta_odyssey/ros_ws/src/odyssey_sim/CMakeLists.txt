@@ -18,6 +18,8 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(acoustics_interfaces REQUIRED)
 find_package(manta_interfaces REQUIRED)
+find_package(whale_estimator_interfaces REQUIRED)
+find_package(odyssey_interfaces REQUIRED)
 
 # -------------------------------------------------------------------------
 # Odyssey ROS node
@@ -62,6 +64,8 @@ ament_target_dependencies(
   std_msgs
   acoustics_interfaces
   manta_interfaces
+  whale_estimator_interfaces
+  odyssey_interfaces
 )
 
 # -------------------------------------------------------------------------

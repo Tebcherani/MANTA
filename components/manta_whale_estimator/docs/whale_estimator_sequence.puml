@@ -1,0 +1,46 @@
+@startuml
+title MANTA — Whale Estimator Update and Prediction
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+participant "OdysseyNode" as Odyssey
+participant "WhaleEstimatorNode" as RosEstimator
+participant "WhaleEstimator C core" as Estimator
+participant "whale_estimator_state_t" as State
+participant "Odyssey guidance snapshot" as Cached
+
+Odyssey -> RosEstimator : Publish per-vehicle position fix from paired bearings
+RosEstimator -> State : Store triangulated position and time in received_fix
+RosEstimator -> Estimator : whale_estimator_update(state)
+Estimator -> State : Clear fix_accepted_b
+Estimator -> Estimator : Validate configuration, finite fix,
+and strictly increasing timestamp
+alt First accepted fix
+    Estimator -> State : Set north/east positions,
+nominal velocities, initial velocity variances,
+measurement time, initialized_b
+else Later accepted fix
+    Estimator -> Estimator : Predict mean-reverting position and velocity
+    Estimator -> Estimator : Propagate covariance using acceleration process noise Q
+    Estimator -> Estimator : Correct velocity from exact position (R = 0)
+    Estimator -> State : Save updated axes and measurement time
+end
+Estimator -> State : Drop stale recent fixes; append current fix
+opt At least three recent fixes
+    Estimator -> Estimator : Fit north/east velocity using actual timestamps
+    Estimator -> State : Replace velocity and variance with rolling-fit result
+end
+Estimator -> State : Set fix_accepted_b
+Estimator -->> RosEstimator : Accepted
+RosEstimator -> Odyssey : Publish filter estimate with velocity and model tuning
+Odyssey -> Cached : Store estimate for guidance between fixes
+
+Odyssey -> Cached : Read latest measurement time and model parameters
+Odyssey -> Odyssey : Reject time before last accepted fix
+Odyssey -> Odyssey : Project position and velocity returning toward nominal
+Odyssey -> Cached : Read projected position for formation guidance
+
+@enduml

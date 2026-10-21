@@ -12,6 +12,7 @@ void OdysseyNode::create_publishers(const rclcpp::QoS &qos) {
     ready_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", qos);
     step_result_pub_ = create_publisher<manta_interfaces::msg::SimStepResult>("/" + vehicle_id_ + "/step_result", qos);
     vehicle_state_pub_ = create_publisher<manta_interfaces::msg::VehicleState>("/" + vehicle_id_ + "/state", qos);
+    whale_fix_pub_ = create_publisher<odyssey_interfaces::msg::WhaleBearingPositionEstimate>("/" + vehicle_id_ + "/whale/bearing_position_estimate", rclcpp::QoS(100).reliable());
 }
 
 /**
@@ -71,4 +72,5 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &
     sim_time_sub_ = create_subscription<std_msgs::msg::Float64>("/sim/time", qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {handle_sim_time(msg);});
     shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_shutdown(msg);});
     bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingObservation>("/" + vehicle_id_ + "/sensors/bearing", whale_qos, [this](const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {handle_bearing_observation(msg);});
+    whale_estimate_sub_ = create_subscription<whale_estimator_interfaces::msg::WhaleKalmanEstimate>("/" + vehicle_id_ + "/whale/kalman_estimate", whale_qos, [this](const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg) {handle_whale_estimate(msg);});
 }

@@ -1,0 +1,24 @@
+@startuml
+title MANTA — Whale Estimator Initialization
+
+skinparam monochrome true
+skinparam shadowing false
+
+start
+:Trailing mission starts one whale_estimator_node per vehicle;
+:Load ros/whale_estimator/config.yaml and vehicle_id;
+:Call whale_estimator_init(state);
+:Clear state, including filter axes, recent fixes,
+received fix, prediction, and validity flags;
+:Set defaults in state.config:
+recent-fix window age and process-noise strength;
+:Set velocity return time and nominal velocity
+(1.5 m/s north, 0 m/s east);
+:Set initial velocity variance;
+:Set configured_b = true;
+:Copy and validate ROS tuning parameters into state.config;
+:Subscribe to vehicle position fixes;
+:Publish vehicle filter estimates;
+stop
+
+@enduml

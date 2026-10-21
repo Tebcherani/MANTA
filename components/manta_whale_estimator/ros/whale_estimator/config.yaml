@@ -1,0 +1,8 @@
+whale_estimator_node:
+  ros__parameters:
+    velocity_window_max_age_s: 1800.0
+    acceleration_psd_m2_s3: 0.001
+    whale_velocity_return_time_s: 1800.0
+    whale_baseline_velocity_north_mps: 1.5
+    whale_baseline_velocity_east_mps: 0.0
+    initial_velocity_variance_m2ps2: 1.0

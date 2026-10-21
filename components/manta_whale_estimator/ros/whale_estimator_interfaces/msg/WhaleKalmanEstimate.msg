@@ -1,0 +1,12 @@
+string vehicle_id
+uint64 call_cycle
+float64 measurement_time_s
+float64 whale_kalman_north_m
+float64 whale_kalman_east_m
+float64 whale_kalman_velocity_north_mps
+float64 whale_kalman_velocity_east_mps
+float64 whale_kalman_velocity_variance_north_m2ps2
+float64 whale_kalman_velocity_variance_east_m2ps2
+float64 whale_baseline_velocity_north_mps
+float64 whale_baseline_velocity_east_mps
+float64 whale_velocity_return_time_s
