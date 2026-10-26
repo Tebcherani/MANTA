@@ -66,6 +66,15 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
             ready_topic, qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_vehicle_ready(msg, vehicle_id);}
         );
         ready_subs_.push_back(subscription);
+
+        if (wait_for_whale_estimators_) {
+            const std::string estimator_ready_topic = "/" + vehicle_id + "/whale_estimator/ready";
+            auto estimator_subscription = create_subscription<std_msgs::msg::Bool>(
+                estimator_ready_topic, qos,
+                [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_whale_estimator_ready(msg, vehicle_id);}
+            );
+            whale_estimator_ready_subs_.push_back(estimator_subscription);
+        }
     }
 
     for (const std::string &vehicle_id : vehicle_ids_) {

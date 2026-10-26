@@ -8,24 +8,23 @@ skinparam responseMessageBelowArrow true
 
 participant "OdysseyNode" as Odyssey
 participant "WhaleEstimatorNode" as RosEstimator
-participant "WhaleEstimator C core" as Estimator
-participant "whale_estimator_state_t" as State
+participant "Python FilterPy model" as Estimator
+participant "WhaleEstimatorState" as State
 participant "Odyssey guidance snapshot" as Cached
 
-Odyssey -> RosEstimator : Publish per-vehicle position fix from paired bearings
-RosEstimator -> State : Store triangulated position and time in received_bearing_whale_position
-RosEstimator -> Estimator : whale_estimator_update(state)
+Odyssey -> RosEstimator : Publish triangulated position and variance
+RosEstimator -> State : Store position, variance, cycle, and time
+RosEstimator -> Estimator : update_estimator(state)
 Estimator -> State : Clear bearing_whale_position_accepted_b
-Estimator -> Estimator : Validate configuration, finite fix,
+Estimator -> Estimator : Validate finite fix and variance,
 and strictly increasing timestamp
 alt First accepted fix
-    Estimator -> State : Set north/east positions,
-nominal velocities, initial velocity variances,
+    Estimator -> State : Set north/east positions and measurement variances,
+baseline velocities, initial velocity variances,
 measurement time, estimator_initialized_b
 else Later accepted fix
-    Estimator -> Estimator : Predict mean-reverting position and velocity
-    Estimator -> Estimator : Propagate covariance using acceleration process noise Q
-    Estimator -> Estimator : Correct velocity from exact position (R = 0)
+    Estimator -> Estimator : Build mean-reverting F, control, and process noise Q
+    Estimator -> Estimator : FilterPy predict, then update with position variance R
     Estimator -> State : Save updated axes and measurement time
 end
 Estimator -> State : Drop stale recent fixes; append current fix
@@ -35,7 +34,7 @@ opt At least three recent fixes
 end
 Estimator -> State : Set bearing_whale_position_accepted_b
 Estimator -->> RosEstimator : Accepted
-RosEstimator -> Odyssey : Publish filter estimate with velocity and model tuning
+RosEstimator -> Odyssey : Publish position, velocity, variances, and model tuning
 Odyssey -> Cached : Store estimate for guidance between fixes
 
 Odyssey -> Cached : Read latest measurement time and model parameters

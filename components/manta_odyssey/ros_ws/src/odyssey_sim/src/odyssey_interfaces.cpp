@@ -12,7 +12,7 @@ void OdysseyNode::create_publishers(const rclcpp::QoS &qos) {
     ready_pub_ = create_publisher<std_msgs::msg::Bool>(vehicle_id_ + "/ready", qos);
     step_result_pub_ = create_publisher<manta_interfaces::msg::SimStepResult>("/" + vehicle_id_ + "/step_result", qos);
     vehicle_state_pub_ = create_publisher<manta_interfaces::msg::VehicleState>("/" + vehicle_id_ + "/state", qos);
-    whale_fix_pub_ = create_publisher<odyssey_interfaces::msg::WhaleBearingPositionEstimate>("/" + vehicle_id_ + "/whale/bearing_position_estimate", rclcpp::QoS(100).reliable());
+    whale_fix_pub_ = create_publisher<odyssey_interfaces::msg::WhaleBearingPositionEstimate>("/" + vehicle_id_ + "/whale/bearing_position_estimate", rclcpp::QoS(100).reliable().transient_local());
 }
 
 /**

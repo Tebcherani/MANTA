@@ -17,7 +17,16 @@ RUN apt-get update && apt-get install -y \
     ros-dev-tools \
     ros-jazzy-rqt-graph \
     python3-colcon-common-extensions \
+    python3-pip \
+    python3-numpy \
+    python3-scipy \
+    python3-matplotlib \
     && rm -rf /var/lib/apt/lists/*
+
+COPY components/manta_whale_estimator/ros/whale_estimator/requirements.txt /tmp/whale_estimator_requirements.txt
+RUN python3 -m pip install --break-system-packages --no-cache-dir --no-deps \
+    -r /tmp/whale_estimator_requirements.txt && \
+    rm /tmp/whale_estimator_requirements.txt
 
 RUN EXISTING_GROUP=$(getent group ${HOST_GID} | cut -d: -f1) && \
     if [ -z "$EXISTING_GROUP" ]; then \

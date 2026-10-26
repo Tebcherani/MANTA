@@ -183,6 +183,12 @@ void SimOrchestratorNode::handle_vehicle_ready( const std_msgs::msg::Bool::Share
     check_all_vehicles_initialized();                   // Begin the simulation if the entire fleet is ready.
 }
 
+void SimOrchestratorNode::handle_whale_estimator_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id) {
+    if (msg->data) ready_whale_estimators_.insert(vehicle_id);
+    else ready_whale_estimators_.erase(vehicle_id);
+    check_all_vehicles_initialized();
+}
+
 /**
  * Process acknowledgement of a published whale-call event.
  *
@@ -340,9 +346,12 @@ void SimOrchestratorNode::check_all_vehicles_initialized() {
         if (!state.ready) return;
     }
 
+    if (wait_for_whale_estimators_ && ready_whale_estimators_.size() != vehicle_states_.size()) return;
+
     // Mark coordinated startup as complete.
     simulation_started_ = true;
-    RCLCPP_INFO(get_logger(), "All %zu vehicles are initialized.", vehicle_states_.size());
+    RCLCPP_INFO(get_logger(), "All %zu vehicles%s are initialized.", vehicle_states_.size(),
+        wait_for_whale_estimators_ ? " and whale estimators" : "");
     
     // Obtain the first whale call before selecting the first simulation batch.
     request_next_whale_call(sim_state_.sim_time_s);

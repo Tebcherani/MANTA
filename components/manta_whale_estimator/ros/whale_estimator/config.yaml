@@ -1,8 +1,14 @@
 whale_estimator_node:
   ros__parameters:
+    # Ignore older position measurements when fitting velocity from recent history (seconds).
     velocity_window_max_age_s: 1800.0
-    acceleration_psd_m2_s3: 0.001
+
+    # Kalman process-noise intensity q: continuous-time acceleration-noise power spectral density (m²/s³).
+    q: 0.001
+
+    # E-folding time for estimated velocity deviations to return toward the baseline velocity (seconds).
     whale_velocity_return_time_s: 1800.0
+
     whale_baseline_velocity_north_mps: 1.5
     whale_baseline_velocity_east_mps: 0.0
-    initial_velocity_variance_m2ps2: 1.0
+    initial_velocity_variance_m2ps2: 0.5

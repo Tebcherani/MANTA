@@ -6,11 +6,8 @@ skinparam shadowing false
 
 start
 
-partition "WhaleEstimationNode()" {
+partition "WhaleEstimatorNode()" {
     :Load configuration;
-    note right
-        - Kalman filter settings
-    end note
 
     partition "Create ROS interfaces" {
         :Create publisher;

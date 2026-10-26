@@ -70,6 +70,7 @@ private:
     void handle_shutdown_timer();
     void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id);
     void handle_vehicle_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
+    void handle_whale_estimator_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
     void handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
 
     void check_all_step_results_received();
@@ -105,6 +106,8 @@ private:
     // Vehicle
     std::vector<std::string> vehicle_ids_;
     std::unordered_map<std::string, VehicleState> vehicle_states_;
+    bool wait_for_whale_estimators_ = false;
+    std::unordered_set<std::string> ready_whale_estimators_;
 
     // Whale calls
     bool next_whale_call_available_ = false;
@@ -137,6 +140,7 @@ private:
     // Subscribers
     rclcpp::Subscription<acoustics_interfaces::msg::BearingProcessed>::SharedPtr bearing_processed_sub_;
     std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> ready_subs_;
+    std::vector<rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr> whale_estimator_ready_subs_;
     std::vector<rclcpp::Subscription<manta_interfaces::msg::SimStepResult>::SharedPtr> step_result_subs_;
     rclcpp::Subscription<acoustics_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;
 
