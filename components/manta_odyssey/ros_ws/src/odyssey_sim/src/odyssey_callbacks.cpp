@@ -236,15 +236,15 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
 
     // Convert the requested output period to a number of control updates.
     if (!log_decimation_configured_) {
-        const double control_interval = static_cast<double>(msg->control_period) * msg->timestep_s;
-        const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_ / control_interval)));
+        const double control_interval_s = static_cast<double>(msg->control_period) * msg->timestep_s;
+        const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_ / control_interval_s)));
 
         set_odyssey_log_decimation(log_decimation);
         log_decimation_configured_ = true;
 
         RCLCPP_INFO(
             get_logger(), "Vehicle '%s' will record output every %.3f simulated seconds (%u control updates).", 
-            vehicle_id_.c_str(), static_cast<double>(log_decimation) * control_interval, log_decimation
+            vehicle_id_.c_str(), static_cast<double>(log_decimation) * control_interval_s, log_decimation
         );
     }
 
@@ -271,8 +271,8 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
 
         // Run sensors, navigation, control, and mission logic when due.
         if (cycle % msg->control_period == 0) {
-            const double control_timestep = static_cast<double>(msg->control_period) * msg->timestep_s;
-            const odyssey_update_status_t cycle_status = update_odyssey_sim_cycle(&world_state, control_timestep);
+            const double control_timestep_s = static_cast<double>(msg->control_period) * msg->timestep_s;
+            const odyssey_update_status_t cycle_status = update_odyssey_sim_cycle(&world_state, control_timestep_s);
 
             if (cycle_status == ODYSSEY_UPDATE_ERROR) {
                 result.status = manta_interfaces::msg::SimStepResult::ERROR;
