@@ -29,8 +29,6 @@ output:
 # Simulation parameters
 #--------------------------------------------------
 simulation:
-  timestep: 0.02      # Each simulation step advances time by X seconds
-  control_period: 10  # Sensor processing and vehicle control run once every X simulation steps
   max_steps: 12960000 
   steps_per_message: 10000
 

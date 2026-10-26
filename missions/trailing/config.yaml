@@ -28,8 +28,6 @@ output:
 # Simulation parameters
 #--------------------------------------------------
 simulation:
-  timestep: 0.02
-  control_period: 10
   max_steps: 4320000
   steps_per_message: 10000
 
