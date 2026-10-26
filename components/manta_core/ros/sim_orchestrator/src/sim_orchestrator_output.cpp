@@ -20,7 +20,7 @@ void SimOrchestratorNode::publish_current_step() {
     // Describe the first cycle, starting time, and physics timestep of the batch that the vehicle simulators are about to process.
     step.current_cycle = static_cast<std::uint64_t>(sim_state_.current_cycle);
     step.sim_time_s = sim_state_.sim_time_s;
-    step.timestep = sim_config_.timestep;
+    step.timestep_s = sim_config_.timestep_s;
 
     // Use the configured maximum batch size unless fewer simulation cycles remain.
     const int remaining_cycles = sim_config_.num_cycles - sim_state_.current_cycle;
@@ -41,7 +41,7 @@ void SimOrchestratorNode::publish_current_step() {
 
         if (time_until_call > 0.0) {
             // Convert the remaining time to a number of physics steps. Every published batch must contain at least one step.
-            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call / sim_config_.timestep)));
+            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call / sim_config_.timestep_s)));
 
             // If the call occurs within the normal batch, shorten the batch so it ends at the call.
             if (steps_until_call <= batch_steps) {

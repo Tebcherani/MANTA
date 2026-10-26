@@ -2,7 +2,7 @@
 #define SIM_CONFIG_H
 
 typedef struct {
-    double timestep;
+    double timestep_s;
     int num_cycles;
     int control_period; // Run the sensor processing and control code once every N simulation cycles
 } sim_config_t;

@@ -236,7 +236,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
 
     // Convert the requested output period to a number of control updates.
     if (!log_decimation_configured_) {
-        const double control_interval = static_cast<double>(msg->control_period) * msg->timestep;
+        const double control_interval = static_cast<double>(msg->control_period) * msg->timestep_s;
         const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_ / control_interval)));
 
         set_odyssey_log_decimation(log_decimation);
@@ -262,7 +262,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
         }
 
         // Dynamics continue running at the native simulation timestep.
-        if (!update_odyssey_sim_state(&world_state, msg->timestep)) {
+        if (!update_odyssey_sim_state(&world_state, msg->timestep_s)) {
             result.status = manta_interfaces::msg::SimStepResult::ERROR;
             result.detail = "Failed to update Odyssey simulation state.";
             step_result_pub_->publish(result);
@@ -271,7 +271,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
 
         // Run sensors, navigation, control, and mission logic when due.
         if (cycle % msg->control_period == 0) {
-            const double control_timestep = static_cast<double>(msg->control_period) * msg->timestep;
+            const double control_timestep = static_cast<double>(msg->control_period) * msg->timestep_s;
             const odyssey_update_status_t cycle_status = update_odyssey_sim_cycle(&world_state, control_timestep);
 
             if (cycle_status == ODYSSEY_UPDATE_ERROR) {
@@ -290,7 +290,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             }
         }
 
-        const double next_sim_time_s = msg->sim_time_s + static_cast<double>(offset + 1) * msg->timestep;
+        const double next_sim_time_s = msg->sim_time_s + static_cast<double>(offset + 1) * msg->timestep_s;
 
         if (!update_odyssey_sim_time(next_sim_time_s)) {
             result.status = manta_interfaces::msg::SimStepResult::ERROR;
@@ -306,7 +306,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
 
     // Publish the vehicle state produced by the completed batch.
     result.completed_cycle = msg->current_cycle + msg->step_count - 1;
-    const double completed_sim_time_s = msg->sim_time_s + static_cast<double>(msg->step_count) * msg->timestep;
+    const double completed_sim_time_s = msg->sim_time_s + static_cast<double>(msg->step_count) * msg->timestep_s;
     publish_vehicle_state(result.completed_cycle, completed_sim_time_s);
 
     // Acknowledge the completed batch after publishing its resulting state.

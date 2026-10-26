@@ -302,7 +302,7 @@ void SimOrchestratorNode::check_all_step_results_received() {
 
     // Advance the shared clock through every completed native timestep.
     for (int step = 0; step < completed_steps; ++step) {
-        if (!update_sim_state(&sim_state_, sim_config_.timestep)) {
+        if (!update_sim_state(&sim_state_, sim_config_.timestep_s)) {
             RCLCPP_ERROR(get_logger(), "Failed to advance the simulation state.");
             request_simulation_shutdown(true);
             return;

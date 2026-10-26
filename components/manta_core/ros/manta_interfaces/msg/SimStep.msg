@@ -1,6 +1,6 @@
 uint64 current_cycle
 float64 sim_time_s
-float64 timestep
+float64 timestep_s
 uint32 step_count
 uint64 control_period
 WorldState world

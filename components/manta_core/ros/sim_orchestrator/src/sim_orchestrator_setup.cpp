@@ -25,7 +25,7 @@ void SimOrchestratorNode::initialize_simulation_config() {
     else throw std::runtime_error("Failed to initialize simulation configuration.");
 
     // Override the native defaults with the configured ROS parameters.
-    sim_config_.timestep = declare_parameter<double>("timestep", sim_config_.timestep);
+    sim_config_.timestep_s = declare_parameter<double>("timestep_s", sim_config_.timestep_s);
     sim_config_.control_period = static_cast<int>(declare_parameter<std::int64_t>("control_period", sim_config_.control_period));
     sim_config_.num_cycles = static_cast<int>(declare_parameter<std::int64_t>("max_steps", sim_config_.num_cycles));
     
@@ -36,9 +36,9 @@ void SimOrchestratorNode::initialize_simulation_config() {
     if (!std::isfinite(communication_interval) || communication_interval < 0.0) throw std::runtime_error("communication_interval must be finite and nonnegative.");
 
     if (communication_interval > 0.0) {
-        if (!std::isfinite(sim_config_.timestep) || sim_config_.timestep <= 0.0) throw std::runtime_error("timestep must be finite and positive.");
+        if (!std::isfinite(sim_config_.timestep_s) || sim_config_.timestep_s <= 0.0) throw std::runtime_error("timestep_s must be finite and positive.");
 
-        const double interval_steps = communication_interval / sim_config_.timestep;
+        const double interval_steps = communication_interval / sim_config_.timestep_s;
         const double rounded_steps = std::round(interval_steps);
 
         if (!std::isfinite(interval_steps) ||
