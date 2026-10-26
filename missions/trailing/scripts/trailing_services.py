@@ -103,6 +103,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     services["sim_orchestrator"] = ros_service(
         "sim_orchestrator", "sim_orchestrator_node",
         orchestrator_parameters, log_dir, ros_domain_id,
+        params_file="/odyssey/components/manta_core/ros/sim_orchestrator/config.yaml",
         extra_environment={"SIM_LOG_PATH": f"{log_dir}/sim_orchestrator.log"},
     )
 

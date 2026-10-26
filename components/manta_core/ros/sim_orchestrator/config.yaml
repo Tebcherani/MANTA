@@ -1,0 +1,5 @@
+sim_orchestrator:
+  ros__parameters:
+    timestep: 0.02        # Duration of one physics step in seconds.
+    control_period: 10    # Physics steps per sensor and control update.
+    steps_per_message: 10000  # Maximum physics steps sent in one ROS message.
