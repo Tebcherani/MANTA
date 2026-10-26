@@ -96,4 +96,5 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
         ros_domain_id=ros_domain_id,
         extra_environment=environment,
         image=image,
+        params_file=container_path(runtime["params_file"]) if runtime.get("params_file") else None,
     )
