@@ -94,10 +94,10 @@ class OdysseyNode : public rclcpp::Node {
         std::uint64_t next_communication_index_ = 1;
 
         // Mission
-        bool log_decimation_configured_ = false;
-        bool metrics_written_ = false;
-        bool mission_finished_ = false;
-        bool tracking_enabled_ = false;
+        bool log_decimation_configured_b_ = false;
+        bool metrics_written_b_ = false;
+        bool mission_finished_b_ = false;
+        bool tracking_enabled_b_ = false;
 
         // Simulation
         bool calendar_start_time_received_b_ = false;

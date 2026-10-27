@@ -29,7 +29,7 @@ void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedP
 }
 
 void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg) {
-    if (!tracking_enabled_) return;
+    if (!tracking_enabled_b_) return;
     if (msg->receiver_id == vehicle_id_) return;
     if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
 
@@ -210,7 +210,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     result.detail = "";
 
     // A completed vehicle no longer participates in simulation cycles.
-    if (mission_finished_) return;
+    if (mission_finished_b_) return;
 
     // Convert the ROS world snapshot to Odyssey's native world structure.
     world_state.gravity = msg->world.gravity;
@@ -235,12 +235,12 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     }
 
     // Convert the requested output period to a number of control updates.
-    if (!log_decimation_configured_) {
+    if (!log_decimation_configured_b_) {
         const double control_interval_s = static_cast<double>(msg->control_period) * msg->timestep_s;
         const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_s_ / control_interval_s)));
 
         set_odyssey_log_decimation(log_decimation);
-        log_decimation_configured_ = true;
+        log_decimation_configured_b_ = true;
 
         RCLCPP_INFO(
             get_logger(), "Vehicle '%s' will record output every %.3f simulated seconds (%u control updates).", 
@@ -254,7 +254,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
         result.completed_cycle = cycle;
 
         if (odyssey_abort_requested()) {
-            mission_finished_ = true;
+            mission_finished_b_ = true;
             result.status = manta_interfaces::msg::SimStepResult::ABORTED;
             result.detail = "Odyssey requested mission abort.";
             step_result_pub_->publish(result);
@@ -282,7 +282,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             }
 
             if (cycle_status == ODYSSEY_UPDATE_MISSION_COMPLETE) {
-                mission_finished_ = true;
+                mission_finished_b_ = true;
                 result.status = manta_interfaces::msg::SimStepResult::MISSION_COMPLETE;
                 result.detail = "Odyssey mission completed.";
                 step_result_pub_->publish(result);
@@ -344,7 +344,7 @@ void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
 }
 
 void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {
-    if (!tracking_enabled_ || msg->receiver_id != vehicle_id_) return;
+    if (!tracking_enabled_b_ || msg->receiver_id != vehicle_id_) return;
 
     // Find this vehicle's position at the measurement time.
     const auto position = std::find_if(bearing_positions_.rbegin(), bearing_positions_.rend(), [&msg](const BearingPosition &sample) {return sample.cycle == msg->call_cycle;});
@@ -449,7 +449,7 @@ void OdysseyNode::try_finish_init() {
 }
 
 void OdysseyNode::publish_bearing(double simulation_time) {
-    if (!tracking_enabled_ || communication_interval_s_ <= 0.0) return;
+    if (!tracking_enabled_b_ || communication_interval_s_ <= 0.0) return;
 
     while (
         simulation_time + 1.0e-9 >=

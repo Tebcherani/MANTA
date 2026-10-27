@@ -17,7 +17,7 @@ extern "C" {
  */
 bool OdysseyNode::write_final_metrics() {
     // Do not write the same final metrics more than once.
-    if (metrics_written_) return true;
+    if (metrics_written_b_) return true;
 
     // Retrieve final metrics from the native Odyssey simulator.
     odyssey_metrics_t metrics;
@@ -53,7 +53,7 @@ bool OdysseyNode::write_final_metrics() {
     if (error) return false;
     std::filesystem::rename(temporary_path, final_path, error);
     if (error) return false;
-    metrics_written_ = true;
+    metrics_written_b_ = true;
 
     RCLCPP_INFO(get_logger(),"Saved final vehicle metrics: %s", final_path.string().c_str());
 
@@ -87,7 +87,7 @@ void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double co
 }
 
 void OdysseyNode::open_whale_prediction_log() {
-    if (!tracking_enabled_) return;
+    if (!tracking_enabled_b_) return;
 
     std::error_code error;
     std::filesystem::create_directories(data_directory_, error);

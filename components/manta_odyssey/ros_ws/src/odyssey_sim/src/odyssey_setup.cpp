@@ -22,7 +22,7 @@ void OdysseyNode::load_config() {
     output_sample_period_s_ = declare_parameter<double>("output_sample_period_s", 2.0);
     if (output_sample_period_s_ <= 0.0) throw std::runtime_error("output_sample_period_s must be greater than zero.");
 
-    tracking_enabled_ = declare_parameter<bool>("tracking_enabled", false);
+    tracking_enabled_b_ = declare_parameter<bool>("tracking_enabled", false);
 
     communication_interval_s_ = declare_parameter<double>("communication_interval_s", 0.0);
     if (!std::isfinite(communication_interval_s_) || communication_interval_s_ < 0.0) throw std::runtime_error("communication_interval_s must be finite and nonnegative.");
