@@ -1,5 +1,5 @@
 odyssey_sim:
   ros__parameters:
-    output_sample_period: 2.0  # Simulated seconds between vehicle output samples.
+    output_sample_period_s: 2.0  # Simulated seconds between vehicle output samples.
     tracking_enabled: false  # Enable tracking guidance.
     communication_interval: 0.0  # Simulated seconds between scheduled bearing exchanges; 0 sends immediately.

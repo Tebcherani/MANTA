@@ -237,7 +237,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     // Convert the requested output period to a number of control updates.
     if (!log_decimation_configured_) {
         const double control_interval_s = static_cast<double>(msg->control_period) * msg->timestep_s;
-        const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_ / control_interval_s)));
+        const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_s_ / control_interval_s)));
 
         set_odyssey_log_decimation(log_decimation);
         log_decimation_configured_ = true;

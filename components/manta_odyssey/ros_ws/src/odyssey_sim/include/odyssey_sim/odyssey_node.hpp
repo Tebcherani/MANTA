@@ -113,7 +113,7 @@ class OdysseyNode : public rclcpp::Node {
         // Vehicle
         std::string vehicle_id_;
         std::string data_directory_;
-        double output_sample_period_ = 2.0;
+        double output_sample_period_s_ = 2.0;
 
         std::ofstream whale_prediction_log_;
         double next_prediction_log_time_ = 0.0;

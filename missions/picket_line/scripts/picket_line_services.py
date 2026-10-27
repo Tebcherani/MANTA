@@ -25,7 +25,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
 
     data_dir = container_path(output["data_directory"])
     log_dir = container_path(output["log_directory"])
-    sample_period = float(output.get("auv_sample_period", 2.0))
+    sample_period_s = float(output.get("auv_sample_period_s", 2.0))
     vehicle_ids = [vehicle["id"] for vehicle in vehicles]
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
 
@@ -35,7 +35,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
             vehicle=vehicle,
             data_dir=data_dir,
             log_dir=log_dir,
-            sample_period=sample_period,
+            sample_period_s=sample_period_s,
             ros_domain_id=ros_domain_id,
             tracking_enabled=False,
         )

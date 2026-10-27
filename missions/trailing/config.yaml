@@ -21,7 +21,7 @@ review:
 output:
   data_directory: ./output/trailing/Data
   log_directory: ./output/trailing/Logs
-  auv_sample_period: 5.0    # Sample AUV's state every X simulated seconds
+  auv_sample_period_s: 5.0    # Sample AUV's state every X simulated seconds
 
 
 #--------------------------------------------------

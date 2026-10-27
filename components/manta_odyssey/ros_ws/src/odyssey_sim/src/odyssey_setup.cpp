@@ -19,8 +19,8 @@ void OdysseyNode::load_config() {
     if (data_directory_env == nullptr || data_directory_env[0] == '\0') throw std::runtime_error("ODYSSEY_DATA_DIR is not set.");
     data_directory_ = data_directory_env;
 
-    output_sample_period_ = declare_parameter<double>("output_sample_period", 2.0);
-    if (output_sample_period_ <= 0.0) throw std::runtime_error("output_sample_period must be greater than zero.");
+    output_sample_period_s_ = declare_parameter<double>("output_sample_period_s", 2.0);
+    if (output_sample_period_s_ <= 0.0) throw std::runtime_error("output_sample_period_s must be greater than zero.");
 
     tracking_enabled_ = declare_parameter<bool>("tracking_enabled", false);
 

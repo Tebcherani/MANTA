@@ -113,7 +113,7 @@ void OdysseyNode::log_whale_prediction(double simulation_time) {
     if (simulation_time + 1.0e-9 < next_prediction_log_time_) return;
 
     while (next_prediction_log_time_ <= simulation_time + 1.0e-9) {
-        next_prediction_log_time_ += output_sample_period_;
+        next_prediction_log_time_ += output_sample_period_s_;
     }
 
     double measurement_time = 0.0;
