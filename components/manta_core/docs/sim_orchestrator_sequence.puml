@@ -1,5 +1,5 @@
 @startuml
-title MANTA Trailing Mission — Scheduled Bearing Communication
+title MANTA Trailing Mission — Orchestration, Bearings, and Whale Estimation
 
 skinparam monochrome true
 skinparam shadowing false
@@ -12,30 +12,31 @@ participant "WhaleDetectionNode" as Detection
 participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
 
-loop
+loop Until mission termination
+    Orchestrator -> Whale : Request next call after current simulation time
+    Whale --> Orchestrator : Next scheduled call or no future call
 
-    Orchestrator -> Whale : Request next whale call
-    Whale --> Orchestrator : Next call or no future call
-
-    par Whale simulation
+    par Advance simulation
         Orchestrator ->> Whale : SimStep
-
-    else AUV simulation
+    else Advance AUV1 simulation
         Orchestrator ->> AUV1 : SimStep
         AUV1 ->> Orchestrator : SimStepResult
+    else Advance AUV2 simulation
+        Orchestrator ->> AUV2 : SimStep        
+        AUV2 ->> Orchestrator : SimStepResult
     end
 
     Orchestrator -> Orchestrator : Wait for all active vehicles' step results
-    Orchestrator -> Orchestrator : Check termination; advance shared clock if continuing
+    Orchestrator -> Orchestrator : Check termination and advance shared simulation clock
 
-    Orchestrator ->> Detection : WhaleCall (position, cycle, time)
+    opt The batch reaches a scheduled whale call
+        Orchestrator ->> Detection : WhaleCall (position, cycle, simulation time)
+        Detection ->> Orchestrator : WhaleCallProcessed (detected receiver IDs)
+        AUV1 ->> Orchestrator : BearingProcessed (stored locally)
+        AUV2 ->> Orchestrator : BearingProcessed (stored locally)
 
-    opt AUV detects call
-        AUV1 ->> Orchestrator : BearingProcessed (measurement stored)
+        Orchestrator -> Orchestrator : Wait for detector acknowledgement and each detected vehicle's storage acknowledgement
     end
-
-        Detection ->> Orchestrator : WhaleCallProcessed (receiver IDs)
-    Orchestrator -> Orchestrator : Wait for detector and bearing acknowledgements
 end
 
 @enduml
