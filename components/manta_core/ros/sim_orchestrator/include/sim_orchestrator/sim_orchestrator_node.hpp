@@ -106,7 +106,7 @@ private:
     // Vehicle
     std::vector<std::string> vehicle_ids_;
     std::unordered_map<std::string, VehicleState> vehicle_states_;
-    bool wait_for_whale_estimators_ = false;
+    bool wait_for_whale_estimators_b_ = false;
     std::unordered_set<std::string> ready_whale_estimators_;
 
     // Whale calls

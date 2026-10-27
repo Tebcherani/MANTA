@@ -346,12 +346,12 @@ void SimOrchestratorNode::check_all_vehicles_initialized() {
         if (!state.ready_b) return;
     }
 
-    if (wait_for_whale_estimators_ && ready_whale_estimators_.size() != vehicle_states_.size()) return;
+    if (wait_for_whale_estimators_b_ && ready_whale_estimators_.size() != vehicle_states_.size()) return;
 
     // Mark coordinated startup as complete.
     simulation_started_b_ = true;
     RCLCPP_INFO(get_logger(), "All %zu vehicles%s are initialized.", vehicle_states_.size(),
-        wait_for_whale_estimators_ ? " and whale estimators" : "");
+        wait_for_whale_estimators_b_ ? " and whale estimators" : "");
     
     // Obtain the first whale call before selecting the first simulation batch.
     request_next_whale_call(sim_state_.sim_time_s);

@@ -74,7 +74,7 @@ void SimOrchestratorNode::initialize_simulation_state() {
  * Load the configured vehicle IDs and initialize their orchestration state.
  */
 void SimOrchestratorNode::load_vehicle_config() {
-    wait_for_whale_estimators_ = declare_parameter<bool>("wait_for_whale_estimators", false);
+    wait_for_whale_estimators_b_ = declare_parameter<bool>("wait_for_whale_estimators", false);
     // Load the list of vehicles participating in the simulation.
     vehicle_ids_ = declare_parameter<std::vector<std::string>>("vehicle_ids", std::vector<std::string>{});
     if (vehicle_ids_.empty()) throw std::runtime_error("The vehicle_ids parameter must contain at least one vehicle.");

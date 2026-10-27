@@ -37,11 +37,11 @@ void SimOrchestratorNode::publish_current_step() {
     current_batch_reaches_whale_call_b_ = false;
     if (next_whale_call_available_b_) {
         // Calculate how many simulated seconds remain before the next scheduled whale call.
-        const double time_until_call = next_whale_call_.sim_time_s - sim_state_.sim_time_s;
+        const double time_until_call_s = next_whale_call_.sim_time_s - sim_state_.sim_time_s;
 
-        if (time_until_call > 0.0) {
+        if (time_until_call_s > 0.0) {
             // Convert the remaining time to a number of physics steps. Every published batch must contain at least one step.
-            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call / sim_config_.timestep_s)));
+            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call_s / sim_config_.timestep_s)));
 
             // If the call occurs within the normal batch, shorten the batch so it ends at the call.
             if (steps_until_call <= batch_steps) {

@@ -67,7 +67,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
         );
         ready_subs_.push_back(subscription);
 
-        if (wait_for_whale_estimators_) {
+        if (wait_for_whale_estimators_b_) {
             const std::string estimator_ready_topic = "/" + vehicle_id + "/whale_estimator/ready";
             auto estimator_subscription = create_subscription<std_msgs::msg::Bool>(
                 estimator_ready_topic, qos,
