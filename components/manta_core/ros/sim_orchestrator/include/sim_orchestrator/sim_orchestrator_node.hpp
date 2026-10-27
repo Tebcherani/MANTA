@@ -110,11 +110,11 @@ private:
     std::unordered_set<std::string> ready_whale_estimators_;
 
     // Whale calls
-    bool next_whale_call_available_ = false;
-    bool current_batch_reaches_whale_call_ = false;
-    bool waiting_for_whale_call_processing_ = false;
-    bool whale_detection_complete_ = false;
-    bool wait_for_bearing_processing_ = false;
+    bool next_whale_call_available_b_ = false;
+    bool current_batch_reaches_whale_call_b_ = false;
+    bool waiting_for_whale_call_processing_b_ = false;
+    bool whale_detection_complete_b_ = false;
+    bool wait_for_bearing_processing_b_ = false;
 
     std::unordered_set<std::string> expected_bearing_processors_;
     std::unordered_set<std::string> completed_bearing_processors_;

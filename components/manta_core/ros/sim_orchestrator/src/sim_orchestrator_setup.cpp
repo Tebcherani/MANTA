@@ -18,7 +18,7 @@ extern "C" {
  * @throws std::runtime_error If native initialization fails or the configured number of steps per message is invalid.
  */
 void SimOrchestratorNode::initialize_simulation_config() {
-    wait_for_bearing_processing_ = declare_parameter<bool>("wait_for_bearing_processing", false);
+    wait_for_bearing_processing_b_ = declare_parameter<bool>("wait_for_bearing_processing", false);
     
     // Initialize the configuration with the native simulator defaults.
     if (init_sim_config(&sim_config_)) RCLCPP_INFO(get_logger(), "Simulation configuration initialized.");

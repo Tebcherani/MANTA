@@ -34,8 +34,8 @@ void SimOrchestratorNode::publish_current_step() {
     }
 
     // Shorten the batch if it would pass the next scheduled whale call.
-    current_batch_reaches_whale_call_ = false;
-    if (next_whale_call_available_) {
+    current_batch_reaches_whale_call_b_ = false;
+    if (next_whale_call_available_b_) {
         // Calculate how many simulated seconds remain before the next scheduled whale call.
         const double time_until_call = next_whale_call_.sim_time_s - sim_state_.sim_time_s;
 
@@ -46,7 +46,7 @@ void SimOrchestratorNode::publish_current_step() {
             // If the call occurs within the normal batch, shorten the batch so it ends at the call.
             if (steps_until_call <= batch_steps) {
                 batch_steps = steps_until_call;
-                current_batch_reaches_whale_call_ = true;
+                current_batch_reaches_whale_call_b_ = true;
             }
         }
     }

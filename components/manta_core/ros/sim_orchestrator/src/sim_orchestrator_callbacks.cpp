@@ -15,7 +15,7 @@
  */
 void SimOrchestratorNode::handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {
     // Accept acknowledgments only for the call currently being processed.
-    if (!waiting_for_whale_call_processing_) return;
+    if (!waiting_for_whale_call_processing_b_) return;
 
     if (msg->call_cycle != next_whale_call_.cycle ||
         std::abs(msg->sim_time_s - next_whale_call_.sim_time_s) > 1.0e-9) {
@@ -46,27 +46,27 @@ void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_i
 
     // Continue normal stepping when no future whale call remains.
     if (!response->whale_call_available_b) {
-        next_whale_call_available_ = false;
+        next_whale_call_available_b_ = false;
         publish_current_step();
         return;
     }
 
     // Store the next scheduled whale call.
     next_whale_call_ = response->whale_call;
-    next_whale_call_available_ = true;
+    next_whale_call_available_b_ = true;
 
     // Publish calls that fall within the timestep vehicles already reached.
     if (next_whale_call_.sim_time_s <= sim_state_.sim_time_s) {
         next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<std::uint64_t>(sim_state_.current_cycle - 1) : 0;
 
         // Prepare the barrier before any acknowledgments can arrive.
-        whale_detection_complete_ = false;
+        whale_detection_complete_b_ = false;
         expected_bearing_processors_.clear();
         completed_bearing_processors_.clear();
-        waiting_for_whale_call_processing_ = true;
+        waiting_for_whale_call_processing_b_ = true;
 
         publish_whale_call(next_whale_call_);
-        next_whale_call_available_ = false;
+        next_whale_call_available_b_ = false;
         return;
     }
 
@@ -199,7 +199,7 @@ void SimOrchestratorNode::handle_whale_estimator_ready(const std_msgs::msg::Bool
  */
 void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
     // Ignore acknowledgements when no whale-call processing is pending.
-    if (!waiting_for_whale_call_processing_) {
+    if (!waiting_for_whale_call_processing_b_) {
         RCLCPP_WARN(get_logger(), "Ignored unexpected whale-call acknowledgement.");
         return;
     }
@@ -218,12 +218,12 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
     }
 
     // The detector has finished and reported which receivers got bearings.
-    whale_detection_complete_ = true;
+    whale_detection_complete_b_ = true;
 
     expected_bearing_processors_.clear();
 
     // Wait for local receipt/storage by every AUV that detected this call.
-    if (wait_for_bearing_processing_) {
+    if (wait_for_bearing_processing_b_) {
         for (const auto &receiver_id : msg->bearing_receiver_ids) {
             expected_bearing_processors_.insert(receiver_id);
         }
@@ -240,8 +240,8 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
  * Continue only after detection and all required estimators finish.
  */
 void SimOrchestratorNode::check_whale_call_processing_complete() {
-    if (!waiting_for_whale_call_processing_ ||
-        !whale_detection_complete_) {
+    if (!waiting_for_whale_call_processing_b_ ||
+        !whale_detection_complete_b_) {
         return;
     }
 
@@ -250,7 +250,7 @@ void SimOrchestratorNode::check_whale_call_processing_complete() {
         if (completed_bearing_processors_.count(vehicle_id) == 0) return;
     }
 
-    waiting_for_whale_call_processing_ = false;
+    waiting_for_whale_call_processing_b_ = false;
     request_next_whale_call(next_whale_call_.sim_time_s);
 }
 
@@ -310,19 +310,19 @@ void SimOrchestratorNode::check_all_step_results_received() {
     }
 
     // If the shortened batch reached a whale call, publish the event before allowing the simulation to continue.
-    if (current_batch_reaches_whale_call_) {
+    if (current_batch_reaches_whale_call_b_) {
         next_whale_call_.cycle = static_cast<std::uint64_t>(sim_state_.current_cycle - 1);
 
         // Prepare the barrier before any acknowledgments can arrive.
-        whale_detection_complete_ = false;
+        whale_detection_complete_b_ = false;
         expected_bearing_processors_.clear();
         completed_bearing_processors_.clear();
-        waiting_for_whale_call_processing_ = true;
+        waiting_for_whale_call_processing_b_ = true;
 
         publish_whale_call(next_whale_call_);
 
-        next_whale_call_available_ = false;
-        current_batch_reaches_whale_call_ = false;
+        next_whale_call_available_b_ = false;
+        current_batch_reaches_whale_call_b_ = false;
         return;
     }
 
