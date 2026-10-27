@@ -47,11 +47,12 @@ def _process_noise(state: WhaleEstimatorState) -> None:
 
     dt_s = state.axis_update_elapsed_s
     q = state.axis_update_q_m2_s3
-    # Integrating white acceleration noise gives position variance, the
-    # position/velocity covariance, and velocity variance for this step.
+
+    # Integrating white acceleration noise gives position variance, the position/velocity covariance, and velocity variance for this step.
     noise_p = q * dt_s**3 / 3.0
     noise_pv = q * dt_s**2 / 2.0
     noise_v = q * dt_s
+
     state.axis_update_process_noise = np.array([[noise_p, noise_pv], [noise_pv, noise_v]], dtype=float)
 
 
@@ -60,53 +61,43 @@ def _update_axis(state: WhaleEstimatorState) -> None:
     state.axis_update_succeeded_b = False
     updated = deepcopy(state.axis_update_filter)
     dt = state.axis_update_elapsed_s
-    tau = state.axis_update_velocity_return_time_s
+    velocity_return_time = state.axis_update_velocity_return_time_s
     baseline = state.axis_update_baseline_velocity_mps
     measurement = state.axis_update_position_m
     variance = state.axis_update_position_variance_m2
 
-    # Remove the starting velocity deviation at a constant rate. If the full
-    # return time elapses, the deviation is gone and velocity stays at baseline.
-    decay = max(0.0, 1.0 - dt / tau)
-    if dt < tau:
-        travel_time = dt - dt**2 / (2.0 * tau)
+    # Remove the starting velocity deviation at a constant rate. If the full return time elapses, the deviation is gone and velocity stays at baseline.
+    if dt < velocity_return_time:
+        T = dt - dt**2 / (2.0 * velocity_return_time)
     else:
-        travel_time = tau / 2.0
-    state.axis_update_travel_time_s = travel_time
-    updated.F = np.array([[1.0, travel_time], [0.0, decay]])
+        T = velocity_return_time / 2.0
+    state.axis_update_travel_time_s = T
+
+    a = max(0.0, 1.0 - dt / velocity_return_time)
+
+    updated.F = np.array([[1.0, T], [0.0, a]])
+    
     _process_noise(state)
     updated.Q = state.axis_update_process_noise
 
-    # F describes deviations from baseline velocity. This control term adds the baseline motion back to both predicted position and velocity.
-    control = np.array([[baseline * (dt - travel_time)], [baseline * (1.0 - decay)]])
-    updated.predict(u=control)
+    u = np.array([[baseline * (dt - T)], [baseline * (1.0 - a)]])
+    updated.predict(u=u)
 
     # The predicted position uncertainty plus measurement uncertainty is the variance of their difference (the innovation).
     innovation_variance = float(updated.P[0, 0]) + variance
-    if (
-        not np.isfinite(updated.x).all()
-        or not np.isfinite(updated.P).all()
-        or not np.isfinite(updated.Q).all()
-        or not isfinite(innovation_variance)
-        or updated.P[0, 0] < 0.0
-        or updated.P[1, 1] < 0.0
-        or innovation_variance <= 0.0
+    if (not np.isfinite(updated.x).all() or not np.isfinite(updated.P).all() or not np.isfinite(updated.Q).all() or not isfinite(innovation_variance)
+        or updated.P[0, 0] < 0.0 or updated.P[1, 1] < 0.0 or innovation_variance <= 0.0
     ):
         return
 
     # FilterPy computes the Kalman gain from P and R=variance. A more precise measurement (smaller R) pulls the estimate closer to the measurement.
     updated.update(measurement, R=variance)
-    # Roundoff can make the covariance matrix slightly asymmetric or negative.
-    updated.P = 0.5 * (updated.P + updated.P.T)
-    if (
-        not np.isfinite(updated.x).all()
-        or not np.isfinite(updated.P).all()
-        or updated.P[0, 0] < -1.0e-12
-        or updated.P[1, 1] < -1.0e-12
-    ):
+    updated.P = 0.5 * (updated.P + updated.P.T) # Roundoff can make the covariance matrix slightly asymmetric or negative.
+    if (not np.isfinite(updated.x).all() or not np.isfinite(updated.P).all() or updated.P[0, 0] < -1.0e-12 or updated.P[1, 1] < -1.0e-12):
         return
     updated.P[0, 0] = max(0.0, updated.P[0, 0])
     updated.P[1, 1] = max(0.0, updated.P[1, 1])
+
     state.axis_update_filter = updated
     state.axis_update_succeeded_b = True
 
