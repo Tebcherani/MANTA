@@ -41,6 +41,21 @@ def state_snapshot(state: WhaleEstimatorState) -> dict:
         "received_vehicle_id": state.received_vehicle_id,
         "received_call_cycle": state.received_call_cycle,
         "bearing_whale_position_accepted_b": state.bearing_whale_position_accepted_b,
+        "axis_update_is_north_b": state.axis_update_is_north_b,
+        "axis_update_filter": axis_snapshot(state.axis_update_filter),
+        "axis_update_position_m": state.axis_update_position_m,
+        "axis_update_position_variance_m2": state.axis_update_position_variance_m2,
+        "axis_update_baseline_velocity_mps": state.axis_update_baseline_velocity_mps,
+        "axis_update_velocity_variance_m2ps2": state.axis_update_velocity_variance_m2ps2,
+        "axis_update_elapsed_s": state.axis_update_elapsed_s,
+        "axis_update_velocity_return_time_s": state.axis_update_velocity_return_time_s,
+        "axis_update_q_m2_s3": state.axis_update_q_m2_s3,
+        "axis_update_travel_time_s": state.axis_update_travel_time_s,
+        "axis_update_process_noise": state.axis_update_process_noise.tolist()
+        if state.axis_update_process_noise is not None else None,
+        "axis_update_succeeded_b": state.axis_update_succeeded_b,
+        "pending_north_axis_estimate": axis_snapshot(state.pending_north_axis_estimate),
+        "pending_east_axis_estimate": axis_snapshot(state.pending_east_axis_estimate),
     }
 
 

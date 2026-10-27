@@ -15,31 +15,35 @@ participant "Odyssey guidance snapshot" as Cached
 Odyssey -> RosEstimator : Publish triangulated position and variance
 RosEstimator -> State : Store position, variance, cycle, and time
 RosEstimator -> Estimator : update_estimator(state)
-Estimator -> State : Clear bearing_whale_position_accepted_b
-Estimator -> Estimator : Validate finite fix and variance,
-and strictly increasing timestamp
 alt First accepted fix
-    Estimator -> State : Set north/east positions and measurement variances,
-baseline velocities, initial velocity variances,
-measurement time, estimator_initialized_b
+    Estimator -> State : Initialize north/east positions from fix
+    Estimator -> State : Set position variances from fix
+    Estimator -> State : Set velocities to configured baselines
+    Estimator -> State : Set initial velocity variances and measurement time
+    Estimator -> State : Set estimator_initialized_b
 else Later accepted fix
-    Estimator -> Estimator : Build mean-reverting F, control, and process noise Q
-    Estimator -> Estimator : FilterPy predict, then update with position variance R
-    Estimator -> State : Save updated axes and measurement time
+    Estimator -> State : Select north axis and load its update values
+    Estimator -> Estimator : Calculate how position and velocity estimates change under the baseline-return rule
+    Estimator -> Estimator : Calculate white-acceleration process noise Q
+    Estimator -> Estimator : FilterPy predicts north position and velocity
+    Estimator -> Estimator : Correct north prediction using measured position and variance R
+    Estimator -> State : Save candidate north estimate in state
+    Estimator -> State : Select east axis and load its update values
+    Estimator -> Estimator : Calculate how position and velocity estimates change under the baseline-return rule
+    Estimator -> Estimator : Calculate white-acceleration process noise Q
+    Estimator -> Estimator : FilterPy predicts east position and velocity
+    Estimator -> Estimator : Correct east prediction using measured position and variance R
+    Estimator -> State : Save both axes and measurement time if both updates succeed
 end
-Estimator -> State : Drop stale recent fixes; append current fix
+Estimator -> State : Drop fixes older than velocity_window_max_age_s
+Estimator -> State : Append current fix; keep at most five fixes
 opt At least three recent fixes
     Estimator -> Estimator : Fit north/east velocity using actual timestamps
-    Estimator -> State : Replace velocity and variance with rolling-fit result
+    Estimator -> State : Replace velocity and variance with fit result
+    Estimator -> State : Clear position/velocity covariance
 end
 Estimator -> State : Set bearing_whale_position_accepted_b
-Estimator -->> RosEstimator : Accepted
-RosEstimator -> Odyssey : Publish position, velocity, variances, and model tuning
-Odyssey -> Cached : Store estimate for guidance between fixes
-
-Odyssey -> Cached : Read latest measurement time and model parameters
-Odyssey -> Odyssey : Reject time before last accepted fix
-Odyssey -> Odyssey : Project position and velocity returning toward nominal
-Odyssey -> Cached : Read projected position for formation guidance
+Estimator -->> RosEstimator : Return through state acceptance flag
+RosEstimator -> Odyssey : Publish estimate, variances, baseline velocities,\nreturn duration, measurement time, and cycle
 
 @enduml

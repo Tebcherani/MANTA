@@ -11,7 +11,7 @@ from odyssey_interfaces.msg import WhaleBearingPositionEstimate
 from std_msgs.msg import Bool
 from whale_estimator_interfaces.msg import WhaleKalmanEstimate
 
-from .filter import update_estimator
+from .whale_estimator_filter import update_estimator
 from .whale_estimator_state import WhaleEstimatorState
 from .whale_estimator_state_log import StateLog, state_snapshot
 from .whale_estimator_types import BearingPositionMeasurement
@@ -69,8 +69,10 @@ class WhaleEstimatorNode(Node):
             north_variance_m2=message.north_variance_m2,
             east_variance_m2=message.east_variance_m2,
         )
-        if message.vehicle_id == self.vehicle_id and update_estimator(self.state):
-            self._publish_estimate()
+        if message.vehicle_id == self.vehicle_id:
+            update_estimator(self.state)
+            if self.state.bearing_whale_position_accepted_b:
+                self._publish_estimate()
         self._log_state_if_changed()
 
     def _publish_estimate(self) -> None:

@@ -53,16 +53,22 @@ void set_whale_trailing_estimate(double north, double east, double measurement_t
 
 static double predict_axis_position(double position, double velocity,
                                     double nominal_velocity, double elapsed) {
-    const double travel_time = -whale_estimate.return_time *
-        expm1(-elapsed / whale_estimate.return_time);
+    double travel_time;
+    if (elapsed < whale_estimate.return_time) {
+        travel_time = elapsed - elapsed * elapsed /
+            (2.0 * whale_estimate.return_time);
+    } else {
+        travel_time = whale_estimate.return_time / 2.0;
+    }
     return position + nominal_velocity * elapsed +
         (velocity - nominal_velocity) * travel_time;
 }
 
 static double predict_axis_velocity(double velocity, double nominal_velocity,
                                     double elapsed) {
-    return nominal_velocity + (velocity - nominal_velocity) *
-        exp(-elapsed / whale_estimate.return_time);
+    const double remaining_fraction = fmax(
+        0.0, 1.0 - elapsed / whale_estimate.return_time);
+    return nominal_velocity + (velocity - nominal_velocity) * remaining_fraction;
 }
 
 /*

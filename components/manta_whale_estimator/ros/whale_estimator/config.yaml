@@ -6,7 +6,7 @@ whale_estimator_node:
     # Kalman process-noise intensity q: continuous-time acceleration-noise power spectral density (m²/s³).
     q: 0.001
 
-    # E-folding time for estimated velocity deviations to return toward the baseline velocity (seconds).
+    # Time for the velocity deviation at an estimate to return linearly to baseline (seconds).
     whale_velocity_return_time_s: 1800.0
 
     whale_baseline_velocity_north_mps: 1.5
