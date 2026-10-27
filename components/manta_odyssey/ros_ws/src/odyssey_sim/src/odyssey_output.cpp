@@ -108,28 +108,28 @@ void OdysseyNode::open_whale_prediction_log() {
         << "sim_time_s,has_estimate,measurement_time,predicted_north,predicted_east\n";
 }
 
-void OdysseyNode::log_whale_prediction(double simulation_time) {
+void OdysseyNode::log_whale_prediction(double simulation_time_s) {
     if (!whale_prediction_log_.is_open()) return;
-    if (simulation_time + 1.0e-9 < next_prediction_log_time_) return;
+    if (simulation_time_s + 1.0e-9 < next_prediction_log_time_s_) return;
 
-    while (next_prediction_log_time_ <= simulation_time + 1.0e-9) {
-        next_prediction_log_time_ += output_sample_period_s_;
+    while (next_prediction_log_time_s_ <= simulation_time_s + 1.0e-9) {
+        next_prediction_log_time_s_ += output_sample_period_s_;
     }
 
-    double measurement_time = 0.0;
-    double predicted_north = 0.0;
-    double predicted_east = 0.0;
+    double measurement_time_s = 0.0;
+    double predicted_north_m = 0.0;
+    double predicted_east_m = 0.0;
 
-    const bool has_estimate = get_odyssey_sim_whale_prediction(simulation_time, &measurement_time, &predicted_north, &predicted_east);
+    const bool has_estimate = get_odyssey_sim_whale_prediction(simulation_time_s, &measurement_time_s, &predicted_north_m, &predicted_east_m);
 
     whale_prediction_log_ << std::setprecision(17)
-                          << simulation_time << ','
+                          << simulation_time_s << ','
                           << (has_estimate ? 1 : 0) << ',';
 
     if (has_estimate) {
-        whale_prediction_log_ << measurement_time << ','
-                              << predicted_north << ','
-                              << predicted_east;
+        whale_prediction_log_ << measurement_time_s << ','
+                              << predicted_north_m << ','
+                              << predicted_east_m;
     } else {
         whale_prediction_log_ << ",,";
     }

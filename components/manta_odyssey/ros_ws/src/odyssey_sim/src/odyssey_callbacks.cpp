@@ -361,8 +361,8 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     shared.sim_time_s = msg->sim_time_s;
     shared.bearing_rad = msg->bearing_rad;
     shared.bearing_std_rad = msg->bearing_std_rad;
-    shared.receiver_north_m = position->north;
-    shared.receiver_east_m = position->east;
+    shared.receiver_north_m = position->north_m;
+    shared.receiver_east_m = position->east_m;
 
     latest_bearing_ = shared;
     latest_bearing_available_b_ = true;
@@ -448,11 +448,11 @@ void OdysseyNode::try_finish_init() {
     }
 }
 
-void OdysseyNode::publish_bearing(double simulation_time) {
+void OdysseyNode::publish_bearing(double simulation_time_s) {
     if (!tracking_enabled_b_ || communication_interval_s_ <= 0.0) return;
 
     while (
-        simulation_time + 1.0e-9 >=
+        simulation_time_s + 1.0e-9 >=
         static_cast<double>(next_communication_index_) * communication_interval_s_
     ) {
         if (latest_bearing_available_b_ && latest_bearing_unsent_b_) {
