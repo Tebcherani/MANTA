@@ -23,15 +23,13 @@ alt First accepted fix
     Estimator -> State : Set estimator_initialized_b
 else Later accepted fix
     Estimator -> State : Select north axis and load its update values
-    Estimator -> Estimator : Calculate how position and velocity estimates change under the baseline-return rule
     Estimator -> Estimator : Calculate white-acceleration process noise Q
-    Estimator -> Estimator : FilterPy predicts north position and velocity
+    Estimator -> Estimator : FilterPy predicts north position and velocity using the baseline-return model
     Estimator -> Estimator : Correct north prediction using measured position and variance R
     Estimator -> State : Save candidate north estimate in state
     Estimator -> State : Select east axis and load its update values
-    Estimator -> Estimator : Calculate how position and velocity estimates change under the baseline-return rule
     Estimator -> Estimator : Calculate white-acceleration process noise Q
-    Estimator -> Estimator : FilterPy predicts east position and velocity
+    Estimator -> Estimator : FilterPy predicts east position and velocity using the baseline-return model
     Estimator -> Estimator : Correct east prediction using measured position and variance R
     Estimator -> State : Save both axes and measurement time if both updates succeed
 end
