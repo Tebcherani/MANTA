@@ -338,7 +338,7 @@ void SimOrchestratorNode::check_all_step_results_received() {
  */
 void SimOrchestratorNode::check_all_vehicles_initialized() {
     // Prevent startup from being triggered more than once.
-    if (simulation_started_) return;
+    if (simulation_started_b_) return;
 
     // Wait until every configured vehicle reports that it is ready.
     for (const auto &entry : vehicle_states_) {
@@ -349,7 +349,7 @@ void SimOrchestratorNode::check_all_vehicles_initialized() {
     if (wait_for_whale_estimators_ && ready_whale_estimators_.size() != vehicle_states_.size()) return;
 
     // Mark coordinated startup as complete.
-    simulation_started_ = true;
+    simulation_started_b_ = true;
     RCLCPP_INFO(get_logger(), "All %zu vehicles%s are initialized.", vehicle_states_.size(),
         wait_for_whale_estimators_ ? " and whale estimators" : "");
     
@@ -393,7 +393,7 @@ void SimOrchestratorNode::request_next_whale_call(double whale_call_after_time_s
  */
 void SimOrchestratorNode::request_simulation_shutdown(bool failed) {            
     // Preserve the final simulation outcome for main() to report.    
-    simulation_failed_ = failed;
+    simulation_failed_b_ = failed;
     
     // Notify every simulation node that it should shut down.
     std_msgs::msg::Bool shutdown_message;

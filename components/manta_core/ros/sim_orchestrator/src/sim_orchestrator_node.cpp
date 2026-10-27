@@ -28,7 +28,7 @@ SimOrchestratorNode::~SimOrchestratorNode() {
     if (!close_sim_log()) RCLCPP_ERROR(get_logger(), "Failed to close simulation log.");
 }
 
-bool SimOrchestratorNode::simulation_failed() const {return simulation_failed_;}
+bool SimOrchestratorNode::simulation_failed() const {return simulation_failed_b_;}
 
 int main(int argc, char *argv[]) {    
     int exit_status = EXIT_SUCCESS;

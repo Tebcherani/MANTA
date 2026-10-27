@@ -92,8 +92,8 @@ private:
     // ---------------------------------------------------------------------
 
     // Simulation
-    bool simulation_started_ = false;
-    bool simulation_failed_ = false;
+    bool simulation_started_b_ = false;
+    bool simulation_failed_b_ = false;
 
     int steps_per_message_ = 1;
     int communication_steps_ = 0;
