@@ -40,9 +40,9 @@ private:
     // ---------------------------------------------------------------------
 
     struct VehicleState {
-        bool ready = false;
-        bool active = true;
-        bool step_complete = false;
+        bool ready_b = false;
+        bool active_b = true;
+        bool step_complete_b = false;
     };
 
     // ---------------------------------------------------------------------

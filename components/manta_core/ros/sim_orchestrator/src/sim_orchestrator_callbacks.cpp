@@ -122,7 +122,7 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
         return;
     }
 
-    if (state.step_complete) {
+    if (state.step_complete_b) {
         RCLCPP_WARN(
             get_logger(), "Ignored duplicate result from %s for cycle %llu.",
             msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle)
@@ -145,8 +145,8 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
             get_logger(), "Vehicle %s completed its mission during cycle %llu.", 
             msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle)
         );
-        state.active = false;
-        state.step_complete = true;
+        state.active_b = false;
+        state.step_complete_b = true;
         check_all_step_results_received();
         return;
     }
@@ -156,14 +156,14 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
             get_logger(), "Vehicle %s aborted its mission during cycle %llu: %s", 
             msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), msg->detail.c_str()
         );                
-        state.active = false;
-        state.step_complete = true;
+        state.active_b = false;
+        state.step_complete_b = true;
         check_all_step_results_received();
         return;
     }
 
     // Step for this vehicle is complete
-    state.step_complete = true;
+    state.step_complete_b = true;
 
     // Check if all vehicles have completed this step
     check_all_step_results_received();
@@ -179,7 +179,7 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
  * @param vehicle_id Identifier of the vehicle that published the message.
  */
 void SimOrchestratorNode::handle_vehicle_ready( const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id) {
-    vehicle_states_.at(vehicle_id).ready = msg->data;   // Store the vehicle's latest readiness state.
+    vehicle_states_.at(vehicle_id).ready_b = msg->data;   // Store the vehicle's latest readiness state.
     check_all_vehicles_initialized();                   // Begin the simulation if the entire fleet is ready.
 }
 
@@ -267,14 +267,14 @@ void SimOrchestratorNode::check_all_step_results_received() {
     // Wait until every active vehicle has returned a result for the current simulation cycle.
     for (const auto &entry : vehicle_states_) {
         const VehicleState &state = entry.second;
-        if (state.active && !state.step_complete) return;
+        if (state.active_b && !state.step_complete_b) return;
     }
 
     // Determine whether any vehicle still has an active mission.
     bool any_vehicle_active = false;
 
     for (const auto &entry : vehicle_states_) {
-        if (entry.second.active) {
+        if (entry.second.active_b) {
             any_vehicle_active = true;
             break;
         }
@@ -298,7 +298,7 @@ void SimOrchestratorNode::check_all_step_results_received() {
     }
 
     // Clear vehicle acknowledgements before beginning the next batch.
-    for (auto &entry : vehicle_states_) entry.second.step_complete = false;
+    for (auto &entry : vehicle_states_) entry.second.step_complete_b = false;
 
     // Advance the shared clock through every completed native timestep.
     for (int step = 0; step < completed_steps; ++step) {
@@ -343,7 +343,7 @@ void SimOrchestratorNode::check_all_vehicles_initialized() {
     // Wait until every configured vehicle reports that it is ready.
     for (const auto &entry : vehicle_states_) {
         const VehicleState &state = entry.second;
-        if (!state.ready) return;
+        if (!state.ready_b) return;
     }
 
     if (wait_for_whale_estimators_ && ready_whale_estimators_.size() != vehicle_states_.size()) return;
