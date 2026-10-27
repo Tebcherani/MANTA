@@ -100,12 +100,12 @@ class OdysseyNode : public rclcpp::Node {
         bool tracking_enabled_ = false;
 
         // Simulation
-        bool calendar_start_time_received_ = false;
-        bool odyssey_initialized_ = false;
-        bool odyssey_sim_started_ = false;
-        bool ready_published_ = false;
-        bool sim_time_initialized_ = false;
-        bool sim_time_received_ = false;
+        bool calendar_start_time_received_b_ = false;
+        bool odyssey_initialized_b_ = false;
+        bool odyssey_sim_started_b_ = false;
+        bool ready_published_b_ = false;
+        bool sim_time_initialized_b_ = false;
+        bool sim_time_received_b_ = false;
 
         time_t calendar_start_time_ = 0;
         double sim_time_s_ = 0.0;

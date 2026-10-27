@@ -24,7 +24,7 @@ extern "C" {
  */
 void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg) {
     calendar_start_time_ = static_cast<time_t>(msg->data);  // Convert the timestamp carried by the ROS message to the native time type.
-    calendar_start_time_received_ = true;                   // Record that this required startup value has been received.
+    calendar_start_time_received_b_ = true;                   // Record that this required startup value has been received.
     try_finish_init();                                      // Complete startup if all other required initialization data is available.
 }
 
@@ -322,7 +322,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
  */
 void OdysseyNode::handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg) {
     sim_time_s_ = msg->data;       // Store the initial simulated mission time.
-    sim_time_received_ = true;   // Record that this required startup value has arrived.
+    sim_time_received_b_ = true;   // Record that this required startup value has arrived.
     try_finish_init();           // Complete startup if the other required values are available.
 }
 
@@ -336,9 +336,9 @@ void OdysseyNode::handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg) {
  * @throws std::runtime_error if the native Odyssey simulator cannot initialize.
  */
 void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
-    if (!msg->data || odyssey_initialized_) return;                                                 // Ignore false messages and duplicate startup notifications.
+    if (!msg->data || odyssey_initialized_b_) return;                                                 // Ignore false messages and duplicate startup notifications.
     if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize " + vehicle_id_ + "."); // Initialize the native Odyssey simulator.
-    odyssey_initialized_ = true;                                                                    // Record successful initialization.
+    odyssey_initialized_b_ = true;                                                                    // Record successful initialization.
     RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
     try_finish_init();                                                                              // Complete startup if the required time values have also arrived.
 }
@@ -419,31 +419,31 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
  * @throws std::runtime_error If the native simulation time cannot be initialized or the Odyssey simulator cannot be started.
  */
 void OdysseyNode::try_finish_init() {
-    if (!odyssey_initialized_) return;
-    if (!sim_time_received_) return;
+    if (!odyssey_initialized_b_) return;
+    if (!sim_time_received_b_) return;
 
     // Initialize the native Odyssey simulation clock once.
-    if (!sim_time_initialized_) {
+    if (!sim_time_initialized_b_) {
         if (!update_odyssey_sim_time(sim_time_s_)) throw std::runtime_error("Failed to initialize " + vehicle_id_ + " simulation time.");
-        sim_time_initialized_ = true;
+        sim_time_initialized_b_ = true;
         RCLCPP_INFO(get_logger(), "Initialized '%s' simulation time.", vehicle_id_.c_str());
     }
 
-    if (!calendar_start_time_received_) return;
+    if (!calendar_start_time_received_b_) return;
 
     // Start the native Odyssey simulator once all startup data is available.
-    if (!odyssey_sim_started_) {
+    if (!odyssey_sim_started_b_) {
         if (!start_odyssey_sim(calendar_start_time_)) throw std::runtime_error("Failed to start " + vehicle_id_ + " simulator.");
-        odyssey_sim_started_ = true;
+        odyssey_sim_started_b_ = true;
         RCLCPP_INFO(get_logger(), "Started '%s' simulator.", vehicle_id_.c_str());
     }
 
     // Notify the orchestrator once the vehicle is fully initialized.
-    if (!ready_published_) {
+    if (!ready_published_b_) {
         std_msgs::msg::Bool ready_message;        
         ready_message.data = true;
         ready_pub_->publish(ready_message);
-        ready_published_ = true;
+        ready_published_b_ = true;
         RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str()); 
     }
 }
