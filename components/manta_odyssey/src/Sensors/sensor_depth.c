@@ -10,5 +10,5 @@ double update_depth(const depth_input_t *input) {
         return 0.0;
     }
 
-    return input->true_depth + std_normal_random_num() * input->noise_std_dev;
+    return input->true_depth_m + std_normal_random_num() * input->noise_std_dev_m;
 }
