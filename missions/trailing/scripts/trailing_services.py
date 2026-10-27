@@ -26,7 +26,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     output = config["output"]
     simulation = config["simulation"]
     trailing = scenario["trailing"]
-    communication_interval = float(trailing.get("communication_interval", 0.0))
+    communication_interval_s = float(trailing.get("communication_interval_s", 0.0))
     monte_carlo = config.get("monte_carlo", {})
 
     # Translate output paths into container paths.
@@ -46,7 +46,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
             sample_period_s=sample_period_s,
             ros_domain_id=ros_domain_id,
             tracking_enabled=True,
-            communication_interval=communication_interval,
+            communication_interval_s=communication_interval_s,
         )
         for vehicle in vehicles
     }
@@ -95,7 +95,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         "steps_per_message": simulation.get("steps_per_message", 1),
         "wait_for_bearing_processing": True,
         "wait_for_whale_estimators": True,
-        "communication_interval": communication_interval,
+        "communication_interval_s": communication_interval_s,
     }
 
     services["sim_orchestrator"] = ros_service(

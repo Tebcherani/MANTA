@@ -90,7 +90,7 @@ class OdysseyNode : public rclcpp::Node {
         // Calls already successfully triangulated.
         std::set<std::uint64_t> processed_bearing_cycles_;
         
-        double communication_interval_ = 0.0;
+        double communication_interval_s_ = 0.0;
         std::uint64_t next_communication_index_ = 1;
 
         // Mission

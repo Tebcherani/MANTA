@@ -24,6 +24,6 @@ void OdysseyNode::load_config() {
 
     tracking_enabled_ = declare_parameter<bool>("tracking_enabled", false);
 
-    communication_interval_ = declare_parameter<double>("communication_interval", 0.0);
-    if (!std::isfinite(communication_interval_) || communication_interval_ < 0.0) throw std::runtime_error("communication_interval must be finite and nonnegative.");
+    communication_interval_s_ = declare_parameter<double>("communication_interval_s", 0.0);
+    if (!std::isfinite(communication_interval_s_) || communication_interval_s_ < 0.0) throw std::runtime_error("communication_interval_s must be finite and nonnegative.");
 }

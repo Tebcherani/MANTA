@@ -380,7 +380,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
         handle_shared_bearing(pending);
     }
 
-    if (communication_interval_ > 0.0) {
+    if (communication_interval_s_ > 0.0) {
         // Confirm local storage so the orchestrator can continue.
         acoustics_interfaces::msg::BearingProcessed stored;
         stored.vehicle_id = vehicle_id_;
@@ -449,11 +449,11 @@ void OdysseyNode::try_finish_init() {
 }
 
 void OdysseyNode::publish_bearing(double simulation_time) {
-    if (!tracking_enabled_ || communication_interval_ <= 0.0) return;
+    if (!tracking_enabled_ || communication_interval_s_ <= 0.0) return;
 
     while (
         simulation_time + 1.0e-9 >=
-        static_cast<double>(next_communication_index_) * communication_interval_
+        static_cast<double>(next_communication_index_) * communication_interval_s_
     ) {
         if (latest_bearing_available_ && latest_bearing_unsent_) {
             bearing_pub_->publish(latest_bearing_);
