@@ -77,8 +77,8 @@ class OdysseyNode : public rclcpp::Node {
 
         // Call detections
         std::deque<BearingPosition> bearing_positions_;
-        bool latest_bearing_available_ = false;
-        bool latest_bearing_unsent_ = false;
+        bool latest_bearing_available_b_ = false;
+        bool latest_bearing_unsent_b_ = false;
         acoustics_interfaces::msg::BearingTransmission latest_bearing_;
 
         // Local measurements retained so delayed remote bearings can find their match.

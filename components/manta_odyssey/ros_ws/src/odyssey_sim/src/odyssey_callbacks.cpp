@@ -365,8 +365,8 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     shared.receiver_east_m = position->east;
 
     latest_bearing_ = shared;
-    latest_bearing_available_ = true;
-    latest_bearing_unsent_ = true;
+    latest_bearing_available_b_ = true;
+    latest_bearing_unsent_b_ = true;
 
     // Retain this local measurement for a matching remote bearing.
     local_bearings_by_cycle_[shared.call_cycle] = shared;
@@ -394,7 +394,7 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
 
     // Zero interval preserves immediate sharing and estimation.
     bearing_pub_->publish(shared);
-    latest_bearing_unsent_ = false;
+    latest_bearing_unsent_b_ = false;
 
     // Acknowledge reception even when only one AUV detected the call.
     acoustics_interfaces::msg::BearingProcessed received;
@@ -455,9 +455,9 @@ void OdysseyNode::publish_bearing(double simulation_time) {
         simulation_time + 1.0e-9 >=
         static_cast<double>(next_communication_index_) * communication_interval_s_
     ) {
-        if (latest_bearing_available_ && latest_bearing_unsent_) {
+        if (latest_bearing_available_b_ && latest_bearing_unsent_b_) {
             bearing_pub_->publish(latest_bearing_);
-            latest_bearing_unsent_ = false;
+            latest_bearing_unsent_b_ = false;
         }
 
         ++next_communication_index_;
