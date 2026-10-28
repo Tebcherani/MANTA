@@ -92,15 +92,15 @@ static int update_odyssey_gyro(void) {
     gyro_input_t input;
     gyro_result_t result;
 
-    config.roll_bias = 4.3663e-4;
-    config.pitch_bias = 8.7266e-4;
-    config.yaw_bias = -8.7266e-4;
+    config.roll_bias_radps = 4.3663e-4;
+    config.pitch_bias_radps = 8.7266e-4;
+    config.yaw_bias_radps = -8.7266e-4;
 
-    config.noise_std_dev = 0.00001745;
+    config.noise_std_dev_radps = 0.00001745;
 
-    input.roll_rate = read_sensor(REAL_P);
-    input.pitch_rate = read_sensor(REAL_Q);
-    input.yaw_rate = read_sensor(REAL_R);
+    input.roll_rate_radps = read_sensor(REAL_P);
+    input.pitch_rate_radps = read_sensor(REAL_Q);
+    input.yaw_rate_radps = read_sensor(REAL_R);
 
     result = update_gyro(&config, &input);
 
@@ -109,9 +109,9 @@ static int update_odyssey_gyro(void) {
         return 0;
     }
 
-    update_sensor(M_ROLL_RATE, result.measurement.roll_rate);
-    update_sensor(M_PITCH_RATE, result.measurement.pitch_rate);
-    update_sensor(M_YAW_RATE, result.measurement.yaw_rate);
+    update_sensor(M_ROLL_RATE, result.measurement.roll_rate_radps);
+    update_sensor(M_PITCH_RATE, result.measurement.pitch_rate_radps);
+    update_sensor(M_YAW_RATE, result.measurement.yaw_rate_radps);
 
     return 1;
 }
