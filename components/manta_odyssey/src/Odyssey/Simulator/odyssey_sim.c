@@ -15,7 +15,7 @@ static int init_odyssey_config(void);
 
 static odyssey_config_t config;
 static odyssey_environment_t environment;
-static double water_speed_sum = 0.0;
+static double water_speed_sum_mps = 0.0;
 static unsigned long water_speed_samples = 0;
 
 static int init_odyssey_config(void) {
@@ -71,38 +71,38 @@ int start_odyssey_sim(time_t calendar_start_time) {
 
     environment.gravity = 0.0;
     environment.seawater_density = 0.0;
-    water_speed_sum = 0.0;
+    water_speed_sum_mps = 0.0;
     water_speed_samples = 0;
 
     return 1;
 }
 
-int update_odyssey_sim_state(const world_state_t *world_state, double timestep) {
+int update_odyssey_sim_state(const world_state_t *world_state, double timestep_s) {
     if (world_state == NULL) return 0;
 
     environment.gravity = world_state->gravity;
     environment.seawater_density = world_state->seawater_density;
 
-    if (update_odyssey_state(world_state, timestep) != 0) return 0;
+    if (update_odyssey_state(world_state, timestep_s) != 0) return 0;
 
     return 1;
 }
 
-odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *world_state, double timestep) {
-    double water_speed;
+odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *world_state, double control_timestep_s) {
+    double water_speed_mps;
 
     if (world_state == NULL) return ODYSSEY_UPDATE_ERROR;
     
     environment.gravity = world_state->gravity;
     environment.seawater_density = world_state->seawater_density;
 
-    if (!update_odyssey_sensors(world_state, timestep)) return ODYSSEY_UPDATE_ERROR;        
+    if (!update_odyssey_sensors(world_state, control_timestep_s)) return ODYSSEY_UPDATE_ERROR;
     
-    water_speed = fabs(read_sensor(M_WATER_SPEED));
-    water_speed_sum += water_speed;
+    water_speed_mps = fabs(read_sensor(M_WATER_SPEED));
+    water_speed_sum_mps += water_speed_mps;
     water_speed_samples++;
 
-    return update_odyssey(world_state->seawater_density, timestep);
+    return update_odyssey(world_state->seawater_density, control_timestep_s);
 }
 
 int update_odyssey_sim_time(double sim_time_s) {
@@ -124,7 +124,7 @@ int get_odyssey_metrics(odyssey_metrics_t *metrics) {
     metrics->mass = read_sensor(REAL_VEH_W) / environment.gravity;
     metrics->energy_consumed = read_sensor(REAL_BATTERY_ENERGY_USED) / 3600.0;
 
-    if (water_speed_samples > 0) metrics->mean_speed = water_speed_sum / (double)water_speed_samples;
+    if (water_speed_samples > 0) metrics->mean_speed = water_speed_sum_mps / (double)water_speed_samples;
     else metrics->mean_speed = 0.0;
 
     return 1;
