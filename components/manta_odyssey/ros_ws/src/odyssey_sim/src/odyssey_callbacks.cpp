@@ -213,11 +213,11 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     if (mission_finished_b_) return;
 
     // Convert the ROS world snapshot to Odyssey's native world structure.
-    world_state.gravity = msg->world.gravity;
-    world_state.magnetic_north = msg->world.magnetic_north;
-    world_state.magnetic_east = msg->world.magnetic_east;
-    world_state.magnetic_down = msg->world.magnetic_down;
-    world_state.seawater_density = msg->world.seawater_density;
+    world_state.gravity_mps2 = msg->world.gravity_mps2;
+    world_state.magnetic_north_gauss = msg->world.magnetic_north_gauss;
+    world_state.magnetic_east_gauss = msg->world.magnetic_east_gauss;
+    world_state.magnetic_down_gauss = msg->world.magnetic_down_gauss;
+    world_state.seawater_density_kgpm3 = msg->world.seawater_density_kgpm3;
 
     // Validate values used by the cycle loop and modulo operation.
     if (msg->control_period == 0) {

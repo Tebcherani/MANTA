@@ -10,8 +10,8 @@ typedef enum {
 } odyssey_update_status_t;
 
 typedef struct {
-    double gravity;
-    double seawater_density;
+    double gravity_mps2;
+    double seawater_density_kgpm3;
 } odyssey_environment_t;
 
 typedef struct {

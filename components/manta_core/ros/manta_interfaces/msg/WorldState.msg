@@ -1,5 +1,5 @@
-float64 gravity
-float64 magnetic_north
-float64 magnetic_east
-float64 magnetic_down
-float64 seawater_density
+float64 gravity_mps2
+float64 magnetic_north_gauss
+float64 magnetic_east_gauss
+float64 magnetic_down_gauss
+float64 seawater_density_kgpm3

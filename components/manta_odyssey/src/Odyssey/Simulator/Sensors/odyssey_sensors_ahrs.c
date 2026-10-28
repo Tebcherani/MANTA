@@ -25,9 +25,9 @@ static void calculate_compass_acceleration(const accelerometer_measurement_t *ac
     roll_rad = read_sensor(REAL_PHI);
 
     // Remove gravity from the accelerometer measurement to recover the non-gravitational acceleration at the AHRS mounting point.
-    body_accel_x_mps2 = accelerometer->accel_x_mps2 - sin(pitch_rad) * world_state->gravity;
-    body_accel_y_mps2 = accelerometer->accel_y_mps2 + cos(pitch_rad) * sin(roll_rad) * world_state->gravity;
-    body_accel_z_mps2 = accelerometer->accel_z_mps2 + cos(pitch_rad) * cos(roll_rad) * world_state->gravity;
+    body_accel_x_mps2 = accelerometer->accel_x_mps2 - sin(pitch_rad) * world_state->gravity_mps2;
+    body_accel_y_mps2 = accelerometer->accel_y_mps2 + cos(pitch_rad) * sin(roll_rad) * world_state->gravity_mps2;
+    body_accel_z_mps2 = accelerometer->accel_z_mps2 + cos(pitch_rad) * cos(roll_rad) * world_state->gravity_mps2;
 
     // Transform the non-gravitational acceleration from the vehicle body frame into the local horizontal frame used by the suspended compass model.
     *compass_accel_x_mps2 = cos(pitch_rad) * body_accel_x_mps2 + sin(roll_rad) * sin(pitch_rad) * body_accel_y_mps2 + cos(roll_rad) * sin(pitch_rad) * body_accel_z_mps2;
@@ -62,7 +62,7 @@ static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *
     vehicle.pitch_rad = read_sensor(REAL_THETA);
     vehicle.roll_rad = read_sensor(REAL_PHI);
 
-    vehicle.gravity_mps2 = world_state->gravity;
+    vehicle.gravity_mps2 = world_state->gravity_mps2;
 
     return update_accelerometer(&config, &vehicle);
 }
@@ -77,9 +77,9 @@ static void update_odyssey_compass(const world_state_t *world_state, double acce
     input.true_yaw_rad = read_sensor(REAL_PSI);
     input.accel_x_mps2 = accel_x_mps2;
     input.accel_y_mps2 = accel_y_mps2;
-    input.magnetic_north_gauss = world_state->magnetic_north;
-    input.magnetic_east_gauss = world_state->magnetic_east;
-    input.magnetic_down_gauss = world_state->magnetic_down;
+    input.magnetic_north_gauss = world_state->magnetic_north_gauss;
+    input.magnetic_east_gauss = world_state->magnetic_east_gauss;
+    input.magnetic_down_gauss = world_state->magnetic_down_gauss;
     input.timestep_s = timestep_s;
 
     compass_yaw_rad = update_compass_yaw(compass, &input);
@@ -141,7 +141,7 @@ static int update_odyssey_inclinometer(const world_state_t *world_state, const a
 
     input.accel_x_mps2 = accelerometer->accel_x_mps2;
     input.accel_y_mps2 = accelerometer->accel_y_mps2;
-    input.gravity_mps2 = world_state->gravity;
+    input.gravity_mps2 = world_state->gravity_mps2;
 
     result = update_inclinometer(state, &input);
 

@@ -55,11 +55,11 @@ void SimOrchestratorNode::publish_current_step() {
     current_batch_steps_ = batch_steps;
     step.step_count = static_cast<std::uint32_t>(batch_steps);
     step.control_period = static_cast<std::uint64_t>(sim_config_.control_period);
-    step.world.gravity = world_state_->gravity;
-    step.world.magnetic_north = world_state_->magnetic_north;
-    step.world.magnetic_east = world_state_->magnetic_east;
-    step.world.magnetic_down = world_state_->magnetic_down;
-    step.world.seawater_density = world_state_->seawater_density;
+    step.world.gravity_mps2 = world_state_->gravity_mps2;
+    step.world.magnetic_north_gauss = world_state_->magnetic_north_gauss;
+    step.world.magnetic_east_gauss = world_state_->magnetic_east_gauss;
+    step.world.magnetic_down_gauss = world_state_->magnetic_down_gauss;
+    step.world.seawater_density_kgpm3 = world_state_->seawater_density_kgpm3;
 
     sim_step_pub_->publish(step);
 }

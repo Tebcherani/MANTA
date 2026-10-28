@@ -69,8 +69,8 @@ int start_odyssey_sim(time_t calendar_start_time) {
     if (!init_odyssey_state()) return 0;
     if (!init_odyssey_dynamics()) return 0;
 
-    environment.gravity = 0.0;
-    environment.seawater_density = 0.0;
+    environment.gravity_mps2 = 0.0;
+    environment.seawater_density_kgpm3 = 0.0;
     water_speed_sum_mps = 0.0;
     water_speed_samples = 0;
 
@@ -80,8 +80,8 @@ int start_odyssey_sim(time_t calendar_start_time) {
 int update_odyssey_sim_state(const world_state_t *world_state, double timestep_s) {
     if (world_state == NULL) return 0;
 
-    environment.gravity = world_state->gravity;
-    environment.seawater_density = world_state->seawater_density;
+    environment.gravity_mps2 = world_state->gravity_mps2;
+    environment.seawater_density_kgpm3 = world_state->seawater_density_kgpm3;
 
     if (update_odyssey_state(world_state, timestep_s) != 0) return 0;
 
@@ -93,8 +93,8 @@ odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *world_stat
 
     if (world_state == NULL) return ODYSSEY_UPDATE_ERROR;
     
-    environment.gravity = world_state->gravity;
-    environment.seawater_density = world_state->seawater_density;
+    environment.gravity_mps2 = world_state->gravity_mps2;
+    environment.seawater_density_kgpm3 = world_state->seawater_density_kgpm3;
 
     if (!update_odyssey_sensors(world_state, control_timestep_s)) return ODYSSEY_UPDATE_ERROR;
     
@@ -102,7 +102,7 @@ odyssey_update_status_t update_odyssey_sim_cycle(const world_state_t *world_stat
     water_speed_sum_mps += water_speed_mps;
     water_speed_samples++;
 
-    return update_odyssey(world_state->seawater_density, control_timestep_s);
+    return update_odyssey(world_state->seawater_density_kgpm3, control_timestep_s);
 }
 
 int update_odyssey_sim_time(double sim_time_s) {
@@ -119,9 +119,9 @@ int end_odyssey_sim(const char *behavior_dump_file) {
 
 int get_odyssey_metrics(odyssey_metrics_t *metrics) {
     if (metrics == NULL) return 0;
-    if (environment.gravity <= 0.0) return 0;
+    if (environment.gravity_mps2 <= 0.0) return 0;
 
-    metrics->mass_kg = read_sensor(REAL_VEH_W) / environment.gravity;
+    metrics->mass_kg = read_sensor(REAL_VEH_W) / environment.gravity_mps2;
     metrics->energy_consumed_Wh = read_sensor(REAL_BATTERY_ENERGY_USED) / 3600.0;
 
     if (water_speed_samples > 0) metrics->mean_speed_mps = water_speed_sum_mps / (double)water_speed_samples;
