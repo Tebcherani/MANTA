@@ -121,11 +121,11 @@ int get_odyssey_metrics(odyssey_metrics_t *metrics) {
     if (metrics == NULL) return 0;
     if (environment.gravity <= 0.0) return 0;
 
-    metrics->mass = read_sensor(REAL_VEH_W) / environment.gravity;
-    metrics->energy_consumed = read_sensor(REAL_BATTERY_ENERGY_USED) / 3600.0;
+    metrics->mass_kg = read_sensor(REAL_VEH_W) / environment.gravity;
+    metrics->energy_consumed_Wh = read_sensor(REAL_BATTERY_ENERGY_USED) / 3600.0;
 
-    if (water_speed_samples > 0) metrics->mean_speed = water_speed_sum_mps / (double)water_speed_samples;
-    else metrics->mean_speed = 0.0;
+    if (water_speed_samples > 0) metrics->mean_speed_mps = water_speed_sum_mps / (double)water_speed_samples;
+    else metrics->mean_speed_mps = 0.0;
 
     return 1;
 }

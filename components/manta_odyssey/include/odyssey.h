@@ -15,9 +15,9 @@ typedef struct {
 } odyssey_environment_t;
 
 typedef struct {
-    double mass;
-    double energy_consumed;
-    double mean_speed;
+    double mass_kg;
+    double energy_consumed_Wh;
+    double mean_speed_mps;
 } odyssey_metrics_t;
 
 int init_odyssey(void);

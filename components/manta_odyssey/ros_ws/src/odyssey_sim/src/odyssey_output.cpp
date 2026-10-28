@@ -41,7 +41,7 @@ bool OdysseyNode::write_final_metrics() {
     if (!file.is_open()) return false;
 
     file << "vehicle_id,mass,energy_consumed,mean_speed\n";
-    file << vehicle_id_ << ',' << std::setprecision(15) << metrics.mass << ',' << metrics.energy_consumed << ',' << metrics.mean_speed << '\n';
+    file << vehicle_id_ << ',' << std::setprecision(15) << metrics.mass_kg << ',' << metrics.energy_consumed_Wh << ',' << metrics.mean_speed_mps << '\n';
 
     // Explicitly close the stream so write failures are detected before rename.
     file.close();
