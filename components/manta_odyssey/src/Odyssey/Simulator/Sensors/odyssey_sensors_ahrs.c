@@ -139,9 +139,9 @@ static int update_odyssey_inclinometer(const world_state_t *world_state, const a
 
     state = get_odyssey_inclinometer_state();
 
-    input.accel_x = accelerometer->accel_x_mps2;
-    input.accel_y = accelerometer->accel_y_mps2;
-    input.gravity = world_state->gravity;
+    input.accel_x_mps2 = accelerometer->accel_x_mps2;
+    input.accel_y_mps2 = accelerometer->accel_y_mps2;
+    input.gravity_mps2 = world_state->gravity;
 
     result = update_inclinometer(state, &input);
 
@@ -150,8 +150,8 @@ static int update_odyssey_inclinometer(const world_state_t *world_state, const a
         return 0;
     }
 
-    update_sensor(M_INCLINO_PITCH, result.measurement.pitch);
-    update_sensor(M_INCLINO_ROLL, result.measurement.roll);
+    update_sensor(M_INCLINO_PITCH, result.measurement.pitch_rad);
+    update_sensor(M_INCLINO_ROLL, result.measurement.roll_rad);
 
     return 1;
 }
