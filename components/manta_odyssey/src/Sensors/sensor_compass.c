@@ -19,9 +19,9 @@ int init_compass_state(compass_state_t *compass) {
     compass->displacement_y_m = 0.0;
     compass->displacement_rate_x_mps = 0.0;
     compass->displacement_rate_y_mps = 0.0;
-    compass->damping_rate = damping / (2.0 * mass);
-    compass->natural_freq = sqrt(spring_constant / mass);
-    compass->damped_freq = sqrt(compass->natural_freq * compass->natural_freq - compass->damping_rate * compass->damping_rate);
+    compass->damping_rate_per_s = damping / (2.0 * mass);
+    compass->natural_freq_radps = sqrt(spring_constant / mass);
+    compass->damped_freq_radps = sqrt(compass->natural_freq_radps * compass->natural_freq_radps - compass->damping_rate_per_s * compass->damping_rate_per_s);
 
     write_to_sim_log("[sensor_compass] Compass state initialized.\n");
     return 1;
@@ -48,22 +48,22 @@ double update_compass_yaw(compass_state_t *compass, compass_input_t *input) {
         return 0.0;
     }
 
-    double cosine = cos(compass->damped_freq * input->timestep_s);
-    double sine = sin(compass->damped_freq * input->timestep_s);
+    double cosine = cos(compass->damped_freq_radps * input->timestep_s);
+    double sine = sin(compass->damped_freq_radps * input->timestep_s);
 
     // x-direction
-    double cos_coeff = input->accel_x_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_x_m;
-    double sin_coeff = (compass->displacement_rate_x_mps + compass->damping_rate * (input->accel_x_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_x_m)) / compass->damped_freq;
+    double cos_coeff = input->accel_x_mps2 / (compass->natural_freq_radps * compass->natural_freq_radps) + compass->displacement_x_m;
+    double sin_coeff = (compass->displacement_rate_x_mps + compass->damping_rate_per_s * (input->accel_x_mps2 / (compass->natural_freq_radps * compass->natural_freq_radps) + compass->displacement_x_m)) / compass->damped_freq_radps;
 
-    compass->displacement_x_m = exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_x_mps2 / (compass->natural_freq * compass->natural_freq);
-    compass->displacement_rate_x_mps = -compass->damping_rate * exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate * input->timestep_s) * (-cos_coeff * compass->damped_freq * sine + sin_coeff * compass->damped_freq * cosine);
+    compass->displacement_x_m = exp(-compass->damping_rate_per_s * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_x_mps2 / (compass->natural_freq_radps * compass->natural_freq_radps);
+    compass->displacement_rate_x_mps = -compass->damping_rate_per_s * exp(-compass->damping_rate_per_s * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate_per_s * input->timestep_s) * (-cos_coeff * compass->damped_freq_radps * sine + sin_coeff * compass->damped_freq_radps * cosine);
 
     // y-direction
-    cos_coeff = input->accel_y_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_y_m;
-    sin_coeff = (compass->displacement_rate_y_mps + compass->damping_rate * (input->accel_y_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_y_m)) / compass->damped_freq;
+    cos_coeff = input->accel_y_mps2 / (compass->natural_freq_radps * compass->natural_freq_radps) + compass->displacement_y_m;
+    sin_coeff = (compass->displacement_rate_y_mps + compass->damping_rate_per_s * (input->accel_y_mps2 / (compass->natural_freq_radps * compass->natural_freq_radps) + compass->displacement_y_m)) / compass->damped_freq_radps;
 
-    compass->displacement_y_m = exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_y_mps2 / (compass->natural_freq * compass->natural_freq);
-    compass->displacement_rate_y_mps = -compass->damping_rate * exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate * input->timestep_s) * (-cos_coeff * compass->damped_freq * sine + sin_coeff * compass->damped_freq * cosine);
+    compass->displacement_y_m = exp(-compass->damping_rate_per_s * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_y_mps2 / (compass->natural_freq_radps * compass->natural_freq_radps);
+    compass->displacement_rate_y_mps = -compass->damping_rate_per_s * exp(-compass->damping_rate_per_s * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate_per_s * input->timestep_s) * (-cos_coeff * compass->damped_freq_radps * sine + sin_coeff * compass->damped_freq_radps * cosine);
 
     compass_pitch = compass->displacement_x_m / compass_length;
     compass_roll = -compass->displacement_y_m / compass_length;

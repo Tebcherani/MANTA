@@ -16,9 +16,9 @@ typedef struct {
     double displacement_y_m;
     double displacement_rate_x_mps;
     double displacement_rate_y_mps;
-    double damping_rate;
-    double natural_freq;
-    double damped_freq;
+    double damping_rate_per_s;
+    double natural_freq_radps;
+    double damped_freq_radps;
 } compass_state_t;
 
 int init_compass_state(compass_state_t *);
