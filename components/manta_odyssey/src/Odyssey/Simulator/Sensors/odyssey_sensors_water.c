@@ -32,10 +32,10 @@ static void update_odyssey_water_speed(void) {
 }
 
 static void update_odyssey_water_temp(void) {
-    double measured_temp;
+    double measured_temp_degC;
 
-    measured_temp = update_water_temp(read_sensor(REAL_Z));
-    update_sensor(WATER_TEMP, measured_temp);
+    measured_temp_degC = update_water_temp(read_sensor(REAL_Z));
+    update_sensor(WATER_TEMP, measured_temp_degC);
 }
 
 void update_water_sensors(void) {

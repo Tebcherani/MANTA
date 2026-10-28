@@ -81,10 +81,10 @@ static double temp_coeff_b(double temp) {
     return (4.464e-4 * temp + 3.426e-2) * temp + 1.0;
 }
 
-double update_water_conductivity(double true_depth) {
-    const double transition_depth_1 = 6.0;
-    const double transition_depth_2 = 18.0;
-    const double transition_depth_3 = 32.0;
+double update_water_conductivity(double true_depth_m) {
+    const double transition_depth_1_m = 6.0;
+    const double transition_depth_2_m = 18.0;
+    const double transition_depth_3_m = 32.0;
 
     const double salinity = 23.1759;
     const double temp = 40.0;
@@ -92,9 +92,9 @@ double update_water_conductivity(double true_depth) {
     double pressure;
     double conductivity = 0.0;
 
-    if (true_depth <= transition_depth_1) pressure = 5.0 * true_depth;
-    else if (true_depth <= transition_depth_2) pressure = 4.0 * true_depth;
-    else if (true_depth <= transition_depth_3) pressure = 2.0 * true_depth;
+    if (true_depth_m <= transition_depth_1_m) pressure = 5.0 * true_depth_m;
+    else if (true_depth_m <= transition_depth_2_m) pressure = 4.0 * true_depth_m;
+    else if (true_depth_m <= transition_depth_3_m) pressure = 2.0 * true_depth_m;
 
     conductivity = salinity_conductivity_conversion(salinity, temp, pressure, 1);
 }
