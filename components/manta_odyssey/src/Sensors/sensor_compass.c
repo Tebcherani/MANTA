@@ -15,10 +15,10 @@ int init_compass_state(compass_state_t *compass) {
         return 0;
     }
 
-    compass->displacement_x = 0.0;
-    compass->displacement_y = 0.0;
-    compass->displacement_rate_x = 0.0;
-    compass->displacement_rate_y = 0.0;
+    compass->displacement_x_m = 0.0;
+    compass->displacement_y_m = 0.0;
+    compass->displacement_rate_x_mps = 0.0;
+    compass->displacement_rate_y_mps = 0.0;
     compass->damping_rate = damping / (2.0 * mass);
     compass->natural_freq = sqrt(spring_constant / mass);
     compass->damped_freq = sqrt(compass->natural_freq * compass->natural_freq - compass->damping_rate * compass->damping_rate);
@@ -48,37 +48,37 @@ double update_compass_yaw(compass_state_t *compass, compass_input_t *input) {
         return 0.0;
     }
 
-    double cosine = cos(compass->damped_freq * input->timestep);
-    double sine = sin(compass->damped_freq * input->timestep);
+    double cosine = cos(compass->damped_freq * input->timestep_s);
+    double sine = sin(compass->damped_freq * input->timestep_s);
 
     // x-direction
-    double cos_coeff = input->accel_x / (compass->natural_freq * compass->natural_freq) + compass->displacement_x;
-    double sin_coeff = (compass->displacement_rate_x + compass->damping_rate * (input->accel_x / (compass->natural_freq * compass->natural_freq) + compass->displacement_x)) / compass->damped_freq;
+    double cos_coeff = input->accel_x_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_x_m;
+    double sin_coeff = (compass->displacement_rate_x_mps + compass->damping_rate * (input->accel_x_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_x_m)) / compass->damped_freq;
 
-    compass->displacement_x = exp(-compass->damping_rate * input->timestep) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_x / (compass->natural_freq * compass->natural_freq);
-    compass->displacement_rate_x = -compass->damping_rate * exp(-compass->damping_rate * input->timestep) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate * input->timestep) * (-cos_coeff * compass->damped_freq * sine + sin_coeff * compass->damped_freq * cosine);
+    compass->displacement_x_m = exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_x_mps2 / (compass->natural_freq * compass->natural_freq);
+    compass->displacement_rate_x_mps = -compass->damping_rate * exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate * input->timestep_s) * (-cos_coeff * compass->damped_freq * sine + sin_coeff * compass->damped_freq * cosine);
 
     // y-direction
-    cos_coeff = input->accel_y / (compass->natural_freq * compass->natural_freq) + compass->displacement_y;
-    sin_coeff = (compass->displacement_rate_y + compass->damping_rate * (input->accel_y / (compass->natural_freq * compass->natural_freq) + compass->displacement_y)) / compass->damped_freq;
+    cos_coeff = input->accel_y_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_y_m;
+    sin_coeff = (compass->displacement_rate_y_mps + compass->damping_rate * (input->accel_y_mps2 / (compass->natural_freq * compass->natural_freq) + compass->displacement_y_m)) / compass->damped_freq;
 
-    compass->displacement_y = exp(-compass->damping_rate * input->timestep) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_y / (compass->natural_freq * compass->natural_freq);
-    compass->displacement_rate_y = -compass->damping_rate * exp(-compass->damping_rate * input->timestep) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate * input->timestep) * (-cos_coeff * compass->damped_freq * sine + sin_coeff * compass->damped_freq * cosine);
+    compass->displacement_y_m = exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) - input->accel_y_mps2 / (compass->natural_freq * compass->natural_freq);
+    compass->displacement_rate_y_mps = -compass->damping_rate * exp(-compass->damping_rate * input->timestep_s) * (cos_coeff * cosine + sin_coeff * sine) + exp(-compass->damping_rate * input->timestep_s) * (-cos_coeff * compass->damped_freq * sine + sin_coeff * compass->damped_freq * cosine);
 
-    compass_pitch = compass->displacement_x / compass_length;
-    compass_roll = -compass->displacement_y / compass_length;
+    compass_pitch = compass->displacement_x_m / compass_length;
+    compass_roll = -compass->displacement_y_m / compass_length;
 
     // Populate rotation matrix
-    rotation[1][1] = cos(input->true_yaw) * cos(compass_pitch);
-    rotation[1][2] = cos(compass_pitch) * sin(input->true_yaw);
+    rotation[1][1] = cos(input->true_yaw_rad) * cos(compass_pitch);
+    rotation[1][2] = cos(compass_pitch) * sin(input->true_yaw_rad);
     rotation[1][3] = -sin(compass_pitch);
 
-    rotation[2][1] = -cos(compass_roll) * sin(input->true_yaw) + cos(input->true_yaw) * sin(compass_roll) * sin(compass_pitch);
-    rotation[2][2] = cos(compass_roll) * cos(input->true_yaw) + sin(compass_roll) * sin(input->true_yaw) * sin(compass_pitch);
+    rotation[2][1] = -cos(compass_roll) * sin(input->true_yaw_rad) + cos(input->true_yaw_rad) * sin(compass_roll) * sin(compass_pitch);
+    rotation[2][2] = cos(compass_roll) * cos(input->true_yaw_rad) + sin(compass_roll) * sin(input->true_yaw_rad) * sin(compass_pitch);
     rotation[2][3] = cos(compass_pitch) * sin(compass_roll);
 
-    rotation[3][1] = sin(compass_roll) * sin(input->true_yaw) + cos(compass_roll) * cos(input->true_yaw) * sin(compass_pitch);
-    rotation[3][2] = -cos(input->true_yaw) * sin(compass_roll) + cos(compass_roll) * sin(input->true_yaw) * sin(compass_pitch);
+    rotation[3][1] = sin(compass_roll) * sin(input->true_yaw_rad) + cos(compass_roll) * cos(input->true_yaw_rad) * sin(compass_pitch);
+    rotation[3][2] = -cos(input->true_yaw_rad) * sin(compass_roll) + cos(compass_roll) * sin(input->true_yaw_rad) * sin(compass_pitch);
     rotation[3][3] = cos(compass_roll) * cos(compass_pitch);
 
     magnetic_x = rotation[1][1] * input->magnetic_north + rotation[1][2] * input->magnetic_east + rotation[1][3] * input->magnetic_down;
