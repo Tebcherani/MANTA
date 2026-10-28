@@ -25,9 +25,9 @@ static void calculate_compass_acceleration(const accelerometer_measurement_t *ac
     roll = read_sensor(REAL_PHI);
 
     // Remove gravity from the accelerometer measurement to recover the non-gravitational acceleration at the AHRS mounting point.
-    body_accel_x = accelerometer->accel_x - sin(pitch) * world_state->gravity;
-    body_accel_y = accelerometer->accel_y + cos(pitch) * sin(roll) * world_state->gravity;
-    body_accel_z = accelerometer->accel_z + cos(pitch) * cos(roll) * world_state->gravity;
+    body_accel_x = accelerometer->accel_x_mps2 - sin(pitch) * world_state->gravity;
+    body_accel_y = accelerometer->accel_y_mps2 + cos(pitch) * sin(roll) * world_state->gravity;
+    body_accel_z = accelerometer->accel_z_mps2 + cos(pitch) * cos(roll) * world_state->gravity;
 
     // Transform the non-gravitational acceleration from the vehicle body frame into the local horizontal frame used by the suspended compass model.
     *compass_accel_x = cos(pitch) * body_accel_x + sin(roll) * sin(pitch) * body_accel_y + cos(roll) * sin(pitch) * body_accel_z;
@@ -39,30 +39,30 @@ static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *
     accelerometer_config_t config;
 
     // Odyssey AHRS mounting location relative to the vehicle reference point
-    config.mount_x = 1.390;
-    config.mount_y = 0.108;
-    config.mount_z = 0.076;
+    config.mount_x_m = 1.390;
+    config.mount_y_m = 0.108;
+    config.mount_z_m = 0.076;
 
-    vehicle.velocity_x = read_sensor(REAL_U);
-    vehicle.velocity_y = read_sensor(REAL_V);
-    vehicle.velocity_z = read_sensor(REAL_W);
+    vehicle.velocity_x_mps = read_sensor(REAL_U);
+    vehicle.velocity_y_mps = read_sensor(REAL_V);
+    vehicle.velocity_z_mps = read_sensor(REAL_W);
 
-    vehicle.acceleration_x = read_sensor(REAL_UD);
-    vehicle.acceleration_y = read_sensor(REAL_VD);
-    vehicle.acceleration_z = read_sensor(REAL_WD);
+    vehicle.acceleration_x_mps2 = read_sensor(REAL_UD);
+    vehicle.acceleration_y_mps2 = read_sensor(REAL_VD);
+    vehicle.acceleration_z_mps2 = read_sensor(REAL_WD);
 
-    vehicle.angular_rate_x = read_sensor(REAL_P);
-    vehicle.angular_rate_y = read_sensor(REAL_Q);
-    vehicle.angular_rate_z = read_sensor(REAL_R);
+    vehicle.angular_rate_x_radps = read_sensor(REAL_P);
+    vehicle.angular_rate_y_radps = read_sensor(REAL_Q);
+    vehicle.angular_rate_z_radps = read_sensor(REAL_R);
 
-    vehicle.angular_acceleration_x = read_sensor(REAL_PD);
-    vehicle.angular_acceleration_y = read_sensor(REAL_QD);
-    vehicle.angular_acceleration_z = read_sensor(REAL_RD);
+    vehicle.angular_acceleration_x_radps2 = read_sensor(REAL_PD);
+    vehicle.angular_acceleration_y_radps2 = read_sensor(REAL_QD);
+    vehicle.angular_acceleration_z_radps2 = read_sensor(REAL_RD);
 
-    vehicle.pitch = read_sensor(REAL_THETA);
-    vehicle.roll = read_sensor(REAL_PHI);
+    vehicle.pitch_rad = read_sensor(REAL_THETA);
+    vehicle.roll_rad = read_sensor(REAL_PHI);
 
-    vehicle.gravity = world_state->gravity;
+    vehicle.gravity_mps2 = world_state->gravity;
 
     return update_accelerometer(&config, &vehicle);
 }
@@ -139,8 +139,8 @@ static int update_odyssey_inclinometer(const world_state_t *world_state, const a
 
     state = get_odyssey_inclinometer_state();
 
-    input.accel_x = accelerometer->accel_x;
-    input.accel_y = accelerometer->accel_y;
+    input.accel_x = accelerometer->accel_x_mps2;
+    input.accel_y = accelerometer->accel_y_mps2;
     input.gravity = world_state->gravity;
 
     result = update_inclinometer(state, &input);
