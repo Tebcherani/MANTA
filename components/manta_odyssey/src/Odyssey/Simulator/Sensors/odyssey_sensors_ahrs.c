@@ -17,21 +17,21 @@ static void update_odyssey_compass(const world_state_t *, double, double, double
 static int update_odyssey_gyro(void);
 static int update_odyssey_inclinometer(const world_state_t *, const accelerometer_measurement_t *);
 
-static void calculate_compass_acceleration(const accelerometer_measurement_t *accelerometer, const world_state_t *world_state, double *compass_accel_x, double *compass_accel_y) {
-    double body_accel_x, body_accel_y, body_accel_z;
-    double pitch, roll;
+static void calculate_compass_acceleration(const accelerometer_measurement_t *accelerometer, const world_state_t *world_state, double *compass_accel_x_mps2, double *compass_accel_y_mps2) {
+    double body_accel_x_mps2, body_accel_y_mps2, body_accel_z_mps2;
+    double pitch_rad, roll_rad;
 
-    pitch = read_sensor(REAL_THETA);
-    roll = read_sensor(REAL_PHI);
+    pitch_rad = read_sensor(REAL_THETA);
+    roll_rad = read_sensor(REAL_PHI);
 
     // Remove gravity from the accelerometer measurement to recover the non-gravitational acceleration at the AHRS mounting point.
-    body_accel_x = accelerometer->accel_x_mps2 - sin(pitch) * world_state->gravity;
-    body_accel_y = accelerometer->accel_y_mps2 + cos(pitch) * sin(roll) * world_state->gravity;
-    body_accel_z = accelerometer->accel_z_mps2 + cos(pitch) * cos(roll) * world_state->gravity;
+    body_accel_x_mps2 = accelerometer->accel_x_mps2 - sin(pitch_rad) * world_state->gravity;
+    body_accel_y_mps2 = accelerometer->accel_y_mps2 + cos(pitch_rad) * sin(roll_rad) * world_state->gravity;
+    body_accel_z_mps2 = accelerometer->accel_z_mps2 + cos(pitch_rad) * cos(roll_rad) * world_state->gravity;
 
     // Transform the non-gravitational acceleration from the vehicle body frame into the local horizontal frame used by the suspended compass model.
-    *compass_accel_x = cos(pitch) * body_accel_x + sin(roll) * sin(pitch) * body_accel_y + cos(roll) * sin(pitch) * body_accel_z;
-    *compass_accel_y = cos(roll) * body_accel_y - sin(roll) * body_accel_z;
+    *compass_accel_x_mps2 = cos(pitch_rad) * body_accel_x_mps2 + sin(roll_rad) * sin(pitch_rad) * body_accel_y_mps2 + cos(roll_rad) * sin(pitch_rad) * body_accel_z_mps2;
+    *compass_accel_y_mps2 = cos(roll_rad) * body_accel_y_mps2 - sin(roll_rad) * body_accel_z_mps2;
 }
 
 static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *world_state) {
@@ -67,24 +67,24 @@ static accelerometer_result_t update_odyssey_accelerometer(const world_state_t *
     return update_accelerometer(&config, &vehicle);
 }
 
-static void update_odyssey_compass(const world_state_t *world_state, double accel_x, double accel_y, double timestep) {
+static void update_odyssey_compass(const world_state_t *world_state, double accel_x_mps2, double accel_y_mps2, double timestep_s) {
     compass_state_t *compass;
-    double compass_yaw;
+    double compass_yaw_rad;
     compass_input_t input;
 
     compass = get_odyssey_compass_state();
 
     input.true_yaw_rad = read_sensor(REAL_PSI);
-    input.accel_x_mps2 = accel_x;
-    input.accel_y_mps2 = accel_y;
+    input.accel_x_mps2 = accel_x_mps2;
+    input.accel_y_mps2 = accel_y_mps2;
     input.magnetic_north = world_state->magnetic_north;
     input.magnetic_east = world_state->magnetic_east;
     input.magnetic_down = world_state->magnetic_down;
-    input.timestep_s = timestep;
+    input.timestep_s = timestep_s;
 
-    compass_yaw = update_compass_yaw(compass, &input);
-    compass_yaw -= read_sensor(UO_MAGNETIC_VARIATION);
-    update_sensor(M_COMPASS_YAW, compass_yaw);
+    compass_yaw_rad = update_compass_yaw(compass, &input);
+    compass_yaw_rad -= read_sensor(UO_MAGNETIC_VARIATION);
+    update_sensor(M_COMPASS_YAW, compass_yaw_rad);
 }
 
 static int update_odyssey_gyro(void) {
@@ -117,19 +117,19 @@ static int update_odyssey_gyro(void) {
 }
 
 static void update_heading(void) {
-    double meas_yaw, meas_pitch, meas_roll;
-    double meas_magnetic_variation, corrected_yaw;
+    double meas_yaw_rad, meas_pitch_rad, meas_roll_rad;
+    double meas_magnetic_variation_rad, corrected_yaw_rad;
 
-    meas_yaw = read_sensor(M_COMPASS_YAW);
-    meas_magnetic_variation = read_sensor(UO_MAGNETIC_VARIATION);
-    corrected_yaw = M_PI + wrap_angle(meas_yaw + meas_magnetic_variation - M_PI);
-    update_sensor(M_YAW, corrected_yaw);
+    meas_yaw_rad = read_sensor(M_COMPASS_YAW);
+    meas_magnetic_variation_rad = read_sensor(UO_MAGNETIC_VARIATION);
+    corrected_yaw_rad = M_PI + wrap_angle(meas_yaw_rad + meas_magnetic_variation_rad - M_PI);
+    update_sensor(M_YAW, corrected_yaw_rad);
 
-    meas_pitch = read_sensor(M_INCLINO_PITCH);
-    update_sensor(M_PITCH, meas_pitch);
+    meas_pitch_rad = read_sensor(M_INCLINO_PITCH);
+    update_sensor(M_PITCH, meas_pitch_rad);
     
-    meas_roll = read_sensor(M_INCLINO_ROLL);
-    update_sensor(M_ROLL, meas_roll);
+    meas_roll_rad = read_sensor(M_INCLINO_ROLL);
+    update_sensor(M_ROLL, meas_roll_rad);
 }
 
 static int update_odyssey_inclinometer(const world_state_t *world_state, const accelerometer_measurement_t *accelerometer) {
@@ -156,14 +156,14 @@ static int update_odyssey_inclinometer(const world_state_t *world_state, const a
     return 1;
 }
 
-void update_ahrs_sensors(const world_state_t *world_state, double timestep) {
-    double compass_accel_x, compass_accel_y;
+void update_ahrs_sensors(const world_state_t *world_state, double timestep_s) {
+    double compass_accel_x_mps2, compass_accel_y_mps2;
     accelerometer_result_t accelerometer;
 
     update_odyssey_gyro();
     accelerometer = update_odyssey_accelerometer(world_state);
     update_odyssey_inclinometer(world_state, &accelerometer.measurement);
-    calculate_compass_acceleration(&accelerometer.measurement, world_state, &compass_accel_x, &compass_accel_y);
-    update_odyssey_compass(world_state, compass_accel_x, compass_accel_y, timestep);
+    calculate_compass_acceleration(&accelerometer.measurement, world_state, &compass_accel_x_mps2, &compass_accel_y_mps2);
+    update_odyssey_compass(world_state, compass_accel_x_mps2, compass_accel_y_mps2, timestep_s);
     update_heading();
 }
