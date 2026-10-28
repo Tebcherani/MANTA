@@ -22,13 +22,13 @@ static void update_odyssey_water_conductivity(void) {
 
 static void update_odyssey_water_speed(void) {
     water_speed_input_t input;
-    double measured_speed;
+    double measured_speed_mps;
 
-    input.true_speed = read_sensor(REAL_U);
-    input.noise_std_dev = 0.02;
+    input.true_speed_mps = read_sensor(REAL_U);
+    input.noise_std_dev_mps = 0.02;
 
-    measured_speed = update_water_speed(&input);
-    update_sensor(M_WATER_SPEED, measured_speed);
+    measured_speed_mps = update_water_speed(&input);
+    update_sensor(M_WATER_SPEED, measured_speed_mps);
 }
 
 static void update_odyssey_water_temp(void) {
