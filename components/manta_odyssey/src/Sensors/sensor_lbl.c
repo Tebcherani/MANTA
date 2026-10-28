@@ -25,8 +25,8 @@ int init_lbl_state(lbl_state_t *state) {
     }
 
     memset(state, 0, sizeof(*state));
-    state->next_ping = 0.0;
-    state->ping_time = 0.0;
+    state->next_ping_s = 0.0;
+    state->ping_time_s = 0.0;
 
     write_to_sim_log("[sensor_lbl] LBL state initialized.\n");
 
@@ -60,7 +60,7 @@ lbl_result_t update_lbl(lbl_state_t *state, const lbl_config_t *config, const lb
         return result;
     }
 
-    if (config->sound_speed <= 0.0) {
+    if (config->sound_speed_mps <= 0.0) {
         write_to_sim_log("[sensor_lbl] Failed to update LBL: sound speed must be greater than zero.\n");
         return result;
     }
@@ -73,39 +73,39 @@ lbl_result_t update_lbl(lbl_state_t *state, const lbl_config_t *config, const lb
         return result;
     }
 
-    if (input->present_time >= state->next_ping) {
-        state->next_ping += config->cycle_interval;
+    if (input->present_time_s >= state->next_ping_s) {
+        state->next_ping_s += config->cycle_interval_s;
 
         if (input->enabled) {
-            state->ping_time = input->present_time;
+            state->ping_time_s = input->present_time_s;
 
             state->cycle_number++;
-            state->update_pending = 1;
+            state->update_pending_b = 1;
 
-            state->ping_north = input->vehicle_north_m;
-            state->ping_east = input->vehicle_east_m;
-            state->ping_depth = input->vehicle_depth;
+            state->ping_north_m = input->vehicle_north_m;
+            state->ping_east_m = input->vehicle_east_m;
+            state->ping_depth_m = input->vehicle_depth_m;
 
-            memset(state->got_reply, 0, sizeof(state->got_reply));
+            memset(state->got_reply_b, 0, sizeof(state->got_reply_b));
 
             result.ping_started = 1;
-            result.ping_time = state->ping_time;
+            result.ping_time_s = state->ping_time_s;
 
-            for (beacon_index = 0; beacon_index <= config->num_beacons; beacon_index++) result.travel_time[beacon_index] = -1.0;
+            for (beacon_index = 0; beacon_index <= config->num_beacons; beacon_index++) result.travel_time_s[beacon_index] = -1.0;
         }
     }
 
-    since_ping = input->present_time - state->ping_time;
+    since_ping = input->present_time_s - state->ping_time_s;
 
-    if (input->present_time > state->ping_time && since_ping < config->timeout && state->cycle_number > 0) {
+    if (input->present_time_s > state->ping_time_s && since_ping < config->timeout_s && state->cycle_number > 0) {
         for (beacon_index = 1; beacon_index <= config->num_beacons; beacon_index++) {
-            if (!state->got_reply[beacon_index]) {
-                outgoing_distance = calculate_distance(state->ping_north, state->ping_east, state->ping_depth,
-                        config->beacons[beacon_index].north, config->beacons[beacon_index].east, config->beacons[beacon_index].depth);
-                return_distance = calculate_distance(input->vehicle_north_m, input->vehicle_east_m, input->vehicle_depth,
-                        config->beacons[beacon_index].north, config->beacons[beacon_index].east, config->beacons[beacon_index].depth);
+            if (!state->got_reply_b[beacon_index]) {
+                outgoing_distance = calculate_distance(state->ping_north_m, state->ping_east_m, state->ping_depth_m,
+                        config->beacons[beacon_index].north_m, config->beacons[beacon_index].east_m, config->beacons[beacon_index].depth_m);
+                return_distance = calculate_distance(input->vehicle_north_m, input->vehicle_east_m, input->vehicle_depth_m,
+                        config->beacons[beacon_index].north_m, config->beacons[beacon_index].east_m, config->beacons[beacon_index].depth_m);
 
-                time_of_flight = (outgoing_distance + return_distance) / config->sound_speed + config->beacons[beacon_index].turnaround_time;
+                time_of_flight = (outgoing_distance + return_distance) / config->sound_speed_mps + config->beacons[beacon_index].turnaround_time_s;
                 
                 noise = std_normal_random_num() * config->noise_amplitude_ms / 1000.0;
                 time_of_flight += noise;
@@ -116,19 +116,19 @@ lbl_result_t update_lbl(lbl_state_t *state, const lbl_config_t *config, const lb
                 }
 
                 if (time_of_flight < since_ping) {
-                    state->got_reply[beacon_index] = 1;
+                    state->got_reply_b[beacon_index] = 1;
 
-                    if (drand48() < config->dropout_probability) state->travel_time[beacon_index] = 0.0;
-                    else state->travel_time[beacon_index] = time_of_flight;
+                    if (drand48() < config->dropout_probability) state->travel_time_s[beacon_index] = 0.0;
+                    else state->travel_time_s[beacon_index] = time_of_flight;
                 }
             }
         }
     }
 
-    if (state->update_pending && since_ping > config->timeout) {
+    if (state->update_pending_b && since_ping > config->timeout_s) {
         result.new_data = 1;
-        for (beacon_index = 1; beacon_index <= config->num_beacons; beacon_index++) result.travel_time[beacon_index] = state->travel_time[beacon_index];
-        state->update_pending = 0;
+        for (beacon_index = 1; beacon_index <= config->num_beacons; beacon_index++) result.travel_time_s[beacon_index] = state->travel_time_s[beacon_index];
+        state->update_pending_b = 0;
     }
 
     result.success = 1;

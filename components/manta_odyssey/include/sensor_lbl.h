@@ -4,19 +4,19 @@
 #define LBL_MAX_BEACONS 4
 
 typedef struct {
-    double north;
-    double east;
-    double depth;
-    double turnaround_time;
+    double north_m;
+    double east_m;
+    double depth_m;
+    double turnaround_time_s;
 } lbl_beacon_t;
 
 
 typedef struct {
-    double sound_speed;
+    double sound_speed_mps;
     int num_beacons;
     lbl_beacon_t beacons[LBL_MAX_BEACONS + 1];
-    double cycle_interval;
-    double timeout;
+    double cycle_interval_s;
+    double timeout_s;
     double bias_probability;
     double dropout_probability;
     double bias_amplitude_ms;
@@ -25,25 +25,25 @@ typedef struct {
 
 
 typedef struct {
-    double present_time;
+    double present_time_s;
     int enabled;
     double vehicle_north_m;
     double vehicle_east_m;
-    double vehicle_depth;
+    double vehicle_depth_m;
 } lbl_input_t;
 
 
 typedef struct {
-    double next_ping;
-    double ping_time;
+    double next_ping_s;
+    double ping_time_s;
     int cycle_number;
-    int update_pending;
-    int got_reply[LBL_MAX_BEACONS + 1];
-    double travel_time[LBL_MAX_BEACONS + 1];
+    int update_pending_b;
+    int got_reply_b[LBL_MAX_BEACONS + 1];
+    double travel_time_s[LBL_MAX_BEACONS + 1];
 
-    double ping_north;
-    double ping_east;
-    double ping_depth;
+    double ping_north_m;
+    double ping_east_m;
+    double ping_depth_m;
 } lbl_state_t;
 
 
@@ -52,8 +52,8 @@ typedef struct {
     int ping_started;
     int new_data;
 
-    double ping_time;
-    double travel_time[LBL_MAX_BEACONS + 1];
+    double ping_time_s;
+    double travel_time_s[LBL_MAX_BEACONS + 1];
 } lbl_result_t;
 
 
