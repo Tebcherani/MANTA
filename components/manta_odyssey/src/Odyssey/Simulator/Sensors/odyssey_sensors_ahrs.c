@@ -77,9 +77,9 @@ static void update_odyssey_compass(const world_state_t *world_state, double acce
     input.true_yaw_rad = read_sensor(REAL_PSI);
     input.accel_x_mps2 = accel_x_mps2;
     input.accel_y_mps2 = accel_y_mps2;
-    input.magnetic_north = world_state->magnetic_north;
-    input.magnetic_east = world_state->magnetic_east;
-    input.magnetic_down = world_state->magnetic_down;
+    input.magnetic_north_gauss = world_state->magnetic_north;
+    input.magnetic_east_gauss = world_state->magnetic_east;
+    input.magnetic_down_gauss = world_state->magnetic_down;
     input.timestep_s = timestep_s;
 
     compass_yaw_rad = update_compass_yaw(compass, &input);

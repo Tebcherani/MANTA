@@ -5,9 +5,9 @@ typedef struct {
     double true_yaw_rad;
     double accel_x_mps2;
     double accel_y_mps2;
-    double magnetic_north;
-    double magnetic_east;
-    double magnetic_down;
+    double magnetic_north_gauss;
+    double magnetic_east_gauss;
+    double magnetic_down_gauss;
     double timestep_s;
 } compass_input_t;
 
