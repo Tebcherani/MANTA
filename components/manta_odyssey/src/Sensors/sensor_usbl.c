@@ -7,10 +7,10 @@
 
 usbl_result_t update_usbl(const usbl_config_t *config, const usbl_input_t *input) {
     usbl_result_t result;
-    double north_difference;
-    double east_difference;
-    double down_difference;
-    double horizontal_range;
+    double north_difference_m;
+    double east_difference_m;
+    double down_difference_m;
+    double horizontal_range_m;
 
     result.success = 0;
     result.has_measurement = 0;
@@ -33,15 +33,15 @@ usbl_result_t update_usbl(const usbl_config_t *config, const usbl_input_t *input
         return result;
     }
 
-    north_difference = input->target_north_m - input->vehicle_north_m;
-    east_difference = input->target_east_m - input->vehicle_east_m;
-    down_difference = input->target_down_m - input->vehicle_down_m;
+    north_difference_m = input->target_north_m - input->vehicle_north_m;
+    east_difference_m = input->target_east_m - input->vehicle_east_m;
+    down_difference_m = input->target_down_m - input->vehicle_down_m;
 
-    horizontal_range = sqrt(north_difference * north_difference + east_difference * east_difference);
+    horizontal_range_m = sqrt(north_difference_m * north_difference_m + east_difference_m * east_difference_m);
 
-    result.measurement.range_m = sqrt(north_difference * north_difference + east_difference * east_difference + down_difference * down_difference);
-    result.measurement.azimuth_rad = wrap_angle(atan2(east_difference, north_difference) - input->vehicle_yaw_rad);
-    result.measurement.elevation_rad = atan2(down_difference, horizontal_range);
+    result.measurement.range_m = sqrt(north_difference_m * north_difference_m + east_difference_m * east_difference_m + down_difference_m * down_difference_m);
+    result.measurement.azimuth_rad = wrap_angle(atan2(east_difference_m, north_difference_m) - input->vehicle_yaw_rad);
+    result.measurement.elevation_rad = atan2(down_difference_m, horizontal_range_m);
 
     // Produces a hit once every hit_interval, provided the current timestep falls within hit_window
     if (fmod(input->sim_time_s, config->hit_interval_s) >= config->hit_window_s) {
