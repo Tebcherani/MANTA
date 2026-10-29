@@ -127,15 +127,15 @@ static void compute_thruster_state(const world_state_t *world_state, double real
     pitch = read_sensor(VS_THRUSTER_PITCH);
     area = read_sensor(VS_THRUSTER_DUCT_AREA) * area_scale;
 
-    numerator = kt_fit * amps + .5 * area * eta * pitch * world_state->seawater_density * inflow*inflow;
-    denominator = .5 * area * eta * eta * eta * pitch * pitch * pitch * world_state->seawater_density;
+    numerator = kt_fit * amps + .5 * area * eta * pitch * world_state->seawater_density_kgpm3 * inflow*inflow;
+    denominator = .5 * area * eta * eta * eta * pitch * pitch * pitch * world_state->seawater_density_kgpm3;
 
     if (denominator > 0.0 && numerator > 0.0)
         ts->prop_omega = sqrt(numerator/denominator);
     else
         ts->prop_omega = 0.0;
 
-    ts->thrust = world_state->seawater_density * area *
+    ts->thrust = world_state->seawater_density_kgpm3 * area *
         (pow(eta*pitch*ts->prop_omega,2) - inflow*eta*pitch*ts->prop_omega);
 
     ts->vehicle_torque = read_sensor(VS_THRUSTER_KT) * amps * kq_scale;
@@ -157,12 +157,12 @@ static void compute_thruster_state(const world_state_t *world_state, double real
        this has no effect and the legacy calibration is preserved. */
     if (voltage_limit > 0.0 && fabs(ts->motor_voltage) > voltage_limit) {
         amps = amps * voltage_limit / fabs(ts->motor_voltage);
-        numerator = kt_fit*amps + .5*area*eta*pitch*world_state->seawater_density*inflow*inflow;
+        numerator = kt_fit*amps + .5*area*eta*pitch*world_state->seawater_density_kgpm3*inflow*inflow;
         if (denominator > 0.0 && numerator > 0.0)
             ts->prop_omega = sqrt(numerator/denominator);
         else
             ts->prop_omega = 0.0;
-        ts->thrust = world_state->seawater_density * area *
+        ts->thrust = world_state->seawater_density_kgpm3 * area *
             (pow(eta*pitch*ts->prop_omega,2) - inflow*eta*pitch*ts->prop_omega);
         ts->vehicle_torque = read_sensor(VS_THRUSTER_KT) * amps * kq_scale;
         ts->motor_omega = gear_ratio * ts->prop_omega;

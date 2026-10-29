@@ -15,7 +15,7 @@
  */
 void SimOrchestratorNode::handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {
     // Accept acknowledgments only for the call currently being processed.
-    if (!waiting_for_whale_call_processing_) return;
+    if (!waiting_for_whale_call_processing_b_) return;
 
     if (msg->call_cycle != next_whale_call_.cycle ||
         std::abs(msg->sim_time_s - next_whale_call_.sim_time_s) > 1.0e-9) {
@@ -46,27 +46,27 @@ void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_i
 
     // Continue normal stepping when no future whale call remains.
     if (!response->whale_call_available_b) {
-        next_whale_call_available_ = false;
+        next_whale_call_available_b_ = false;
         publish_current_step();
         return;
     }
 
     // Store the next scheduled whale call.
     next_whale_call_ = response->whale_call;
-    next_whale_call_available_ = true;
+    next_whale_call_available_b_ = true;
 
     // Publish calls that fall within the timestep vehicles already reached.
     if (next_whale_call_.sim_time_s <= sim_state_.sim_time_s) {
         next_whale_call_.cycle = sim_state_.current_cycle > 0 ? static_cast<std::uint64_t>(sim_state_.current_cycle - 1) : 0;
 
         // Prepare the barrier before any acknowledgments can arrive.
-        whale_detection_complete_ = false;
+        whale_detection_complete_b_ = false;
         expected_bearing_processors_.clear();
         completed_bearing_processors_.clear();
-        waiting_for_whale_call_processing_ = true;
+        waiting_for_whale_call_processing_b_ = true;
 
         publish_whale_call(next_whale_call_);
-        next_whale_call_available_ = false;
+        next_whale_call_available_b_ = false;
         return;
     }
 
@@ -122,7 +122,7 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
         return;
     }
 
-    if (state.step_complete) {
+    if (state.step_complete_b) {
         RCLCPP_WARN(
             get_logger(), "Ignored duplicate result from %s for cycle %llu.",
             msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle)
@@ -145,8 +145,8 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
             get_logger(), "Vehicle %s completed its mission during cycle %llu.", 
             msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle)
         );
-        state.active = false;
-        state.step_complete = true;
+        state.active_b = false;
+        state.step_complete_b = true;
         check_all_step_results_received();
         return;
     }
@@ -156,14 +156,14 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
             get_logger(), "Vehicle %s aborted its mission during cycle %llu: %s", 
             msg->vehicle_id.c_str(), static_cast<unsigned long long>(msg->completed_cycle), msg->detail.c_str()
         );                
-        state.active = false;
-        state.step_complete = true;
+        state.active_b = false;
+        state.step_complete_b = true;
         check_all_step_results_received();
         return;
     }
 
     // Step for this vehicle is complete
-    state.step_complete = true;
+    state.step_complete_b = true;
 
     // Check if all vehicles have completed this step
     check_all_step_results_received();
@@ -179,7 +179,7 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
  * @param vehicle_id Identifier of the vehicle that published the message.
  */
 void SimOrchestratorNode::handle_vehicle_ready( const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id) {
-    vehicle_states_.at(vehicle_id).ready = msg->data;   // Store the vehicle's latest readiness state.
+    vehicle_states_.at(vehicle_id).ready_b = msg->data;   // Store the vehicle's latest readiness state.
     check_all_vehicles_initialized();                   // Begin the simulation if the entire fleet is ready.
 }
 
@@ -199,7 +199,7 @@ void SimOrchestratorNode::handle_whale_estimator_ready(const std_msgs::msg::Bool
  */
 void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
     // Ignore acknowledgements when no whale-call processing is pending.
-    if (!waiting_for_whale_call_processing_) {
+    if (!waiting_for_whale_call_processing_b_) {
         RCLCPP_WARN(get_logger(), "Ignored unexpected whale-call acknowledgement.");
         return;
     }
@@ -218,12 +218,12 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
     }
 
     // The detector has finished and reported which receivers got bearings.
-    whale_detection_complete_ = true;
+    whale_detection_complete_b_ = true;
 
     expected_bearing_processors_.clear();
 
     // Wait for local receipt/storage by every AUV that detected this call.
-    if (wait_for_bearing_processing_) {
+    if (wait_for_bearing_processing_b_) {
         for (const auto &receiver_id : msg->bearing_receiver_ids) {
             expected_bearing_processors_.insert(receiver_id);
         }
@@ -240,8 +240,8 @@ void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces
  * Continue only after detection and all required estimators finish.
  */
 void SimOrchestratorNode::check_whale_call_processing_complete() {
-    if (!waiting_for_whale_call_processing_ ||
-        !whale_detection_complete_) {
+    if (!waiting_for_whale_call_processing_b_ ||
+        !whale_detection_complete_b_) {
         return;
     }
 
@@ -250,7 +250,7 @@ void SimOrchestratorNode::check_whale_call_processing_complete() {
         if (completed_bearing_processors_.count(vehicle_id) == 0) return;
     }
 
-    waiting_for_whale_call_processing_ = false;
+    waiting_for_whale_call_processing_b_ = false;
     request_next_whale_call(next_whale_call_.sim_time_s);
 }
 
@@ -267,14 +267,14 @@ void SimOrchestratorNode::check_all_step_results_received() {
     // Wait until every active vehicle has returned a result for the current simulation cycle.
     for (const auto &entry : vehicle_states_) {
         const VehicleState &state = entry.second;
-        if (state.active && !state.step_complete) return;
+        if (state.active_b && !state.step_complete_b) return;
     }
 
     // Determine whether any vehicle still has an active mission.
     bool any_vehicle_active = false;
 
     for (const auto &entry : vehicle_states_) {
-        if (entry.second.active) {
+        if (entry.second.active_b) {
             any_vehicle_active = true;
             break;
         }
@@ -298,11 +298,11 @@ void SimOrchestratorNode::check_all_step_results_received() {
     }
 
     // Clear vehicle acknowledgements before beginning the next batch.
-    for (auto &entry : vehicle_states_) entry.second.step_complete = false;
+    for (auto &entry : vehicle_states_) entry.second.step_complete_b = false;
 
     // Advance the shared clock through every completed native timestep.
     for (int step = 0; step < completed_steps; ++step) {
-        if (!update_sim_state(&sim_state_, sim_config_.timestep)) {
+        if (!update_sim_state(&sim_state_, sim_config_.timestep_s)) {
             RCLCPP_ERROR(get_logger(), "Failed to advance the simulation state.");
             request_simulation_shutdown(true);
             return;
@@ -310,19 +310,19 @@ void SimOrchestratorNode::check_all_step_results_received() {
     }
 
     // If the shortened batch reached a whale call, publish the event before allowing the simulation to continue.
-    if (current_batch_reaches_whale_call_) {
+    if (current_batch_reaches_whale_call_b_) {
         next_whale_call_.cycle = static_cast<std::uint64_t>(sim_state_.current_cycle - 1);
 
         // Prepare the barrier before any acknowledgments can arrive.
-        whale_detection_complete_ = false;
+        whale_detection_complete_b_ = false;
         expected_bearing_processors_.clear();
         completed_bearing_processors_.clear();
-        waiting_for_whale_call_processing_ = true;
+        waiting_for_whale_call_processing_b_ = true;
 
         publish_whale_call(next_whale_call_);
 
-        next_whale_call_available_ = false;
-        current_batch_reaches_whale_call_ = false;
+        next_whale_call_available_b_ = false;
+        current_batch_reaches_whale_call_b_ = false;
         return;
     }
 
@@ -338,20 +338,20 @@ void SimOrchestratorNode::check_all_step_results_received() {
  */
 void SimOrchestratorNode::check_all_vehicles_initialized() {
     // Prevent startup from being triggered more than once.
-    if (simulation_started_) return;
+    if (simulation_started_b_) return;
 
     // Wait until every configured vehicle reports that it is ready.
     for (const auto &entry : vehicle_states_) {
         const VehicleState &state = entry.second;
-        if (!state.ready) return;
+        if (!state.ready_b) return;
     }
 
-    if (wait_for_whale_estimators_ && ready_whale_estimators_.size() != vehicle_states_.size()) return;
+    if (wait_for_whale_estimators_b_ && ready_whale_estimators_.size() != vehicle_states_.size()) return;
 
     // Mark coordinated startup as complete.
-    simulation_started_ = true;
+    simulation_started_b_ = true;
     RCLCPP_INFO(get_logger(), "All %zu vehicles%s are initialized.", vehicle_states_.size(),
-        wait_for_whale_estimators_ ? " and whale estimators" : "");
+        wait_for_whale_estimators_b_ ? " and whale estimators" : "");
     
     // Obtain the first whale call before selecting the first simulation batch.
     request_next_whale_call(sim_state_.sim_time_s);
@@ -393,7 +393,7 @@ void SimOrchestratorNode::request_next_whale_call(double whale_call_after_time_s
  */
 void SimOrchestratorNode::request_simulation_shutdown(bool failed) {            
     // Preserve the final simulation outcome for main() to report.    
-    simulation_failed_ = failed;
+    simulation_failed_b_ = failed;
     
     // Notify every simulation node that it should shut down.
     std_msgs::msg::Bool shutdown_message;

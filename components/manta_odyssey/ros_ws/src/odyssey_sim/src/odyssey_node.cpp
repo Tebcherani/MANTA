@@ -19,7 +19,7 @@ OdysseyNode::OdysseyNode() : rclcpp::Node("odyssey_sim") {
 OdysseyNode::~OdysseyNode() {
     RCLCPP_INFO(get_logger(), "Shutting down vehicle '%s'.", vehicle_id_.c_str());
             
-    if (!odyssey_sim_started_) return;  // No native cleanup is required if the simulator never started.
+    if (!odyssey_sim_started_b_) return;  // No native cleanup is required if the simulator never started.
     if (!write_final_metrics()) RCLCPP_ERROR(get_logger(), "Failed to write final metrics for vehicle '%s'.", vehicle_id_.c_str());         // Save final metrics before closing the native simulator.
     if (!end_odyssey_sim(nullptr)) RCLCPP_ERROR(get_logger(), "Failed to cleanly end simulator for vehicle '%s'.", vehicle_id_.c_str());    // Flush and close the native Odyssey mission data file.
 }

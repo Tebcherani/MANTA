@@ -17,7 +17,7 @@ extern "C" {
  */
 bool OdysseyNode::write_final_metrics() {
     // Do not write the same final metrics more than once.
-    if (metrics_written_) return true;
+    if (metrics_written_b_) return true;
 
     // Retrieve final metrics from the native Odyssey simulator.
     odyssey_metrics_t metrics;
@@ -41,7 +41,7 @@ bool OdysseyNode::write_final_metrics() {
     if (!file.is_open()) return false;
 
     file << "vehicle_id,mass,energy_consumed,mean_speed\n";
-    file << vehicle_id_ << ',' << std::setprecision(15) << metrics.mass << ',' << metrics.energy_consumed << ',' << metrics.mean_speed << '\n';
+    file << vehicle_id_ << ',' << std::setprecision(15) << metrics.mass_kg << ',' << metrics.energy_consumed_Wh << ',' << metrics.mean_speed_mps << '\n';
 
     // Explicitly close the stream so write failures are detected before rename.
     file.close();
@@ -53,7 +53,7 @@ bool OdysseyNode::write_final_metrics() {
     if (error) return false;
     std::filesystem::rename(temporary_path, final_path, error);
     if (error) return false;
-    metrics_written_ = true;
+    metrics_written_b_ = true;
 
     RCLCPP_INFO(get_logger(),"Saved final vehicle metrics: %s", final_path.string().c_str());
 
@@ -87,7 +87,7 @@ void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double co
 }
 
 void OdysseyNode::open_whale_prediction_log() {
-    if (!tracking_enabled_) return;
+    if (!tracking_enabled_b_) return;
 
     std::error_code error;
     std::filesystem::create_directories(data_directory_, error);
@@ -108,28 +108,28 @@ void OdysseyNode::open_whale_prediction_log() {
         << "sim_time_s,has_estimate,measurement_time,predicted_north,predicted_east\n";
 }
 
-void OdysseyNode::log_whale_prediction(double simulation_time) {
+void OdysseyNode::log_whale_prediction(double simulation_time_s) {
     if (!whale_prediction_log_.is_open()) return;
-    if (simulation_time + 1.0e-9 < next_prediction_log_time_) return;
+    if (simulation_time_s + 1.0e-9 < next_prediction_log_time_s_) return;
 
-    while (next_prediction_log_time_ <= simulation_time + 1.0e-9) {
-        next_prediction_log_time_ += output_sample_period_;
+    while (next_prediction_log_time_s_ <= simulation_time_s + 1.0e-9) {
+        next_prediction_log_time_s_ += output_sample_period_s_;
     }
 
-    double measurement_time = 0.0;
-    double predicted_north = 0.0;
-    double predicted_east = 0.0;
+    double measurement_time_s = 0.0;
+    double predicted_north_m = 0.0;
+    double predicted_east_m = 0.0;
 
-    const bool has_estimate = get_odyssey_sim_whale_prediction(simulation_time, &measurement_time, &predicted_north, &predicted_east);
+    const bool has_estimate = get_odyssey_sim_whale_prediction(simulation_time_s, &measurement_time_s, &predicted_north_m, &predicted_east_m);
 
     whale_prediction_log_ << std::setprecision(17)
-                          << simulation_time << ','
+                          << simulation_time_s << ','
                           << (has_estimate ? 1 : 0) << ',';
 
     if (has_estimate) {
-        whale_prediction_log_ << measurement_time << ','
-                              << predicted_north << ','
-                              << predicted_east;
+        whale_prediction_log_ << measurement_time_s << ','
+                              << predicted_north_m << ','
+                              << predicted_east_m;
     } else {
         whale_prediction_log_ << ",,";
     }

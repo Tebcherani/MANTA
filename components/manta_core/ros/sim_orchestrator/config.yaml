@@ -1,0 +1,10 @@
+sim_orchestrator:
+  ros__parameters:
+    timestep_s: 0.02        # Duration of one physics step in seconds.
+    control_period: 10    # Physics steps per sensor and control update.
+    steps_per_message: 1  # Maximum physics steps sent in one ROS message.
+    max_steps: 1000000  # Maximum number of physics steps in one simulation.
+    vehicle_ids: [auv_1]  # Vehicles coordinated by the orchestrator.
+    data_directory: /odyssey/output/Data  # Directory for core simulation output.
+    wait_for_bearing_processing: false  # Wait for vehicles to acknowledge receipt of detected bearings.
+    communication_interval_s: 0.0  # Simulated seconds between communication boundaries; 0 disables boundaries.

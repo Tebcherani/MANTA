@@ -2,23 +2,23 @@
 #define SENSOR_COMPASS_H
 
 typedef struct {
-    double true_yaw;
-    double accel_x;
-    double accel_y;
-    double magnetic_north;
-    double magnetic_east;
-    double magnetic_down;
-    double timestep;
+    double true_yaw_rad;
+    double accel_x_mps2;
+    double accel_y_mps2;
+    double magnetic_north_gauss;
+    double magnetic_east_gauss;
+    double magnetic_down_gauss;
+    double timestep_s;
 } compass_input_t;
 
 typedef struct {
-    double displacement_x;
-    double displacement_y;
-    double displacement_rate_x;
-    double displacement_rate_y;
-    double damping_rate;
-    double natural_freq;
-    double damped_freq;
+    double displacement_x_m;
+    double displacement_y_m;
+    double displacement_rate_x_mps;
+    double displacement_rate_y_mps;
+    double damping_rate_per_s;
+    double natural_freq_radps;
+    double damped_freq_radps;
 } compass_state_t;
 
 int init_compass_state(compass_state_t *);

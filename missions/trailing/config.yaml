@@ -21,15 +21,13 @@ review:
 output:
   data_directory: ./output/trailing/Data
   log_directory: ./output/trailing/Logs
-  auv_sample_period: 5.0    # Sample AUV's state every X simulated seconds
+  auv_sample_period_s: 5.0    # Sample AUV's state every X simulated seconds
 
 
 #--------------------------------------------------
 # Simulation parameters
 #--------------------------------------------------
 simulation:
-  timestep: 0.02
-  control_period: 10
   max_steps: 4320000
   steps_per_message: 10000
 
@@ -71,7 +69,7 @@ scenario:
   trailing:
     vehicle_separation_m: 2000.0
     following_distance_m: 1000.0
-    communication_interval: 500.0 # simulated seconds; 0 means immediate
+    communication_interval_s: 500.0 # simulated seconds; 0 means immediate
 
   duration: 86400.0  # 1 day
 

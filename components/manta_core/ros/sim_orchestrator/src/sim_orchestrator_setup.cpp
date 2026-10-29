@@ -18,34 +18,34 @@ extern "C" {
  * @throws std::runtime_error If native initialization fails or the configured number of steps per message is invalid.
  */
 void SimOrchestratorNode::initialize_simulation_config() {
-    wait_for_bearing_processing_ = declare_parameter<bool>("wait_for_bearing_processing", false);
+    wait_for_bearing_processing_b_ = declare_parameter<bool>("wait_for_bearing_processing", false);
     
     // Initialize the configuration with the native simulator defaults.
     if (init_sim_config(&sim_config_)) RCLCPP_INFO(get_logger(), "Simulation configuration initialized.");
     else throw std::runtime_error("Failed to initialize simulation configuration.");
 
     // Override the native defaults with the configured ROS parameters.
-    sim_config_.timestep = declare_parameter<double>("timestep", sim_config_.timestep);
+    sim_config_.timestep_s = declare_parameter<double>("timestep_s", sim_config_.timestep_s);
     sim_config_.control_period = static_cast<int>(declare_parameter<std::int64_t>("control_period", sim_config_.control_period));
     sim_config_.num_cycles = static_cast<int>(declare_parameter<std::int64_t>("max_steps", sim_config_.num_cycles));
     
     steps_per_message_ = static_cast<int>(declare_parameter<std::int64_t>("steps_per_message", 1));
     if (steps_per_message_ < 1) throw std::runtime_error("steps_per_message must be at least 1.");
 
-    const double communication_interval = declare_parameter<double>("communication_interval", 0.0);
-    if (!std::isfinite(communication_interval) || communication_interval < 0.0) throw std::runtime_error("communication_interval must be finite and nonnegative.");
+    const double communication_interval_s = declare_parameter<double>("communication_interval_s", 0.0);
+    if (!std::isfinite(communication_interval_s) || communication_interval_s < 0.0) throw std::runtime_error("communication_interval_s must be finite and nonnegative.");
 
-    if (communication_interval > 0.0) {
-        if (!std::isfinite(sim_config_.timestep) || sim_config_.timestep <= 0.0) throw std::runtime_error("timestep must be finite and positive.");
+    if (communication_interval_s > 0.0) {
+        if (!std::isfinite(sim_config_.timestep_s) || sim_config_.timestep_s <= 0.0) throw std::runtime_error("timestep_s must be finite and positive.");
 
-        const double interval_steps = communication_interval / sim_config_.timestep;
+        const double interval_steps = communication_interval_s / sim_config_.timestep_s;
         const double rounded_steps = std::round(interval_steps);
 
         if (!std::isfinite(interval_steps) ||
             rounded_steps < 1.0 ||
             rounded_steps > std::numeric_limits<int>::max() ||
             std::abs(interval_steps - rounded_steps) > 1.0e-6) {
-            throw std::runtime_error("communication_interval must be a whole number of simulation timesteps.");
+            throw std::runtime_error("communication_interval_s must be a whole number of simulation timesteps.");
         }
 
         communication_steps_ = static_cast<int>(rounded_steps);
@@ -74,7 +74,7 @@ void SimOrchestratorNode::initialize_simulation_state() {
  * Load the configured vehicle IDs and initialize their orchestration state.
  */
 void SimOrchestratorNode::load_vehicle_config() {
-    wait_for_whale_estimators_ = declare_parameter<bool>("wait_for_whale_estimators", false);
+    wait_for_whale_estimators_b_ = declare_parameter<bool>("wait_for_whale_estimators", false);
     // Load the list of vehicles participating in the simulation.
     vehicle_ids_ = declare_parameter<std::vector<std::string>>("vehicle_ids", std::vector<std::string>{});
     if (vehicle_ids_.empty()) throw std::runtime_error("The vehicle_ids parameter must contain at least one vehicle.");

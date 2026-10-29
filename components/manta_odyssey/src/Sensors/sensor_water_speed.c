@@ -10,5 +10,5 @@ double update_water_speed(const water_speed_input_t *input) {
         return 0.0;
     }
     
-    return input->true_speed + input->noise_std_dev * std_normal_random_num();
+    return input->true_speed_mps + input->noise_std_dev_mps * std_normal_random_num();
 }

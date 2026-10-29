@@ -37,13 +37,13 @@ int main(int argc, char *argv[]) {
             exit_sim(EXIT_SUCCESS);
         }
 
-        if (!update_odyssey_sim_state(world_state, sim_config.timestep)) {
+        if (!update_odyssey_sim_state(world_state, sim_config.timestep_s)) {
             write_to_sim_log("Failed to update Odyssey state.\n");
             exit_sim(EXIT_FAILURE);
         }
 
 	    if (sim_state.current_cycle % sim_config.control_period == 0) {
-            cycle_status = update_odyssey_sim_cycle(world_state, sim_config.control_period * sim_config.timestep);
+            cycle_status = update_odyssey_sim_cycle(world_state, sim_config.control_period * sim_config.timestep_s);
 
             if (cycle_status == ODYSSEY_UPDATE_ERROR) {
                 write_to_sim_log("Failed to update Odyssey cycle.\n");
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
             }
 	    }
 	
-        if (!update_sim_state(&sim_state, sim_config.timestep)) exit_sim(EXIT_FAILURE);
+        if (!update_sim_state(&sim_state, sim_config.timestep_s)) exit_sim(EXIT_FAILURE);
         if (!update_odyssey_sim_time(sim_state.sim_time_s)) exit_sim(EXIT_FAILURE);
     }
 

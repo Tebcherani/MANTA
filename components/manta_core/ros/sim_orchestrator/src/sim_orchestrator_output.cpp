@@ -20,7 +20,7 @@ void SimOrchestratorNode::publish_current_step() {
     // Describe the first cycle, starting time, and physics timestep of the batch that the vehicle simulators are about to process.
     step.current_cycle = static_cast<std::uint64_t>(sim_state_.current_cycle);
     step.sim_time_s = sim_state_.sim_time_s;
-    step.timestep = sim_config_.timestep;
+    step.timestep_s = sim_config_.timestep_s;
 
     // Use the configured maximum batch size unless fewer simulation cycles remain.
     const int remaining_cycles = sim_config_.num_cycles - sim_state_.current_cycle;
@@ -34,19 +34,19 @@ void SimOrchestratorNode::publish_current_step() {
     }
 
     // Shorten the batch if it would pass the next scheduled whale call.
-    current_batch_reaches_whale_call_ = false;
-    if (next_whale_call_available_) {
+    current_batch_reaches_whale_call_b_ = false;
+    if (next_whale_call_available_b_) {
         // Calculate how many simulated seconds remain before the next scheduled whale call.
-        const double time_until_call = next_whale_call_.sim_time_s - sim_state_.sim_time_s;
+        const double time_until_call_s = next_whale_call_.sim_time_s - sim_state_.sim_time_s;
 
-        if (time_until_call > 0.0) {
+        if (time_until_call_s > 0.0) {
             // Convert the remaining time to a number of physics steps. Every published batch must contain at least one step.
-            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call / sim_config_.timestep)));
+            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call_s / sim_config_.timestep_s)));
 
             // If the call occurs within the normal batch, shorten the batch so it ends at the call.
             if (steps_until_call <= batch_steps) {
                 batch_steps = steps_until_call;
-                current_batch_reaches_whale_call_ = true;
+                current_batch_reaches_whale_call_b_ = true;
             }
         }
     }
@@ -55,11 +55,11 @@ void SimOrchestratorNode::publish_current_step() {
     current_batch_steps_ = batch_steps;
     step.step_count = static_cast<std::uint32_t>(batch_steps);
     step.control_period = static_cast<std::uint64_t>(sim_config_.control_period);
-    step.world.gravity = world_state_->gravity;
-    step.world.magnetic_north = world_state_->magnetic_north;
-    step.world.magnetic_east = world_state_->magnetic_east;
-    step.world.magnetic_down = world_state_->magnetic_down;
-    step.world.seawater_density = world_state_->seawater_density;
+    step.world.gravity_mps2 = world_state_->gravity_mps2;
+    step.world.magnetic_north_gauss = world_state_->magnetic_north_gauss;
+    step.world.magnetic_east_gauss = world_state_->magnetic_east_gauss;
+    step.world.magnetic_down_gauss = world_state_->magnetic_down_gauss;
+    step.world.seawater_density_kgpm3 = world_state_->seawater_density_kgpm3;
 
     sim_step_pub_->publish(step);
 }

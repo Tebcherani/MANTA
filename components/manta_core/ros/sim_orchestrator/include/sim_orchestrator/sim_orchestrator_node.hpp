@@ -40,9 +40,9 @@ private:
     // ---------------------------------------------------------------------
 
     struct VehicleState {
-        bool ready = false;
-        bool active = true;
-        bool step_complete = false;
+        bool ready_b = false;
+        bool active_b = true;
+        bool step_complete_b = false;
     };
 
     // ---------------------------------------------------------------------
@@ -92,8 +92,8 @@ private:
     // ---------------------------------------------------------------------
 
     // Simulation
-    bool simulation_started_ = false;
-    bool simulation_failed_ = false;
+    bool simulation_started_b_ = false;
+    bool simulation_failed_b_ = false;
 
     int steps_per_message_ = 1;
     int communication_steps_ = 0;
@@ -106,15 +106,15 @@ private:
     // Vehicle
     std::vector<std::string> vehicle_ids_;
     std::unordered_map<std::string, VehicleState> vehicle_states_;
-    bool wait_for_whale_estimators_ = false;
+    bool wait_for_whale_estimators_b_ = false;
     std::unordered_set<std::string> ready_whale_estimators_;
 
     // Whale calls
-    bool next_whale_call_available_ = false;
-    bool current_batch_reaches_whale_call_ = false;
-    bool waiting_for_whale_call_processing_ = false;
-    bool whale_detection_complete_ = false;
-    bool wait_for_bearing_processing_ = false;
+    bool next_whale_call_available_b_ = false;
+    bool current_batch_reaches_whale_call_b_ = false;
+    bool waiting_for_whale_call_processing_b_ = false;
+    bool whale_detection_complete_b_ = false;
+    bool wait_for_bearing_processing_b_ = false;
 
     std::unordered_set<std::string> expected_bearing_processors_;
     std::unordered_set<std::string> completed_bearing_processors_;

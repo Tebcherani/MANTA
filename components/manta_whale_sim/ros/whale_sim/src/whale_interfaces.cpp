@@ -22,7 +22,7 @@ void WhaleNode::create_subscribers() {
     // Receive simulation batches from the orchestrator.
     sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>(
         "/sim/step", 10, [this](const manta_interfaces::msg::SimStep::SharedPtr step) {
-            sim_state_.pending_sim_step = {step->current_cycle, step->sim_time_s, step->timestep, step->step_count};
+            sim_state_.pending_sim_step = {step->current_cycle, step->sim_time_s, step->timestep_s, step->step_count};
             update_whales();
             log_state_if_changed();
         }

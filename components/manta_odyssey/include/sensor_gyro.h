@@ -2,23 +2,23 @@
 #define SENSOR_GYRO_H
 
 typedef struct {
-    double roll_rate;
-    double pitch_rate;
-    double yaw_rate;
+    double roll_rate_radps;
+    double pitch_rate_radps;
+    double yaw_rate_radps;
 } gyro_input_t;
 
 typedef struct {
-    double roll_bias;
-    double pitch_bias;
-    double yaw_bias;
+    double roll_bias_radps;
+    double pitch_bias_radps;
+    double yaw_bias_radps;
 
-    double noise_std_dev;
+    double noise_std_dev_radps;
 } gyro_config_t;
 
 typedef struct {
-    double roll_rate;
-    double pitch_rate;
-    double yaw_rate;
+    double roll_rate_radps;
+    double pitch_rate_radps;
+    double yaw_rate_radps;
 } gyro_measurement_t;
 
 typedef struct {

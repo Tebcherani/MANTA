@@ -37,8 +37,8 @@ class OdysseyNode : public rclcpp::Node {
         struct BearingPosition {
             std::uint64_t cycle;
             double sim_time_s;
-            double north;
-            double east;
+            double north_m;
+            double east_m;
         };
 
         // Setup
@@ -64,12 +64,12 @@ class OdysseyNode : public rclcpp::Node {
         void try_finish_init();
 
         // Output
-        void publish_bearing(double simulation_time);
+        void publish_bearing(double simulation_time_s);
         void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time_s);
         bool write_final_metrics();
 
         void open_whale_prediction_log();
-        void log_whale_prediction(double simulation_time);
+        void log_whale_prediction(double simulation_time_s);
 
         // ---------------------------------------------------------------------
         // Variables
@@ -77,8 +77,8 @@ class OdysseyNode : public rclcpp::Node {
 
         // Call detections
         std::deque<BearingPosition> bearing_positions_;
-        bool latest_bearing_available_ = false;
-        bool latest_bearing_unsent_ = false;
+        bool latest_bearing_available_b_ = false;
+        bool latest_bearing_unsent_b_ = false;
         acoustics_interfaces::msg::BearingTransmission latest_bearing_;
 
         // Local measurements retained so delayed remote bearings can find their match.
@@ -90,22 +90,22 @@ class OdysseyNode : public rclcpp::Node {
         // Calls already successfully triangulated.
         std::set<std::uint64_t> processed_bearing_cycles_;
         
-        double communication_interval_ = 0.0;
+        double communication_interval_s_ = 0.0;
         std::uint64_t next_communication_index_ = 1;
 
         // Mission
-        bool log_decimation_configured_ = false;
-        bool metrics_written_ = false;
-        bool mission_finished_ = false;
-        bool tracking_enabled_ = false;
+        bool log_decimation_configured_b_ = false;
+        bool metrics_written_b_ = false;
+        bool mission_finished_b_ = false;
+        bool tracking_enabled_b_ = false;
 
         // Simulation
-        bool calendar_start_time_received_ = false;
-        bool odyssey_initialized_ = false;
-        bool odyssey_sim_started_ = false;
-        bool ready_published_ = false;
-        bool sim_time_initialized_ = false;
-        bool sim_time_received_ = false;
+        bool calendar_start_time_received_b_ = false;
+        bool odyssey_initialized_b_ = false;
+        bool odyssey_sim_started_b_ = false;
+        bool ready_published_b_ = false;
+        bool sim_time_initialized_b_ = false;
+        bool sim_time_received_b_ = false;
 
         time_t calendar_start_time_ = 0;
         double sim_time_s_ = 0.0;
@@ -113,10 +113,10 @@ class OdysseyNode : public rclcpp::Node {
         // Vehicle
         std::string vehicle_id_;
         std::string data_directory_;
-        double output_sample_period_ = 2.0;
+        double output_sample_period_s_ = 2.0;
 
         std::ofstream whale_prediction_log_;
-        double next_prediction_log_time_ = 0.0;
+        double next_prediction_log_time_s_ = 0.0;
 
 
         // ---------------------------------------------------------------------

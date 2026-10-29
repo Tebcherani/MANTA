@@ -19,8 +19,8 @@ int init_inclinometer_state(inclinometer_state_t *state) {
 
     for (axis = 0; axis < 2; axis++) {
         for (sample = 0; sample < 3; sample++) {
-            state->previous_raw[axis][sample] = 0.0;
-            state->previous_filtered[axis][sample] = 0.0;
+            state->previous_raw_rad[axis][sample] = 0.0;
+            state->previous_filtered_rad[axis][sample] = 0.0;
         }
     }
 
@@ -30,7 +30,7 @@ int init_inclinometer_state(inclinometer_state_t *state) {
 }
 
 
-static void low_pass_filter(inclinometer_state_t *state, const double raw[2], double filtered[2]) {
+static void low_pass_filter(inclinometer_state_t *state, const double raw_rad[2], double filtered_rad[2]) {
     const double a1 = -1.82269492519631;
     const double a2 = 0.83718165127602;
 
@@ -42,37 +42,37 @@ static void low_pass_filter(inclinometer_state_t *state, const double raw[2], do
 
     for (axis = 0; axis <= 1; axis++) {
         if (state->sample_count == 1) {
-            state->previous_raw[axis][1] = raw[axis];
-            state->previous_filtered[axis][1] = raw[axis];
+            state->previous_raw_rad[axis][1] = raw_rad[axis];
+            state->previous_filtered_rad[axis][1] = raw_rad[axis];
 
-            filtered[axis] = raw[axis];
+            filtered_rad[axis] = raw_rad[axis];
         }
 
         if (state->sample_count == 2) {
-            state->previous_raw[axis][2] = state->previous_raw[axis][1];
-            state->previous_filtered[axis][2] = state->previous_filtered[axis][1];
+            state->previous_raw_rad[axis][2] = state->previous_raw_rad[axis][1];
+            state->previous_filtered_rad[axis][2] = state->previous_filtered_rad[axis][1];
 
-            state->previous_raw[axis][1] = raw[axis];
-            state->previous_filtered[axis][1] = raw[axis];
+            state->previous_raw_rad[axis][1] = raw_rad[axis];
+            state->previous_filtered_rad[axis][1] = raw_rad[axis];
 
-            filtered[axis] = raw[axis];
+            filtered_rad[axis] = raw_rad[axis];
         }
 
         if (state->sample_count > 2) {
-            filtered[axis] = b0 * raw[axis];
+            filtered_rad[axis] = b0 * raw_rad[axis];
 
             for (j = 1; j <= 2; j++) {
-                filtered[axis] += (j == 1 ? b1 : b2) * state->previous_raw[axis][j];
-                filtered[axis] -= (j == 1 ? a1 : a2) * state->previous_filtered[axis][j];
+                filtered_rad[axis] += (j == 1 ? b1 : b2) * state->previous_raw_rad[axis][j];
+                filtered_rad[axis] -= (j == 1 ? a1 : a2) * state->previous_filtered_rad[axis][j];
             }
 
             for (j = 2; j > 1; j--) {
-                state->previous_raw[axis][j] = state->previous_raw[axis][j - 1];
-                state->previous_filtered[axis][j] = state->previous_filtered[axis][j - 1];
+                state->previous_raw_rad[axis][j] = state->previous_raw_rad[axis][j - 1];
+                state->previous_filtered_rad[axis][j] = state->previous_filtered_rad[axis][j - 1];
             }
 
-            state->previous_raw[axis][1] = raw[axis];
-            state->previous_filtered[axis][1] = filtered[axis];
+            state->previous_raw_rad[axis][1] = raw_rad[axis];
+            state->previous_filtered_rad[axis][1] = filtered_rad[axis];
         }
     }
 
@@ -83,14 +83,14 @@ static void low_pass_filter(inclinometer_state_t *state, const double raw[2], do
 
 
 inclinometer_result_t update_inclinometer(inclinometer_state_t *state, const inclinometer_input_t *input) {
-    const double inclinometer_noise = 0.001745;
+    const double inclinometer_noise_rad = 0.001745;
     inclinometer_result_t result;
-    double raw_pitch_roll[2];
-    double filtered_pitch_roll[2];
+    double raw_pitch_roll_rad[2];
+    double filtered_pitch_roll_rad[2];
 
     result.success = 0;
-    result.measurement.pitch = 0.0;
-    result.measurement.roll = 0.0;
+    result.measurement.pitch_rad = 0.0;
+    result.measurement.roll_rad = 0.0;
 
     if (state == NULL) {
         write_to_sim_log("[sensor_inclinometer] Failed to update inclinometer: state pointer is NULL.\n");
@@ -102,18 +102,18 @@ inclinometer_result_t update_inclinometer(inclinometer_state_t *state, const inc
         return result;
     }
 
-    if (input->gravity == 0.0) {
+    if (input->gravity_mps2 == 0.0) {
         write_to_sim_log("[sensor_inclinometer] Failed to update inclinometer: gravity is zero.\n");
         return result;
     }
 
-    raw_pitch_roll[0] = asin(input->accel_x / input->gravity);
-    raw_pitch_roll[1] = -asin(input->accel_y / (input->gravity * cos(raw_pitch_roll[0])));
+    raw_pitch_roll_rad[0] = asin(input->accel_x_mps2 / input->gravity_mps2);
+    raw_pitch_roll_rad[1] = -asin(input->accel_y_mps2 / (input->gravity_mps2 * cos(raw_pitch_roll_rad[0])));
 
-    low_pass_filter(state, raw_pitch_roll, filtered_pitch_roll);
+    low_pass_filter(state, raw_pitch_roll_rad, filtered_pitch_roll_rad);
 
-    result.measurement.pitch = filtered_pitch_roll[0] + inclinometer_noise * std_normal_random_num();
-    result.measurement.roll = filtered_pitch_roll[1] + inclinometer_noise * std_normal_random_num();
+    result.measurement.pitch_rad = filtered_pitch_roll_rad[0] + inclinometer_noise_rad * std_normal_random_num();
+    result.measurement.roll_rad = filtered_pitch_roll_rad[1] + inclinometer_noise_rad * std_normal_random_num();
 
     result.success = 1;
     return result;

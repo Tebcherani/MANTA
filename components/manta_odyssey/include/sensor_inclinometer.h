@@ -5,20 +5,20 @@ typedef struct {
     // Filter history for pitch and roll
     // Index 0 = pitch
     // Index 1 = roll
-    double previous_raw[2][3];
-    double previous_filtered[2][3];
+    double previous_raw_rad[2][3];
+    double previous_filtered_rad[2][3];
     int sample_count;
 } inclinometer_state_t;
 
 typedef struct {
-    double accel_x;
-    double accel_y;
-    double gravity;
+    double accel_x_mps2;
+    double accel_y_mps2;
+    double gravity_mps2;
 } inclinometer_input_t;
 
 typedef struct {
-    double pitch;
-    double roll;
+    double pitch_rad;
+    double roll_rad;
 } inclinometer_measurement_t;
 
 typedef struct {

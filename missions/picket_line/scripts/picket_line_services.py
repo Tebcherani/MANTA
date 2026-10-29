@@ -25,7 +25,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
 
     data_dir = container_path(output["data_directory"])
     log_dir = container_path(output["log_directory"])
-    sample_period = float(output.get("auv_sample_period", 2.0))
+    sample_period_s = float(output.get("auv_sample_period_s", 2.0))
     vehicle_ids = [vehicle["id"] for vehicle in vehicles]
     vehicle_list = f"[{', '.join(vehicle_ids)}]"
 
@@ -35,7 +35,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
             vehicle=vehicle,
             data_dir=data_dir,
             log_dir=log_dir,
-            sample_period=sample_period,
+            sample_period_s=sample_period_s,
             ros_domain_id=ros_domain_id,
             tracking_enabled=False,
         )
@@ -77,8 +77,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     orchestrator_parameters = {
         "vehicle_ids": vehicle_list,
         "data_directory": data_dir,
-        "timestep": simulation["timestep"],
-        "control_period": simulation["control_period"],
         "max_steps": simulation["max_steps"],
         "steps_per_message": simulation.get("steps_per_message", 1),
     }
@@ -86,6 +84,7 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
     services["sim_orchestrator"] = ros_service(
         "sim_orchestrator", "sim_orchestrator_node",
         orchestrator_parameters, log_dir, ros_domain_id,
+        params_file="/odyssey/components/manta_core/ros/sim_orchestrator/config.yaml",
         extra_environment={
             "SIM_LOG_PATH": f"{log_dir}/sim_orchestrator.log"
         },

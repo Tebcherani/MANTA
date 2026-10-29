@@ -155,7 +155,7 @@ static void fins(const world_state_t *world_state, double *e, double rud_ang, do
   CD4 = read_sensor(VS_FIN_CDO) + aa*CL4*CL4;
 
                                         /* lift and drag forces, in flow coords... */  
-  cons = (world_state->seawater_density * read_sensor(VS_FIN_AREA)) / 2.0;
+  cons = (world_state->seawater_density_kgpm3 * read_sensor(VS_FIN_AREA)) / 2.0;
   
   LW1 = cons*norm_v1*norm_v1*CL1;      /* positive when the lift vector is close to normal vector */
   LW2 = cons*norm_v2*norm_v2*CL2;

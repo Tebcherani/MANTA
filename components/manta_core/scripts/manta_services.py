@@ -43,7 +43,7 @@ def ros_service(package: str, executable: str, parameters: dict, log_dir: str, r
     }
 
 
-def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: float, ros_domain_id: int, tracking_enabled: bool, communication_interval: float | None = None) -> dict:
+def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period_s: float, ros_domain_id: int, tracking_enabled: bool, communication_interval_s: float | None = None) -> dict:
     """Create a vehicle service using its plugin manifest."""
     vehicle_id = vehicle["id"]
     vehicle_type = vehicle["type"]
@@ -81,12 +81,12 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
         environment[environment_name] = container_path(value) if value else ""
 
     parameters = {
-        "output_sample_period": sample_period,
+        "output_sample_period_s": sample_period_s,
         "tracking_enabled": tracking_enabled,
     }
 
-    if communication_interval is not None:
-        parameters["communication_interval"] = communication_interval
+    if communication_interval_s is not None:
+        parameters["communication_interval_s"] = communication_interval_s
 
     return ros_service(
         package=ros_package,
@@ -96,4 +96,5 @@ def vehicle_service(vehicle: dict, data_dir: str, log_dir: str, sample_period: f
         ros_domain_id=ros_domain_id,
         extra_environment=environment,
         image=image,
+        params_file=container_path(runtime["params_file"]) if runtime.get("params_file") else None,
     )

@@ -24,12 +24,12 @@ int init_sim_state(sim_state_t *state) {
     return 1;
 }
 
-int update_sim_state(sim_state_t *state, double timestep)
+int update_sim_state(sim_state_t *state, double timestep_s)
 {
     if (state == NULL) return 0;
 
     state->current_cycle++;
-    state->sim_time_s += timestep;
+    state->sim_time_s += timestep_s;
 
     return 1;
 }

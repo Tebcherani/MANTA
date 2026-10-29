@@ -10,14 +10,14 @@ typedef enum {
 } odyssey_update_status_t;
 
 typedef struct {
-    double gravity;
-    double seawater_density;
+    double gravity_mps2;
+    double seawater_density_kgpm3;
 } odyssey_environment_t;
 
 typedef struct {
-    double mass;
-    double energy_consumed;
-    double mean_speed;
+    double mass_kg;
+    double energy_consumed_Wh;
+    double mean_speed_mps;
 } odyssey_metrics_t;
 
 int init_odyssey(void);

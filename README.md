@@ -205,7 +205,7 @@ vehicles:
 output:
   data_directory: ./output/picket_line/Data
   log_directory: ./output/picket_line/Logs
-  auv_sample_period: 5.0
+  auv_sample_period_s: 5.0
 ```
 
 For trailing, use paths under `output/trailing/`.

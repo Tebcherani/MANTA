@@ -19,8 +19,8 @@ int init_odyssey_sensors(void) {
     return 1;
 }
 
-int update_odyssey_sensors(const world_state_t *world_state, double timestep) {
-    update_ahrs_sensors(world_state, timestep);
+int update_odyssey_sensors(const world_state_t *world_state, double timestep_s) {
+    update_ahrs_sensors(world_state, timestep_s);
     update_odyssey_depth();
     update_water_sensors();
     update_usbl_sensor();
