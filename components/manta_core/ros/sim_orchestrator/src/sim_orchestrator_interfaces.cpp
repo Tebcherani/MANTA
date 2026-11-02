@@ -58,7 +58,7 @@ void SimOrchestratorNode::create_ros_interfaces() {
  */
 void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
     // Create the readiness and step-result subscriptions for every vehicle.
-    for (const std::string &vehicle_id : vehicle_ids_) {
+    for (const std::string &vehicle_id : state_.vehicle_ids) {
         const std::string ready_topic = "/" + vehicle_id + "/ready";
         
         // Receive notification that this vehicle has completed initialization.
@@ -67,7 +67,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
         );
         ready_subs_.push_back(subscription);
 
-        if (wait_for_whale_estimators_b_) {
+        if (state_.wait_for_whale_estimators_b) {
             const std::string estimator_ready_topic = "/" + vehicle_id + "/whale_estimator/ready";
             auto estimator_subscription = create_subscription<std_msgs::msg::Bool>(
                 estimator_ready_topic, qos,
@@ -77,7 +77,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
         }
     }
 
-    for (const std::string &vehicle_id : vehicle_ids_) {
+    for (const std::string &vehicle_id : state_.vehicle_ids) {
         const std::string result_topic = "/" + vehicle_id + "/step_result";
         // Receive this vehicle's result for each simulation batch.
         auto subscription = create_subscription<manta_interfaces::msg::SimStepResult>(

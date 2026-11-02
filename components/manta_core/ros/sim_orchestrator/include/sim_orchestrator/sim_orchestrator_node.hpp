@@ -20,11 +20,7 @@
 #include "whale_interfaces/msg/whale_call.hpp"
 #include "whale_interfaces/srv/get_next_whale_call.hpp"
 
-extern "C" {
-    #include "sim_config.h"
-    #include "sim_state.h"
-    #include "world_sim.h"
-}
+#include "sim_orchestrator/sim_orchestrator_state.hpp"
 
 
 class SimOrchestratorNode : public rclcpp::Node {
@@ -35,16 +31,6 @@ public:
     bool simulation_failed() const;
 
 private:
-    // ---------------------------------------------------------------------
-    // Structures
-    // ---------------------------------------------------------------------
-
-    struct VehicleState {
-        bool ready_b = false;
-        bool active_b = true;
-        bool step_complete_b = false;
-    };
-
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
@@ -91,35 +77,7 @@ private:
     // Variables
     // ---------------------------------------------------------------------
 
-    // Simulation
-    bool simulation_started_b_ = false;
-    bool simulation_failed_b_ = false;
-
-    int steps_per_message_ = 1;
-    int communication_steps_ = 0;
-    int current_batch_steps_ = 0;
-    
-    sim_config_t sim_config_;
-    sim_state_t sim_state_;
-    const world_state_t *world_state_ = nullptr;
-    
-    // Vehicle
-    std::vector<std::string> vehicle_ids_;
-    std::unordered_map<std::string, VehicleState> vehicle_states_;
-    bool wait_for_whale_estimators_b_ = false;
-    std::unordered_set<std::string> ready_whale_estimators_;
-
-    // Whale calls
-    bool next_whale_call_available_b_ = false;
-    bool current_batch_reaches_whale_call_b_ = false;
-    bool waiting_for_whale_call_processing_b_ = false;
-    bool whale_detection_complete_b_ = false;
-    bool wait_for_bearing_processing_b_ = false;
-
-    std::unordered_set<std::string> expected_bearing_processors_;
-    std::unordered_set<std::string> completed_bearing_processors_;
-
-    whale_interfaces::msg::WhaleCall next_whale_call_;
+    SimOrchestratorState state_;
     std::ofstream whale_call_log_;
 
     // ---------------------------------------------------------------------
