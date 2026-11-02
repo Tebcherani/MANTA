@@ -11,6 +11,8 @@ partition "OdysseyNode()" {
     :Load vehicle configuration;
     note right
         - Vehicle ID
+        - Output data directory
+        - Output sample period, tracking, communication interval
     end note
 
     :Open whale prediction log;
@@ -22,6 +24,7 @@ partition "OdysseyNode()" {
         note right
             - Bearing (bearing, vehicle position)
             - Bearing processed
+            - Whale bearing position estimate
             - Vehicle init complete
             - Sim step complete
             - Vehicle state (vehicle ID, time, location)
@@ -32,6 +35,7 @@ partition "OdysseyNode()" {
             - Own bearing observation
             - Shared bearings from other vehicles
               (ignore own published messages)
+            - Whale Kalman estimate
             - Calendar start time
             - Sim init complete
             - Advance sim by a specified num of cycles
