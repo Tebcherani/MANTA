@@ -17,6 +17,7 @@
 #include "whale_interfaces/msg/whale_call.hpp"
 #include "whale_interfaces/srv/get_next_whale_call.hpp"
 
+#include "manta_interfaces/state_log.hpp"
 #include "sim_orchestrator/sim_orchestrator_state.hpp"
 
 
@@ -31,6 +32,8 @@ private:
     // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
+
+    void log_state_if_changed();
 
     // Setup
     void initialize_simulation_config();
@@ -74,6 +77,7 @@ private:
 
     SimOrchestratorState state_;
     std::ofstream whale_call_log_;
+    manta::StateLog state_log_;
 
     // ---------------------------------------------------------------------
     // ROS interfaces

@@ -66,6 +66,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
             ready_topic, qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {
                 state_.vehicle_states.at(vehicle_id).ready_b = msg->data;   // Store the vehicle's latest readiness state.
                 check_all_vehicles_initialized();                   // Begin the simulation if the entire fleet is ready.
+                log_state_if_changed();
             }
         );
         ready_subs_.push_back(subscription);
@@ -78,6 +79,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
                     if (msg->data) state_.ready_whale_estimators.insert(vehicle_id);
                     else state_.ready_whale_estimators.erase(vehicle_id);
                     check_all_vehicles_initialized();
+                    log_state_if_changed();
                 }
             );
             whale_estimator_ready_subs_.push_back(estimator_subscription);
@@ -92,6 +94,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
                 state_.received_step_result = *msg;
                 state_.expected_step_vehicle_id = vehicle_id;
                 handle_step_result();
+                log_state_if_changed();
             }
         );
         step_result_subs_.push_back(subscription);
@@ -102,6 +105,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
         "/sim/whales/call_processed", 100, [this](const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
             state_.received_whale_call_processed = *msg;
             handle_whale_call_processed();
+            log_state_if_changed();
         }
     );
 
@@ -110,6 +114,7 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
         "/sim/bearing_processed", rclcpp::QoS(100).reliable(), [this](const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {
             state_.received_bearing_processed = *msg;
             handle_bearing_processed();
+            log_state_if_changed();
         }
     );
 }

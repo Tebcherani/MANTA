@@ -362,7 +362,10 @@ void SimOrchestratorNode::request_next_whale_call(double whale_call_after_time_s
 
     // Forward the asynchronous response to the corresponding callback.
     next_whale_call_client_->async_send_request(
-        request, [this](rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {handle_next_whale_call_response(future);}
+        request, [this](rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future) {
+            handle_next_whale_call_response(future);
+            log_state_if_changed();
+        }
     );
 }
 

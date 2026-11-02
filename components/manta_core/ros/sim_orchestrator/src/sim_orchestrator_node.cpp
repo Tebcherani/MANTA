@@ -1,4 +1,5 @@
 #include "sim_orchestrator/sim_orchestrator_node.hpp"
+#include "sim_orchestrator/sim_orchestrator_state_json.hpp"
 
 #include <cstdlib>
 #include <exception>
@@ -17,6 +18,8 @@ SimOrchestratorNode::SimOrchestratorNode() : rclcpp::Node("sim_orchestrator") {
     open_simulation_log();
     initialize_simulation_config();
     initialize_simulation_state();
+    state_log_.open_in_log_directory("sim_orchestrator_state.jsonl");
+    log_state_if_changed();
 
     RCLCPP_INFO(get_logger(), "Simulation orchestrator initialized and ready.");
 
@@ -26,6 +29,10 @@ SimOrchestratorNode::SimOrchestratorNode() : rclcpp::Node("sim_orchestrator") {
 SimOrchestratorNode::~SimOrchestratorNode() {
     RCLCPP_INFO(get_logger(), "Shutting down simulation orchestrator.");
     if (!close_sim_log()) RCLCPP_ERROR(get_logger(), "Failed to close simulation log.");
+}
+
+void SimOrchestratorNode::log_state_if_changed() {
+    state_log_.record(state_);
 }
 
 bool SimOrchestratorNode::simulation_failed() const {return state_.simulation_failed_b;}
