@@ -53,9 +53,7 @@ void OdysseyNode::create_ros_interfaces() {
 }
 
 /**
- * Create subscriptions used to receive simulation startup, step, time, and shutdown messages.
- *
- * Startup and step subscriptions store received values before processing; other subscriptions forward messages to their handlers.
+ * Create subscriptions for simulation startup, steps, bearings, whale estimates, and shutdown requests.
  *
  * @param qos Reliable, retained QoS used for simulation startup and step messages.
  * @param whale_qos Reliable, non-retained QoS used for live bearing and estimate messages.
