@@ -54,9 +54,7 @@ private:
     void handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg);
     void handle_next_whale_call_response(rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future);
     void handle_shutdown_timer();
-    void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id);
-    void handle_vehicle_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
-    void handle_whale_estimator_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
+    void handle_step_result();
     void handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
 
     void check_all_step_results_received();

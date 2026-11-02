@@ -88,10 +88,11 @@ void SimOrchestratorNode::handle_shutdown_timer() {
  * The handler validates the vehicle identity and completed cycle, rejects duplicate or incomplete results, handles terminal mission states, and checks
  * whether every active vehicle has completed the current batch.
  *
- * @param msg ROS message containing the vehicle's completed cycle and status.
- * @param expected_vehicle_id Vehicle associated with the subscribed result topic.
+ * Reads the received result and subscribed vehicle ID stored in state.
  */
-void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id) {
+void SimOrchestratorNode::handle_step_result() {
+    const auto *msg = &state_.received_step_result;
+    const std::string &expected_vehicle_id = state_.expected_step_vehicle_id;
     VehicleState &state = state_.vehicle_states.at(expected_vehicle_id);
 
     if (msg->vehicle_id != expected_vehicle_id) {
@@ -167,26 +168,6 @@ void SimOrchestratorNode::handle_step_result(const manta_interfaces::msg::SimSte
 
     // Check if all vehicles have completed this step
     check_all_step_results_received();
-}
-
-/**
- * Record a vehicle's readiness and check whether the fleet can start.
- *
- * This handler is called when a vehicle publishes its initialization status. Once every configured vehicle is ready, the orchestrator can begin advancing
- * the simulation.
- *
- * @param msg ROS message containing the vehicle's readiness state.
- * @param vehicle_id Identifier of the vehicle that published the message.
- */
-void SimOrchestratorNode::handle_vehicle_ready( const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id) {
-    state_.vehicle_states.at(vehicle_id).ready_b = msg->data;   // Store the vehicle's latest readiness state.
-    check_all_vehicles_initialized();                   // Begin the simulation if the entire fleet is ready.
-}
-
-void SimOrchestratorNode::handle_whale_estimator_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id) {
-    if (msg->data) state_.ready_whale_estimators.insert(vehicle_id);
-    else state_.ready_whale_estimators.erase(vehicle_id);
-    check_all_vehicles_initialized();
 }
 
 /**

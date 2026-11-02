@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "whale_interfaces/msg/whale_call.hpp"
+#include "manta_interfaces/msg/sim_step_result.hpp"
 
 extern "C" {
     #include "sim_config.h"
@@ -43,6 +44,8 @@ struct SimOrchestratorState {
     std::unordered_map<std::string, VehicleState> vehicle_states;
     bool wait_for_whale_estimators_b = false;
     std::unordered_set<std::string> ready_whale_estimators;
+    manta_interfaces::msg::SimStepResult received_step_result;
+    std::string expected_step_vehicle_id;
 
     // Whale calls
     bool next_whale_call_available_b = false;

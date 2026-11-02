@@ -63,7 +63,10 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
         
         // Receive notification that this vehicle has completed initialization.
         auto subscription = create_subscription<std_msgs::msg::Bool>(
-            ready_topic, qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_vehicle_ready(msg, vehicle_id);}
+            ready_topic, qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {
+                state_.vehicle_states.at(vehicle_id).ready_b = msg->data;   // Store the vehicle's latest readiness state.
+                check_all_vehicles_initialized();                   // Begin the simulation if the entire fleet is ready.
+            }
         );
         ready_subs_.push_back(subscription);
 
@@ -71,7 +74,11 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
             const std::string estimator_ready_topic = "/" + vehicle_id + "/whale_estimator/ready";
             auto estimator_subscription = create_subscription<std_msgs::msg::Bool>(
                 estimator_ready_topic, qos,
-                [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_whale_estimator_ready(msg, vehicle_id);}
+                [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {
+                    if (msg->data) state_.ready_whale_estimators.insert(vehicle_id);
+                    else state_.ready_whale_estimators.erase(vehicle_id);
+                    check_all_vehicles_initialized();
+                }
             );
             whale_estimator_ready_subs_.push_back(estimator_subscription);
         }
@@ -81,7 +88,11 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
         const std::string result_topic = "/" + vehicle_id + "/step_result";
         // Receive this vehicle's result for each simulation batch.
         auto subscription = create_subscription<manta_interfaces::msg::SimStepResult>(
-            result_topic, qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {handle_step_result(msg, vehicle_id);}
+            result_topic, qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
+                state_.received_step_result = *msg;
+                state_.expected_step_vehicle_id = vehicle_id;
+                handle_step_result();
+            }
         );
         step_result_subs_.push_back(subscription);
     }
