@@ -184,15 +184,16 @@ void OdysseyNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg) {
  * The callback converts the ROS world-state message to Odyssey's native world structure, updates vehicle dynamics at every simulation step, runs control
  * logic at the configured control period, publishes the final vehicle state, and acknowledges the completed batch to the orchestrator.
  *
- * @param msg ROS message describing the simulation batch to execute.
+ * Reads the pending simulation batch from Odyssey state.
  */
-void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr msg) {
+void OdysseyNode::handle_sim_step() {
+    const auto &step = odyssey_state_.pending_sim_step;
     manta_interfaces::msg::SimStepResult result;
     world_state_t world_state;
 
     // Prepare the result returned to the orchestrator.
     result.vehicle_id = odyssey_state_.vehicle_id;
-    result.completed_cycle = msg->current_cycle;
+    result.completed_cycle = step.current_cycle;
     result.status = manta_interfaces::msg::SimStepResult::RUNNING;
     result.detail = "";
 
@@ -200,21 +201,21 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     if (odyssey_state_.mission_finished_b) return;
 
     // Convert the ROS world snapshot to Odyssey's native world structure.
-    world_state.gravity_mps2 = msg->world.gravity_mps2;
-    world_state.magnetic_north_gauss = msg->world.magnetic_north_gauss;
-    world_state.magnetic_east_gauss = msg->world.magnetic_east_gauss;
-    world_state.magnetic_down_gauss = msg->world.magnetic_down_gauss;
-    world_state.seawater_density_kgpm3 = msg->world.seawater_density_kgpm3;
+    world_state.gravity_mps2 = step.world.gravity_mps2;
+    world_state.magnetic_north_gauss = step.world.magnetic_north_gauss;
+    world_state.magnetic_east_gauss = step.world.magnetic_east_gauss;
+    world_state.magnetic_down_gauss = step.world.magnetic_down_gauss;
+    world_state.seawater_density_kgpm3 = step.world.seawater_density_kgpm3;
 
     // Validate values used by the cycle loop and modulo operation.
-    if (msg->control_period == 0) {
+    if (step.control_period == 0) {
         result.status = manta_interfaces::msg::SimStepResult::ERROR;
         result.detail = "Simulation control period cannot be zero.";
         step_result_pub_->publish(result);
         return;
     }
 
-    if (msg->step_count == 0) {
+    if (step.step_count == 0) {
         result.status = manta_interfaces::msg::SimStepResult::ERROR;
         result.detail = "Simulation step count cannot be zero.";
         step_result_pub_->publish(result);
@@ -223,7 +224,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
 
     // Convert the requested output period to a number of control updates.
     if (!odyssey_state_.log_decimation_configured_b) {
-        const double control_interval_s = static_cast<double>(msg->control_period) * msg->timestep_s;
+        const double control_interval_s = static_cast<double>(step.control_period) * step.timestep_s;
         const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(odyssey_state_.output_sample_period_s / control_interval_s)));
 
         set_odyssey_log_decimation(log_decimation);
@@ -236,8 +237,8 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     }
 
     // Run every native Odyssey cycle contained in this ROS batch.
-    for (std::uint32_t offset = 0; offset < msg->step_count; ++offset) {
-        const std::uint64_t cycle = msg->current_cycle + offset;
+    for (std::uint32_t offset = 0; offset < step.step_count; ++offset) {
+        const std::uint64_t cycle = step.current_cycle + offset;
         result.completed_cycle = cycle;
 
         if (odyssey_abort_requested()) {
@@ -249,7 +250,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
         }
 
         // Dynamics continue running at the native simulation timestep.
-        if (!update_odyssey_sim_state(&world_state, msg->timestep_s)) {
+        if (!update_odyssey_sim_state(&world_state, step.timestep_s)) {
             result.status = manta_interfaces::msg::SimStepResult::ERROR;
             result.detail = "Failed to update Odyssey simulation state.";
             step_result_pub_->publish(result);
@@ -257,8 +258,8 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
         }
 
         // Run sensors, navigation, control, and mission logic when due.
-        if (cycle % msg->control_period == 0) {
-            const double control_timestep_s = static_cast<double>(msg->control_period) * msg->timestep_s;
+        if (cycle % step.control_period == 0) {
+            const double control_timestep_s = static_cast<double>(step.control_period) * step.timestep_s;
             const odyssey_update_status_t cycle_status = update_odyssey_sim_cycle(&world_state, control_timestep_s);
 
             if (cycle_status == ODYSSEY_UPDATE_ERROR) {
@@ -277,7 +278,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             }
         }
 
-        const double next_sim_time_s = msg->sim_time_s + static_cast<double>(offset + 1) * msg->timestep_s;
+        const double next_sim_time_s = step.sim_time_s + static_cast<double>(offset + 1) * step.timestep_s;
 
         if (!update_odyssey_sim_time(next_sim_time_s)) {
             result.status = manta_interfaces::msg::SimStepResult::ERROR;
@@ -287,14 +288,14 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
         }
 
         odyssey_state_.sim_time_s = next_sim_time_s;
-        log_whale_prediction(next_sim_time_s);
-        publish_bearing(next_sim_time_s);
+        log_whale_prediction();
+        publish_bearing();
     }
 
     // Publish the vehicle state produced by the completed batch.
-    result.completed_cycle = msg->current_cycle + msg->step_count - 1;
-    const double completed_sim_time_s = msg->sim_time_s + static_cast<double>(msg->step_count) * msg->timestep_s;
-    publish_vehicle_state(result.completed_cycle, completed_sim_time_s);
+    result.completed_cycle = step.current_cycle + step.step_count - 1;
+    odyssey_state_.completed_cycle = result.completed_cycle;
+    publish_vehicle_state();
 
     // Acknowledge the completed batch after publishing its resulting state.
     step_result_pub_->publish(result);
@@ -422,7 +423,8 @@ void OdysseyNode::try_finish_init() {
     }
 }
 
-void OdysseyNode::publish_bearing(double simulation_time_s) {
+void OdysseyNode::publish_bearing() {
+    const double simulation_time_s = odyssey_state_.sim_time_s;
     if (!odyssey_state_.tracking_enabled_b || odyssey_state_.communication_interval_s <= 0.0) return;
 
     while (

@@ -56,7 +56,7 @@ void OdysseyNode::create_ros_interfaces() {
 /**
  * Create subscriptions used to receive simulation startup, step, time, and shutdown messages.
  *
- * Startup subscriptions store received values before continuing initialization; other subscriptions forward messages to their handlers.
+ * Startup and step subscriptions store received values before processing; other subscriptions forward messages to their handlers.
  *
  * @param startup_qos QoS used for retained simulation-state messages.
  * @param step_qos QoS used for simulation-step messages.
@@ -75,7 +75,10 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &
         odyssey_state_.startup_ready_b = msg->data;
         handle_startup();
     });
-    sim_sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {handle_sim_step(msg);});
+    sim_sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
+        odyssey_state_.pending_sim_step = *msg;
+        handle_sim_step();
+    });
     sim_time_sub_ = create_subscription<std_msgs::msg::Float64>("/sim/time", qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {
         odyssey_state_.sim_time_s = msg->data;       // Store the initial simulated mission time.
         odyssey_state_.sim_time_received_b = true;   // Record that this required startup value has arrived.

@@ -50,7 +50,7 @@ class OdysseyNode : public rclcpp::Node {
         // Callbacks
         void handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg);
         void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
-        void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr msg);
+        void handle_sim_step();
         void handle_startup();
         void handle_bearing_observation(const acoustics_interfaces::msg::BearingObservation::SharedPtr msg);
         void handle_whale_estimate(const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg);
@@ -58,12 +58,12 @@ class OdysseyNode : public rclcpp::Node {
         void try_finish_init();
 
         // Output
-        void publish_bearing(double simulation_time_s);
-        void publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time_s);
+        void publish_bearing();
+        void publish_vehicle_state();
         bool write_final_metrics();
 
         void open_whale_prediction_log();
-        void log_whale_prediction(double simulation_time_s);
+        void log_whale_prediction();
 
         // ---------------------------------------------------------------------
         // Variables

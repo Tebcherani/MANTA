@@ -9,6 +9,7 @@
 #include <string>
 
 #include "acoustics_interfaces/msg/bearing_transmission.hpp"
+#include "manta_interfaces/msg/sim_step.hpp"
 
 struct OdysseyState {
     struct BearingPosition {
@@ -51,6 +52,8 @@ struct OdysseyState {
     bool sim_time_received_b = false;
     bool startup_ready_b = false;
 
+    manta_interfaces::msg::SimStep pending_sim_step;
+    std::uint64_t completed_cycle = 0;
     time_t calendar_start_time = 0;
     double sim_time_s = 0.0;
 

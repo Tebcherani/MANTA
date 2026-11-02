@@ -63,16 +63,15 @@ bool OdysseyNode::write_final_metrics() {
 /**
  * Publish the vehicle state after a completed simulation batch.
  *
- * @param completed_cycle Final simulation cycle completed by the vehicle.
- * @param completed_sim_time_s Simulation time corresponding to that cycle.
+ * Reads the completed cycle and simulation time from Odyssey state.
  */
-void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double completed_sim_time_s) {
+void OdysseyNode::publish_vehicle_state() {
     manta_interfaces::msg::VehicleState state;
 
     // Identify the vehicle and completed simulation point.
     state.vehicle_id = odyssey_state_.vehicle_id;
-    state.cycle = completed_cycle;
-    state.sim_time_s = completed_sim_time_s;
+    state.cycle = odyssey_state_.completed_cycle;
+    state.sim_time_s = odyssey_state_.sim_time_s;
 
     // Read the vehicle's current position from the native Odyssey simulator.
     state.vehicle_north_m = get_odyssey_sim_north();
@@ -108,7 +107,8 @@ void OdysseyNode::open_whale_prediction_log() {
         << "sim_time_s,has_estimate,measurement_time,predicted_north,predicted_east\n";
 }
 
-void OdysseyNode::log_whale_prediction(double simulation_time_s) {
+void OdysseyNode::log_whale_prediction() {
+    const double simulation_time_s = odyssey_state_.sim_time_s;
     if (!whale_prediction_log_.is_open()) return;
     if (simulation_time_s + 1.0e-9 < odyssey_state_.next_prediction_log_time_s) return;
 
