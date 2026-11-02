@@ -1,14 +1,7 @@
 #ifndef ODYSSEY_SIM__ODYSSEY_NODE_HPP_
 #define ODYSSEY_SIM__ODYSSEY_NODE_HPP_
 
-#include <cstdint>
-#include <ctime>
-#include <deque>
-#include <map>
-#include <string>
-#include <unordered_map>
 #include <fstream>
-#include <set>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"

@@ -3,8 +3,7 @@
 /**
  * Create publishers used to report vehicle readiness, step completion, and vehicle state.
  *
- * @param startup_qos QoS used for retained readiness messages.
- * @param step_qos QoS used for simulation-step results and vehicle states.
+ * @param qos Reliable, retained QoS used for readiness, step results, and vehicle states.
  */
 void OdysseyNode::create_publishers(const rclcpp::QoS &qos) {
     bearing_processed_pub_ = create_publisher<acoustics_interfaces::msg::BearingProcessed>("/sim/bearing_processed", rclcpp::QoS(100).reliable());
@@ -58,8 +57,8 @@ void OdysseyNode::create_ros_interfaces() {
  *
  * Startup and step subscriptions store received values before processing; other subscriptions forward messages to their handlers.
  *
- * @param startup_qos QoS used for retained simulation-state messages.
- * @param step_qos QoS used for simulation-step messages.
+ * @param qos Reliable, retained QoS used for simulation startup and step messages.
+ * @param whale_qos Reliable, non-retained QoS used for live bearing and estimate messages.
  */
 void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &whale_qos) {
     calendar_start_time_sub_ = create_subscription<std_msgs::msg::Int64>( "/sim/calendar_start_time", qos, [this](const std_msgs::msg::Int64::SharedPtr msg) {
