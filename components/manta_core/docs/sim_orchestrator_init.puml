@@ -26,6 +26,7 @@ partition "SimOrchestratorNode()" {
         :Create subscribers;
         note right
             - Init complete (for every AUV)
+            - Whale estimator ready (for every AUV, when configured)
             - Step results (for every AUV)
             - Whale call processed by detector
             - Bearing processed (by one AUV)
@@ -37,9 +38,10 @@ partition "SimOrchestratorNode()" {
     }
     
     :Open simulation log;
-    :Initialize simulation;
-    :Initialize world;
-    #lightgreen:Publish that Odysseys can\nbegin initialization;
+    :Initialize simulation configuration;
+    :Initialize world model;
+    :Initialize shared simulation state;
+    #lightgreen:Publish startup readiness,\nsimulation time, and calendar time;
 }
 
 stop
