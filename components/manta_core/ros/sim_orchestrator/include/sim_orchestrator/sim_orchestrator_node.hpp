@@ -51,18 +51,18 @@ private:
     void create_subscribers(const rclcpp::QoS &qos);
 
     // Callbacks
-    void handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg);
+    void handle_bearing_processed();
     void handle_next_whale_call_response(rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future);
     void handle_shutdown_timer();
     void handle_step_result();
-    void handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
+    void handle_whale_call_processed();
 
     void check_all_step_results_received();
     void check_whale_call_processing_complete();
 
     // Outputs
     void publish_current_step();
-    void publish_whale_call(const whale_interfaces::msg::WhaleCall &call);
+    void publish_whale_call();
 
     // Simulation coordination
     void check_all_vehicles_initialized();

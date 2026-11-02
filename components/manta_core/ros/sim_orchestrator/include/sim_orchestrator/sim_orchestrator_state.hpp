@@ -6,6 +6,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "acoustics_interfaces/msg/bearing_processed.hpp"
+#include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "whale_interfaces/msg/whale_call.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
 
@@ -57,6 +59,8 @@ struct SimOrchestratorState {
     std::unordered_set<std::string> expected_bearing_processors;
     std::unordered_set<std::string> completed_bearing_processors;
 
+    acoustics_interfaces::msg::BearingProcessed received_bearing_processed;
+    acoustics_interfaces::msg::WhaleCallProcessed received_whale_call_processed;
     whale_interfaces::msg::WhaleCall next_whale_call;
 };
 

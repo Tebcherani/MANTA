@@ -99,11 +99,17 @@ void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
 
     // Receive confirmation that the current whale call has been evaluated.
     whale_call_processed_sub_ = create_subscription<acoustics_interfaces::msg::WhaleCallProcessed>(
-        "/sim/whales/call_processed", 100, [this](const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {handle_whale_call_processed(msg);}
+        "/sim/whales/call_processed", 100, [this](const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
+            state_.received_whale_call_processed = *msg;
+            handle_whale_call_processed();
+        }
     );
 
     // Receive completion acknowledgments from each vehicle's bearing estimator.
     bearing_processed_sub_ = create_subscription<acoustics_interfaces::msg::BearingProcessed>(
-        "/sim/bearing_processed", rclcpp::QoS(100).reliable(), [this](const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {handle_bearing_processed(msg);}
+        "/sim/bearing_processed", rclcpp::QoS(100).reliable(), [this](const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {
+            state_.received_bearing_processed = *msg;
+            handle_bearing_processed();
+        }
     );
 }

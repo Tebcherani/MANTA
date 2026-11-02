@@ -13,7 +13,8 @@
  * Acknowledgments may arrive before the detector's completion message.
  * Both valid and invalid estimates count as finished processing.
  */
-void SimOrchestratorNode::handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {
+void SimOrchestratorNode::handle_bearing_processed() {
+    const auto *msg = &state_.received_bearing_processed;
     // Accept acknowledgments only for the call currently being processed.
     if (!state_.waiting_for_whale_call_processing_b) return;
 
@@ -65,7 +66,7 @@ void SimOrchestratorNode::handle_next_whale_call_response(rclcpp::Client<whale_i
         state_.completed_bearing_processors.clear();
         state_.waiting_for_whale_call_processing_b = true;
 
-        publish_whale_call(state_.next_whale_call);
+        publish_whale_call();
         state_.next_whale_call_available_b = false;
         return;
     }
@@ -176,9 +177,10 @@ void SimOrchestratorNode::handle_step_result() {
  * The acknowledgement is accepted only when the orchestrator is waiting for one and its whale ID, cycle, and simulation time match the pending call.
  * Once accepted, the orchestrator requests the next scheduled whale call.
  *
- * @param msg ROS message identifying the whale call that was processed.
+ * Reads the received acknowledgement stored in state.
  */
-void SimOrchestratorNode::handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
+void SimOrchestratorNode::handle_whale_call_processed() {
+    const auto *msg = &state_.received_whale_call_processed;
     // Ignore acknowledgements when no whale-call processing is pending.
     if (!state_.waiting_for_whale_call_processing_b) {
         RCLCPP_WARN(get_logger(), "Ignored unexpected whale-call acknowledgement.");
@@ -300,7 +302,7 @@ void SimOrchestratorNode::check_all_step_results_received() {
         state_.completed_bearing_processors.clear();
         state_.waiting_for_whale_call_processing_b = true;
 
-        publish_whale_call(state_.next_whale_call);
+        publish_whale_call();
 
         state_.next_whale_call_available_b = false;
         state_.current_batch_reaches_whale_call_b = false;
