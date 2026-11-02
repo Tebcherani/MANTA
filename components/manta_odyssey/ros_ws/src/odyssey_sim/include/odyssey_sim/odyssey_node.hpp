@@ -11,6 +11,7 @@
 #include "manta_interfaces/msg/sim_step.hpp"
 #include "manta_interfaces/msg/sim_step_result.hpp"
 #include "manta_interfaces/msg/vehicle_state.hpp"
+#include "manta_interfaces/state_log.hpp"
 #include "odyssey_interfaces/msg/whale_bearing_position_estimate.hpp"
 #include "whale_estimator_interfaces/msg/whale_kalman_estimate.hpp"
 #include "acoustics_interfaces/msg/bearing_transmission.hpp"
@@ -32,6 +33,7 @@ class OdysseyNode : public rclcpp::Node {
 
         // Setup
         void load_config();
+        void log_state_if_changed();
 
         // ROS interface setup
         void create_publishers(const rclcpp::QoS &qos);
@@ -64,6 +66,7 @@ class OdysseyNode : public rclcpp::Node {
 
         OdysseyState odyssey_state_;
         std::ofstream whale_prediction_log_;
+        manta::StateLog state_log_;
 
 
         // ---------------------------------------------------------------------

@@ -9,7 +9,9 @@
 #include <string>
 
 #include "acoustics_interfaces/msg/bearing_transmission.hpp"
+#include "acoustics_interfaces/msg/bearing_observation.hpp"
 #include "manta_interfaces/msg/sim_step.hpp"
+#include "whale_estimator_interfaces/msg/whale_kalman_estimate.hpp"
 
 struct OdysseyState {
     struct BearingPosition {
@@ -24,6 +26,12 @@ struct OdysseyState {
     bool latest_bearing_available_b = false;
     bool latest_bearing_unsent_b = false;
     acoustics_interfaces::msg::BearingTransmission latest_bearing;
+    bool last_received_local_bearing_available_b = false;
+    acoustics_interfaces::msg::BearingObservation last_received_local_bearing;
+    bool last_received_shared_bearing_available_b = false;
+    acoustics_interfaces::msg::BearingTransmission last_received_shared_bearing;
+    bool last_received_whale_estimate_available_b = false;
+    whale_estimator_interfaces::msg::WhaleKalmanEstimate last_received_whale_estimate;
 
     // Local measurements retained so delayed remote bearings can find their match.
     std::map<std::uint64_t, acoustics_interfaces::msg::BearingTransmission> local_bearings_by_cycle;

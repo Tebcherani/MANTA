@@ -65,25 +65,45 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &
         odyssey_state_.calendar_start_time = static_cast<time_t>(msg->data);  // Convert the timestamp carried by the ROS message to the native time type.
         odyssey_state_.calendar_start_time_received_b = true;                   // Record that this required startup value has been received.
         try_finish_init();                                      // Complete startup if all other required initialization data is available.
+        log_state_if_changed();
     });
     shared_bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingTransmission>("/comms/bearings", whale_qos, [this](const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg) {
         if (msg->receiver_id == odyssey_state_.vehicle_id) return;
+        odyssey_state_.last_received_shared_bearing = *msg;
+        odyssey_state_.last_received_shared_bearing_available_b = true;
         handle_shared_bearing(msg);
+        log_state_if_changed();
     });
     startup_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/startup_ready", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
         odyssey_state_.startup_ready_b = msg->data;
         handle_startup();
+        log_state_if_changed();
     });
     sim_sim_step_sub_ = create_subscription<manta_interfaces::msg::SimStep>("/sim/step", qos, [this](const manta_interfaces::msg::SimStep::SharedPtr msg) {
         odyssey_state_.pending_sim_step = *msg;
         handle_sim_step();
+        log_state_if_changed();
     });
     sim_time_sub_ = create_subscription<std_msgs::msg::Float64>("/sim/time", qos, [this](const std_msgs::msg::Float64::SharedPtr msg) {
         odyssey_state_.sim_time_s = msg->data;       // Store the initial simulated mission time.
         odyssey_state_.sim_time_received_b = true;   // Record that this required startup value has arrived.
         try_finish_init();           // Complete startup if the other required values are available.
+        log_state_if_changed();
     });
-    shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {handle_shutdown(msg);});
-    bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingObservation>("/" + odyssey_state_.vehicle_id + "/sensors/bearing", whale_qos, [this](const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {handle_bearing_observation(msg);});
-    whale_estimate_sub_ = create_subscription<whale_estimator_interfaces::msg::WhaleKalmanEstimate>("/" + odyssey_state_.vehicle_id + "/whale/kalman_estimate", whale_qos, [this](const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg) {handle_whale_estimate(msg);});
+    shutdown_sub_ = create_subscription<std_msgs::msg::Bool>("/sim/shutdown", qos, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+        handle_shutdown(msg);
+        log_state_if_changed();
+    });
+    bearing_sub_ = create_subscription<acoustics_interfaces::msg::BearingObservation>("/" + odyssey_state_.vehicle_id + "/sensors/bearing", whale_qos, [this](const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {
+        odyssey_state_.last_received_local_bearing = *msg;
+        odyssey_state_.last_received_local_bearing_available_b = true;
+        handle_bearing_observation(msg);
+        log_state_if_changed();
+    });
+    whale_estimate_sub_ = create_subscription<whale_estimator_interfaces::msg::WhaleKalmanEstimate>("/" + odyssey_state_.vehicle_id + "/whale/kalman_estimate", whale_qos, [this](const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg) {
+        odyssey_state_.last_received_whale_estimate = *msg;
+        odyssey_state_.last_received_whale_estimate_available_b = true;
+        handle_whale_estimate(msg);
+        log_state_if_changed();
+    });
 }
