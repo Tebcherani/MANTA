@@ -41,6 +41,8 @@ partition "SimOrchestratorNode()" {
     :Initialize simulation configuration;
     :Initialize world model;
     :Initialize shared simulation state;
+    :Open orchestrator state log;
+    :Write initial orchestrator state;
     #lightgreen:Publish startup readiness,\nsimulation time, and calendar time;
 }
 
