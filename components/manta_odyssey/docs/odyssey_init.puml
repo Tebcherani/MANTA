@@ -16,6 +16,8 @@ partition "OdysseyNode()" {
     end note
 
     :Open whale prediction log;
+    :Open per-vehicle Odyssey state log;
+    :Write initial Odyssey state;
 
     partition "Create ROS interfaces" {
         :Create QoS configuration;
