@@ -15,34 +15,21 @@ extern "C" {
 // Handle functions
 //----------------------------------------------------
 
-/**
- * Store the simulation's calendar start time and continue initialization.
- *
- * This callback runs when the orchestrator publishes the calendar timestamp used as the beginning of the simulated mission.
- * 
- *  @param msg ROS message containing the calendar start time as a Unix timestamp.
- */
-void OdysseyNode::handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg) {
-    calendar_start_time_ = static_cast<time_t>(msg->data);  // Convert the timestamp carried by the ROS message to the native time type.
-    calendar_start_time_received_b_ = true;                   // Record that this required startup value has been received.
-    try_finish_init();                                      // Complete startup if all other required initialization data is available.
-}
-
 void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg) {
-    if (!tracking_enabled_b_) return;
-    if (msg->receiver_id == vehicle_id_) return;
+    if (!odyssey_state_.tracking_enabled_b) return;
+    if (msg->receiver_id == odyssey_state_.vehicle_id) return;
     if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
 
     const std::uint64_t call_cycle = msg->call_cycle;
 
     // Process each call only once.
-    if (processed_bearing_cycles_.count(call_cycle) != 0) return;
+    if (odyssey_state_.processed_bearing_cycles.count(call_cycle) != 0) return;
 
-    const auto local_it = local_bearings_by_cycle_.find(call_cycle);
+    const auto local_it = odyssey_state_.local_bearings_by_cycle.find(call_cycle);
 
-    if (local_it == local_bearings_by_cycle_.end()) {
+    if (local_it == odyssey_state_.local_bearings_by_cycle.end()) {
         // Wait for our measurement of this exact call.
-        pending_shared_bearings_[call_cycle] = msg;
+        odyssey_state_.pending_shared_bearings[call_cycle] = msg;
         return;
     }
 
@@ -153,11 +140,11 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     }
 
     // Record the call only after triangulation succeeds.
-    processed_bearing_cycles_.insert(call_cycle);
+    odyssey_state_.processed_bearing_cycles.insert(call_cycle);
 
     // Both bearings describe the same call; use its measurement time.
     odyssey_interfaces::msg::WhaleBearingPositionEstimate fix;
-    fix.vehicle_id = vehicle_id_;
+    fix.vehicle_id = odyssey_state_.vehicle_id;
     fix.call_cycle = call_cycle;
     fix.sim_time_s = local.sim_time_s;
     fix.north_m = estimated_north_m;
@@ -166,11 +153,11 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
     fix.east_variance_m2 = east_variance_m2;
     whale_fix_pub_->publish(fix);
 
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.", vehicle_id_.c_str(), msg->receiver_id.c_str(), estimated_north_m, estimated_east_m, sim_time_s_);
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' received a bearing from '%s': whale estimate north %.2f m, east %.2f m at %.2f s.", odyssey_state_.vehicle_id.c_str(), msg->receiver_id.c_str(), estimated_north_m, estimated_east_m, odyssey_state_.sim_time_s);
 }
 
 void OdysseyNode::handle_whale_estimate(const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg) {
-    if (msg->vehicle_id != vehicle_id_) return;
+    if (msg->vehicle_id != odyssey_state_.vehicle_id) return;
     set_whale_trailing_estimate(msg->whale_kalman_north_m, msg->whale_kalman_east_m, msg->measurement_time_s,
         msg->whale_kalman_velocity_north_mps, msg->whale_kalman_velocity_east_mps,
         msg->whale_kalman_velocity_variance_north_m2ps2, msg->whale_kalman_velocity_variance_east_m2ps2,
@@ -187,7 +174,7 @@ void OdysseyNode::handle_whale_estimate(const whale_estimator_interfaces::msg::W
  */
 void OdysseyNode::handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg) {
     if (!msg->data) return; // Ignore messages that do not request shutdown.
-    RCLCPP_INFO(get_logger(), "Vehicle '%s' received simulation shutdown.", vehicle_id_.c_str());
+    RCLCPP_INFO(get_logger(), "Vehicle '%s' received simulation shutdown.", odyssey_state_.vehicle_id.c_str());
     rclcpp::shutdown();     // Stop the ROS executor and begin normal node destruction.
 }
 
@@ -204,13 +191,13 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     world_state_t world_state;
 
     // Prepare the result returned to the orchestrator.
-    result.vehicle_id = vehicle_id_;
+    result.vehicle_id = odyssey_state_.vehicle_id;
     result.completed_cycle = msg->current_cycle;
     result.status = manta_interfaces::msg::SimStepResult::RUNNING;
     result.detail = "";
 
     // A completed vehicle no longer participates in simulation cycles.
-    if (mission_finished_b_) return;
+    if (odyssey_state_.mission_finished_b) return;
 
     // Convert the ROS world snapshot to Odyssey's native world structure.
     world_state.gravity_mps2 = msg->world.gravity_mps2;
@@ -235,16 +222,16 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
     }
 
     // Convert the requested output period to a number of control updates.
-    if (!log_decimation_configured_b_) {
+    if (!odyssey_state_.log_decimation_configured_b) {
         const double control_interval_s = static_cast<double>(msg->control_period) * msg->timestep_s;
-        const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(output_sample_period_s_ / control_interval_s)));
+        const unsigned int log_decimation = static_cast<unsigned int>(std::max(1.0, std::ceil(odyssey_state_.output_sample_period_s / control_interval_s)));
 
         set_odyssey_log_decimation(log_decimation);
-        log_decimation_configured_b_ = true;
+        odyssey_state_.log_decimation_configured_b = true;
 
         RCLCPP_INFO(
             get_logger(), "Vehicle '%s' will record output every %.3f simulated seconds (%u control updates).", 
-            vehicle_id_.c_str(), static_cast<double>(log_decimation) * control_interval_s, log_decimation
+            odyssey_state_.vehicle_id.c_str(), static_cast<double>(log_decimation) * control_interval_s, log_decimation
         );
     }
 
@@ -254,7 +241,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
         result.completed_cycle = cycle;
 
         if (odyssey_abort_requested()) {
-            mission_finished_b_ = true;
+            odyssey_state_.mission_finished_b = true;
             result.status = manta_interfaces::msg::SimStepResult::ABORTED;
             result.detail = "Odyssey requested mission abort.";
             step_result_pub_->publish(result);
@@ -282,7 +269,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             }
 
             if (cycle_status == ODYSSEY_UPDATE_MISSION_COMPLETE) {
-                mission_finished_b_ = true;
+                odyssey_state_.mission_finished_b = true;
                 result.status = manta_interfaces::msg::SimStepResult::MISSION_COMPLETE;
                 result.detail = "Odyssey mission completed.";
                 step_result_pub_->publish(result);
@@ -299,7 +286,7 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
             return;
         }
 
-        sim_time_s_ = next_sim_time_s;
+        odyssey_state_.sim_time_s = next_sim_time_s;
         log_whale_prediction(next_sim_time_s);
         publish_bearing(next_sim_time_s);
     }
@@ -314,49 +301,36 @@ void OdysseyNode::handle_sim_step(const manta_interfaces::msg::SimStep::SharedPt
 }
 
 /**
- * Store the initial simulation time and continue Odyssey initialization.
- *
- * This callback receives the current simulated mission time from the orchestrator during startup.
- *
- * @param msg ROS message containing the current simulation time in seconds.
- */
-void OdysseyNode::handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg) {
-    sim_time_s_ = msg->data;       // Store the initial simulated mission time.
-    sim_time_received_b_ = true;   // Record that this required startup value has arrived.
-    try_finish_init();           // Complete startup if the other required values are available.
-}
-
-/**
  * Initialize Odyssey when the orchestrator announces that startup is ready.
  * 
  * Duplicate or false startup messages are ignored after Odyssey has already been initialized.
  *
- * @param msg ROS message whose value indicates whether startup may begin.
+ * Reads the startup-ready value stored in state.
  * 
  * @throws std::runtime_error if the native Odyssey simulator cannot initialize.
  */
-void OdysseyNode::handle_startup(const std_msgs::msg::Bool::SharedPtr msg) {
-    if (!msg->data || odyssey_initialized_b_) return;                                                 // Ignore false messages and duplicate startup notifications.
-    if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize " + vehicle_id_ + "."); // Initialize the native Odyssey simulator.
-    odyssey_initialized_b_ = true;                                                                    // Record successful initialization.
-    RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", vehicle_id_.c_str());
+void OdysseyNode::handle_startup() {
+    if (!odyssey_state_.startup_ready_b || odyssey_state_.odyssey_initialized_b) return;                                                 // Ignore false messages and duplicate startup notifications.
+    if (!init_odyssey_sim()) throw std::runtime_error("Failed to initialize " + odyssey_state_.vehicle_id + "."); // Initialize the native Odyssey simulator.
+    odyssey_state_.odyssey_initialized_b = true;                                                                    // Record successful initialization.
+    RCLCPP_INFO(get_logger(), "Initialized '%s' simulator.", odyssey_state_.vehicle_id.c_str());
     try_finish_init();                                                                              // Complete startup if the required time values have also arrived.
 }
 
 void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {
-    if (!tracking_enabled_b_ || msg->receiver_id != vehicle_id_) return;
+    if (!odyssey_state_.tracking_enabled_b || msg->receiver_id != odyssey_state_.vehicle_id) return;
 
     // Find this vehicle's position at the measurement time.
-    const auto position = std::find_if(bearing_positions_.rbegin(), bearing_positions_.rend(), [&msg](const BearingPosition &sample) {return sample.cycle == msg->call_cycle;});
+    const auto position = std::find_if(odyssey_state_.bearing_positions.rbegin(), odyssey_state_.bearing_positions.rend(), [&msg](const BearingPosition &sample) {return sample.cycle == msg->call_cycle;});
 
-    if (position == bearing_positions_.rend()) {
+    if (position == odyssey_state_.bearing_positions.rend()) {
         RCLCPP_ERROR(get_logger(), "No vehicle position available for bearing at cycle %llu.", static_cast<unsigned long long>(msg->call_cycle));
         return;
     }
 
     // Share the sensor measurement with this vehicle's own position.
     acoustics_interfaces::msg::BearingTransmission shared;
-    shared.receiver_id = vehicle_id_;
+    shared.receiver_id = odyssey_state_.vehicle_id;
     shared.call_cycle = msg->call_cycle;
     shared.sim_time_s = msg->sim_time_s;
     shared.bearing_rad = msg->bearing_rad;
@@ -364,26 +338,26 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     shared.receiver_north_m = position->north_m;
     shared.receiver_east_m = position->east_m;
 
-    latest_bearing_ = shared;
-    latest_bearing_available_b_ = true;
-    latest_bearing_unsent_b_ = true;
+    odyssey_state_.latest_bearing = shared;
+    odyssey_state_.latest_bearing_available_b = true;
+    odyssey_state_.latest_bearing_unsent_b = true;
 
     // Retain this local measurement for a matching remote bearing.
-    local_bearings_by_cycle_[shared.call_cycle] = shared;
+    odyssey_state_.local_bearings_by_cycle[shared.call_cycle] = shared;
 
     // A remote measurement of this call may already be waiting.
-    const auto pending_it = pending_shared_bearings_.find(shared.call_cycle);
+    const auto pending_it = odyssey_state_.pending_shared_bearings.find(shared.call_cycle);
 
-    if (pending_it != pending_shared_bearings_.end()) {
+    if (pending_it != odyssey_state_.pending_shared_bearings.end()) {
         auto pending = pending_it->second;
-        pending_shared_bearings_.erase(pending_it);
+        odyssey_state_.pending_shared_bearings.erase(pending_it);
         handle_shared_bearing(pending);
     }
 
-    if (communication_interval_s_ > 0.0) {
+    if (odyssey_state_.communication_interval_s > 0.0) {
         // Confirm local storage so the orchestrator can continue.
         acoustics_interfaces::msg::BearingProcessed stored;
-        stored.vehicle_id = vehicle_id_;
+        stored.vehicle_id = odyssey_state_.vehicle_id;
         stored.call_cycle = msg->call_cycle;
         stored.sim_time_s = msg->sim_time_s;
         stored.estimate_valid_b = false;
@@ -394,11 +368,11 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
 
     // Zero interval preserves immediate sharing and estimation.
     bearing_pub_->publish(shared);
-    latest_bearing_unsent_b_ = false;
+    odyssey_state_.latest_bearing_unsent_b = false;
 
     // Acknowledge reception even when only one AUV detected the call.
     acoustics_interfaces::msg::BearingProcessed received;
-    received.vehicle_id = vehicle_id_;
+    received.vehicle_id = odyssey_state_.vehicle_id;
     received.call_cycle = msg->call_cycle;
     received.sim_time_s = msg->sim_time_s;
     received.estimate_valid_b = false;
@@ -419,47 +393,47 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
  * @throws std::runtime_error If the native simulation time cannot be initialized or the Odyssey simulator cannot be started.
  */
 void OdysseyNode::try_finish_init() {
-    if (!odyssey_initialized_b_) return;
-    if (!sim_time_received_b_) return;
+    if (!odyssey_state_.odyssey_initialized_b) return;
+    if (!odyssey_state_.sim_time_received_b) return;
 
     // Initialize the native Odyssey simulation clock once.
-    if (!sim_time_initialized_b_) {
-        if (!update_odyssey_sim_time(sim_time_s_)) throw std::runtime_error("Failed to initialize " + vehicle_id_ + " simulation time.");
-        sim_time_initialized_b_ = true;
-        RCLCPP_INFO(get_logger(), "Initialized '%s' simulation time.", vehicle_id_.c_str());
+    if (!odyssey_state_.sim_time_initialized_b) {
+        if (!update_odyssey_sim_time(odyssey_state_.sim_time_s)) throw std::runtime_error("Failed to initialize " + odyssey_state_.vehicle_id + " simulation time.");
+        odyssey_state_.sim_time_initialized_b = true;
+        RCLCPP_INFO(get_logger(), "Initialized '%s' simulation time.", odyssey_state_.vehicle_id.c_str());
     }
 
-    if (!calendar_start_time_received_b_) return;
+    if (!odyssey_state_.calendar_start_time_received_b) return;
 
     // Start the native Odyssey simulator once all startup data is available.
-    if (!odyssey_sim_started_b_) {
-        if (!start_odyssey_sim(calendar_start_time_)) throw std::runtime_error("Failed to start " + vehicle_id_ + " simulator.");
-        odyssey_sim_started_b_ = true;
-        RCLCPP_INFO(get_logger(), "Started '%s' simulator.", vehicle_id_.c_str());
+    if (!odyssey_state_.odyssey_sim_started_b) {
+        if (!start_odyssey_sim(odyssey_state_.calendar_start_time)) throw std::runtime_error("Failed to start " + odyssey_state_.vehicle_id + " simulator.");
+        odyssey_state_.odyssey_sim_started_b = true;
+        RCLCPP_INFO(get_logger(), "Started '%s' simulator.", odyssey_state_.vehicle_id.c_str());
     }
 
     // Notify the orchestrator once the vehicle is fully initialized.
-    if (!ready_published_b_) {
+    if (!odyssey_state_.ready_published_b) {
         std_msgs::msg::Bool ready_message;        
         ready_message.data = true;
         ready_pub_->publish(ready_message);
-        ready_published_b_ = true;
-        RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", vehicle_id_.c_str()); 
+        odyssey_state_.ready_published_b = true;
+        RCLCPP_INFO(get_logger(), "Vehicle '%s' initialized and ready.", odyssey_state_.vehicle_id.c_str());
     }
 }
 
 void OdysseyNode::publish_bearing(double simulation_time_s) {
-    if (!tracking_enabled_b_ || communication_interval_s_ <= 0.0) return;
+    if (!odyssey_state_.tracking_enabled_b || odyssey_state_.communication_interval_s <= 0.0) return;
 
     while (
         simulation_time_s + 1.0e-9 >=
-        static_cast<double>(next_communication_index_) * communication_interval_s_
+        static_cast<double>(odyssey_state_.next_communication_index) * odyssey_state_.communication_interval_s
     ) {
-        if (latest_bearing_available_b_ && latest_bearing_unsent_b_) {
-            bearing_pub_->publish(latest_bearing_);
-            latest_bearing_unsent_b_ = false;
+        if (odyssey_state_.latest_bearing_available_b && odyssey_state_.latest_bearing_unsent_b) {
+            bearing_pub_->publish(odyssey_state_.latest_bearing);
+            odyssey_state_.latest_bearing_unsent_b = false;
         }
 
-        ++next_communication_index_;
+        ++odyssey_state_.next_communication_index;
     }
 }

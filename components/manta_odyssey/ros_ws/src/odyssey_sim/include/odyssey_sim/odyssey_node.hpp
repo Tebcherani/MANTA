@@ -23,6 +23,7 @@
 #include "acoustics_interfaces/msg/bearing_transmission.hpp"
 #include "acoustics_interfaces/msg/bearing_observation.hpp"
 #include "acoustics_interfaces/msg/bearing_processed.hpp"
+#include "odyssey_sim/odyssey_state.hpp"
 
 class OdysseyNode : public rclcpp::Node {
     public:
@@ -34,12 +35,7 @@ class OdysseyNode : public rclcpp::Node {
         // Functions
         // ---------------------------------------------------------------------
 
-        struct BearingPosition {
-            std::uint64_t cycle;
-            double sim_time_s;
-            double north_m;
-            double east_m;
-        };
+        using BearingPosition = OdysseyState::BearingPosition;
 
         // Setup
         void load_config();
@@ -52,12 +48,10 @@ class OdysseyNode : public rclcpp::Node {
         void create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &whale_qos);
 
         // Callbacks
-        void handle_calendar_start_time(const std_msgs::msg::Int64::SharedPtr msg);
         void handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg);
         void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
         void handle_sim_step(const manta_interfaces::msg::SimStep::SharedPtr msg);
-        void handle_sim_time(const std_msgs::msg::Float64::SharedPtr msg);
-        void handle_startup(const std_msgs::msg::Bool::SharedPtr msg);
+        void handle_startup();
         void handle_bearing_observation(const acoustics_interfaces::msg::BearingObservation::SharedPtr msg);
         void handle_whale_estimate(const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg);
 
@@ -75,48 +69,8 @@ class OdysseyNode : public rclcpp::Node {
         // Variables
         // ---------------------------------------------------------------------
 
-        // Call detections
-        std::deque<BearingPosition> bearing_positions_;
-        bool latest_bearing_available_b_ = false;
-        bool latest_bearing_unsent_b_ = false;
-        acoustics_interfaces::msg::BearingTransmission latest_bearing_;
-
-        // Local measurements retained so delayed remote bearings can find their match.
-        std::map<std::uint64_t, acoustics_interfaces::msg::BearingTransmission> local_bearings_by_cycle_;
-
-        // Remote measurements that arrived before the corresponding local measurement.
-        std::map<std::uint64_t, acoustics_interfaces::msg::BearingTransmission::SharedPtr> pending_shared_bearings_;
-
-        // Calls already successfully triangulated.
-        std::set<std::uint64_t> processed_bearing_cycles_;
-        
-        double communication_interval_s_ = 0.0;
-        std::uint64_t next_communication_index_ = 1;
-
-        // Mission
-        bool log_decimation_configured_b_ = false;
-        bool metrics_written_b_ = false;
-        bool mission_finished_b_ = false;
-        bool tracking_enabled_b_ = false;
-
-        // Simulation
-        bool calendar_start_time_received_b_ = false;
-        bool odyssey_initialized_b_ = false;
-        bool odyssey_sim_started_b_ = false;
-        bool ready_published_b_ = false;
-        bool sim_time_initialized_b_ = false;
-        bool sim_time_received_b_ = false;
-
-        time_t calendar_start_time_ = 0;
-        double sim_time_s_ = 0.0;
-
-        // Vehicle
-        std::string vehicle_id_;
-        std::string data_directory_;
-        double output_sample_period_s_ = 2.0;
-
+        OdysseyState odyssey_state_;
         std::ofstream whale_prediction_log_;
-        double next_prediction_log_time_s_ = 0.0;
 
 
         // ---------------------------------------------------------------------

@@ -17,7 +17,7 @@ extern "C" {
  */
 bool OdysseyNode::write_final_metrics() {
     // Do not write the same final metrics more than once.
-    if (metrics_written_b_) return true;
+    if (odyssey_state_.metrics_written_b) return true;
 
     // Retrieve final metrics from the native Odyssey simulator.
     odyssey_metrics_t metrics;
@@ -25,9 +25,9 @@ bool OdysseyNode::write_final_metrics() {
     if (!get_odyssey_metrics(&metrics)) return false;
 
     // Construct the final and temporary output paths.
-    const std::filesystem::path directory(data_directory_);
-    const std::filesystem::path final_path = directory / (vehicle_id_ + "_metrics.csv");
-    const std::filesystem::path temporary_path = directory / (vehicle_id_ + "_metrics.csv.tmp");
+    const std::filesystem::path directory(odyssey_state_.data_directory);
+    const std::filesystem::path final_path = directory / (odyssey_state_.vehicle_id + "_metrics.csv");
+    const std::filesystem::path temporary_path = directory / (odyssey_state_.vehicle_id + "_metrics.csv.tmp");
 
     // Ensure the configured output directory exists.
     std::error_code error;
@@ -41,7 +41,7 @@ bool OdysseyNode::write_final_metrics() {
     if (!file.is_open()) return false;
 
     file << "vehicle_id,mass,energy_consumed,mean_speed\n";
-    file << vehicle_id_ << ',' << std::setprecision(15) << metrics.mass_kg << ',' << metrics.energy_consumed_Wh << ',' << metrics.mean_speed_mps << '\n';
+    file << odyssey_state_.vehicle_id << ',' << std::setprecision(15) << metrics.mass_kg << ',' << metrics.energy_consumed_Wh << ',' << metrics.mean_speed_mps << '\n';
 
     // Explicitly close the stream so write failures are detected before rename.
     file.close();
@@ -53,7 +53,7 @@ bool OdysseyNode::write_final_metrics() {
     if (error) return false;
     std::filesystem::rename(temporary_path, final_path, error);
     if (error) return false;
-    metrics_written_b_ = true;
+    odyssey_state_.metrics_written_b = true;
 
     RCLCPP_INFO(get_logger(),"Saved final vehicle metrics: %s", final_path.string().c_str());
 
@@ -70,7 +70,7 @@ void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double co
     manta_interfaces::msg::VehicleState state;
 
     // Identify the vehicle and completed simulation point.
-    state.vehicle_id = vehicle_id_;
+    state.vehicle_id = odyssey_state_.vehicle_id;
     state.cycle = completed_cycle;
     state.sim_time_s = completed_sim_time_s;
 
@@ -80,24 +80,24 @@ void OdysseyNode::publish_vehicle_state(std::uint64_t completed_cycle, double co
     state.depth = get_odyssey_sim_depth();
 
     // Save the position and time used by the bearing detector.
-    bearing_positions_.push_back({state.cycle, state.sim_time_s, state.vehicle_north_m, state.vehicle_east_m});
+    odyssey_state_.bearing_positions.push_back({state.cycle, state.sim_time_s, state.vehicle_north_m, state.vehicle_east_m});
 
     // Make the completed state available to the detection node.
     vehicle_state_pub_->publish(state);
 }
 
 void OdysseyNode::open_whale_prediction_log() {
-    if (!tracking_enabled_b_) return;
+    if (!odyssey_state_.tracking_enabled_b) return;
 
     std::error_code error;
-    std::filesystem::create_directories(data_directory_, error);
+    std::filesystem::create_directories(odyssey_state_.data_directory, error);
     if (error) {
         throw std::runtime_error("Failed to create prediction-log directory.");
     }
 
     const std::filesystem::path path =
-        std::filesystem::path(data_directory_) /
-        (vehicle_id_ + "_whale_predictions.csv");
+        std::filesystem::path(odyssey_state_.data_directory) /
+        (odyssey_state_.vehicle_id + "_whale_predictions.csv");
 
     whale_prediction_log_.open(path, std::ios::out | std::ios::trunc);
     if (!whale_prediction_log_.is_open()) {
@@ -110,10 +110,10 @@ void OdysseyNode::open_whale_prediction_log() {
 
 void OdysseyNode::log_whale_prediction(double simulation_time_s) {
     if (!whale_prediction_log_.is_open()) return;
-    if (simulation_time_s + 1.0e-9 < next_prediction_log_time_s_) return;
+    if (simulation_time_s + 1.0e-9 < odyssey_state_.next_prediction_log_time_s) return;
 
-    while (next_prediction_log_time_s_ <= simulation_time_s + 1.0e-9) {
-        next_prediction_log_time_s_ += output_sample_period_s_;
+    while (odyssey_state_.next_prediction_log_time_s <= simulation_time_s + 1.0e-9) {
+        odyssey_state_.next_prediction_log_time_s += odyssey_state_.output_sample_period_s;
     }
 
     double measurement_time_s = 0.0;
