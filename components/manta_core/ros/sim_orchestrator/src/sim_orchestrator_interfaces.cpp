@@ -58,41 +58,63 @@ void SimOrchestratorNode::create_ros_interfaces() {
  */
 void SimOrchestratorNode::create_subscribers(const rclcpp::QoS &qos) {
     // Create the readiness and step-result subscriptions for every vehicle.
-    for (const std::string &vehicle_id : vehicle_ids_) {
+    for (const std::string &vehicle_id : state_.vehicle_ids) {
         const std::string ready_topic = "/" + vehicle_id + "/ready";
         
         // Receive notification that this vehicle has completed initialization.
         auto subscription = create_subscription<std_msgs::msg::Bool>(
-            ready_topic, qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_vehicle_ready(msg, vehicle_id);}
+            ready_topic, qos, [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {
+                state_.vehicle_states.at(vehicle_id).ready_b = msg->data;   // Store the vehicle's latest readiness state.
+                check_all_vehicles_initialized();                   // Begin the simulation if the entire fleet is ready.
+                log_state_if_changed();
+            }
         );
         ready_subs_.push_back(subscription);
 
-        if (wait_for_whale_estimators_b_) {
+        if (state_.wait_for_whale_estimators_b) {
             const std::string estimator_ready_topic = "/" + vehicle_id + "/whale_estimator/ready";
             auto estimator_subscription = create_subscription<std_msgs::msg::Bool>(
                 estimator_ready_topic, qos,
-                [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {handle_whale_estimator_ready(msg, vehicle_id);}
+                [this, vehicle_id](const std_msgs::msg::Bool::SharedPtr msg) {
+                    if (msg->data) state_.ready_whale_estimators.insert(vehicle_id);
+                    else state_.ready_whale_estimators.erase(vehicle_id);
+                    check_all_vehicles_initialized();
+                    log_state_if_changed();
+                }
             );
             whale_estimator_ready_subs_.push_back(estimator_subscription);
         }
     }
 
-    for (const std::string &vehicle_id : vehicle_ids_) {
+    for (const std::string &vehicle_id : state_.vehicle_ids) {
         const std::string result_topic = "/" + vehicle_id + "/step_result";
         // Receive this vehicle's result for each simulation batch.
         auto subscription = create_subscription<manta_interfaces::msg::SimStepResult>(
-            result_topic, qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {handle_step_result(msg, vehicle_id);}
+            result_topic, qos, [this, vehicle_id](const manta_interfaces::msg::SimStepResult::SharedPtr msg) {
+                state_.received_step_result = *msg;
+                state_.expected_step_vehicle_id = vehicle_id;
+                handle_step_result();
+                log_state_if_changed();
+            }
         );
         step_result_subs_.push_back(subscription);
     }
 
     // Receive confirmation that the current whale call has been evaluated.
     whale_call_processed_sub_ = create_subscription<acoustics_interfaces::msg::WhaleCallProcessed>(
-        "/sim/whales/call_processed", 100, [this](const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {handle_whale_call_processed(msg);}
+        "/sim/whales/call_processed", 100, [this](const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
+            state_.received_whale_call_processed = *msg;
+            handle_whale_call_processed();
+            log_state_if_changed();
+        }
     );
 
     // Receive completion acknowledgments from each vehicle's bearing estimator.
     bearing_processed_sub_ = create_subscription<acoustics_interfaces::msg::BearingProcessed>(
-        "/sim/bearing_processed", rclcpp::QoS(100).reliable(), [this](const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {handle_bearing_processed(msg);}
+        "/sim/bearing_processed", rclcpp::QoS(100).reliable(), [this](const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg) {
+            state_.received_bearing_processed = *msg;
+            handle_bearing_processed();
+            log_state_if_changed();
+        }
     );
 }

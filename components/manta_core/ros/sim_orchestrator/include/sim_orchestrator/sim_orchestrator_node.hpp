@@ -2,9 +2,6 @@
 #define SIM_ORCHESTRATOR__SIM_ORCHESTRATOR_NODE_HPP_
 
 #include <fstream>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -20,11 +17,8 @@
 #include "whale_interfaces/msg/whale_call.hpp"
 #include "whale_interfaces/srv/get_next_whale_call.hpp"
 
-extern "C" {
-    #include "sim_config.h"
-    #include "sim_state.h"
-    #include "world_sim.h"
-}
+#include "manta_interfaces/state_log.hpp"
+#include "sim_orchestrator/sim_orchestrator_state.hpp"
 
 
 class SimOrchestratorNode : public rclcpp::Node {
@@ -36,18 +30,10 @@ public:
 
 private:
     // ---------------------------------------------------------------------
-    // Structures
-    // ---------------------------------------------------------------------
-
-    struct VehicleState {
-        bool ready_b = false;
-        bool active_b = true;
-        bool step_complete_b = false;
-    };
-
-    // ---------------------------------------------------------------------
     // Functions
     // ---------------------------------------------------------------------
+
+    void log_state_if_changed();
 
     // Setup
     void initialize_simulation_config();
@@ -65,20 +51,18 @@ private:
     void create_subscribers(const rclcpp::QoS &qos);
 
     // Callbacks
-    void handle_bearing_processed(const acoustics_interfaces::msg::BearingProcessed::SharedPtr msg);
+    void handle_bearing_processed();
     void handle_next_whale_call_response(rclcpp::Client<whale_interfaces::srv::GetNextWhaleCall>::SharedFuture future);
     void handle_shutdown_timer();
-    void handle_step_result(const manta_interfaces::msg::SimStepResult::SharedPtr msg, const std::string &expected_vehicle_id);
-    void handle_vehicle_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
-    void handle_whale_estimator_ready(const std_msgs::msg::Bool::SharedPtr msg, const std::string &vehicle_id);
-    void handle_whale_call_processed(const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg);
+    void handle_step_result();
+    void handle_whale_call_processed();
 
     void check_all_step_results_received();
     void check_whale_call_processing_complete();
 
     // Outputs
     void publish_current_step();
-    void publish_whale_call(const whale_interfaces::msg::WhaleCall &call);
+    void publish_whale_call();
 
     // Simulation coordination
     void check_all_vehicles_initialized();
@@ -91,36 +75,9 @@ private:
     // Variables
     // ---------------------------------------------------------------------
 
-    // Simulation
-    bool simulation_started_b_ = false;
-    bool simulation_failed_b_ = false;
-
-    int steps_per_message_ = 1;
-    int communication_steps_ = 0;
-    int current_batch_steps_ = 0;
-    
-    sim_config_t sim_config_;
-    sim_state_t sim_state_;
-    const world_state_t *world_state_ = nullptr;
-    
-    // Vehicle
-    std::vector<std::string> vehicle_ids_;
-    std::unordered_map<std::string, VehicleState> vehicle_states_;
-    bool wait_for_whale_estimators_b_ = false;
-    std::unordered_set<std::string> ready_whale_estimators_;
-
-    // Whale calls
-    bool next_whale_call_available_b_ = false;
-    bool current_batch_reaches_whale_call_b_ = false;
-    bool waiting_for_whale_call_processing_b_ = false;
-    bool whale_detection_complete_b_ = false;
-    bool wait_for_bearing_processing_b_ = false;
-
-    std::unordered_set<std::string> expected_bearing_processors_;
-    std::unordered_set<std::string> completed_bearing_processors_;
-
-    whale_interfaces::msg::WhaleCall next_whale_call_;
+    SimOrchestratorState state_;
     std::ofstream whale_call_log_;
+    manta::StateLog state_log_;
 
     // ---------------------------------------------------------------------
     // ROS interfaces
