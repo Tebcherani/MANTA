@@ -87,7 +87,10 @@ def run_docs(argv=None):
             if readonly:
                 mount += ",readonly"
             command.extend(["--mount", mount])
-        common = ["-c", "/input/config", "-d", "/output/cache/doctrees", "-W", "--keep-going"]
+        common = [
+            "-c", "/input/config", "-d", "/output/cache/doctrees",
+            "-a", "-W", "--keep-going",
+        ]
         if args.action == "build":
             command.extend([
                 "--network", "none", IMAGE, "sphinx-build", "-b", "html", *common,
