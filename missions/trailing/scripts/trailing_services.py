@@ -93,7 +93,6 @@ def create_services(config: dict, ros_domain_id: int = 1) -> dict:
         "data_directory": data_dir,
         "max_steps": simulation["max_steps"],
         "steps_per_message": simulation.get("steps_per_message", 1),
-        "wait_for_bearing_processing": True,
         "wait_for_whale_estimators": True,
         "communication_interval_s": communication_interval_s,
     }

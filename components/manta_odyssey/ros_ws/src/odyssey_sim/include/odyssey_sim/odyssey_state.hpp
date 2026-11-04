@@ -10,7 +10,9 @@
 
 #include "acoustics_interfaces/msg/bearing_transmission.hpp"
 #include "acoustics_interfaces/msg/bearing_observation.hpp"
+#include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "manta_interfaces/msg/sim_step.hpp"
+#include "manta_interfaces/msg/sim_step_result.hpp"
 #include "whale_estimator_interfaces/msg/whale_kalman_estimate.hpp"
 
 struct OdysseyState {
@@ -41,6 +43,17 @@ struct OdysseyState {
 
     // Calls already successfully triangulated.
     std::set<std::uint64_t> processed_bearing_cycles;
+    std::set<std::uint64_t> triangulation_attempted_cycles;
+    manta_interfaces::msg::SimStepResult pending_step_result;
+    bool pending_step_result_b = false;
+    bool detector_complete_for_step_b = false;
+    bool bearing_received_for_step_b = false;
+    bool bearing_expected_for_step_b = false;
+    bool triangulation_expected_for_step_b = false;
+    bool peer_exchange_pending_b = false;
+    std::uint64_t peer_exchange_cycle = 0;
+    std::uint64_t current_physics_cycle = 0;
+    acoustics_interfaces::msg::WhaleCallProcessed received_whale_call_processed;
 
     double communication_interval_s = 0.0;
     std::uint64_t next_communication_index = 1;

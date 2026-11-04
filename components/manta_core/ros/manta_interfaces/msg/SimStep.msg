@@ -3,4 +3,5 @@ float64 sim_time_s
 float64 timestep_s
 uint32 step_count
 uint64 control_period
+bool whale_call_expected_b
 WorldState world

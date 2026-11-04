@@ -1,4 +1,6 @@
 string receiver_id
+uint64 exchange_cycle
+bool bearing_available_b
 uint64 call_cycle
 float64 sim_time_s
 float64 bearing_rad

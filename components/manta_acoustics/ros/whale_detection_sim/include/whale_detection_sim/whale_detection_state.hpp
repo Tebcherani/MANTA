@@ -11,6 +11,7 @@
 #include "acoustics_interfaces/msg/bearing_observation.hpp"
 #include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "manta_interfaces/msg/vehicle_state.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "whale_interfaces/msg/whale_call.hpp"
 
 // Configuration and runtime inputs used by the whale detector.
@@ -27,6 +28,7 @@ struct WhaleDetectionState {
     std::normal_distribution<double> normal{0.0, 1.0};
 
     // Simulation
+    std_msgs::msg::Bool ready;
     bool shutdown_requested_b = false;
     bool pending_whale_call_available_b = false;
     std::vector<std::string> bearing_receiver_ids;

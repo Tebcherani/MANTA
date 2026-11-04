@@ -6,7 +6,6 @@
  * @param qos Reliable, retained QoS used for readiness, step results, and vehicle states.
  */
 void OdysseyNode::create_publishers(const rclcpp::QoS &qos) {
-    bearing_processed_pub_ = create_publisher<acoustics_interfaces::msg::BearingProcessed>("/sim/bearing_processed", rclcpp::QoS(100).reliable());
     bearing_pub_ = create_publisher<acoustics_interfaces::msg::BearingTransmission>("/comms/bearings", rclcpp::QoS(100).reliable());
     ready_pub_ = create_publisher<std_msgs::msg::Bool>(odyssey_state_.vehicle_id + "/ready", qos);
     step_result_pub_ = create_publisher<manta_interfaces::msg::SimStepResult>("/" + odyssey_state_.vehicle_id + "/step_result", qos);
@@ -98,6 +97,13 @@ void OdysseyNode::create_subscribers(const rclcpp::QoS &qos, const rclcpp::QoS &
         handle_bearing_observation(msg);
         log_state_if_changed();
     });
+    whale_call_processed_sub_ = create_subscription<acoustics_interfaces::msg::WhaleCallProcessed>(
+        "/sim/whales/call_processed", whale_qos,
+        [this](const acoustics_interfaces::msg::WhaleCallProcessed::SharedPtr msg) {
+            odyssey_state_.received_whale_call_processed = *msg;
+            handle_whale_call_processed();
+            log_state_if_changed();
+        });
     whale_estimate_sub_ = create_subscription<whale_estimator_interfaces::msg::WhaleKalmanEstimate>("/" + odyssey_state_.vehicle_id + "/whale/kalman_estimate", whale_qos, [this](const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg) {
         odyssey_state_.last_received_whale_estimate = *msg;
         odyssey_state_.last_received_whale_estimate_available_b = true;

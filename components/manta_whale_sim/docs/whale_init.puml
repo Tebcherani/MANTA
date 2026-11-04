@@ -146,9 +146,11 @@ partition "WhaleNode()" {
 
     partition "Create ROS interfaces" {
         :Create whale-state publisher;
-        :Subscribe to simulation steps and shutdown;
-        :Create next-whale-call service;
+        :Create whale-call, step-result, and ready publishers;
+        :Subscribe to whale steps and shutdown;
     }
+
+    :Publish whale ready;
 }
 
 stop

@@ -16,6 +16,18 @@ extern "C" {
 //----------------------------------------------------
 
 void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg) {
+    triangulate_shared_bearing(msg);
+
+    // Finish this communication exchange only after any matching bearings
+    // have been triangulated and the position estimate has been published.
+    if (odyssey_state_.peer_exchange_pending_b && msg->exchange_cycle == odyssey_state_.peer_exchange_cycle) {
+        odyssey_state_.peer_exchange_pending_b = false;
+    }
+    publish_step_result_after_detection();
+}
+
+void OdysseyNode::triangulate_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg) {
+    if (!msg->bearing_available_b) return;
     if (!odyssey_state_.tracking_enabled_b) return;
     if (msg->receiver_id == odyssey_state_.vehicle_id) return;
     if (msg->receiver_id != "auv_1" && msg->receiver_id != "auv_2") return;
@@ -32,6 +44,10 @@ void OdysseyNode::handle_shared_bearing(const acoustics_interfaces::msg::Bearing
         odyssey_state_.pending_shared_bearings[call_cycle] = msg;
         return;
     }
+
+    // A matching pair is now available. Record the attempt even when geometry
+    // later rejects the intersection, so a step cannot wait indefinitely.
+    odyssey_state_.triangulation_attempted_cycles.insert(call_cycle);
 
     const auto &local = local_it->second;
     const auto &remote = *msg;
@@ -239,6 +255,7 @@ void OdysseyNode::handle_sim_step() {
     // Run every native Odyssey cycle contained in this ROS batch.
     for (std::uint32_t offset = 0; offset < step.step_count; ++offset) {
         const std::uint64_t cycle = step.current_cycle + offset;
+        odyssey_state_.current_physics_cycle = cycle;
         result.completed_cycle = cycle;
 
         if (odyssey_abort_requested()) {
@@ -297,8 +314,46 @@ void OdysseyNode::handle_sim_step() {
     odyssey_state_.completed_cycle = result.completed_cycle;
     publish_vehicle_state();
 
-    // Acknowledge the completed batch after publishing its resulting state.
-    step_result_pub_->publish(result);
+    // Keep the step open while the detector handles a call or the other AUV's
+    // scheduled exchange is still in flight. Triangulation runs when that
+    // exchange arrives, before the step result can be published.
+    if (step.whale_call_expected_b || odyssey_state_.peer_exchange_pending_b) {
+        odyssey_state_.pending_step_result = result;
+        odyssey_state_.pending_step_result_b = true;
+        odyssey_state_.detector_complete_for_step_b = !step.whale_call_expected_b;
+        odyssey_state_.bearing_received_for_step_b = false;
+        odyssey_state_.bearing_expected_for_step_b = false;
+        odyssey_state_.triangulation_expected_for_step_b = false;
+    } else {
+        step_result_pub_->publish(result);
+    }
+}
+
+void OdysseyNode::publish_step_result_after_detection() {
+    // A call step cannot wait for a later scheduled exchange: the clock must
+    // advance to that boundary first. At the exchange step, wait for the peer.
+    if (!odyssey_state_.pending_step_result_b || !odyssey_state_.detector_complete_for_step_b ||
+        (odyssey_state_.bearing_expected_for_step_b && !odyssey_state_.bearing_received_for_step_b) ||
+        odyssey_state_.peer_exchange_pending_b ||
+        (odyssey_state_.triangulation_expected_for_step_b &&
+         odyssey_state_.triangulation_attempted_cycles.count(odyssey_state_.pending_step_result.completed_cycle) == 0)) return;
+    step_result_pub_->publish(odyssey_state_.pending_step_result);
+    odyssey_state_.pending_step_result_b = false;
+}
+
+void OdysseyNode::handle_whale_call_processed() {
+    const auto &msg = odyssey_state_.received_whale_call_processed;
+    if (!odyssey_state_.pending_step_result_b || msg.cycle != odyssey_state_.pending_step_result.completed_cycle) return;
+    odyssey_state_.detector_complete_for_step_b = true;
+    odyssey_state_.bearing_expected_for_step_b = std::find(
+        msg.bearing_receiver_ids.begin(), msg.bearing_receiver_ids.end(), odyssey_state_.vehicle_id) !=
+        msg.bearing_receiver_ids.end();
+    odyssey_state_.triangulation_expected_for_step_b =
+        odyssey_state_.communication_interval_s == 0.0 &&
+        odyssey_state_.tracking_enabled_b &&
+        odyssey_state_.bearing_expected_for_step_b &&
+        msg.bearing_receiver_ids.size() >= 2;
+    publish_step_result_after_detection();
 }
 
 /**
@@ -319,19 +374,33 @@ void OdysseyNode::handle_startup() {
 }
 
 void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::BearingObservation::SharedPtr msg) {
-    if (!odyssey_state_.tracking_enabled_b || msg->receiver_id != odyssey_state_.vehicle_id) return;
+    if (msg->receiver_id != odyssey_state_.vehicle_id) return;
+    const bool bearing_for_pending_step = odyssey_state_.pending_step_result_b &&
+        msg->call_cycle == odyssey_state_.pending_step_result.completed_cycle;
+    if (!odyssey_state_.tracking_enabled_b) {
+        if (bearing_for_pending_step) {
+            odyssey_state_.bearing_received_for_step_b = true;
+            publish_step_result_after_detection();
+        }
+        return;
+    }
 
     // Find this vehicle's position at the measurement time.
     const auto position = std::find_if(odyssey_state_.bearing_positions.rbegin(), odyssey_state_.bearing_positions.rend(), [&msg](const BearingPosition &sample) {return sample.cycle == msg->call_cycle;});
 
     if (position == odyssey_state_.bearing_positions.rend()) {
         RCLCPP_ERROR(get_logger(), "No vehicle position available for bearing at cycle %llu.", static_cast<unsigned long long>(msg->call_cycle));
+        if (bearing_for_pending_step) {
+            odyssey_state_.bearing_received_for_step_b = true;
+            publish_step_result_after_detection();
+        }
         return;
     }
 
     // Share the sensor measurement with this vehicle's own position.
     acoustics_interfaces::msg::BearingTransmission shared;
     shared.receiver_id = odyssey_state_.vehicle_id;
+    shared.bearing_available_b = true;
     shared.call_cycle = msg->call_cycle;
     shared.sim_time_s = msg->sim_time_s;
     shared.bearing_rad = msg->bearing_rad;
@@ -356,14 +425,10 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     }
 
     if (odyssey_state_.communication_interval_s > 0.0) {
-        // Confirm local storage so the orchestrator can continue.
-        acoustics_interfaces::msg::BearingProcessed stored;
-        stored.vehicle_id = odyssey_state_.vehicle_id;
-        stored.call_cycle = msg->call_cycle;
-        stored.sim_time_s = msg->sim_time_s;
-        stored.estimate_valid_b = false;
-        bearing_processed_pub_->publish(stored);
-
+        if (bearing_for_pending_step) {
+            odyssey_state_.bearing_received_for_step_b = true;
+            publish_step_result_after_detection();
+        }
         return;
     }
 
@@ -371,13 +436,10 @@ void OdysseyNode::handle_bearing_observation(const acoustics_interfaces::msg::Be
     bearing_pub_->publish(shared);
     odyssey_state_.latest_bearing_unsent_b = false;
 
-    // Acknowledge reception even when only one AUV detected the call.
-    acoustics_interfaces::msg::BearingProcessed received;
-    received.vehicle_id = odyssey_state_.vehicle_id;
-    received.call_cycle = msg->call_cycle;
-    received.sim_time_s = msg->sim_time_s;
-    received.estimate_valid_b = false;
-    bearing_processed_pub_->publish(received);
+    if (bearing_for_pending_step) {
+        odyssey_state_.bearing_received_for_step_b = true;
+        publish_step_result_after_detection();
+    }
 }
 
 //----------------------------------------------------
@@ -425,16 +487,24 @@ void OdysseyNode::try_finish_init() {
 
 void OdysseyNode::publish_bearing() {
     const double simulation_time_s = odyssey_state_.sim_time_s;
-    if (!odyssey_state_.tracking_enabled_b || odyssey_state_.communication_interval_s <= 0.0) return;
+    if (odyssey_state_.communication_interval_s <= 0.0) return;
 
     while (
         simulation_time_s + 1.0e-9 >=
         static_cast<double>(odyssey_state_.next_communication_index) * odyssey_state_.communication_interval_s
     ) {
-        if (odyssey_state_.latest_bearing_available_b && odyssey_state_.latest_bearing_unsent_b) {
-            bearing_pub_->publish(odyssey_state_.latest_bearing);
+        acoustics_interfaces::msg::BearingTransmission exchange;
+        exchange.receiver_id = odyssey_state_.vehicle_id;
+        exchange.exchange_cycle = odyssey_state_.current_physics_cycle;
+        if (odyssey_state_.tracking_enabled_b && odyssey_state_.latest_bearing_available_b && odyssey_state_.latest_bearing_unsent_b) {
+            exchange = odyssey_state_.latest_bearing;
+            exchange.exchange_cycle = odyssey_state_.current_physics_cycle;
+            exchange.bearing_available_b = true;
             odyssey_state_.latest_bearing_unsent_b = false;
         }
+        bearing_pub_->publish(exchange);
+        odyssey_state_.peer_exchange_pending_b = true;
+        odyssey_state_.peer_exchange_cycle = exchange.exchange_cycle;
 
         ++odyssey_state_.next_communication_index;
     }

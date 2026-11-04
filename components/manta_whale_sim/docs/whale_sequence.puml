@@ -1,5 +1,5 @@
 @startuml
-title Whale Simulation
+title MANTA — Whale Step and Call Publication
 
 skinparam monochrome true
 skinparam shadowing false
@@ -8,14 +8,17 @@ skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
 participant "WhaleNode" as Whale
+participant "WhaleDetectionNode" as Detection
 
-Orchestrator -> Whale : Request next whale call
-Whale -> Whale : Find earliest remaining call
-Whale --> Orchestrator : Next call or no future call
-
-Orchestrator ->> Whale : SimStep
-Whale -> Whale : Update whale positions
+Orchestrator ->> Whale : Whale SimStep (maximum batch size)
+Whale -> Whale : Find earliest call within this batch
+Whale -> Whale : Shorten batch to the call step, if needed
+Whale -> Whale : Advance whale positions
 Whale -> Whale : Publish ground truth and log trajectory samples
+opt Scheduled call falls in the completed step
+    Whale ->> Detection : WhaleCall (position, cycle, time)
+end
+Whale ->> Orchestrator : WhaleStepResult (completed steps, optional call)
 
 Orchestrator ->> Whale : Shutdown
 

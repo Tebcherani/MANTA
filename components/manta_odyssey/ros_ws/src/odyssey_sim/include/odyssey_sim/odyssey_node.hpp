@@ -16,7 +16,7 @@
 #include "whale_estimator_interfaces/msg/whale_kalman_estimate.hpp"
 #include "acoustics_interfaces/msg/bearing_transmission.hpp"
 #include "acoustics_interfaces/msg/bearing_observation.hpp"
-#include "acoustics_interfaces/msg/bearing_processed.hpp"
+#include "acoustics_interfaces/msg/whale_call_processed.hpp"
 #include "odyssey_sim/odyssey_state.hpp"
 
 class OdysseyNode : public rclcpp::Node {
@@ -44,13 +44,16 @@ class OdysseyNode : public rclcpp::Node {
 
         // Callbacks
         void handle_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg);
+        void triangulate_shared_bearing(const acoustics_interfaces::msg::BearingTransmission::SharedPtr msg);
         void handle_shutdown(const std_msgs::msg::Bool::SharedPtr msg);
         void handle_sim_step();
         void handle_startup();
         void handle_bearing_observation(const acoustics_interfaces::msg::BearingObservation::SharedPtr msg);
+        void handle_whale_call_processed();
         void handle_whale_estimate(const whale_estimator_interfaces::msg::WhaleKalmanEstimate::SharedPtr msg);
 
         void try_finish_init();
+        void publish_step_result_after_detection();
 
         // Output
         void publish_bearing();
@@ -74,7 +77,6 @@ class OdysseyNode : public rclcpp::Node {
         // ---------------------------------------------------------------------
 
         // Publishers
-        rclcpp::Publisher<acoustics_interfaces::msg::BearingProcessed>::SharedPtr bearing_processed_pub_;
         rclcpp::Publisher<acoustics_interfaces::msg::BearingTransmission>::SharedPtr bearing_pub_;
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
         rclcpp::Publisher<manta_interfaces::msg::SimStepResult>::SharedPtr step_result_pub_;
@@ -89,6 +91,7 @@ class OdysseyNode : public rclcpp::Node {
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr startup_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
         rclcpp::Subscription<acoustics_interfaces::msg::BearingObservation>::SharedPtr bearing_sub_;
+        rclcpp::Subscription<acoustics_interfaces::msg::WhaleCallProcessed>::SharedPtr whale_call_processed_sub_;
         rclcpp::Subscription<whale_estimator_interfaces::msg::WhaleKalmanEstimate>::SharedPtr whale_estimate_sub_;
 };
 

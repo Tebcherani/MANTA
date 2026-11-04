@@ -22,6 +22,7 @@ partition "WhaleDetectionNode()" {
         note right
             - Bearing observations (one for each vehicle)
             - Whale call processed
+            - Detection node ready
         end note
 
         :Create subscribers;
@@ -31,6 +32,8 @@ partition "WhaleDetectionNode()" {
             - Request shutdown
         end note
     }
+
+    :Publish detection node ready;
 }
 
 stop

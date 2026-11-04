@@ -14,6 +14,10 @@ WhaleDetectionNode::WhaleDetectionNode() : rclcpp::Node("whale_detection_node") 
     state_log_.open_in_log_directory("whale_detection_state.jsonl");
     log_state_if_changed();
     create_ros_interfaces();
+
+    sim_state_.ready.data = true;
+    log_state_if_changed();
+    ready_pub_->publish(sim_state_.ready);
     
     RCLCPP_INFO(get_logger(), "Whale detector initialized for %zu vehicles with a %.1f m detection range.", sim_state_.vehicle_ids.size(), sim_state_.detection_range_m);
 }
