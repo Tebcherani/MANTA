@@ -15,11 +15,6 @@ participant "WhaleEstimatorNode\nauv_1" as Estimator1
 participant "WhaleEstimatorNode\nauv_2" as Estimator2
 
 loop Each simulation batch
-    Orchestrator ->> Whale : Whale SimStep
-    opt Whale calls during this batch
-        Whale ->> Detection : WhaleCall
-    end
-    Whale ->> Orchestrator : WhaleStepResult (completed steps)
     Orchestrator ->> AUV1 : Vehicle SimStep (completed whale steps)
     Orchestrator ->> AUV2 : Vehicle SimStep (completed whale steps)
     AUV1 -> AUV1 : Advance dynamics and trailing control
@@ -37,7 +32,6 @@ loop Each simulation batch
     AUV1 ->> Detection : VehicleState for completed cycle
     AUV2 ->> Detection : VehicleState for completed cycle
     opt Whale called during this batch
-        Detection -> Detection : Match vehicle states and check range
         Detection ->> AUV1 : BearingObservation (if detected)
         Detection ->> AUV2 : BearingObservation (if detected)
         AUV1 -> AUV1 : Store local bearing (if received)
@@ -55,13 +49,11 @@ loop Each simulation batch
     end
 
     opt Estimator 1 received a position fix
-        Estimator1 -> Estimator1 : Update position and velocity filter
         Estimator1 ->> AUV1 : WhaleKalmanEstimate
         AUV1 -> AUV1 : Store estimate for guidance
     end
 
     opt Estimator 2 received a position fix
-        Estimator2 -> Estimator2 : Update position and velocity filter
         Estimator2 ->> AUV2 : WhaleKalmanEstimate
         AUV2 -> AUV2 : Store estimate for guidance
     end
