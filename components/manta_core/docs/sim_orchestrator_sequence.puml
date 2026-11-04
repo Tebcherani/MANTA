@@ -14,32 +14,12 @@ participant "OdysseyNode\nauv_2" as AUV2
 
 loop Until mission termination
     Orchestrator ->> Whale : Whale SimStep (maximum batch size)
-    Whale -> Whale : Stop at next call if one occurs in this batch
-    Whale -> Whale : Advance whale positions
-    opt A call occurred
-        Whale ->> Detection : WhaleCall
-    end
     Whale ->> Orchestrator : WhaleStepResult (completed steps, optional call)
 
     Orchestrator ->> AUV1 : Vehicle SimStep (completed whale steps)
     Orchestrator ->> AUV2 : Vehicle SimStep (completed whale steps)
     AUV1 ->> Detection : VehicleState
     AUV2 ->> Detection : VehicleState
-    opt A whale call was published
-        Detection -> Detection : Match vehicle states to call cycle
-        Detection ->> AUV1 : BearingObservation (if detected)
-        Detection ->> AUV2 : BearingObservation (if detected)
-        Detection ->> AUV1 : WhaleCallProcessed (receiver IDs)
-        Detection ->> AUV2 : WhaleCallProcessed (receiver IDs)
-        AUV1 -> AUV1 : Handle bearing, if detected
-        AUV2 -> AUV2 : Handle bearing, if detected
-    end
-    opt Scheduled communication boundary
-        AUV1 ->> AUV2 : Bearing exchange or no-bearing notice
-        AUV2 ->> AUV1 : Bearing exchange or no-bearing notice
-        AUV1 -> AUV1 : Triangulate if matching bearings are available
-        AUV2 -> AUV2 : Triangulate if matching bearings are available
-    end
     AUV1 ->> Orchestrator : SimStepResult (after peer exchange, if scheduled)
     AUV2 ->> Orchestrator : SimStepResult (after peer exchange, if scheduled)
     Orchestrator -> Orchestrator : Wait for active vehicle step results; advance shared clock
