@@ -12,7 +12,10 @@ sys.path.append(str(ROOT / "scripts"))
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Manage MANTA simulations.")
-    parser.add_argument("command", choices=("down", "build"))
+    parser.add_argument("command", choices=("down", "build", "docs"))
+    if sys.argv[1:2] == ["docs"]:
+        from manta_docs import run_docs
+        return run_docs(sys.argv[2:])
     args = parser.parse_args()
 
     if args.command == "down":
