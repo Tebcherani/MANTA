@@ -1,5 +1,5 @@
 @startuml
-title MANTA Trailing Mission — Scheduled Bearings and Whale Estimation
+title MANTA Trailing Mission — Sequential Whale Step and Bearing Estimation
 
 skinparam monochrome true
 skinparam shadowing false
@@ -17,91 +17,66 @@ participant "WhaleEstimatorNode\nauv_2" as Estimator2
 == Initialization ==
 
 Orchestrator ->> AUV1 : Startup ready, initial simulation time, calendar time
-AUV1 -> AUV1 : Initialize Odyssey and trailing mission
-AUV1 ->> Orchestrator : Vehicle ready
-
 Orchestrator ->> AUV2 : Startup ready, initial simulation time, calendar time
+AUV1 -> AUV1 : Initialize Odyssey and trailing mission
 AUV2 -> AUV2 : Initialize Odyssey and trailing mission
+AUV1 ->> Orchestrator : Vehicle ready
 AUV2 ->> Orchestrator : Vehicle ready
-
-Orchestrator -> Orchestrator : Wait until all configured vehicles are ready
+Whale ->> Orchestrator : Whale ready
+Detection ->> Orchestrator : Detector ready
+Orchestrator -> Orchestrator : Wait for vehicles, estimators, whale, and detector
 
 == Trailing simulation ==
 
 loop Until mission termination
-    Orchestrator -> Whale : Request next call after current simulation time
-    Whale --> Orchestrator : Next scheduled call or no future call
-
-    par Whale simulation
-        Orchestrator ->> Whale : SimStep
-        Whale -> Whale : Advance whale positions
-        Whale ->> Orchestrator : Step completion
-    else Vehicle simulations
-        Orchestrator ->> AUV1 : SimStep
-        Orchestrator ->> AUV2 : SimStep
-        AUV1 -> AUV1 : Advance dynamics and simulation time
-        AUV2 -> AUV2 : Advance dynamics and simulation time
-        AUV1 -> AUV1 : At control updates, project cached whale estimate
-        AUV2 -> AUV2 : At control updates, project cached whale estimate
-        AUV1 -> AUV1 : Update trailing waypoint and control
-        AUV2 -> AUV2 : Update trailing waypoint and control
-        AUV1 ->> Detection : VehicleState
-        AUV2 ->> Detection : VehicleState
-        AUV1 ->> Orchestrator : SimStepResult
-        AUV2 ->> Orchestrator : SimStepResult
+    Orchestrator ->> Whale : Whale SimStep (maximum batch size)
+    Whale -> Whale : Stop at the next scheduled call, if one occurs
+    Whale -> Whale : Advance whale positions and publish ground truth
+    opt A whale calls during this batch
+        Whale ->> Detection : WhaleCall (position, cycle, time)
     end
+    Whale ->> Orchestrator : WhaleStepResult (completed steps, optional call)
 
-    Orchestrator -> Orchestrator : Wait for all active vehicles' step results
-    Orchestrator -> Orchestrator : Check termination and advance shared simulation clock
-
-    opt The batch reaches a scheduled whale call
-        Orchestrator ->> Detection : WhaleCall (position, cycle, simulation time)
-        Detection -> Detection : Wait until vehicle states match the call cycle
-
-        loop Each configured vehicle
-            Detection -> Detection : Check horizontal detection range
-            opt Vehicle is in range
-                Detection -> Detection : Calculate bearing and add configured noise
-                Detection ->> AUV1 : BearingObservation (if auv_1 detects)
-                Detection ->> AUV2 : BearingObservation (if auv_2 detects)
+    Orchestrator ->> AUV1 : Vehicle SimStep (completed whale steps)
+    Orchestrator ->> AUV2 : Vehicle SimStep (completed whale steps)
+    AUV1 -> AUV1 : Advance dynamics and update trailing control
+    AUV2 -> AUV2 : Advance dynamics and update trailing control
+    opt Scheduled communication time
+        AUV1 ->> AUV2 : Bearing or no-bearing notice
+        AUV2 ->> AUV1 : Bearing or no-bearing notice
             end
-        end
-
-        opt auv_1 received a bearing observation
-            AUV1 -> AUV1 : Find own position at the call cycle
-            AUV1 -> AUV1 : Store bearing with receiver position and call time
-            AUV1 ->> Orchestrator : BearingProcessed (stored locally)
-        end
-        opt auv_2 received a bearing observation
-            AUV2 -> AUV2 : Find own position at the call cycle
-            AUV2 -> AUV2 : Store bearing with receiver position and call time
-            AUV2 ->> Orchestrator : BearingProcessed (stored locally)
-        end
-
-        Detection ->> Orchestrator : WhaleCallProcessed (detected receiver IDs)
-        Orchestrator -> Orchestrator : Wait for detector and detected-vehicle storage acknowledgements
+    AUV1 ->> Detection : VehicleState
+    AUV2 ->> Detection : VehicleState
+    opt A whale call was published
+        Detection -> Detection : Match vehicle states to call cycle
+        Detection -> Detection : Check range and calculate noisy bearings
+        Detection ->> AUV1 : BearingObservation (if detected)
+        Detection ->> AUV2 : BearingObservation (if detected)
+        Detection ->> AUV1 : WhaleCallProcessed (receiver IDs)
+        Detection ->> AUV2 : WhaleCallProcessed (receiver IDs)
+        AUV1 -> AUV1 : Handle bearing, if detected
+        AUV2 -> AUV2 : Handle bearing, if detected
     end
-
-    opt Scheduled communication time and an unsent bearing is available
-        AUV1 ->> AUV2 : BearingTransmission (bearing and call-cycle position)
-        AUV2 ->> AUV1 : BearingTransmission (bearing and call-cycle position)
-    end
-
-    opt Matching bearings for the same call cycle are available on auv_1
-        AUV1 -> AUV1 : Triangulate whale position and calculate position variance
-        AUV1 ->> Estimator1 : WhaleBearingPositionEstimate (position, variance, cycle, time)
-        Estimator1 -> Estimator1 : FilterPy predict, then update with measured position
-        Estimator1 ->> AUV1 : WhaleKalmanEstimate (position, velocity, variances)
+    opt Same-cycle local and remote bearings available on auv_1
+        AUV1 -> AUV1 : Triangulate whale position and variance
+        AUV1 ->> Estimator1 : WhaleBearingPositionEstimate
+        Estimator1 -> Estimator1 : Predict, correct, and fit recent velocity
+        Estimator1 ->> AUV1 : WhaleKalmanEstimate
         AUV1 -> AUV1 : Cache estimate for trailing guidance
     end
 
-    opt Matching bearings for the same call cycle are available on auv_2
-        AUV2 -> AUV2 : Triangulate whale position and calculate position variance
-        AUV2 ->> Estimator2 : WhaleBearingPositionEstimate (position, variance, cycle, time)
-        Estimator2 -> Estimator2 : FilterPy predict, then update with measured position
-        Estimator2 ->> AUV2 : WhaleKalmanEstimate (position, velocity, variances)
+    opt Same-cycle local and remote bearings available on auv_2
+        AUV2 -> AUV2 : Triangulate whale position and variance
+        AUV2 ->> Estimator2 : WhaleBearingPositionEstimate
+        Estimator2 -> Estimator2 : Predict, correct, and fit recent velocity
+        Estimator2 ->> AUV2 : WhaleKalmanEstimate
         AUV2 -> AUV2 : Cache estimate for trailing guidance
     end
+    AUV1 ->> Orchestrator : SimStepResult (after peer exchange, if scheduled)
+    AUV2 ->> Orchestrator : SimStepResult (after peer exchange, if scheduled)
+    Orchestrator -> Orchestrator : Wait for active vehicle step results; advance shared clock
+
+
 end
 
 == Shutdown ==

@@ -1,16 +1,66 @@
 #include "whale_sim/whale_node.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <exception>
+#include <limits>
+#include <stdexcept>
+
 //----------------------------------------------------
 // Handle functions
 //----------------------------------------------------
 
+/** Validate and execute the received whale simulation batch, then publish its result. */
+void WhaleNode::handle_sim_step() {
+    const auto &step = sim_state_.received_sim_step;
+    auto &result = sim_state_.step_result;
+    result = whale_interfaces::msg::WhaleStepResult{};
+    result.completed_cycle = step.current_cycle;
+    result.succeeded_b = false;
+
+    try {
+        if (step.step_count == 0 || !std::isfinite(step.sim_time_s) || !std::isfinite(step.timestep_s) || step.timestep_s <= 0.0 || std::abs(step.sim_time_s - sim_state_.sim_time_s) > 1.0e-6) {
+            throw std::runtime_error("Invalid or out-of-order whale simulation step.");
+        }
+
+        // A batch may contain many physics steps. Stop it at the first
+        // scheduled call so the vehicles can supply the matching state.
+        find_next_call();
+        std::uint32_t completed_steps = step.step_count;
+        const double requested_end_s = step.sim_time_s + static_cast<double>(completed_steps) * step.timestep_s;
+        if (sim_state_.next_whale_call_available_b &&
+            sim_state_.next_whale_call.sim_time_s <= requested_end_s + 1.0e-9) {
+            const double steps_to_call = std::ceil((sim_state_.next_whale_call.sim_time_s - step.sim_time_s) / step.timestep_s);
+            completed_steps = static_cast<std::uint32_t>(std::min<double>(completed_steps, std::max(1.0, steps_to_call)));
+        }
+
+        sim_state_.pending_sim_step = {step.current_cycle, step.sim_time_s, step.timestep_s, completed_steps};
+        update_whales();
+
+        result.completed_cycle = sim_state_.completed_cycle;
+        result.completed_step_count = completed_steps;
+        if (sim_state_.next_whale_call_available_b &&
+            sim_state_.next_whale_call.sim_time_s <= sim_state_.sim_time_s + 1.0e-9) {
+            publish_pending_call();
+            result.whale_call_published_b = true;
+            result.whale_call = sim_state_.next_whale_call;
+        }
+        result.succeeded_b = true;
+    } catch (const std::exception &error) {
+        result.detail = error.what();
+        RCLCPP_ERROR(get_logger(), "%s", result.detail.c_str());
+    }
+    step_result_pub_->publish(result);
+}
+
 /**
- * Find the first scheduled whale call after a requested simulation time.
+ * Find the first scheduled whale call after the current simulation time.
  *
- * Calls at or before the time saved from the request have already been processed
+ * Calls at or before the current whale simulation time have already been processed
  * and are discarded. Store the earliest remaining call and its position in state.
  */
-void WhaleNode::handle_get_next_call() {
+void WhaleNode::find_next_call() {
     // Clear the previous result before searching for the next call.
     sim_state_.next_whale_call = whale_interfaces::msg::WhaleCall{};
     sim_state_.next_whale_call_available_b = false;
@@ -22,8 +72,8 @@ void WhaleNode::handle_get_next_call() {
     // Search every whale for its earliest unprocessed call.
     for (std::size_t whale_index = 0; whale_index < sim_state_.whales.size(); ++whale_index) {
         Whale &whale = sim_state_.whales[whale_index];
-        // Discard calls that the orchestrator has already processed.
-        while (whale.next_call_index < whale.whale_call_times_s.size() && whale.whale_call_times_s[whale.next_call_index] <= sim_state_.whale_call_after_time_s) {
+        // Discard call times already passed by the whale simulation clock.
+        while (whale.next_call_index < whale.whale_call_times_s.size() && whale.whale_call_times_s[whale.next_call_index] <= sim_state_.sim_time_s) {
             ++whale.next_call_index;
         }
 
@@ -43,6 +93,7 @@ void WhaleNode::handle_get_next_call() {
 
     // Identify the next call and its scheduled simulation time.
     sim_state_.next_whale_call_available_b = true;
+    sim_state_.next_call_whale_index = next_whale_index;
     sim_state_.next_whale_call.whale_id = sim_state_.whales[next_whale_index].id;
     sim_state_.next_whale_call.cycle = 0;
     sim_state_.next_whale_call.sim_time_s = next_time_s;
@@ -67,6 +118,15 @@ void WhaleNode::handle_shutdown() {
     if (!sim_state_.shutdown_requested_b) return;
     RCLCPP_INFO(get_logger(), "Shutting down whale node."); // Report the shutdown before stopping the ROS context.
     rclcpp::shutdown();                                     // Stop the ROS executor and allow the process to exit normally.
+}
+
+/** Publish the next scheduled call at the whale simulator's completed cycle. */
+void WhaleNode::publish_pending_call() {
+    if (!sim_state_.next_whale_call_available_b) return;
+    sim_state_.next_whale_call.cycle = sim_state_.completed_cycle;
+    whale_call_pub_->publish(sim_state_.next_whale_call);
+    ++sim_state_.whales.at(sim_state_.next_call_whale_index).next_call_index;
+    sim_state_.next_whale_call_available_b = false;
 }
 
 //----------------------------------------------------

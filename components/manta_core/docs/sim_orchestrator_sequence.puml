@@ -1,5 +1,5 @@
 @startuml
-title MANTA Trailing Mission — Orchestration, Bearings, and Whale Estimation
+title MANTA — Sequential Whale and Vehicle Steps
 
 skinparam monochrome true
 skinparam shadowing false
@@ -13,30 +13,36 @@ participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
 
 loop Until mission termination
-    Orchestrator -> Whale : Request next call after current simulation time
-    Whale --> Orchestrator : Next scheduled call or no future call
-
-    par Advance simulation
-        Orchestrator ->> Whale : SimStep
-    else Advance AUV1 simulation
-        Orchestrator ->> AUV1 : SimStep
-        AUV1 ->> Orchestrator : SimStepResult
-    else Advance AUV2 simulation
-        Orchestrator ->> AUV2 : SimStep        
-        AUV2 ->> Orchestrator : SimStepResult
+    Orchestrator ->> Whale : Whale SimStep (maximum batch size)
+    Whale -> Whale : Stop at next call if one occurs in this batch
+    Whale -> Whale : Advance whale positions
+    opt A call occurred
+        Whale ->> Detection : WhaleCall
     end
+    Whale ->> Orchestrator : WhaleStepResult (completed steps, optional call)
 
-    Orchestrator -> Orchestrator : Wait for all active vehicles' step results
-    Orchestrator -> Orchestrator : Check termination and advance shared simulation clock
-
-    opt The batch reaches a scheduled whale call
-        Orchestrator ->> Detection : WhaleCall (position, cycle, simulation time)
-        Detection ->> Orchestrator : WhaleCallProcessed (detected receiver IDs)
-        AUV1 ->> Orchestrator : BearingProcessed (stored locally)
-        AUV2 ->> Orchestrator : BearingProcessed (stored locally)
-
-        Orchestrator -> Orchestrator : Wait for detector acknowledgement and each detected vehicle's storage acknowledgement
+    Orchestrator ->> AUV1 : Vehicle SimStep (completed whale steps)
+    Orchestrator ->> AUV2 : Vehicle SimStep (completed whale steps)
+    AUV1 ->> Detection : VehicleState
+    AUV2 ->> Detection : VehicleState
+    opt A whale call was published
+        Detection -> Detection : Match vehicle states to call cycle
+        Detection ->> AUV1 : BearingObservation (if detected)
+        Detection ->> AUV2 : BearingObservation (if detected)
+        Detection ->> AUV1 : WhaleCallProcessed (receiver IDs)
+        Detection ->> AUV2 : WhaleCallProcessed (receiver IDs)
+        AUV1 -> AUV1 : Handle bearing, if detected
+        AUV2 -> AUV2 : Handle bearing, if detected
     end
+    opt Scheduled communication boundary
+        AUV1 ->> AUV2 : Bearing exchange or no-bearing notice
+        AUV2 ->> AUV1 : Bearing exchange or no-bearing notice
+        AUV1 -> AUV1 : Triangulate if matching bearings are available
+        AUV2 -> AUV2 : Triangulate if matching bearings are available
+    end
+    AUV1 ->> Orchestrator : SimStepResult (after peer exchange, if scheduled)
+    AUV2 ->> Orchestrator : SimStepResult (after peer exchange, if scheduled)
+    Orchestrator -> Orchestrator : Wait for active vehicle step results; advance shared clock
 end
 
 @enduml

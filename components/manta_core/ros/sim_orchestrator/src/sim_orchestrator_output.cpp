@@ -1,76 +1,42 @@
 #include "sim_orchestrator/sim_orchestrator_node.hpp"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <iomanip>
 
-extern "C" {
-    #include "odyssey_sim.h"
-}
-
-/**
- * Select and publish the next batch of simulation cycles.
- *
- * The normal configured batch size is shortened when the mission is near completion or when a scheduled whale call occurs within the batch.
- */
+/** Select the next batch and ask the whale node to advance first. */
 void SimOrchestratorNode::publish_current_step() {
-    manta_interfaces::msg::SimStep step;
-
-    // Describe the first cycle, starting time, and physics timestep of the batch that the vehicle simulators are about to process.
+    auto &step = state_.current_step;
+    step = manta_interfaces::msg::SimStep{};
     step.current_cycle = static_cast<std::uint64_t>(state_.sim_state.current_cycle);
     step.sim_time_s = state_.sim_state.sim_time_s;
     step.timestep_s = state_.sim_config.timestep_s;
 
-    // Use the configured maximum batch size unless fewer simulation cycles remain.
     const int remaining_cycles = state_.sim_config.num_cycles - state_.sim_state.current_cycle;
     int batch_steps = std::min(state_.steps_per_message, remaining_cycles);
-
-    // Stop at the next communication boundary anchored to time zero.
     if (state_.communication_steps > 0) {
         const int steps_into_interval = state_.sim_state.current_cycle % state_.communication_steps;
-        const int steps_until_communication = state_.communication_steps - steps_into_interval;
-        batch_steps = std::min(batch_steps, steps_until_communication);
+        batch_steps = std::min(batch_steps, state_.communication_steps - steps_into_interval);
     }
 
-    // Shorten the batch if it would pass the next scheduled whale call.
-    state_.current_batch_reaches_whale_call_b = false;
-    if (state_.next_whale_call_available_b) {
-        // Calculate how many simulated seconds remain before the next scheduled whale call.
-        const double time_until_call_s = state_.next_whale_call.sim_time_s - state_.sim_state.sim_time_s;
-
-        if (time_until_call_s > 0.0) {
-            // Convert the remaining time to a number of physics steps. Every published batch must contain at least one step.
-            const int steps_until_call = std::max(1, static_cast<int>(std::ceil(time_until_call_s / state_.sim_config.timestep_s)));
-
-            // If the call occurs within the normal batch, shorten the batch so it ends at the call.
-            if (steps_until_call <= batch_steps) {
-                batch_steps = steps_until_call;
-                state_.current_batch_reaches_whale_call_b = true;
-            }
-        }
-    }
-
-    // Send the selected number of internal physics steps to every vehicle simulator.
-    state_.current_batch_steps = batch_steps;
     step.step_count = static_cast<std::uint32_t>(batch_steps);
     step.control_period = static_cast<std::uint64_t>(state_.sim_config.control_period);
+    step.whale_call_expected_b = false;
     step.world.gravity_mps2 = state_.world_state->gravity_mps2;
     step.world.magnetic_north_gauss = state_.world_state->magnetic_north_gauss;
     step.world.magnetic_east_gauss = state_.world_state->magnetic_east_gauss;
     step.world.magnetic_down_gauss = state_.world_state->magnetic_down_gauss;
     step.world.seawater_density_kgpm3 = state_.world_state->seawater_density_kgpm3;
 
-    sim_step_pub_->publish(step);
+    state_.waiting_for_whale_step_b = true;
+    whale_step_pub_->publish(step);
+    log_state_if_changed();
 }
 
-/**
- * Publish a whale-call event and record the exact event in the output log.
- *
- * Reads the scheduled whale call stored in state.
- */
-void SimOrchestratorNode::publish_whale_call() {
-    const auto &call = state_.next_whale_call;
-    whale_call_pub_->publish(call); // Publish the event for the whale-detection node.
-    whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time_s << ',' << call.whale_id << ',' << call.whale_call_north_m << ',' << call.whale_call_east_m << '\n';   // Record the published event for simulation analysis and review.
+/** Record the whale call reported by the whale simulator. */
+void SimOrchestratorNode::record_whale_call() {
+    const auto &call = state_.current_whale_call;
+    whale_call_log_ << call.cycle << ',' << std::setprecision(17) << call.sim_time_s << ','
+                    << call.whale_id << ',' << call.whale_call_north_m << ','
+                    << call.whale_call_east_m << '\n';
 }

@@ -1,5 +1,5 @@
 @startuml
-title MANTA Trailing Mission — Scheduled Bearing Communication
+title MANTA — Odyssey Whale Calls, Bearings, and Guidance
 
 skinparam monochrome true
 skinparam shadowing false
@@ -7,45 +7,67 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
 participant "SimOrchestratorNode" as Orchestrator
+participant "WhaleNode" as Whale
 participant "WhaleDetectionNode" as Detection
 participant "OdysseyNode\nauv_1" as AUV1
 participant "OdysseyNode\nauv_2" as AUV2
 participant "WhaleEstimatorNode\nauv_1" as Estimator1
 participant "WhaleEstimatorNode\nauv_2" as Estimator2
 
-Orchestrator ->> AUV1 : SimStep
-AUV1 -> AUV1 : Advance dynamics and simulation time
-AUV1 -> AUV1 : At control updates, project latest Kalman estimate\nusing baseline velocity and return time
-AUV1 -> AUV1 : Update trailing waypoint and control
+loop Each simulation batch
+    Orchestrator ->> Whale : Whale SimStep
+    opt Whale calls during this batch
+        Whale ->> Detection : WhaleCall
+    end
+    Whale ->> Orchestrator : WhaleStepResult (completed steps)
+    Orchestrator ->> AUV1 : Vehicle SimStep (completed whale steps)
+    Orchestrator ->> AUV2 : Vehicle SimStep (completed whale steps)
+    AUV1 -> AUV1 : Advance dynamics and trailing control
+    AUV2 -> AUV2 : Advance dynamics and trailing control
 
-opt Communication boundary reached and measurement available
-    AUV1 ->> AUV2 : Latest bearing, receiver position, and measurement time
-end
+    opt Scheduled AUV communication boundary
+        AUV1 ->> AUV2 : Bearing or no-bearing notice
+        AUV2 ->> AUV1 : Bearing or no-bearing notice
+        AUV1 -> AUV1 : Triangulate if matching bearings exist
+        AUV2 -> AUV2 : Triangulate if matching bearings exist
+        AUV1 ->> Estimator1 : Position fix (if triangulation succeeded)
+        AUV2 ->> Estimator2 : Position fix (if triangulation succeeded)
+    end
 
-AUV1 ->> Detection : VehicleState
-AUV1 ->> Orchestrator : SimStepResult
+    AUV1 ->> Detection : VehicleState for completed cycle
+    AUV2 ->> Detection : VehicleState for completed cycle
+    opt Whale called during this batch
+        Detection -> Detection : Match vehicle states and check range
+        Detection ->> AUV1 : BearingObservation (if detected)
+        Detection ->> AUV2 : BearingObservation (if detected)
+        AUV1 -> AUV1 : Store local bearing (if received)
+        AUV2 -> AUV2 : Store local bearing (if received)
+        opt Immediate AUV communication is configured
+            AUV1 ->> AUV2 : Local bearing (if detected)
+            AUV2 ->> AUV1 : Local bearing (if detected)
+            AUV1 -> AUV1 : Triangulate if matching bearings exist
+            AUV2 -> AUV2 : Triangulate if matching bearings exist
+            AUV1 ->> Estimator1 : Position fix (if triangulation succeeded)
+            AUV2 ->> Estimator2 : Position fix (if triangulation succeeded)
+        end
+        Detection ->> AUV1 : WhaleCallProcessed (receiver IDs)
+        Detection ->> AUV2 : WhaleCallProcessed (receiver IDs)
+    end
 
-opt AUV detects call
-    Detection ->> AUV1 : BearingObservation
-    AUV1 -> AUV1 : Find own position at call cycle
-    AUV1 -> AUV1 : Store bearing with vehicle position\nfor its call cycle
-    AUV1 ->> Orchestrator : BearingProcessed (measurement stored)
-end
+    opt Estimator 1 received a position fix
+        Estimator1 -> Estimator1 : Update position and velocity filter
+        Estimator1 ->> AUV1 : WhaleKalmanEstimate
+        AUV1 -> AUV1 : Store estimate for guidance
+    end
 
-opt Matching local and remote bearings available
-    AUV1 -> AUV1 : Intersect bearings from the same call cycle
-    AUV1 ->> Estimator1 : WhaleBearingPositionEstimate
-    Estimator1 -> Estimator1 : Update position and velocity filter\nusing the timestamped position estimate
-    Estimator1 ->> AUV1 : WhaleKalmanEstimate
-    AUV1 -> AUV1 : Store latest Kalman estimate for guidance
-end
+    opt Estimator 2 received a position fix
+        Estimator2 -> Estimator2 : Update position and velocity filter
+        Estimator2 ->> AUV2 : WhaleKalmanEstimate
+        AUV2 -> AUV2 : Store estimate for guidance
+    end
 
-opt Matching local and remote bearings available on auv_2
-    AUV2 -> AUV2 : Intersect bearings from the same call cycle
-    AUV2 ->> Estimator2 : WhaleBearingPositionEstimate
-    Estimator2 -> Estimator2 : Update position and velocity filter
-    Estimator2 ->> AUV2 : WhaleKalmanEstimate
-    AUV2 -> AUV2 : Store latest Kalman estimate for guidance
+    AUV1 ->> Orchestrator : SimStepResult (after any available triangulation)
+    AUV2 ->> Orchestrator : SimStepResult (after any available triangulation)
 end
 
 @enduml

@@ -12,8 +12,9 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "manta_interfaces/msg/sim_step.hpp"
+#include "whale_interfaces/msg/whale_call.hpp"
+#include "whale_interfaces/msg/whale_step_result.hpp"
 #include "whale_interfaces/msg/whale_state_array.hpp"
-#include "whale_interfaces/srv/get_next_whale_call.hpp"
 
 
 class WhaleNode : public rclcpp::Node {
@@ -51,11 +52,12 @@ private:
     void create_ros_interfaces();
     void create_publishers();
     void create_subscribers();
-    void create_services();
     
     // Callbacks
-    void handle_get_next_call();
+    void handle_sim_step();
+    void find_next_call();
     void handle_shutdown();
+    void publish_pending_call();
 
     WhaleWaypoint trajectory_at_time() const;
     void update_whales();
@@ -74,9 +76,9 @@ private:
 
     // Publishers
     rclcpp::Publisher<whale_interfaces::msg::WhaleStateArray>::SharedPtr whale_states_pub_;
-    
-    // Services
-    rclcpp::Service<whale_interfaces::srv::GetNextWhaleCall>::SharedPtr next_whale_call_service_;
+    rclcpp::Publisher<whale_interfaces::msg::WhaleCall>::SharedPtr whale_call_pub_;
+    rclcpp::Publisher<whale_interfaces::msg::WhaleStepResult>::SharedPtr step_result_pub_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
 
     // Subscribers
     rclcpp::Subscription<manta_interfaces::msg::SimStep>::SharedPtr sim_step_sub_;

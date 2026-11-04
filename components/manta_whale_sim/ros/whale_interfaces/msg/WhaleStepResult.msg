@@ -1,0 +1,6 @@
+uint64 completed_cycle
+uint32 completed_step_count
+bool succeeded_b
+bool whale_call_published_b
+WhaleCall whale_call
+string detail
