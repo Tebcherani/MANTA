@@ -9,18 +9,17 @@ start
 
 partition "SimOrchestratorNode()" {
     :Load list of vehicles;    
-    :Open whale call log;
     partition "Create ROS interfaces" {
         :Create QoS configuration;
         
         :Create publishers;
         note right
             - Calendar start time
-            - Advance sim by a specified num of cycles
+            - Advance whale simulation first
+            - Advance vehicles after whale step result
             - Sim time
             - Startup complete
             - Request shutdown
-            - Whale call (whale ID, time, location)
         end note
 
         :Create subscribers;
@@ -28,21 +27,17 @@ partition "SimOrchestratorNode()" {
             - Init complete (for every AUV)
             - Whale estimator ready (for every AUV, when configured)
             - Step results (for every AUV)
+            - Whale step result
+            - Whale and detection node ready
             - Whale call processed by detector
             - Bearing processed (by one AUV)
         end note
 
-        :Create service clients;
-        note right: - Request next whale call
-
     }
     
-    :Open simulation log;
     :Initialize simulation configuration;
     :Initialize world model;
     :Initialize shared simulation state;
-    :Open orchestrator state log;
-    :Write initial orchestrator state;
     #lightgreen:Publish startup readiness,\nsimulation time, and calendar time;
 }
 

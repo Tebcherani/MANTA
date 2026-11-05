@@ -85,6 +85,7 @@ inline void write_json(std::ostream &out, const WhaleDetectionState &state) {
     manta::json_field(out, "bearing_std_rad", state.bearing_std_rad, first);
     manta::json_field(out, "bearing_noise_seed", state.bearing_noise_seed, first);
     manta::json_field(out, "data_directory", state.data_directory, first);
+    manta::json_field(out, "ready", state.ready.data, first);
     manta::json_field(out, "shutdown_requested_b", state.shutdown_requested_b, first);
     manta::json_field(out, "pending_whale_call_available_b", state.pending_whale_call_available_b, first);
     manta::json_field(out, "bearing_receiver_ids", state.bearing_receiver_ids, first);

@@ -8,7 +8,10 @@
 #include <vector>
 
 #include "whale_interfaces/msg/whale_call.hpp"
+#include "whale_interfaces/msg/whale_step_result.hpp"
 #include "whale_interfaces/msg/whale_state_array.hpp"
+#include "manta_interfaces/msg/sim_step.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "whale_sim/whale_types.hpp"
 
 // Configuration, population, and runtime state for the whale simulator.
@@ -25,8 +28,10 @@ struct WhaleState {
     // Simulation
     double sim_time_s = 0.0;
     std::uint64_t completed_cycle = 0;
+    manta_interfaces::msg::SimStep received_sim_step;
+    whale_interfaces::msg::WhaleStepResult step_result;
+    std_msgs::msg::Bool ready;
     WhaleStepInput pending_sim_step{};
-    double whale_call_after_time_s = 0.0;
     WhaleTrajectoryQuery trajectory_query{};
     WhaleGenerationContext whale_generation{};
     WhaleCallScheduleWindow call_schedule_window{};
@@ -36,6 +41,7 @@ struct WhaleState {
     bool whales_active_entire_mission_b = false;
     whale_interfaces::msg::WhaleCall next_whale_call;
     bool next_whale_call_available_b = false;
+    std::size_t next_call_whale_index = 0;
     whale_interfaces::msg::WhaleStateArray current_whale_states;
     std::vector<WhaleGroup> whale_groups;
     std::vector<Whale> whales;

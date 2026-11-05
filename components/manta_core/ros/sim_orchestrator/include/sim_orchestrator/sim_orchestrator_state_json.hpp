@@ -48,6 +48,17 @@ inline void write_json(std::ostream &out, const world_state_t &state) {
 }
 
 namespace manta_interfaces { namespace msg {
+inline void write_json(std::ostream &out, const SimStep &state) {
+    bool first = true;
+    out << '{';
+    manta::json_field(out, "current_cycle", state.current_cycle, first);
+    manta::json_field(out, "sim_time_s", state.sim_time_s, first);
+    manta::json_field(out, "timestep_s", state.timestep_s, first);
+    manta::json_field(out, "step_count", state.step_count, first);
+    manta::json_field(out, "control_period", state.control_period, first);
+    manta::json_field(out, "whale_call_expected_b", state.whale_call_expected_b, first);
+    out << '}';
+}
 inline void write_json(std::ostream &out, const SimStepResult &state) {
     bool first = true;
     out << '{';
@@ -55,28 +66,6 @@ inline void write_json(std::ostream &out, const SimStepResult &state) {
     manta::json_field(out, "completed_cycle", state.completed_cycle, first);
     manta::json_field(out, "status", static_cast<unsigned int>(state.status), first);
     manta::json_field(out, "detail", state.detail, first);
-    out << '}';
-}
-}}
-
-namespace acoustics_interfaces { namespace msg {
-inline void write_json(std::ostream &out, const BearingProcessed &state) {
-    bool first = true;
-    out << '{';
-    manta::json_field(out, "vehicle_id", state.vehicle_id, first);
-    manta::json_field(out, "call_cycle", state.call_cycle, first);
-    manta::json_field(out, "sim_time_s", state.sim_time_s, first);
-    manta::json_field(out, "estimate_valid_b", state.estimate_valid_b, first);
-    out << '}';
-}
-
-inline void write_json(std::ostream &out, const WhaleCallProcessed &state) {
-    bool first = true;
-    out << '{';
-    manta::json_field(out, "whale_id", state.whale_id, first);
-    manta::json_field(out, "cycle", state.cycle, first);
-    manta::json_field(out, "sim_time_s", state.sim_time_s, first);
-    manta::json_field(out, "bearing_receiver_ids", state.bearing_receiver_ids, first);
     out << '}';
 }
 }}
@@ -97,6 +86,20 @@ inline void write_json(std::ostream &out, const WhaleCall &state) {
 }}
 #endif
 
+namespace whale_interfaces { namespace msg {
+inline void write_json(std::ostream &out, const WhaleStepResult &state) {
+    bool first = true;
+    out << '{';
+    manta::json_field(out, "completed_cycle", state.completed_cycle, first);
+    manta::json_field(out, "completed_step_count", state.completed_step_count, first);
+    manta::json_field(out, "succeeded_b", state.succeeded_b, first);
+    manta::json_field(out, "whale_call_published_b", state.whale_call_published_b, first);
+    manta::json_field(out, "whale_call", state.whale_call, first);
+    manta::json_field(out, "detail", state.detail, first);
+    out << '}';
+}
+}}
+
 inline void write_sorted_string_set_field(
     std::ostream &out, const char *name, const std::unordered_set<std::string> &values, bool &first) {
     std::vector<std::string> sorted(values.begin(), values.end());
@@ -112,6 +115,8 @@ inline void write_json(std::ostream &out, const SimOrchestratorState &state) {
     manta::json_field(out, "steps_per_message", state.steps_per_message, first);
     manta::json_field(out, "communication_steps", state.communication_steps, first);
     manta::json_field(out, "current_batch_steps", state.current_batch_steps, first);
+    manta::json_field(out, "current_step", state.current_step, first);
+    manta::json_field(out, "waiting_for_whale_step_b", state.waiting_for_whale_step_b, first);
     manta::json_field(out, "sim_config", state.sim_config, first);
     manta::json_field(out, "sim_state", state.sim_state, first);
     if (!first) out << ',';
@@ -127,16 +132,11 @@ inline void write_json(std::ostream &out, const SimOrchestratorState &state) {
     write_sorted_string_set_field(out, "ready_whale_estimators", state.ready_whale_estimators, first);
     manta::json_field(out, "received_step_result", state.received_step_result, first);
     manta::json_field(out, "expected_step_vehicle_id", state.expected_step_vehicle_id, first);
-    manta::json_field(out, "next_whale_call_available_b", state.next_whale_call_available_b, first);
-    manta::json_field(out, "current_batch_reaches_whale_call_b", state.current_batch_reaches_whale_call_b, first);
-    manta::json_field(out, "waiting_for_whale_call_processing_b", state.waiting_for_whale_call_processing_b, first);
-    manta::json_field(out, "whale_detection_complete_b", state.whale_detection_complete_b, first);
-    manta::json_field(out, "wait_for_bearing_processing_b", state.wait_for_bearing_processing_b, first);
-    write_sorted_string_set_field(out, "expected_bearing_processors", state.expected_bearing_processors, first);
-    write_sorted_string_set_field(out, "completed_bearing_processors", state.completed_bearing_processors, first);
-    manta::json_field(out, "received_bearing_processed", state.received_bearing_processed, first);
-    manta::json_field(out, "received_whale_call_processed", state.received_whale_call_processed, first);
-    manta::json_field(out, "next_whale_call", state.next_whale_call, first);
+    manta::json_field(out, "received_whale_step_result", state.received_whale_step_result, first);
+    manta::json_field(out, "whale_ready_b", state.whale_ready_b, first);
+    manta::json_field(out, "detection_ready_b", state.detection_ready_b, first);
+    manta::json_field(out, "current_batch_has_whale_call_b", state.current_batch_has_whale_call_b, first);
+    manta::json_field(out, "current_whale_call", state.current_whale_call, first);
     out << '}';
 }
 
